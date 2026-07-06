@@ -95,7 +95,20 @@
     // ── SUPABASE ──────────────────────────────────────────────────────────
     const SUPABASE_URL = 'https://yapvixvleqpecjcuvqmq.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhcHZpeHZsZXFwZWNqY3V2cW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyOTA3NDYsImV4cCI6MjA5ODg2Njc0Nn0.i1GAXFLO93NQXqfuj_dfKP2Mv8hKSWNxfuROhVzmfgo';
-    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // The CDN exposes the library as `supabase` global (window.supabase may also work)
+    let db;
+    try {
+      const _lib = window.supabase || supabase;
+      const { createClient } = _lib;
+      db = createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch(e) {
+      console.error('Supabase failed to init:', e);
+      document.getElementById('screen-loading').innerHTML =
+        '<div style="padding:32px;text-align:center;color:#c00;font-size:18px">' +
+        'Failed to load app.<br>Please check your internet and refresh.' +
+        '</div>';
+    }
 
     // ── STRINGS ───────────────────────────────────────────────────────────
     const STRINGS = {
@@ -1292,6 +1305,8 @@
 
     // ── INIT ─────────────────────────────────────────────────────────────
     async function init() {
+      if (!db) return; // Supabase failed to load — error already shown
+
       // Try reading cached theme immediately so the loading screen matches
       try {
         const cached = JSON.parse(localStorage.getItem('salon_settings') || '{}');
@@ -1299,7 +1314,14 @@
         if (cached.language) lang = cached.language;
       } catch(e) {}
 
+      // Fallback: if still on loading screen after 8s, show auth anyway
+      const loadingTimeout = setTimeout(() => {
+        const loading = document.getElementById('screen-loading');
+        if (!loading.classList.contains('hidden')) showScreen('auth');
+      }, 8000);
+
       const { data: { session } } = await db.auth.getSession();
+      clearTimeout(loadingTimeout);
 
       if (session) {
         currentUser = session.user;
