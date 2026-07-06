@@ -152,6 +152,7 @@
     let editingServiceIdx = null;
     let editingEntryId = null;
     let currentPeriod = 'biweekly';
+    let summaryAnchor = new Date();
 
     // ── STORAGE ───────────────────────────────────────────────────────────
     function loadFromStorage() {
@@ -422,7 +423,7 @@
     function renderSummary() {
       const sym = state.settings.currencySymbol || '$';
       const rate = state.settings.commissionRate;
-      const anchor = new Date();
+      const anchor = summaryAnchor;
       const { start, end } = getPeriodRange(currentPeriod, anchor);
       const entries = getPeriodEntries(start, end);
       const gross = entries.reduce((s, e) => s + (e.price || 0), 0);
@@ -478,7 +479,17 @@
             ${toggleBtns}
           </div>
 
-          <div style="text-align:center;font-size:13px;color:var(--ts);font-weight:600;margin-bottom:16px">${rangeLabel}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <button onclick="shiftAnchor(-1)"
+              style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.06);border:none;
+                     font-size:22px;cursor:pointer;color:var(--td);display:flex;align-items:center;justify-content:center">‹</button>
+            <div style="text-align:center;font-size:13px;color:var(--ts);font-weight:600">${rangeLabel}</div>
+            <button onclick="shiftAnchor(1)"
+              style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.06);border:none;
+                     font-size:22px;cursor:pointer;color:var(--td);display:flex;align-items:center;justify-content:center;
+                     opacity:${end >= formatDate(new Date()) ? '0.25' : '1'};
+                     pointer-events:${end >= formatDate(new Date()) ? 'none' : 'auto'}">›</button>
+          </div>
 
           <div style="background:linear-gradient(135deg,var(--tp),var(--ts));border-radius:20px;
                       padding:28px 24px;color:#fff;text-align:center;margin-bottom:16px">
@@ -529,6 +540,16 @@
 
     function switchPeriod(period) {
       currentPeriod = period;
+      summaryAnchor = new Date();
+      renderSummary();
+    }
+
+    function shiftAnchor(dir) {
+      const d = new Date(summaryAnchor);
+      if (currentPeriod === 'weekly')   d.setDate(d.getDate() + dir * 7);
+      if (currentPeriod === 'biweekly') d.setDate(d.getDate() + dir * 14);
+      if (currentPeriod === 'monthly')  d.setMonth(d.getMonth() + dir);
+      summaryAnchor = d;
       renderSummary();
     }
 
