@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Nail Salon Tracker</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style id="theme-vars">
     :root {
       --tp: #F9A8C2;
@@ -35,11 +36,41 @@
 
     .svc-chip.selected { background: var(--tp) !important; border-color: var(--ts) !important; font-weight: 700; }
     button { touch-action: manipulation; }
+
+    #screen-loading {
+      position: fixed; inset: 0; background: var(--tb);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 200;
+    }
+    .spinner {
+      width: 48px; height: 48px; border: 5px solid var(--tbd);
+      border-top-color: var(--ts); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #screen-auth {
+      position: fixed; inset: 0; background: var(--tb);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 32px 24px; z-index: 100; overflow-y: auto;
+    }
   </style>
 </head>
 <body>
 
-  <div id="view-calendar" class="view"></div>
+  <!-- Loading screen -->
+  <div id="screen-loading">
+    <div style="font-size:52px;margin-bottom:20px">💅</div>
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Auth screen (login / signup) -->
+  <div id="screen-auth" class="hidden">
+    <div id="auth-content" style="width:100%;max-width:380px"></div>
+  </div>
+
+  <!-- App views -->
+  <div id="view-calendar" class="view hidden"></div>
   <div id="view-summary" class="view hidden"></div>
   <div id="view-settings" class="view hidden"></div>
 
@@ -56,11 +87,16 @@
   </div>
 
   <nav id="nav-bar"
-    class="fixed bottom-0 left-0 right-0 z-30 bg-white"
+    class="fixed bottom-0 left-0 right-0 z-30 bg-white hidden"
     style="border-top:2px solid var(--tp);padding-bottom:env(safe-area-inset-bottom)">
   </nav>
 
   <script>
+    // ── SUPABASE ──────────────────────────────────────────────────────────
+    const SUPABASE_URL = 'https://yapvixvleqpecjcuvqmq.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhcHZpeHZsZXFwZWNqY3V2cW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyOTA3NDYsImV4cCI6MjA5ODg2Njc0Nn0.i1GAXFLO93NQXqfuj_dfKP2Mv8hKSWNxfuROhVzmfgo';
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     // ── STRINGS ───────────────────────────────────────────────────────────
     const STRINGS = {
       en: {
@@ -88,6 +124,20 @@
         exportCSV: 'Export CSV', exportCSVSub: 'Download all entries as a spreadsheet',
         theme: 'Theme',
         themeBlush: 'Blush', themeOcean: 'Ocean', themeForest: 'Forest', themeSlate: 'Slate',
+        // Auth
+        signIn: 'Sign In', createAccount: 'Create Account',
+        phoneNumber: 'Phone Number', pin: 'PIN (4+ digits)',
+        confirmPin: 'Confirm PIN',
+        phonePlaceholder: '555-123-4567',
+        pinPlaceholder: '••••',
+        signingIn: 'Signing in...', signingUp: 'Creating account...',
+        signOut: 'Sign Out', confirmSignOut: 'Sign out of this account?',
+        authError: 'Wrong phone number or PIN',
+        pinMismatch: 'PINs do not match',
+        pinTooShort: 'PIN must be at least 4 digits',
+        phoneRequired: 'Please enter your phone number',
+        noAccount: 'New here?', alreadyHaveAccount: 'Already have an account?',
+        account: 'Account', yourPhone: 'Your phone',
         months: ['January','February','March','April','May','June',
                  'July','August','September','October','November','December'],
         days: ['Su','Mo','Tu','We','Th','Fr','Sa'],
@@ -117,6 +167,20 @@
         exportCSV: 'Xuất CSV', exportCSVSub: 'Tải xuống tất cả dữ liệu',
         theme: 'Giao diện',
         themeBlush: 'Hồng', themeOcean: 'Xanh biển', themeForest: 'Xanh lá', themeSlate: 'Xám',
+        // Auth
+        signIn: 'Đăng nhập', createAccount: 'Tạo tài khoản',
+        phoneNumber: 'Số điện thoại', pin: 'Mã PIN (4+ số)',
+        confirmPin: 'Nhập lại PIN',
+        phonePlaceholder: '555-123-4567',
+        pinPlaceholder: '••••',
+        signingIn: 'Đang đăng nhập...', signingUp: 'Đang tạo tài khoản...',
+        signOut: 'Đăng xuất', confirmSignOut: 'Đăng xuất tài khoản này?',
+        authError: 'Sai số điện thoại hoặc PIN',
+        pinMismatch: 'PIN không khớp',
+        pinTooShort: 'PIN phải có ít nhất 4 chữ số',
+        phoneRequired: 'Vui lòng nhập số điện thoại',
+        noAccount: 'Lần đầu dùng?', alreadyHaveAccount: 'Đã có tài khoản?',
+        account: 'Tài khoản', yourPhone: 'Số điện thoại của bạn',
         months: ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
                  'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'],
         days: ['CN','T2','T3','T4','T5','T6','T7'],
@@ -153,27 +217,8 @@
     let editingEntryId = null;
     let currentPeriod = 'biweekly';
     let summaryAnchor = new Date();
-
-    // ── STORAGE ───────────────────────────────────────────────────────────
-    function loadFromStorage() {
-      const raw = localStorage.getItem('salon_entries');
-      const rawS = localStorage.getItem('salon_settings');
-      state.entries = raw ? JSON.parse(raw) : [];
-      state.settings = rawS ? JSON.parse(rawS) : {
-        services: [...DEFAULT_SERVICES],
-        currencySymbol: '$',
-        commissionRate: null,
-        language: 'en',
-        theme: 'blush'
-      };
-      lang = state.settings.language || 'en';
-      applyTheme(state.settings.theme || 'blush');
-    }
-
-    function saveToStorage() {
-      localStorage.setItem('salon_entries', JSON.stringify(state.entries));
-      localStorage.setItem('salon_settings', JSON.stringify(state.settings));
-    }
+    let currentUser = null;
+    let settingsSaveTimer = null;
 
     // ── HELPERS ───────────────────────────────────────────────────────────
     const t = key => (STRINGS[lang] && STRINGS[lang][key] !== undefined) ? STRINGS[lang][key] : key;
@@ -192,7 +237,8 @@
     }
 
     function generateId() {
-      return Date.now().toString(36) + Math.random().toString(36).slice(2);
+      return crypto.randomUUID ? crypto.randomUUID()
+        : Date.now().toString(36) + Math.random().toString(36).slice(2);
     }
 
     function formatDate(d) {
@@ -230,6 +276,277 @@
 
     function getPeriodEntries(start, end) {
       return state.entries.filter(e => e.date >= start && e.date <= end);
+    }
+
+    // ── SUPABASE DATA LAYER ───────────────────────────────────────────────
+    async function loadFromSupabase() {
+      if (!currentUser) return;
+
+      const [{ data: entries }, { data: settings }] = await Promise.all([
+        db.from('entries').select('*').order('date'),
+        db.from('user_settings').select('*').eq('user_id', currentUser.id).single()
+      ]);
+
+      state.entries = (entries || []).map(e => ({
+        id: e.id, date: e.date, time: e.time || '',
+        name: e.name || '', services: e.services || [],
+        price: e.price || 0, notes: e.notes || ''
+      }));
+
+      if (settings) {
+        state.settings = {
+          services: (settings.services && settings.services.length) ? settings.services : [...DEFAULT_SERVICES],
+          currencySymbol: settings.currency_symbol || '$',
+          commissionRate: settings.commission_rate || null,
+          language: settings.language || 'en',
+          theme: settings.theme || 'blush'
+        };
+      } else {
+        state.settings = {
+          services: [...DEFAULT_SERVICES],
+          currencySymbol: '$',
+          commissionRate: null,
+          language: 'en',
+          theme: 'blush'
+        };
+        await pushSettingsToCloud();
+      }
+
+      lang = state.settings.language || 'en';
+      applyTheme(state.settings.theme || 'blush');
+    }
+
+    async function pushEntryToCloud(entry) {
+      if (!currentUser) return;
+      await db.from('entries').upsert({
+        id: entry.id,
+        user_id: currentUser.id,
+        date: entry.date,
+        time: entry.time || '',
+        name: entry.name || '',
+        services: entry.services || [],
+        price: entry.price || 0,
+        notes: entry.notes || ''
+      });
+    }
+
+    async function deleteEntryFromCloud(id) {
+      if (!currentUser) return;
+      await db.from('entries').delete().eq('id', id);
+    }
+
+    async function pushSettingsToCloud() {
+      if (!currentUser) return;
+      await db.from('user_settings').upsert({
+        user_id: currentUser.id,
+        services: state.settings.services || [],
+        currency_symbol: state.settings.currencySymbol || '$',
+        commission_rate: state.settings.commissionRate || null,
+        language: state.settings.language || 'en',
+        theme: state.settings.theme || 'blush',
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    async function bulkUploadEntries(entries) {
+      if (!currentUser || !entries.length) return;
+      const rows = entries.map(e => ({
+        id: e.id, user_id: currentUser.id,
+        date: e.date, time: e.time || '',
+        name: e.name || '', services: e.services || [],
+        price: e.price || 0, notes: e.notes || ''
+      }));
+      await db.from('entries').upsert(rows);
+    }
+
+    // Keep localStorage as local cache for instant reads
+    function saveToStorage() {
+      localStorage.setItem('salon_entries', JSON.stringify(state.entries));
+      localStorage.setItem('salon_settings', JSON.stringify(state.settings));
+      clearTimeout(settingsSaveTimer);
+      settingsSaveTimer = setTimeout(pushSettingsToCloud, 1500);
+    }
+
+    // ── AUTH ──────────────────────────────────────────────────────────────
+    function phoneToEmail(phone) {
+      return phone.replace(/\D/g, '') + '@nailapp.local';
+    }
+
+    async function doSignIn(phone, pin) {
+      const { data, error } = await db.auth.signInWithPassword({
+        email: phoneToEmail(phone), password: pin
+      });
+      if (error) return t('authError');
+      currentUser = data.user;
+      await loadFromSupabase();
+      showScreen('app');
+      return null;
+    }
+
+    async function doSignUp(phone, pin) {
+      const email = phoneToEmail(phone);
+      const { data, error } = await db.auth.signUp({ email, password: pin });
+      if (error) {
+        if (error.message.includes('already registered')) return t('authError');
+        return error.message;
+      }
+
+      // Auto-confirm trigger fires in DB; session may or may not be immediate.
+      // If null session, sign in immediately (trigger sets email_confirmed_at).
+      let user = data.user;
+      let session = data.session;
+      if (!session) {
+        const { data: siData, error: siErr } = await db.auth.signInWithPassword({ email, password: pin });
+        if (siErr) return siErr.message;
+        user = siData.user;
+      }
+      currentUser = user;
+
+      // Migrate any existing localStorage data for this device
+      const localEntries = JSON.parse(localStorage.getItem('salon_entries') || '[]');
+      const localSettings = JSON.parse(localStorage.getItem('salon_settings') || 'null');
+
+      if (localSettings) {
+        state.settings = localSettings;
+      } else {
+        state.settings = {
+          services: [...DEFAULT_SERVICES],
+          currencySymbol: '$',
+          commissionRate: null,
+          language: 'en',
+          theme: 'blush'
+        };
+      }
+      await pushSettingsToCloud();
+
+      if (localEntries.length > 0) {
+        state.entries = localEntries;
+        await bulkUploadEntries(localEntries);
+        localStorage.removeItem('salon_entries');
+        localStorage.removeItem('salon_settings');
+      }
+
+      await loadFromSupabase();
+      showScreen('app');
+      return null;
+    }
+
+    async function doSignOut() {
+      if (!confirm(t('confirmSignOut'))) return;
+      await db.auth.signOut();
+      currentUser = null;
+      state.entries = [];
+      state.settings = {};
+      localStorage.removeItem('salon_entries');
+      localStorage.removeItem('salon_settings');
+      showScreen('auth');
+    }
+
+    // ── SCREEN MANAGEMENT ─────────────────────────────────────────────────
+    function showScreen(name) {
+      document.getElementById('screen-loading').classList.add('hidden');
+      document.getElementById('screen-auth').classList.add('hidden');
+      document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+      document.getElementById('nav-bar').classList.add('hidden');
+
+      if (name === 'auth') {
+        document.getElementById('screen-auth').classList.remove('hidden');
+        renderAuthScreen('signin');
+      } else if (name === 'app') {
+        document.getElementById('nav-bar').classList.remove('hidden');
+        renderNav();
+        showView('calendar');
+      }
+    }
+
+    function renderAuthScreen(mode) {
+      const isSignin = mode === 'signin';
+      document.getElementById('auth-content').innerHTML = `
+        <div style="text-align:center;margin-bottom:32px">
+          <div style="font-size:56px;margin-bottom:12px">💅</div>
+          <div style="font-size:24px;font-weight:800;color:var(--td)">${t('appTitle')}</div>
+        </div>
+
+        <div style="margin-bottom:18px">
+          <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                        letter-spacing:0.07em;display:block;margin-bottom:8px">${t('phoneNumber')}</label>
+          <input id="auth-phone" type="tel" placeholder="${t('phonePlaceholder')}"
+            style="width:100%;padding:18px;border:2px solid var(--tbd);border-radius:14px;
+                   font-size:22px;color:var(--td);background:#fff;outline:none;
+                   box-sizing:border-box;-webkit-appearance:none">
+        </div>
+
+        <div style="margin-bottom:${isSignin ? 8 : 18}px">
+          <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                        letter-spacing:0.07em;display:block;margin-bottom:8px">${t('pin')}</label>
+          <input id="auth-pin" type="password" inputmode="numeric" placeholder="${t('pinPlaceholder')}"
+            style="width:100%;padding:18px;border:2px solid var(--tbd);border-radius:14px;
+                   font-size:22px;color:var(--td);background:#fff;outline:none;
+                   box-sizing:border-box;-webkit-appearance:none">
+        </div>
+
+        ${!isSignin ? `
+        <div style="margin-bottom:8px">
+          <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                        letter-spacing:0.07em;display:block;margin-bottom:8px">${t('confirmPin')}</label>
+          <input id="auth-pin2" type="password" inputmode="numeric" placeholder="${t('pinPlaceholder')}"
+            style="width:100%;padding:18px;border:2px solid var(--tbd);border-radius:14px;
+                   font-size:22px;color:var(--td);background:#fff;outline:none;
+                   box-sizing:border-box;-webkit-appearance:none">
+        </div>` : ''}
+
+        <div id="auth-error" style="color:#d00;font-size:15px;text-align:center;
+                                    min-height:24px;margin:10px 0"></div>
+
+        <button id="auth-btn" onclick="handleAuth('${mode}')"
+          style="width:100%;padding:20px;
+                 background:linear-gradient(135deg,var(--tp),var(--ts));
+                 color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                 cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2);margin-bottom:20px">
+          ${isSignin ? t('signIn') : t('createAccount')}
+        </button>
+
+        <div style="text-align:center;font-size:16px;color:var(--ts)">
+          ${isSignin ? t('noAccount') : t('alreadyHaveAccount')}
+          <button onclick="renderAuthScreen('${isSignin ? 'signup' : 'signin'}')"
+            style="background:none;border:none;color:var(--td);font-size:16px;font-weight:800;
+                   cursor:pointer;text-decoration:underline;padding:4px 8px;font-family:Georgia,serif">
+            ${isSignin ? t('createAccount') : t('signIn')}
+          </button>
+        </div>
+      `;
+
+      requestAnimationFrame(() => {
+        const el = document.getElementById('auth-phone');
+        if (el) el.focus();
+      });
+    }
+
+    async function handleAuth(mode) {
+      const phone = (document.getElementById('auth-phone')?.value || '').trim();
+      const pin   = (document.getElementById('auth-pin')?.value || '').trim();
+      const pin2  = (document.getElementById('auth-pin2')?.value || '').trim();
+      const btn   = document.getElementById('auth-btn');
+      const errEl = document.getElementById('auth-error');
+      if (!errEl) return;
+
+      errEl.textContent = '';
+      if (!phone) { errEl.textContent = t('phoneRequired'); return; }
+      if (pin.length < 4) { errEl.textContent = t('pinTooShort'); return; }
+      if (mode === 'signup' && pin !== pin2) { errEl.textContent = t('pinMismatch'); return; }
+
+      btn.disabled = true;
+      btn.textContent = mode === 'signin' ? t('signingIn') : t('signingUp');
+
+      const error = mode === 'signin'
+        ? await doSignIn(phone, pin)
+        : await doSignUp(phone, pin);
+
+      if (error) {
+        errEl.textContent = error;
+        btn.disabled = false;
+        btn.textContent = mode === 'signin' ? t('signIn') : t('createAccount');
+      }
     }
 
     // ── ROUTING ───────────────────────────────────────────────────────────
@@ -536,6 +853,7 @@
       state.entries = state.entries.filter(e => e.id !== id);
       saveToStorage();
       renderCalendar();
+      deleteEntryFromCloud(id);
     }
 
     function switchPeriod(period) {
@@ -608,6 +926,11 @@
       const rate = state.settings.commissionRate || '';
       const services = state.settings.services || DEFAULT_SERVICES;
       const activeTheme = state.settings.theme || 'blush';
+
+      // Phone number display (strip @nailapp.local from email)
+      const phoneDisplay = currentUser?.email
+        ? currentUser.email.replace('@nailapp.local', '')
+        : '';
 
       const serviceRows = services.map((svc, i) => {
         if (i === editingServiceIdx) {
@@ -767,6 +1090,23 @@
             </div>
           `)}
 
+          ${sectionTitle(t('account'))}
+          ${card(`
+            <div style="padding:16px 18px;border-bottom:1px solid var(--tb)">
+              <div style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;
+                          letter-spacing:0.07em;margin-bottom:4px">${t('yourPhone')}</div>
+              <div style="font-size:18px;font-weight:700;color:var(--td)">${phoneDisplay}</div>
+            </div>
+            <div style="padding:16px 18px">
+              <button onclick="doSignOut()"
+                style="width:100%;padding:16px;background:#FFF0F0;color:#C0392B;
+                       border:2px solid #FFCCCC;border-radius:12px;
+                       font-size:17px;font-weight:800;cursor:pointer;font-family:Georgia,serif">
+                ${t('signOut')}
+              </button>
+            </div>
+          `)}
+
         </div>`;
     }
 
@@ -905,7 +1245,10 @@
 
       if (editingEntryId) {
         const idx = state.entries.findIndex(e => e.id === editingEntryId);
-        if (idx !== -1) state.entries[idx] = { id: editingEntryId, name, date, time, price, services, notes };
+        if (idx !== -1) {
+          state.entries[idx] = { id: editingEntryId, name, date, time, price, services, notes };
+          pushEntryToCloud(state.entries[idx]);
+        }
         editingEntryId = null;
         saveToStorage();
         closeSheet();
@@ -938,17 +1281,36 @@
     }
 
     function saveEntry(data) {
-      state.entries.push({ id: generateId(), ...data });
+      const entry = { id: generateId(), ...data };
+      state.entries.push(entry);
       saveToStorage();
       closeSheet();
       selectedDay = data.date;
       renderCalendar();
+      pushEntryToCloud(entry);
     }
 
     // ── INIT ─────────────────────────────────────────────────────────────
-    loadFromStorage();
-    renderNav();
-    showView('calendar');
+    async function init() {
+      // Try reading cached theme immediately so the loading screen matches
+      try {
+        const cached = JSON.parse(localStorage.getItem('salon_settings') || '{}');
+        if (cached.theme) applyTheme(cached.theme);
+        if (cached.language) lang = cached.language;
+      } catch(e) {}
+
+      const { data: { session } } = await db.auth.getSession();
+
+      if (session) {
+        currentUser = session.user;
+        await loadFromSupabase();
+        showScreen('app');
+      } else {
+        showScreen('auth');
+      }
+    }
+
+    init();
   </script>
 </body>
 </html>
