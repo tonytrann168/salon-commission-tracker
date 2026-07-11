@@ -49,7 +49,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    #screen-auth {
+    #screen-auth, #screen-onboarding {
       position: fixed; inset: 0; background: var(--tb);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       padding: 32px 24px; z-index: 100; overflow-y: auto;
@@ -69,9 +69,15 @@
     <div id="auth-content" style="width:100%;max-width:380px"></div>
   </div>
 
+  <!-- Onboarding screen -->
+  <div id="screen-onboarding" class="hidden">
+    <div id="onboarding-content" style="width:100%;max-width:380px"></div>
+  </div>
+
   <!-- App views -->
   <div id="view-calendar" class="view hidden"></div>
   <div id="view-summary" class="view hidden"></div>
+  <div id="view-team" class="view hidden"></div>
   <div id="view-settings" class="view hidden"></div>
 
   <div id="sheet-overlay"
@@ -93,10 +99,9 @@
 
   <script>
     // ── SUPABASE ──────────────────────────────────────────────────────────
-    const SUPABASE_URL = 'https://yapvixvleqpecjcuvqmq.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhcHZpeHZsZXFwZWNqY3V2cW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyOTA3NDYsImV4cCI6MjA5ODg2Njc0Nn0.i1GAXFLO93NQXqfuj_dfKP2Mv8hKSWNxfuROhVzmfgo';
+    const SUPABASE_URL = 'https://tfvkonjmacpiggfcikax.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_NlVy8k_j1qVht_SdXaGYJQ_-TJ5ch5N';
 
-    // The CDN exposes the library as `supabase` global (window.supabase may also work)
     let db;
     try {
       const _lib = window.supabase || supabase;
@@ -114,7 +119,7 @@
     const STRINGS = {
       en: {
         appTitle: 'Nail Salon Tracker',
-        calendar: 'Calendar', summary: 'Summary', settings: 'Settings',
+        calendar: 'Calendar', summary: 'Summary', settings: 'Settings', team: 'Team',
         addCustomer: 'Add Customer', saveCustomer: 'Save',
         customerName: 'Customer Name', optional: '(optional)',
         date: 'Date', time: 'Time', servicesDone: 'Services Done',
@@ -151,13 +156,37 @@
         phoneRequired: 'Please enter your phone number',
         noAccount: 'New here?', alreadyHaveAccount: 'Already have an account?',
         account: 'Account', yourPhone: 'Your phone',
+        // Onboarding
+        welcomeTitle: 'How do you use this app?',
+        iAmSolo: 'Track my own clients', iAmSoloSub: 'Personal commissions only',
+        iAmOwner: 'I own a salon', iAmOwnerSub: 'Track your team\'s commissions',
+        iAmEmployee: 'I work for a salon', iAmEmployeeSub: 'Join your salon\'s account',
+        salonName: 'Salon Name', salonNamePlaceholder: 'e.g. Nails by Tony',
+        yourName: 'Your Name', yourNamePlaceholder: 'e.g. Tony',
+        inviteCode: 'Invite Code', inviteCodePlaceholder: 'e.g. ABCD12',
+        inviteCodeSub: 'Ask your salon owner for this code',
+        creating: 'Creating...', joining: 'Joining...',
+        invalidCode: 'Invalid or expired invite code',
+        salonCreated: 'Salon Created!', salonCreatedSub: 'Share this code with your employees:',
+        goToApp: 'Go to App',
+        // Team view
+        yourInviteCode: 'Your Invite Code',
+        inviteCodeHelp: 'Share with employees to join your salon',
+        refreshCode: 'Refresh Code',
+        employees: 'Employees',
+        noEmployees: 'No employees yet',
+        inviteFirst: 'Share your invite code to add employees',
+        you: '(you)', editRate: 'Edit rate', noRate: 'No rate',
+        // Settings — salon section
+        yourSalon: 'Your Salon', yourRole: 'Your Role',
+        roleOwner: 'Owner', roleEmployee: 'Employee', roleSolo: 'Solo',
         months: ['January','February','March','April','May','June',
                  'July','August','September','October','November','December'],
         days: ['Su','Mo','Tu','We','Th','Fr','Sa'],
       },
       vi: {
         appTitle: 'Theo Dõi Hoa Hồng',
-        calendar: 'Lịch', summary: 'Tổng kết', settings: 'Cài đặt',
+        calendar: 'Lịch', summary: 'Tổng kết', settings: 'Cài đặt', team: 'Đội nhóm',
         addCustomer: 'Thêm khách', saveCustomer: 'Lưu',
         customerName: 'Tên khách', optional: '(tùy chọn)',
         date: 'Ngày', time: 'Giờ', servicesDone: 'Dịch vụ',
@@ -194,6 +223,30 @@
         phoneRequired: 'Vui lòng nhập số điện thoại',
         noAccount: 'Lần đầu dùng?', alreadyHaveAccount: 'Đã có tài khoản?',
         account: 'Tài khoản', yourPhone: 'Số điện thoại của bạn',
+        // Onboarding
+        welcomeTitle: 'Bạn dùng ứng dụng này như thế nào?',
+        iAmSolo: 'Theo dõi khách của riêng tôi', iAmSoloSub: 'Chỉ theo dõi hoa hồng cá nhân',
+        iAmOwner: 'Tôi là chủ tiệm', iAmOwnerSub: 'Theo dõi hoa hồng của cả đội',
+        iAmEmployee: 'Tôi làm việc tại tiệm', iAmEmployeeSub: 'Tham gia tài khoản tiệm của bạn',
+        salonName: 'Tên tiệm', salonNamePlaceholder: 'VD: Nails by Tony',
+        yourName: 'Tên của bạn', yourNamePlaceholder: 'VD: Tony',
+        inviteCode: 'Mã mời', inviteCodePlaceholder: 'VD: ABCD12',
+        inviteCodeSub: 'Hỏi chủ tiệm để lấy mã này',
+        creating: 'Đang tạo...', joining: 'Đang tham gia...',
+        invalidCode: 'Mã mời không hợp lệ hoặc đã hết hạn',
+        salonCreated: 'Đã tạo tiệm!', salonCreatedSub: 'Chia sẻ mã này với nhân viên:',
+        goToApp: 'Vào ứng dụng',
+        // Team view
+        yourInviteCode: 'Mã mời của bạn',
+        inviteCodeHelp: 'Chia sẻ với nhân viên để tham gia tiệm',
+        refreshCode: 'Làm mới mã',
+        employees: 'Nhân viên',
+        noEmployees: 'Chưa có nhân viên',
+        inviteFirst: 'Chia sẻ mã mời để thêm nhân viên',
+        you: '(bạn)', editRate: 'Sửa tỷ lệ', noRate: 'Chưa có',
+        // Settings — salon section
+        yourSalon: 'Tiệm của bạn', yourRole: 'Vai trò',
+        roleOwner: 'Chủ tiệm', roleEmployee: 'Nhân viên', roleSolo: 'Cá nhân',
         months: ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
                  'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'],
         days: ['CN','T2','T3','T4','T5','T6','T7'],
@@ -232,6 +285,13 @@
     let summaryAnchor = new Date();
     let currentUser = null;
     let settingsSaveTimer = null;
+    // Owner/employee layer
+    let userRole = null;       // 'solo' | 'owner' | 'employee' | null (triggers onboarding)
+    let currentSalon = null;   // { id, name, invite_code, ... }
+    let salonMembers = [];     // [{ id, user_id, display_name, commission_rate, role }]
+    let teamPeriod = 'biweekly';
+    let teamAnchor = new Date();
+    let editingMemberIdx = null;
 
     // ── HELPERS ───────────────────────────────────────────────────────────
     const t = key => (STRINGS[lang] && STRINGS[lang][key] !== undefined) ? STRINGS[lang][key] : key;
@@ -254,6 +314,11 @@
         : Date.now().toString(36) + Math.random().toString(36).slice(2);
     }
 
+    function generateInviteCode() {
+      const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+      return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
+
     function formatDate(d) {
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -262,7 +327,9 @@
     }
 
     function getDayEntries(dateStr) {
-      return state.entries.filter(e => e.date === dateStr).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+      return state.entries
+        .filter(e => e.date === dateStr && e.user_id === currentUser?.id)
+        .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
     }
 
     function getDayTotal(dateStr) {
@@ -288,7 +355,9 @@
     }
 
     function getPeriodEntries(start, end) {
-      return state.entries.filter(e => e.date >= start && e.date <= end);
+      return state.entries.filter(e =>
+        e.date >= start && e.date <= end && e.user_id === currentUser?.id
+      );
     }
 
     // ── SUPABASE DATA LAYER ───────────────────────────────────────────────
@@ -303,7 +372,8 @@
       state.entries = (entries || []).map(e => ({
         id: e.id, date: e.date, time: e.time || '',
         name: e.name || '', services: e.services || [],
-        price: e.price || 0, notes: e.notes || ''
+        price: e.price || 0, notes: e.notes || '',
+        user_id: e.user_id, salon_id: e.salon_id || null
       }));
 
       if (settings) {
@@ -312,7 +382,10 @@
           currencySymbol: settings.currency_symbol || '$',
           commissionRate: settings.commission_rate || null,
           language: settings.language || 'en',
-          theme: settings.theme || 'blush'
+          theme: settings.theme || 'blush',
+          role: settings.role || null,
+          salon_id: settings.salon_id || null,
+          display_name: settings.display_name || null,
         };
       } else {
         state.settings = {
@@ -320,7 +393,10 @@
           currencySymbol: '$',
           commissionRate: null,
           language: 'en',
-          theme: 'blush'
+          theme: 'blush',
+          role: null,
+          salon_id: null,
+          display_name: null,
         };
         await pushSettingsToCloud();
       }
@@ -329,11 +405,22 @@
       applyTheme(state.settings.theme || 'blush');
     }
 
+    async function loadSalonContext() {
+      if (!state.settings.salon_id) return;
+      const { data: salon } = await db.from('salons').select('*').eq('id', state.settings.salon_id).single();
+      currentSalon = salon;
+      if (userRole === 'owner') {
+        const { data: members } = await db.from('salon_members').select('*').eq('salon_id', state.settings.salon_id);
+        salonMembers = members || [];
+      }
+    }
+
     async function pushEntryToCloud(entry) {
       if (!currentUser) return;
       await db.from('entries').upsert({
         id: entry.id,
         user_id: currentUser.id,
+        salon_id: entry.salon_id || null,
         date: entry.date,
         time: entry.time || '',
         name: entry.name || '',
@@ -357,6 +444,9 @@
         commission_rate: state.settings.commissionRate || null,
         language: state.settings.language || 'en',
         theme: state.settings.theme || 'blush',
+        role: state.settings.role || null,
+        salon_id: state.settings.salon_id || null,
+        display_name: state.settings.display_name || null,
         updated_at: new Date().toISOString()
       });
     }
@@ -365,6 +455,7 @@
       if (!currentUser || !entries.length) return;
       const rows = entries.map(e => ({
         id: e.id, user_id: currentUser.id,
+        salon_id: null,
         date: e.date, time: e.time || '',
         name: e.name || '', services: e.services || [],
         price: e.price || 0, notes: e.notes || ''
@@ -372,7 +463,6 @@
       await db.from('entries').upsert(rows);
     }
 
-    // Keep localStorage as local cache for instant reads
     function saveToStorage() {
       localStorage.setItem('salon_entries', JSON.stringify(state.entries));
       localStorage.setItem('salon_settings', JSON.stringify(state.settings));
@@ -385,6 +475,19 @@
       return phone.replace(/\D/g, '') + '@nailapp.local';
     }
 
+    async function routeAfterLoad() {
+      userRole = state.settings.role || null;
+      if (!userRole) {
+        showScreen('onboarding');
+        renderOnboarding('choose');
+      } else if (userRole === 'owner' || userRole === 'employee') {
+        await loadSalonContext();
+        showScreen('app');
+      } else {
+        showScreen('app');
+      }
+    }
+
     async function doSignIn(phone, pin) {
       const { data, error } = await db.auth.signInWithPassword({
         email: phoneToEmail(phone), password: pin
@@ -392,7 +495,7 @@
       if (error) return t('authError');
       currentUser = data.user;
       await loadFromSupabase();
-      showScreen('app');
+      await routeAfterLoad();
       return null;
     }
 
@@ -404,8 +507,6 @@
         return error.message;
       }
 
-      // Auto-confirm trigger fires in DB; session may or may not be immediate.
-      // If null session, sign in immediately (trigger sets email_confirmed_at).
       let user = data.user;
       let session = data.session;
       if (!session) {
@@ -415,32 +516,30 @@
       }
       currentUser = user;
 
-      // Migrate any existing localStorage data for this device
       const localEntries = JSON.parse(localStorage.getItem('salon_entries') || '[]');
       const localSettings = JSON.parse(localStorage.getItem('salon_settings') || 'null');
 
       if (localSettings) {
-        state.settings = localSettings;
+        state.settings = { ...localSettings, role: null, salon_id: null, display_name: null };
       } else {
         state.settings = {
           services: [...DEFAULT_SERVICES],
-          currencySymbol: '$',
-          commissionRate: null,
-          language: 'en',
-          theme: 'blush'
+          currencySymbol: '$', commissionRate: null,
+          language: 'en', theme: 'blush',
+          role: null, salon_id: null, display_name: null,
         };
       }
       await pushSettingsToCloud();
 
       if (localEntries.length > 0) {
-        state.entries = localEntries;
-        await bulkUploadEntries(localEntries);
+        state.entries = localEntries.map(e => ({ ...e, user_id: currentUser.id, salon_id: null }));
+        await bulkUploadEntries(state.entries);
         localStorage.removeItem('salon_entries');
         localStorage.removeItem('salon_settings');
       }
 
       await loadFromSupabase();
-      showScreen('app');
+      await routeAfterLoad();
       return null;
     }
 
@@ -450,6 +549,9 @@
       currentUser = null;
       state.entries = [];
       state.settings = {};
+      userRole = null;
+      currentSalon = null;
+      salonMembers = [];
       localStorage.removeItem('salon_entries');
       localStorage.removeItem('salon_settings');
       showScreen('auth');
@@ -459,12 +561,15 @@
     function showScreen(name) {
       document.getElementById('screen-loading').classList.add('hidden');
       document.getElementById('screen-auth').classList.add('hidden');
+      document.getElementById('screen-onboarding').classList.add('hidden');
       document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
       document.getElementById('nav-bar').classList.add('hidden');
 
       if (name === 'auth') {
         document.getElementById('screen-auth').classList.remove('hidden');
         renderAuthScreen('signin');
+      } else if (name === 'onboarding') {
+        document.getElementById('screen-onboarding').classList.remove('hidden');
       } else if (name === 'app') {
         document.getElementById('nav-bar').classList.remove('hidden');
         renderNav();
@@ -562,6 +667,257 @@
       }
     }
 
+    // ── ONBOARDING ────────────────────────────────────────────────────────
+    function renderOnboarding(mode) {
+      const el = document.getElementById('onboarding-content');
+
+      const inputStyle = `width:100%;padding:18px;border:2px solid var(--tbd);border-radius:14px;
+                         font-size:20px;color:var(--td);background:#fff;outline:none;
+                         box-sizing:border-box;-webkit-appearance:none`;
+
+      const labelStyle = `font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                         letter-spacing:0.07em;display:block;margin-bottom:8px`;
+
+      if (mode === 'choose') {
+        el.innerHTML = `
+          <div style="text-align:center;margin-bottom:32px">
+            <div style="font-size:52px;margin-bottom:12px">💅</div>
+            <div style="font-size:22px;font-weight:800;color:var(--td)">${t('welcomeTitle')}</div>
+          </div>
+
+          <button onclick="chooseSolo()"
+            style="width:100%;padding:20px;background:#fff;border:2px solid var(--tbd);
+                   border-radius:16px;text-align:left;cursor:pointer;margin-bottom:12px;
+                   display:block">
+            <div style="font-size:17px;font-weight:800;color:var(--td)">${t('iAmSolo')}</div>
+            <div style="font-size:13px;color:var(--ts);margin-top:4px">${t('iAmSoloSub')}</div>
+          </button>
+
+          <button onclick="chooseOwner()"
+            style="width:100%;padding:20px;background:#fff;border:2px solid var(--tbd);
+                   border-radius:16px;text-align:left;cursor:pointer;margin-bottom:12px;
+                   display:block">
+            <div style="font-size:17px;font-weight:800;color:var(--td)">${t('iAmOwner')}</div>
+            <div style="font-size:13px;color:var(--ts);margin-top:4px">${t('iAmOwnerSub')}</div>
+          </button>
+
+          <button onclick="chooseEmployee()"
+            style="width:100%;padding:20px;background:#fff;border:2px solid var(--tbd);
+                   border-radius:16px;text-align:left;cursor:pointer;display:block">
+            <div style="font-size:17px;font-weight:800;color:var(--td)">${t('iAmEmployee')}</div>
+            <div style="font-size:13px;color:var(--ts);margin-top:4px">${t('iAmEmployeeSub')}</div>
+          </button>
+        `;
+      } else if (mode === 'setup_salon') {
+        el.innerHTML = `
+          <button onclick="renderOnboarding('choose')"
+            style="background:none;border:none;color:var(--ts);font-size:18px;cursor:pointer;
+                   padding:0;margin-bottom:20px;display:flex;align-items:center;gap:6px;
+                   font-family:Georgia,serif">
+            ← ${t('cancel')}
+          </button>
+
+          <div style="margin-bottom:28px">
+            <div style="font-size:22px;font-weight:800;color:var(--td);margin-bottom:6px">${t('iAmOwner')}</div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <label style="${labelStyle}">${t('salonName')}</label>
+            <input id="ob-salon-name" type="text" placeholder="${t('salonNamePlaceholder')}"
+              style="${inputStyle}">
+          </div>
+
+          <div style="margin-bottom:18px">
+            <label style="${labelStyle}">${t('yourName')}</label>
+            <input id="ob-display-name" type="text" placeholder="${t('yourNamePlaceholder')}"
+              style="${inputStyle}">
+          </div>
+
+          <div id="onboarding-error" style="color:#d00;font-size:15px;text-align:center;min-height:24px;margin:10px 0"></div>
+
+          <button id="onboarding-btn" onclick="handleSetupSalon()"
+            style="width:100%;padding:20px;background:linear-gradient(135deg,var(--tp),var(--ts));
+                   color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                   cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2)">
+            ${t('iAmOwner')}
+          </button>
+        `;
+        requestAnimationFrame(() => document.getElementById('ob-salon-name')?.focus());
+      } else if (mode === 'join_salon') {
+        el.innerHTML = `
+          <button onclick="renderOnboarding('choose')"
+            style="background:none;border:none;color:var(--ts);font-size:18px;cursor:pointer;
+                   padding:0;margin-bottom:20px;display:flex;align-items:center;gap:6px;
+                   font-family:Georgia,serif">
+            ← ${t('cancel')}
+          </button>
+
+          <div style="margin-bottom:28px">
+            <div style="font-size:22px;font-weight:800;color:var(--td);margin-bottom:6px">${t('iAmEmployee')}</div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <label style="${labelStyle}">${t('inviteCode')}</label>
+            <input id="ob-invite-code" type="text" placeholder="${t('inviteCodePlaceholder')}"
+              maxlength="6" autocomplete="off"
+              oninput="this.value=this.value.toUpperCase()"
+              style="${inputStyle};letter-spacing:4px;font-weight:800;text-transform:uppercase">
+            <div style="font-size:13px;color:var(--ts);margin-top:6px">${t('inviteCodeSub')}</div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <label style="${labelStyle}">${t('yourName')}</label>
+            <input id="ob-display-name" type="text" placeholder="${t('yourNamePlaceholder')}"
+              style="${inputStyle}">
+          </div>
+
+          <div id="onboarding-error" style="color:#d00;font-size:15px;text-align:center;min-height:24px;margin:10px 0"></div>
+
+          <button id="onboarding-btn" onclick="handleJoinSalon()"
+            style="width:100%;padding:20px;background:linear-gradient(135deg,var(--tp),var(--ts));
+                   color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                   cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2)">
+            ${t('iAmEmployee')}
+          </button>
+        `;
+        requestAnimationFrame(() => document.getElementById('ob-invite-code')?.focus());
+      } else if (mode === 'salon_created') {
+        const code = currentSalon?.invite_code || '——';
+        el.innerHTML = `
+          <div style="text-align:center;margin-bottom:28px">
+            <div style="font-size:52px;margin-bottom:12px">🎉</div>
+            <div style="font-size:24px;font-weight:800;color:var(--td)">${t('salonCreated')}</div>
+            <div style="font-size:16px;color:var(--ts);margin-top:6px">${currentSalon?.name || ''}</div>
+          </div>
+
+          <div style="text-align:center;margin-bottom:24px">
+            <div style="font-size:15px;color:var(--td);margin-bottom:12px">${t('salonCreatedSub')}</div>
+            <div style="background:var(--td);color:#fff;border-radius:16px;padding:20px;
+                        font-size:36px;font-weight:900;letter-spacing:6px;font-family:monospace">
+              ${code}
+            </div>
+          </div>
+
+          <button id="copy-code-btn" onclick="copyInviteCode()"
+            style="width:100%;padding:16px;background:var(--tb);border:2px solid var(--tp);
+                   border-radius:12px;color:var(--td);font-size:16px;font-weight:700;
+                   cursor:pointer;margin-bottom:12px;font-family:Georgia,serif">
+            Copy Code
+          </button>
+
+          <button onclick="showScreen('app')"
+            style="width:100%;padding:20px;background:linear-gradient(135deg,var(--tp),var(--ts));
+                   color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                   cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2)">
+            ${t('goToApp')}
+          </button>
+        `;
+      }
+    }
+
+    async function chooseSolo() {
+      state.settings.role = 'solo';
+      state.settings.salon_id = null;
+      state.settings.display_name = null;
+      userRole = 'solo';
+      await pushSettingsToCloud();
+      showScreen('app');
+    }
+
+    function chooseOwner() { renderOnboarding('setup_salon'); }
+    function chooseEmployee() { renderOnboarding('join_salon'); }
+
+    async function handleSetupSalon() {
+      const salonName = (document.getElementById('ob-salon-name')?.value || '').trim();
+      const displayName = (document.getElementById('ob-display-name')?.value || '').trim();
+      const btn = document.getElementById('onboarding-btn');
+      const errEl = document.getElementById('onboarding-error');
+      errEl.textContent = '';
+
+      if (!salonName) { errEl.textContent = t('salonName') + ' required'; return; }
+      if (!displayName) { errEl.textContent = t('yourName') + ' required'; return; }
+
+      btn.disabled = true;
+      btn.textContent = t('creating');
+
+      const code = generateInviteCode();
+
+      const { data: salon, error: salonErr } = await db.from('salons').insert({
+        name: salonName, owner_user_id: currentUser.id, invite_code: code
+      }).select().single();
+
+      if (salonErr) {
+        errEl.textContent = salonErr.message;
+        btn.disabled = false; btn.textContent = t('iAmOwner'); return;
+      }
+
+      await db.from('salon_members').insert({
+        salon_id: salon.id, user_id: currentUser.id,
+        role: 'owner', display_name: displayName, commission_rate: null
+      });
+
+      state.settings.role = 'owner';
+      state.settings.salon_id = salon.id;
+      state.settings.display_name = displayName;
+      await pushSettingsToCloud();
+
+      userRole = 'owner';
+      currentSalon = salon;
+      salonMembers = [{
+        id: null, salon_id: salon.id, user_id: currentUser.id,
+        role: 'owner', display_name: displayName, commission_rate: null
+      }];
+
+      // Reload members to get real IDs
+      const { data: members } = await db.from('salon_members').select('*').eq('salon_id', salon.id);
+      salonMembers = members || salonMembers;
+
+      renderOnboarding('salon_created');
+    }
+
+    async function handleJoinSalon() {
+      const inviteCode = (document.getElementById('ob-invite-code')?.value || '').trim().toUpperCase();
+      const displayName = (document.getElementById('ob-display-name')?.value || '').trim();
+      const btn = document.getElementById('onboarding-btn');
+      const errEl = document.getElementById('onboarding-error');
+      errEl.textContent = '';
+
+      if (!inviteCode) { errEl.textContent = t('inviteCode') + ' required'; return; }
+      if (!displayName) { errEl.textContent = t('yourName') + ' required'; return; }
+
+      btn.disabled = true;
+      btn.textContent = t('joining');
+
+      const { data: rows, error: codeErr } = await db.rpc('get_salon_by_invite_code', { p_code: inviteCode });
+
+      if (codeErr || !rows || rows.length === 0) {
+        errEl.textContent = t('invalidCode');
+        btn.disabled = false; btn.textContent = t('iAmEmployee'); return;
+      }
+
+      const { salon_id, salon_name } = rows[0];
+
+      const { error: joinErr } = await db.from('salon_members').insert({
+        salon_id, user_id: currentUser.id,
+        role: 'employee', display_name: displayName, commission_rate: null
+      });
+
+      if (joinErr) {
+        errEl.textContent = joinErr.message;
+        btn.disabled = false; btn.textContent = t('iAmEmployee'); return;
+      }
+
+      state.settings.role = 'employee';
+      state.settings.salon_id = salon_id;
+      state.settings.display_name = displayName;
+      await pushSettingsToCloud();
+
+      userRole = 'employee';
+      currentSalon = { id: salon_id, name: salon_name };
+
+      showScreen('app');
+    }
+
     // ── ROUTING ───────────────────────────────────────────────────────────
     function showView(name) {
       currentView = name;
@@ -570,40 +926,43 @@
       renderNav();
       if (name === 'calendar') renderCalendar();
       if (name === 'summary')  renderSummary();
+      if (name === 'team')     renderTeam();
       if (name === 'settings') renderSettings();
     }
 
     function renderNav() {
-      const tabs = [
-        { key: 'calendar', icon: '📅' },
-        { key: 'summary',  icon: '📊' },
-        { key: 'settings', icon: '⚙️' },
-      ];
+      const tabs = [{ key: 'calendar', icon: '📅' }, { key: 'summary', icon: '📊' }];
+      if (userRole === 'owner') tabs.push({ key: 'team', icon: '👥' });
+      tabs.push({ key: 'settings', icon: '⚙️' });
 
       const tabHtml = (tab) => `
         <button class="nav-tab ${currentView === tab.key ? 'active' : ''}"
           onclick="showView('${tab.key}')"
-          style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0">
-          <span style="font-size:22px">${tab.icon}</span>
-          <span style="font-size:11px;font-weight:${currentView === tab.key ? '700' : '400'}">${t(tab.key)}</span>
+          style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0">
+          <span style="font-size:20px">${tab.icon}</span>
+          <span style="font-size:10px;font-weight:${currentView === tab.key ? '700' : '400'}">${t(tab.key)}</span>
         </button>
       `;
 
+      // Split tabs around center + button
+      const leftTabs = tabs.slice(0, 2).map(tabHtml).join('');
+      const rightTabs = tabs.slice(2).map(tabHtml).join('');
+
       document.getElementById('nav-bar').innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-around;padding:4px 0">
-          ${tabHtml(tabs[0])}
+          ${leftTabs}
           <button onclick="openSheet(null)"
-            style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--tp),var(--ts));border:none;
-                   color:#fff;font-size:28px;cursor:pointer;margin-top:-16px;
+            style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--tp),var(--ts));border:none;
+                   color:#fff;font-size:26px;cursor:pointer;margin-top:-14px;
                    box-shadow:0 4px 16px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center">
             +
           </button>
-          ${tabHtml(tabs[1])}
-          ${tabHtml(tabs[2])}
+          ${rightTabs}
         </div>
       `;
     }
 
+    // ── CALENDAR ──────────────────────────────────────────────────────────
     function renderCalendar() {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
@@ -712,6 +1071,7 @@
       }
 
       const hasAnyEntries = state.entries.some(e =>
+        e.user_id === currentUser?.id &&
         e.date.startsWith(`${year}-${String(month+1).padStart(2,'0')}`)
       );
       const emptyState = (!selectedDay && !hasAnyEntries)
@@ -750,6 +1110,7 @@
         </div>`;
     }
 
+    // ── SUMMARY ───────────────────────────────────────────────────────────
     function renderSummary() {
       const sym = state.settings.currencySymbol || '$';
       const rate = state.settings.commissionRate;
@@ -844,31 +1205,6 @@
         </div>`;
     }
 
-    function exportCSV() {
-      const sym = state.settings.currencySymbol || '$';
-      const headers = ['Date','Time','Name','Services','Price (' + sym + ')','Notes'];
-      const rows = [...state.entries]
-        .sort((a, b) => a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''))
-        .map(e => [
-          e.date, e.time || '', e.name || '',
-          (e.services||[]).join('; '),
-          e.price, e.notes || ''
-        ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','));
-      const csv = [headers.join(','), ...rows].join('\n');
-      const a = document.createElement('a');
-      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-      a.download = 'salon-tracker-export.csv';
-      a.click();
-    }
-
-    function deleteEntry(id) {
-      if (!confirm(t('confirmDelete'))) return;
-      state.entries = state.entries.filter(e => e.id !== id);
-      saveToStorage();
-      renderCalendar();
-      deleteEntryFromCloud(id);
-    }
-
     function switchPeriod(period) {
       currentPeriod = period;
       summaryAnchor = new Date();
@@ -882,6 +1218,300 @@
       if (currentPeriod === 'monthly')  d.setMonth(d.getMonth() + dir);
       summaryAnchor = d;
       renderSummary();
+    }
+
+    // ── TEAM VIEW ─────────────────────────────────────────────────────────
+    function renderTeam() {
+      if (userRole !== 'owner' || !currentSalon) {
+        document.getElementById('view-team').innerHTML = '';
+        return;
+      }
+
+      const sym = state.settings.currencySymbol || '$';
+      const { start, end } = getPeriodRange(teamPeriod, teamAnchor);
+
+      const salonPeriodEntries = state.entries.filter(e =>
+        e.salon_id === currentSalon.id && e.date >= start && e.date <= end
+      );
+
+      const byUser = {};
+      salonPeriodEntries.forEach(e => {
+        if (!byUser[e.user_id]) byUser[e.user_id] = { total: 0, count: 0 };
+        byUser[e.user_id].total += e.price || 0;
+        byUser[e.user_id].count++;
+      });
+
+      const membersWithTotals = salonMembers.map(m => ({
+        ...m,
+        periodTotal: byUser[m.user_id]?.total || 0,
+        periodCount: byUser[m.user_id]?.count || 0,
+      }));
+
+      const fmtD = ds => {
+        const d = new Date(ds + 'T12:00:00');
+        return `${t('months')[d.getMonth()].replace('Tháng ','T.')} ${d.getDate()}`;
+      };
+      const rangeLabel = `${fmtD(start)} – ${fmtD(end)}, ${new Date(end + 'T12:00:00').getFullYear()}`;
+
+      const periods = ['weekly','biweekly','monthly'];
+      const toggleBtns = periods.map(p => `
+        <button onclick="switchTeamPeriod('${p}')"
+          style="flex:1;padding:12px 8px;border:none;border-radius:10px;
+                 font-size:14px;font-weight:700;cursor:pointer;font-family:Georgia,serif;
+                 background:${teamPeriod===p ? '#fff' : 'transparent'};
+                 color:${teamPeriod===p ? 'var(--td)' : 'var(--ts)'};
+                 box-shadow:${teamPeriod===p ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'}">
+          ${t(p)}
+        </button>`).join('');
+
+      const code = currentSalon.invite_code || '——';
+
+      const employeesOnly = membersWithTotals.filter(m => m.role === 'employee');
+
+      const memberRows = membersWithTotals.map((m, idx) => {
+        const isMe = m.user_id === currentUser?.id;
+        const takeHome = (m.commission_rate && m.periodTotal)
+          ? Math.round(m.periodTotal * m.commission_rate / 100) : null;
+
+        if (editingMemberIdx === idx) {
+          return `
+            <div style="padding:14px 0;border-bottom:1px solid var(--tb)">
+              <div style="font-size:15px;font-weight:700;color:var(--td);margin-bottom:10px">
+                ${m.display_name || '—'}
+                ${isMe ? `<span style="font-size:12px;color:var(--ts);font-weight:400"> ${t('you')}</span>` : ''}
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input id="member-rate-input" type="number" min="0" max="100" placeholder="0"
+                  value="${m.commission_rate || ''}"
+                  style="width:80px;padding:10px;border:2px solid var(--tp);border-radius:10px;
+                         font-size:20px;font-weight:700;text-align:center;outline:none;
+                         font-family:Georgia,serif">
+                <div style="font-size:16px;color:var(--ts);font-weight:700">%</div>
+                <button onclick="saveMemberRate('${m.id}',document.getElementById('member-rate-input').value)"
+                  style="padding:10px 16px;background:var(--tp);color:var(--td);border:none;
+                         border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;
+                         font-family:Georgia,serif">
+                  Save
+                </button>
+                <button onclick="cancelEditMember()"
+                  style="padding:10px 12px;background:var(--tb);color:var(--ts);border:none;
+                         border-radius:9px;font-size:16px;font-weight:800;cursor:pointer">×</button>
+              </div>
+            </div>`;
+        }
+
+        return `
+          <div style="display:flex;align-items:center;justify-content:space-between;
+                      padding:14px 0;border-bottom:1px solid var(--tb)">
+            <div>
+              <div style="font-size:16px;font-weight:700;color:var(--td)">
+                ${m.display_name || '—'}
+                ${isMe ? `<span style="font-size:12px;color:var(--ts);font-weight:400"> ${t('you')}</span>` : ''}
+              </div>
+              <div style="font-size:12px;color:var(--ts);margin-top:3px">
+                ${m.commission_rate != null ? m.commission_rate + '%' : t('noRate')}
+                · ${m.periodCount} ${m.periodCount === 1 ? t('client') : t('clients')}
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:18px;font-weight:800;color:var(--td)">${sym}${m.periodTotal}</div>
+              ${takeHome != null ? `<div style="font-size:13px;color:#E9C87A;font-weight:700">${t('takeHome')} ${sym}${takeHome}</div>` : ''}
+              <button onclick="editMember(${idx})"
+                style="font-size:12px;color:var(--ts);background:none;border:none;cursor:pointer;
+                       padding:2px 0;font-family:Georgia,serif;margin-top:2px">
+                ${t('editRate')} ✎
+              </button>
+            </div>
+          </div>`;
+      }).join('');
+
+      const noEmployeesMsg = employeesOnly.length === 0
+        ? `<div style="text-align:center;color:#ccc;padding:24px 16px">
+             <div style="font-size:32px;margin-bottom:8px">👥</div>
+             <div style="font-size:15px;color:var(--ts)">${t('noEmployees')}</div>
+             <div style="font-size:13px;color:#bbb;margin-top:4px">${t('inviteFirst')}</div>
+           </div>`
+        : '';
+
+      document.getElementById('view-team').innerHTML = `
+        <div style="padding:24px 16px">
+
+          <div style="background:var(--tb);border-radius:14px;padding:4px;display:flex;gap:4px;margin-bottom:16px">
+            ${toggleBtns}
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <button onclick="shiftTeamAnchor(-1)"
+              style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.06);border:none;
+                     font-size:22px;cursor:pointer;color:var(--td);display:flex;align-items:center;justify-content:center">‹</button>
+            <div style="text-align:center;font-size:13px;color:var(--ts);font-weight:600">${rangeLabel}</div>
+            <button onclick="shiftTeamAnchor(1)"
+              style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.06);border:none;
+                     font-size:22px;cursor:pointer;color:var(--td);display:flex;align-items:center;justify-content:center;
+                     opacity:${end >= formatDate(new Date()) ? '0.25' : '1'};
+                     pointer-events:${end >= formatDate(new Date()) ? 'none' : 'auto'}">›</button>
+          </div>
+
+          <div style="background:#fff;border:1px solid var(--tbd);border-radius:16px;padding:20px;margin-bottom:16px">
+            <div style="font-size:13px;font-weight:700;color:var(--ts);text-transform:uppercase;
+                        letter-spacing:0.07em;margin-bottom:10px">${t('yourInviteCode')}</div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <div style="background:var(--td);color:#fff;border-radius:12px;padding:14px 20px;
+                          font-size:28px;font-weight:900;letter-spacing:4px;font-family:monospace;flex:1;text-align:center">
+                ${code}
+              </div>
+              <button id="copy-code-btn" onclick="copyInviteCode()"
+                style="padding:14px 18px;background:var(--tp);color:var(--td);border:none;
+                       border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;
+                       white-space:nowrap;font-family:Georgia,serif">
+                Copy
+              </button>
+            </div>
+            <div style="font-size:12px;color:#aaa;margin-bottom:10px">${t('inviteCodeHelp')}</div>
+            <button onclick="refreshInviteCode()"
+              style="font-size:13px;color:var(--ts);background:none;border:none;cursor:pointer;
+                     padding:0;font-family:Georgia,serif;text-decoration:underline">
+              ${t('refreshCode')}
+            </button>
+          </div>
+
+          <div style="background:#fff;border:1px solid var(--tbd);border-radius:16px;padding:20px">
+            <div style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                        letter-spacing:0.07em;margin-bottom:4px">${t('employees')}</div>
+            ${noEmployeesMsg}
+            <div>${memberRows}</div>
+          </div>
+
+        </div>`;
+
+      if (editingMemberIdx !== null) {
+        requestAnimationFrame(() => {
+          const input = document.getElementById('member-rate-input');
+          if (input) { input.focus(); input.select(); }
+        });
+      }
+    }
+
+    function switchTeamPeriod(period) {
+      teamPeriod = period;
+      teamAnchor = new Date();
+      renderTeam();
+    }
+
+    function shiftTeamAnchor(dir) {
+      const d = new Date(teamAnchor);
+      if (teamPeriod === 'weekly')   d.setDate(d.getDate() + dir * 7);
+      if (teamPeriod === 'biweekly') d.setDate(d.getDate() + dir * 14);
+      if (teamPeriod === 'monthly')  d.setMonth(d.getMonth() + dir);
+      teamAnchor = d;
+      renderTeam();
+    }
+
+    function editMember(idx) {
+      editingMemberIdx = idx;
+      renderTeam();
+    }
+
+    function cancelEditMember() {
+      editingMemberIdx = null;
+      renderTeam();
+    }
+
+    async function saveMemberRate(memberId, rate) {
+      const numRate = (rate !== '' && rate !== null) ? parseFloat(rate) : null;
+      const { error } = await db.from('salon_members')
+        .update({ commission_rate: numRate })
+        .eq('id', memberId);
+      if (error) { alert(error.message); return; }
+      const idx = salonMembers.findIndex(m => m.id === memberId);
+      if (idx !== -1) salonMembers[idx].commission_rate = numRate;
+      editingMemberIdx = null;
+      renderTeam();
+    }
+
+    async function copyInviteCode() {
+      const code = currentSalon?.invite_code;
+      if (!code) return;
+      try {
+        await navigator.clipboard.writeText(code);
+        const btn = document.getElementById('copy-code-btn');
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = '✓ Copied!';
+          setTimeout(() => { if (btn) btn.textContent = orig; }, 2000);
+        }
+      } catch(e) {
+        alert(code);
+      }
+    }
+
+    async function refreshInviteCode() {
+      if (!currentSalon) return;
+      const newCode = generateInviteCode();
+      const { error } = await db.from('salons')
+        .update({ invite_code: newCode })
+        .eq('id', currentSalon.id);
+      if (error) { alert(error.message); return; }
+      currentSalon = { ...currentSalon, invite_code: newCode };
+      renderTeam();
+    }
+
+    // ── EXPORT CSV ────────────────────────────────────────────────────────
+    function exportCSV() {
+      const sym = state.settings.currencySymbol || '$';
+
+      if (userRole === 'owner' && currentSalon) {
+        // Owner: all salon entries with employee name column
+        const salonEntries = [...state.entries]
+          .filter(e => e.salon_id === currentSalon.id)
+          .sort((a, b) => a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''));
+
+        const getMemberName = (userId) => {
+          const m = salonMembers.find(m => m.user_id === userId);
+          return m?.display_name || userId;
+        };
+
+        const headers = ['Employee','Date','Time','Name','Services','Price (' + sym + ')','Notes'];
+        const rows = salonEntries.map(e => [
+          getMemberName(e.user_id),
+          e.date, e.time || '', e.name || '',
+          (e.services||[]).join('; '),
+          e.price, e.notes || ''
+        ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','));
+
+        const csv = [headers.join(','), ...rows].join('\n');
+        const a = document.createElement('a');
+        a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        a.download = 'salon-team-export.csv';
+        a.click();
+      } else {
+        // Solo / employee: own entries only
+        const myEntries = [...state.entries]
+          .filter(e => e.user_id === currentUser?.id)
+          .sort((a, b) => a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''));
+
+        const headers = ['Date','Time','Name','Services','Price (' + sym + ')','Notes'];
+        const rows = myEntries.map(e => [
+          e.date, e.time || '', e.name || '',
+          (e.services||[]).join('; '),
+          e.price, e.notes || ''
+        ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','));
+
+        const csv = [headers.join(','), ...rows].join('\n');
+        const a = document.createElement('a');
+        a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        a.download = 'salon-tracker-export.csv';
+        a.click();
+      }
+    }
+
+    // ── SETTINGS ──────────────────────────────────────────────────────────
+    function deleteEntry(id) {
+      if (!confirm(t('confirmDelete'))) return;
+      state.entries = state.entries.filter(e => e.id !== id);
+      saveToStorage();
+      renderCalendar();
+      deleteEntryFromCloud(id);
     }
 
     function deleteService(idx) {
@@ -940,7 +1570,6 @@
       const services = state.settings.services || DEFAULT_SERVICES;
       const activeTheme = state.settings.theme || 'blush';
 
-      // Phone number display (strip @nailapp.local from email)
       const phoneDisplay = currentUser?.email
         ? currentUser.email.replace('@nailapp.local', '')
         : '';
@@ -1008,6 +1637,33 @@
             <div style="font-size:12px;font-weight:${isActive ? '800' : '400'};color:var(--td)">${t(labelKey)}</div>
           </div>`;
       }).join('');
+
+      // Salon section (owners and employees only)
+      let salonSection = '';
+      if ((userRole === 'owner' || userRole === 'employee') && currentSalon) {
+        const roleLabel = userRole === 'owner' ? t('roleOwner') : t('roleEmployee');
+        const displayName = state.settings.display_name || '';
+        salonSection = `
+          ${sectionTitle(t('yourSalon'))}
+          ${card(`
+            <div style="padding:16px 18px;border-bottom:1px solid var(--tb)">
+              <div style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;
+                          letter-spacing:0.07em;margin-bottom:4px">${t('yourSalon')}</div>
+              <div style="font-size:18px;font-weight:700;color:var(--td)">${currentSalon.name}</div>
+            </div>
+            <div style="padding:16px 18px;border-bottom:1px solid var(--tb)">
+              <div style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;
+                          letter-spacing:0.07em;margin-bottom:4px">${t('yourRole')}</div>
+              <div style="font-size:18px;font-weight:700;color:var(--td)">${roleLabel}</div>
+            </div>
+            ${displayName ? `
+            <div style="padding:16px 18px">
+              <div style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;
+                          letter-spacing:0.07em;margin-bottom:4px">${t('yourName')}</div>
+              <div style="font-size:18px;font-weight:700;color:var(--td)">${displayName}</div>
+            </div>` : ''}
+          `)}`;
+      }
 
       document.getElementById('view-settings').innerHTML = `
         <div style="padding:24px 16px">
@@ -1103,6 +1759,8 @@
             </div>
           `)}
 
+          ${salonSection}
+
           ${sectionTitle(t('account'))}
           ${card(`
             <div style="padding:16px 18px;border-bottom:1px solid var(--tb)">
@@ -1123,6 +1781,7 @@
         </div>`;
     }
 
+    // ── ENTRY SHEET ───────────────────────────────────────────────────────
     function openSheet(dateStr, entryId = null) {
       editingEntryId = entryId;
       const entry = entryId ? state.entries.find(e => e.id === entryId) : null;
@@ -1259,7 +1918,13 @@
       if (editingEntryId) {
         const idx = state.entries.findIndex(e => e.id === editingEntryId);
         if (idx !== -1) {
-          state.entries[idx] = { id: editingEntryId, name, date, time, price, services, notes };
+          const existing = state.entries[idx];
+          state.entries[idx] = {
+            id: editingEntryId,
+            user_id: existing.user_id || currentUser?.id,
+            salon_id: existing.salon_id,
+            name, date, time, price, services, notes
+          };
           pushEntryToCloud(state.entries[idx]);
         }
         editingEntryId = null;
@@ -1294,7 +1959,12 @@
     }
 
     function saveEntry(data) {
-      const entry = { id: generateId(), ...data };
+      const entry = {
+        id: generateId(),
+        user_id: currentUser?.id,
+        salon_id: state.settings.salon_id || null,
+        ...data
+      };
       state.entries.push(entry);
       saveToStorage();
       closeSheet();
@@ -1305,16 +1975,14 @@
 
     // ── INIT ─────────────────────────────────────────────────────────────
     async function init() {
-      if (!db) return; // Supabase failed to load — error already shown
+      if (!db) return;
 
-      // Try reading cached theme immediately so the loading screen matches
       try {
         const cached = JSON.parse(localStorage.getItem('salon_settings') || '{}');
         if (cached.theme) applyTheme(cached.theme);
         if (cached.language) lang = cached.language;
       } catch(e) {}
 
-      // Fallback: if still on loading screen after 8s, show auth anyway
       const loadingTimeout = setTimeout(() => {
         const loading = document.getElementById('screen-loading');
         if (!loading.classList.contains('hidden')) showScreen('auth');
@@ -1326,7 +1994,7 @@
       if (session) {
         currentUser = session.user;
         await loadFromSupabase();
-        showScreen('app');
+        await routeAfterLoad();
       } else {
         showScreen('auth');
       }
