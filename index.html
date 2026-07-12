@@ -194,6 +194,23 @@
         tomorrowAppts: 'appointments tomorrow',
         todayAppt: 'appointment remaining today',
         todayAppts: 'appointments remaining today',
+        // PIN reset
+        changePin: 'Change PIN',
+        currentPin: 'Current PIN',
+        newPin: 'New PIN',
+        confirmNewPin: 'Confirm New PIN',
+        changingPin: 'Updating...',
+        pinChanged: 'PIN updated',
+        recoveryCode: 'Recovery Code',
+        recoveryCodeSub: 'Save this — you\'ll need it to reset your PIN if forgotten',
+        forgotPin: 'Forgot PIN?',
+        forgotPinTitle: 'Reset Your PIN',
+        forgotPinSub: 'Enter your phone number and recovery code',
+        resetPin: 'Reset PIN',
+        resettingPin: 'Resetting...',
+        pinReset: 'PIN reset! Sign in with your new PIN.',
+        invalidRecoveryCode: 'Invalid recovery code',
+        backToSignIn: 'Back to Sign In',
         months: ['January','February','March','April','May','June',
                  'July','August','September','October','November','December'],
         days: ['Su','Mo','Tu','We','Th','Fr','Sa'],
@@ -273,6 +290,23 @@
         tomorrowAppts: 'lịch hẹn ngày mai',
         todayAppt: 'lịch hẹn còn lại hôm nay',
         todayAppts: 'lịch hẹn còn lại hôm nay',
+        // PIN reset
+        changePin: 'Đổi PIN',
+        currentPin: 'PIN hiện tại',
+        newPin: 'PIN mới',
+        confirmNewPin: 'Xác nhận PIN mới',
+        changingPin: 'Đang cập nhật...',
+        pinChanged: 'Đã đổi PIN',
+        recoveryCode: 'Mã khôi phục',
+        recoveryCodeSub: 'Lưu lại — cần dùng để đặt lại PIN nếu quên',
+        forgotPin: 'Quên PIN?',
+        forgotPinTitle: 'Đặt lại PIN',
+        forgotPinSub: 'Nhập số điện thoại và mã khôi phục của bạn',
+        resetPin: 'Đặt lại PIN',
+        resettingPin: 'Đang đặt lại...',
+        pinReset: 'Đã đặt lại PIN! Đăng nhập với PIN mới.',
+        invalidRecoveryCode: 'Mã khôi phục không đúng',
+        backToSignIn: 'Quay lại đăng nhập',
         months: ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
                  'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'],
         days: ['CN','T2','T3','T4','T5','T6','T7'],
@@ -345,6 +379,13 @@
     function generateInviteCode() {
       const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
       return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
+
+    function generateRecoveryCode() {
+      const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+      const p1 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      const p2 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      return p1 + '-' + p2;
     }
 
     function formatDate(d) {
@@ -420,6 +461,7 @@
           role: settings.role || null,
           salon_id: settings.salon_id || null,
           display_name: settings.display_name || null,
+          recovery_code: settings.recovery_code || null,
         };
       } else {
         state.settings = {
@@ -431,8 +473,15 @@
           role: null,
           salon_id: null,
           display_name: null,
+          recovery_code: generateRecoveryCode(),
         };
         await pushSettingsToCloud();
+      }
+
+      // Generate recovery code for existing users who don't have one yet
+      if (!state.settings.recovery_code) {
+        state.settings.recovery_code = generateRecoveryCode();
+        pushSettingsToCloud();
       }
 
       lang = state.settings.language || 'en';
@@ -496,6 +545,7 @@
         role: state.settings.role || null,
         salon_id: state.settings.salon_id || null,
         display_name: state.settings.display_name || null,
+        recovery_code: state.settings.recovery_code || null,
         updated_at: new Date().toISOString()
       });
     }
@@ -578,6 +628,9 @@
           role: null, salon_id: null, display_name: null,
         };
       }
+      if (!state.settings.recovery_code) {
+        state.settings.recovery_code = generateRecoveryCode();
+      }
       await pushSettingsToCloud();
 
       if (localEntries.length > 0) {
@@ -628,6 +681,74 @@
     }
 
     function renderAuthScreen(mode) {
+      if (mode === 'forgot') {
+        document.getElementById('auth-content').innerHTML = `
+          <div style="text-align:center;margin-bottom:28px">
+            <div style="font-size:48px;margin-bottom:10px">🔑</div>
+            <div style="font-size:22px;font-weight:800;color:var(--td);margin-bottom:6px">${t('forgotPinTitle')}</div>
+            <div style="font-size:14px;color:var(--ts)">${t('forgotPinSub')}</div>
+          </div>
+
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.07em;display:block;margin-bottom:8px">${t('phoneNumber')}</label>
+            <input id="auth-phone" type="tel" placeholder="${t('phonePlaceholder')}"
+              style="width:100%;padding:16px;border:2px solid var(--tbd);border-radius:14px;
+                     font-size:20px;color:var(--td);background:#fff;outline:none;
+                     box-sizing:border-box;-webkit-appearance:none">
+          </div>
+
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.07em;display:block;margin-bottom:8px">${t('recoveryCode')}</label>
+            <input id="auth-recovery" type="text" placeholder="XXXX-XXXX"
+              autocomplete="off" autocapitalize="characters" spellcheck="false"
+              style="width:100%;padding:16px;border:2px solid var(--tbd);border-radius:14px;
+                     font-size:22px;font-weight:800;color:var(--td);background:#fff;outline:none;
+                     box-sizing:border-box;-webkit-appearance:none;letter-spacing:0.12em">
+          </div>
+
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.07em;display:block;margin-bottom:8px">${t('newPin')}</label>
+            <input id="auth-pin" type="password" inputmode="numeric" placeholder="${t('pinPlaceholder')}"
+              style="width:100%;padding:16px;border:2px solid var(--tbd);border-radius:14px;
+                     font-size:22px;color:var(--td);background:#fff;outline:none;
+                     box-sizing:border-box;-webkit-appearance:none">
+          </div>
+
+          <div style="margin-bottom:8px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.07em;display:block;margin-bottom:8px">${t('confirmNewPin')}</label>
+            <input id="auth-pin2" type="password" inputmode="numeric" placeholder="${t('pinPlaceholder')}"
+              style="width:100%;padding:16px;border:2px solid var(--tbd);border-radius:14px;
+                     font-size:22px;color:var(--td);background:#fff;outline:none;
+                     box-sizing:border-box;-webkit-appearance:none">
+          </div>
+
+          <div id="auth-error" style="color:#d00;font-size:15px;text-align:center;
+                                      min-height:24px;margin:10px 0"></div>
+
+          <button id="auth-btn" onclick="handleForgotPin()"
+            style="width:100%;padding:20px;
+                   background:linear-gradient(135deg,var(--tp),var(--ts));
+                   color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                   cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2);margin-bottom:20px">
+            ${t('resetPin')}
+          </button>
+
+          <div style="text-align:center">
+            <button onclick="renderAuthScreen('signin')"
+              style="background:none;border:none;color:var(--ts);font-size:15px;
+                     cursor:pointer;padding:4px 8px;font-family:Georgia,serif">
+              ← ${t('backToSignIn')}
+            </button>
+          </div>
+        `;
+        requestAnimationFrame(() => { const el = document.getElementById('auth-phone'); if (el) el.focus(); });
+        return;
+      }
+
       const isSignin = mode === 'signin';
       document.getElementById('auth-content').innerHTML = `
         <div style="text-align:center;margin-bottom:32px">
@@ -682,6 +803,15 @@
             ${isSignin ? t('createAccount') : t('signIn')}
           </button>
         </div>
+
+        ${isSignin ? `
+        <div style="text-align:center;margin-top:16px">
+          <button onclick="renderAuthScreen('forgot')"
+            style="background:none;border:none;color:var(--ts);font-size:14px;
+                   cursor:pointer;padding:4px 8px;font-family:Georgia,serif">
+            ${t('forgotPin')}
+          </button>
+        </div>` : ''}
       `;
 
       requestAnimationFrame(() => {
@@ -715,6 +845,121 @@
         btn.disabled = false;
         btn.textContent = mode === 'signin' ? t('signIn') : t('createAccount');
       }
+    }
+
+    async function handleForgotPin() {
+      const phone    = (document.getElementById('auth-phone')?.value || '').trim();
+      const code     = (document.getElementById('auth-recovery')?.value || '').trim();
+      const newPin   = (document.getElementById('auth-pin')?.value || '').trim();
+      const newPin2  = (document.getElementById('auth-pin2')?.value || '').trim();
+      const btn      = document.getElementById('auth-btn');
+      const errEl    = document.getElementById('auth-error');
+      if (!errEl) return;
+
+      errEl.textContent = '';
+      if (!phone) { errEl.textContent = t('phoneRequired'); return; }
+      if (!code)  { errEl.textContent = t('invalidRecoveryCode'); return; }
+      if (newPin.length < 4) { errEl.textContent = t('pinTooShort'); return; }
+      if (newPin !== newPin2) { errEl.textContent = t('pinMismatch'); return; }
+
+      btn.disabled = true;
+      btn.textContent = t('resettingPin');
+
+      try {
+        const res = await fetch(SUPABASE_URL + '/functions/v1/reset-pin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY
+          },
+          body: JSON.stringify({ phone, recovery_code: code, new_pin: newPin })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = data.error === 'not_found'    ? t('authError')
+                    : data.error === 'invalid_code' ? t('invalidRecoveryCode')
+                    : (data.error || 'Server error. Try again.');
+          errEl.textContent = msg;
+          btn.disabled = false;
+          btn.textContent = t('resetPin');
+        } else {
+          document.getElementById('auth-content').innerHTML = `
+            <div style="text-align:center;padding:40px 0">
+              <div style="font-size:56px;margin-bottom:16px">✓</div>
+              <div style="font-size:20px;font-weight:800;color:var(--td);margin-bottom:24px">${t('pinReset')}</div>
+              <button onclick="renderAuthScreen('signin')"
+                style="width:100%;padding:20px;background:linear-gradient(135deg,var(--tp),var(--ts));
+                       color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                       cursor:pointer;font-family:Georgia,serif">
+                ${t('signIn')}
+              </button>
+            </div>
+          `;
+        }
+      } catch (_) {
+        errEl.textContent = 'Network error. Please try again.';
+        btn.disabled = false;
+        btn.textContent = t('resetPin');
+      }
+    }
+
+    async function handleChangePin() {
+      const curPin  = (document.getElementById('change-pin-cur')?.value || '').trim();
+      const newPin  = (document.getElementById('change-pin-new')?.value || '').trim();
+      const newPin2 = (document.getElementById('change-pin-new2')?.value || '').trim();
+      const errEl   = document.getElementById('change-pin-error');
+      const btn     = document.getElementById('change-pin-btn');
+      if (!errEl || !btn) return;
+
+      errEl.style.color = '#d00';
+      errEl.textContent = '';
+      if (curPin.length < 4) { errEl.textContent = t('pinTooShort'); return; }
+      if (newPin.length < 4) { errEl.textContent = t('pinTooShort'); return; }
+      if (newPin !== newPin2) { errEl.textContent = t('pinMismatch'); return; }
+
+      btn.disabled = true;
+      btn.textContent = t('changingPin');
+
+      // Verify current PIN
+      const { error: verifyErr } = await db.auth.signInWithPassword({
+        email: currentUser.email, password: curPin
+      });
+      if (verifyErr) {
+        errEl.textContent = t('authError');
+        btn.disabled = false;
+        btn.textContent = t('changePin');
+        return;
+      }
+
+      // Update to new PIN
+      const { error: updateErr } = await db.auth.updateUser({ password: newPin });
+      if (updateErr) {
+        errEl.textContent = updateErr.message;
+        btn.disabled = false;
+        btn.textContent = t('changePin');
+        return;
+      }
+
+      document.getElementById('change-pin-cur').value = '';
+      document.getElementById('change-pin-new').value = '';
+      document.getElementById('change-pin-new2').value = '';
+      btn.disabled = false;
+      btn.textContent = t('changePin');
+      errEl.style.color = '#2a7a2a';
+      errEl.textContent = t('pinChanged');
+      setTimeout(() => { if (errEl) { errEl.style.color = '#d00'; errEl.textContent = ''; } }, 3000);
+    }
+
+    function copyRecoveryCode() {
+      const code = state.settings.recovery_code;
+      if (!code) return;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('copy-code-btn');
+        if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => { if (btn) btn.textContent = 'Copy'; }, 2000); }
+      }).catch(() => {
+        prompt('Your recovery code:', code);
+      });
     }
 
     // ── ONBOARDING ────────────────────────────────────────────────────────
@@ -2055,6 +2300,60 @@
                           letter-spacing:0.07em;margin-bottom:4px">${t('yourPhone')}</div>
               <div style="font-size:18px;font-weight:700;color:var(--td)">${phoneDisplay}</div>
             </div>
+
+            <div style="padding:16px 18px;border-bottom:1px solid var(--tb)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div>
+                  <div style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;
+                              letter-spacing:0.07em;margin-bottom:4px">${t('recoveryCode')}</div>
+                  <div style="font-size:22px;font-weight:800;color:var(--td);letter-spacing:0.1em">
+                    ${state.settings.recovery_code || '——'}
+                  </div>
+                </div>
+                <button id="copy-code-btn" onclick="copyRecoveryCode()"
+                  style="padding:10px 16px;background:var(--tb);color:var(--td);
+                         border:2px solid var(--tbd);border-radius:10px;
+                         font-size:14px;font-weight:800;cursor:pointer;font-family:Georgia,serif;
+                         white-space:nowrap;flex-shrink:0">
+                  Copy
+                </button>
+              </div>
+              <div style="font-size:12px;color:#b07;background:#FFF0F7;
+                          border-radius:8px;padding:8px 10px;line-height:1.5">
+                ⚠ ${t('recoveryCodeSub')}
+              </div>
+            </div>
+
+            <div style="padding:16px 18px;border-bottom:1px solid var(--tb)">
+              <div style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.07em;margin-bottom:14px">${t('changePin')}</div>
+              <input id="change-pin-cur" type="password" inputmode="numeric"
+                placeholder="${t('currentPin')}"
+                style="width:100%;padding:14px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:18px;color:var(--td);background:var(--tb);outline:none;
+                       margin-bottom:8px;box-sizing:border-box;-webkit-appearance:none;
+                       font-family:Georgia,serif">
+              <input id="change-pin-new" type="password" inputmode="numeric"
+                placeholder="${t('newPin')}"
+                style="width:100%;padding:14px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:18px;color:var(--td);background:var(--tb);outline:none;
+                       margin-bottom:8px;box-sizing:border-box;-webkit-appearance:none;
+                       font-family:Georgia,serif">
+              <input id="change-pin-new2" type="password" inputmode="numeric"
+                placeholder="${t('confirmNewPin')}"
+                style="width:100%;padding:14px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:18px;color:var(--td);background:var(--tb);outline:none;
+                       margin-bottom:12px;box-sizing:border-box;-webkit-appearance:none;
+                       font-family:Georgia,serif">
+              <div id="change-pin-error" style="color:#d00;font-size:14px;min-height:20px;margin-bottom:10px"></div>
+              <button id="change-pin-btn" onclick="handleChangePin()"
+                style="width:100%;padding:14px;background:var(--tp);color:var(--td);border:none;
+                       border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;
+                       font-family:Georgia,serif">
+                ${t('changePin')}
+              </button>
+            </div>
+
             <div style="padding:16px 18px">
               <button onclick="doSignOut()"
                 style="width:100%;padding:16px;background:#FFF0F0;color:#C0392B;
