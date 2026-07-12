@@ -35,6 +35,8 @@
     .nav-tab { color: var(--ts); font-size: 11px; text-align: center; cursor: pointer; background: none; border: none; padding: 4px 8px; }
 
     .svc-chip.selected { background: var(--tp) !important; border-color: var(--ts) !important; font-weight: 700; }
+    .b-svc-chip.selected { background: var(--tp) !important; border-color: var(--ts) !important; font-weight: 700; }
+    .assign-chip.selected { background: #E9C87A !important; border-color: #D4B060 !important; font-weight: 700; color: #4A2D3A !important; }
     button { touch-action: manipulation; }
 
     #screen-loading {
@@ -180,6 +182,18 @@
         // Settings — salon section
         yourSalon: 'Your Salon', yourRole: 'Your Role',
         roleOwner: 'Owner', roleEmployee: 'Employee', roleSolo: 'Solo',
+        // Appointments
+        bookAppointment: 'Book Appointment',
+        upcoming: 'Upcoming',
+        noAppointments: 'No upcoming appointments',
+        assignTo: 'Assign To',
+        completeAppt: 'Mark Complete',
+        cancelAppt: 'Cancel Booking',
+        confirmCancelAppt: 'Cancel this appointment?',
+        tomorrowAppt: 'appointment tomorrow',
+        tomorrowAppts: 'appointments tomorrow',
+        todayAppt: 'appointment remaining today',
+        todayAppts: 'appointments remaining today',
         months: ['January','February','March','April','May','June',
                  'July','August','September','October','November','December'],
         days: ['Su','Mo','Tu','We','Th','Fr','Sa'],
@@ -247,6 +261,18 @@
         // Settings — salon section
         yourSalon: 'Tiệm của bạn', yourRole: 'Vai trò',
         roleOwner: 'Chủ tiệm', roleEmployee: 'Nhân viên', roleSolo: 'Cá nhân',
+        // Appointments
+        bookAppointment: 'Đặt lịch hẹn',
+        upcoming: 'Sắp tới',
+        noAppointments: 'Không có lịch hẹn',
+        assignTo: 'Giao cho',
+        completeAppt: 'Hoàn thành',
+        cancelAppt: 'Hủy lịch hẹn',
+        confirmCancelAppt: 'Hủy lịch hẹn này?',
+        tomorrowAppt: 'lịch hẹn ngày mai',
+        tomorrowAppts: 'lịch hẹn ngày mai',
+        todayAppt: 'lịch hẹn còn lại hôm nay',
+        todayAppts: 'lịch hẹn còn lại hôm nay',
         months: ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
                  'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'],
         days: ['CN','T2','T3','T4','T5','T6','T7'],
@@ -292,6 +318,8 @@
     let teamPeriod = 'biweekly';
     let teamAnchor = new Date();
     let editingMemberIdx = null;
+    let appointments = [];
+    let completingApptId = null;
 
     // ── HELPERS ───────────────────────────────────────────────────────────
     const t = key => (STRINGS[lang] && STRINGS[lang][key] !== undefined) ? STRINGS[lang][key] : key;
@@ -360,6 +388,12 @@
       );
     }
 
+    function getDayAppointments(dateStr) {
+      return appointments
+        .filter(a => a.date === dateStr && !a.completed)
+        .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    }
+
     // ── SUPABASE DATA LAYER ───────────────────────────────────────────────
     async function loadFromSupabase() {
       if (!currentUser) return;
@@ -413,6 +447,21 @@
         const { data: members } = await db.from('salon_members').select('*').eq('salon_id', state.settings.salon_id);
         salonMembers = members || [];
       }
+      await loadAppointments();
+    }
+
+    async function loadAppointments() {
+      if (!currentSalon) return;
+      const { data } = await db.from('appointments')
+        .select('*')
+        .eq('salon_id', currentSalon.id)
+        .eq('completed', false)
+        .order('date').order('time');
+      appointments = (data || []).map(a => ({
+        ...a,
+        services: Array.isArray(a.services) ? a.services : [],
+        date: typeof a.date === 'string' ? a.date.slice(0, 10) : a.date,
+      }));
     }
 
     async function pushEntryToCloud(entry) {
@@ -552,6 +601,7 @@
       userRole = null;
       currentSalon = null;
       salonMembers = [];
+      appointments = [];
       localStorage.removeItem('salon_entries');
       localStorage.removeItem('salon_settings');
       showScreen('auth');
@@ -963,6 +1013,34 @@
     }
 
     // ── CALENDAR ──────────────────────────────────────────────────────────
+    function appointmentCardHtml(a) {
+      const isOwner = userRole === 'owner';
+      const assignedMember = salonMembers.find(m => m.user_id === a.assigned_to);
+      return `
+        <div style="background:#FFFBF0;border:2px solid #E9C87A;border-radius:10px;
+                    padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div style="font-size:12px;color:#B8860B;font-weight:700">${a.time || '—'}</div>
+            ${isOwner && assignedMember ? `<div style="font-size:11px;color:#888;font-weight:600">${assignedMember.display_name}</div>` : ''}
+          </div>
+          <div style="font-size:15px;font-weight:700;color:var(--td)">${a.customer_name || '—'}</div>
+          ${(a.services||[]).length ? `<div style="font-size:12px;color:#888;margin-top:2px">${a.services.join(' · ')}</div>` : ''}
+          ${a.notes ? `<div style="font-size:11px;color:#bbb;margin-top:2px">${a.notes}</div>` : ''}
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button onclick="completeAppointment('${a.id}')"
+              style="flex:1;padding:9px;background:#E8F5E9;color:#2E7D32;border:2px solid #A5D6A7;
+                     border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;
+                     font-family:Georgia,serif">
+              ✓ ${t('completeAppt')}
+            </button>
+            ${isOwner ? `
+            <button onclick="cancelAppointment('${a.id}')"
+              style="padding:9px 14px;background:#FFF0F0;color:#C0392B;border:2px solid #FFCCCC;
+                     border-radius:8px;font-size:18px;font-weight:700;cursor:pointer;line-height:1">×</button>` : ''}
+          </div>
+        </div>`;
+    }
+
     function renderCalendar() {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
@@ -971,6 +1049,37 @@
       const today = formatDate(new Date());
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const firstDow = new Date(year, month, 1).getDay();
+
+      // Tomorrow / today banners
+      const nowTime = `${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}`;
+      const tomorrowDate = new Date(); tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+      const tomorrowStr = formatDate(tomorrowDate);
+      const visibleAppt = (a) =>
+        !a.completed && (userRole === 'owner' || a.assigned_to === currentUser?.id);
+      const todayAppts = appointments.filter(a => a.date === today && visibleAppt(a) && (!a.time || a.time >= nowTime));
+      const tomorrowAppts = appointments.filter(a => a.date === tomorrowStr && visibleAppt(a));
+      let bannerHtml = '';
+      if (todayAppts.length > 0 || tomorrowAppts.length > 0) {
+        const lines = [];
+        if (todayAppts.length > 0) {
+          const names = todayAppts.map(a => [a.time, a.customer_name].filter(Boolean).join(' ')).join(' · ');
+          const word = todayAppts.length === 1 ? t('todayAppt') : t('todayAppts');
+          lines.push(`<div style="font-weight:800;font-size:14px">${todayAppts.length} ${word}</div>`
+            + (names ? `<div style="font-size:12px;opacity:0.8;margin-top:1px">${names}</div>` : ''));
+        }
+        if (tomorrowAppts.length > 0) {
+          const names = tomorrowAppts.map(a => [a.time, a.customer_name].filter(Boolean).join(' ')).join(' · ');
+          const word = tomorrowAppts.length === 1 ? t('tomorrowAppt') : t('tomorrowAppts');
+          lines.push(`<div style="font-weight:800;font-size:14px">${tomorrowAppts.length} ${word}</div>`
+            + (names ? `<div style="font-size:12px;opacity:0.8;margin-top:1px">${names}</div>` : ''));
+        }
+        bannerHtml = `
+          <div style="background:#E9C87A;color:#4A2D3A;padding:10px 16px;
+                      display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">📋</span>
+            <div>${lines.join('<div style="height:4px"></div>')}</div>
+          </div>`;
+      }
 
       let monthTotal = 0;
       for (let d = 1; d <= daysInMonth; d++) {
@@ -991,6 +1100,7 @@
         const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const entries = getDayEntries(ds);
         const total = getDayTotal(ds);
+        const dayAppts = getDayAppointments(ds);
         const isToday = ds === today;
         const isSelected = ds === selectedDay;
         const hasData = entries.length > 0;
@@ -1004,6 +1114,9 @@
           ? `<div style="font-size:9px;color:#E9C87A;margin-top:1px">${sym}${Math.round(total * rate / 100)}</div>`
           : '';
         const clientWord = entries.length === 1 ? t('client') : t('clients');
+        const apptDot = dayAppts.length > 0
+          ? `<div style="width:6px;height:6px;border-radius:50%;background:#E9C87A;margin:2px auto 0"></div>`
+          : '';
 
         cells += `
           <div onclick="selectDay('${ds}')"
@@ -1015,6 +1128,7 @@
               ${takeHomeGold}
               <div style="font-size:10px;color:${subColor};margin-top:2px">${entries.length} ${clientWord}</div>
             ` : ''}
+            ${apptDot}
           </div>`;
       }
 
@@ -1022,11 +1136,19 @@
       if (selectedDay) {
         const dayEntries = getDayEntries(selectedDay);
         const dayTotal = getDayTotal(selectedDay);
+        const selectedDayAppts = getDayAppointments(selectedDay);
         const dd = new Date(selectedDay + 'T12:00:00');
         const dayLabel = `${t('days')[(dd.getDay()+7)%7]} ${t('months')[dd.getMonth()]} ${dd.getDate()}`;
         const dayTakeHome = rate
           ? `<div style="font-size:12px;color:#E9C87A;margin-top:2px">${t('takeHome')} ${sym}${Math.round(dayTotal * rate / 100)}</div>`
           : '';
+
+        const apptSection = selectedDayAppts.length > 0 ? `
+          <div style="font-size:12px;font-weight:700;color:#B8860B;text-transform:uppercase;
+                      letter-spacing:0.05em;margin-bottom:8px">📋 ${t('upcoming')}</div>
+          ${selectedDayAppts.map(a => appointmentCardHtml(a)).join('')}
+          ${dayEntries.length > 0 ? `<div style="height:1px;background:var(--tbd);margin:12px 0"></div>` : ''}
+        ` : '';
 
         const rows = dayEntries.length
           ? dayEntries.map(e => `
@@ -1048,7 +1170,7 @@
                            color:var(--tp);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
                 </div>
               </div>`).join('')
-          : `<div style="text-align:center;color:#ccc;padding:24px;font-size:16px">${t('noEntries')}</div>`;
+          : (selectedDayAppts.length === 0 ? `<div style="text-align:center;color:#ccc;padding:24px;font-size:16px">${t('noEntries')}</div>` : '');
 
         dayPanel = `
           <div style="background:#fff;border:2px solid var(--tp);border-top:none;border-radius:0 0 16px 16px;padding:16px">
@@ -1060,13 +1182,21 @@
               <div style="background:#E9C87A;color:#4A2D3A;border-radius:20px;padding:5px 14px;
                           font-size:14px;font-weight:800">${sym}${dayTotal} ${t('totalGross')}</div>
             </div>
+            ${apptSection}
             ${rows}
             <button onclick="openSheet('${selectedDay}')"
               style="width:100%;padding:14px;background:var(--tb);border:2px dashed var(--tp);
                      border-radius:10px;color:var(--ts);font-size:15px;font-weight:700;
-                     cursor:pointer;margin-top:4px">
+                     cursor:pointer;margin-top:8px">
               + ${t('addCustomer')}
             </button>
+            ${userRole === 'owner' ? `
+            <button onclick="openBookingSheet('${selectedDay}')"
+              style="width:100%;padding:14px;background:#FFFBF0;border:2px dashed #E9C87A;
+                     border-radius:10px;color:#B8860B;font-size:15px;font-weight:700;
+                     cursor:pointer;margin-top:8px">
+              📋 ${t('bookAppointment')}
+            </button>` : ''}
           </div>`;
       }
 
@@ -1084,6 +1214,7 @@
 
       document.getElementById('view-calendar').innerHTML = `
         <div>
+          ${bannerHtml}
           <div style="background:var(--tp);padding:20px 16px;display:flex;align-items:center;justify-content:space-between">
             <button onclick="prevMonth()"
               style="background:rgba(255,255,255,0.4);border:none;border-radius:50%;
@@ -1505,6 +1636,162 @@
       }
     }
 
+    // ── APPOINTMENTS ──────────────────────────────────────────────────────
+    function openBookingSheet(dateStr) {
+      if (userRole !== 'owner' || !currentSalon) return;
+      completingApptId = null;
+      editingEntryId = null;
+
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2,'0');
+      const mm = String(now.getMinutes()).padStart(2,'0');
+      const defaultDate = dateStr || formatDate(new Date());
+      const defaultTime = `${hh}:${mm}`;
+      const services = state.settings.services || DEFAULT_SERVICES;
+
+      const assignChips = salonMembers.map(m => `
+        <div class="assign-chip" data-user-id="${m.user_id}"
+          onclick="document.querySelectorAll('.assign-chip').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')"
+          style="padding:12px 10px;border-radius:10px;border:2px solid var(--tbd);
+                 background:var(--tb);text-align:center;font-size:14px;
+                 color:var(--td);cursor:pointer;transition:all 0.15s;min-height:44px;
+                 display:flex;align-items:center;justify-content:center">
+          ${m.display_name || '—'}
+        </div>`).join('');
+
+      const serviceChips = services.map((svc, i) => `
+        <div class="b-svc-chip" data-svc="${i}"
+          onclick="this.classList.toggle('selected')"
+          style="padding:13px 8px;border-radius:10px;border:2px solid var(--tbd);
+                 background:var(--tb);text-align:center;font-size:14px;
+                 color:var(--td);cursor:pointer;transition:all 0.15s;min-height:48px;
+                 display:flex;align-items:center;justify-content:center">
+          ${svc}
+        </div>`).join('');
+
+      document.getElementById('sheet-content').innerHTML = `
+        <div style="padding:24px 20px 32px">
+          <div style="width:40px;height:4px;background:#E9C87A;border-radius:4px;margin:0 auto 20px"></div>
+          <div style="font-size:22px;font-weight:800;color:var(--td);margin-bottom:24px">📋 ${t('bookAppointment')}</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+            <div>
+              <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                            letter-spacing:0.05em;display:block;margin-bottom:8px">${t('date')}</label>
+              <input id="b-date" type="date" value="${defaultDate}"
+                style="width:100%;padding:14px 12px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:15px;color:var(--td);background:var(--tb);outline:none">
+            </div>
+            <div>
+              <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                            letter-spacing:0.05em;display:block;margin-bottom:8px">${t('time')}</label>
+              <input id="b-time" type="time" value="${defaultTime}"
+                style="width:100%;padding:14px 12px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:15px;color:var(--td);background:var(--tb);outline:none">
+            </div>
+          </div>
+
+          <div style="margin-bottom:20px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">
+              ${t('customerName')} <span style="color:#ccc;font-weight:400">${t('optional')}</span>
+            </label>
+            <input id="b-name" type="text" placeholder="${t('namePlaceholder')}"
+              style="width:100%;padding:14px 16px;border:2px solid var(--tbd);border-radius:12px;
+                     font-size:18px;color:var(--td);background:var(--tb);outline:none">
+          </div>
+
+          <div style="margin-bottom:20px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">${t('assignTo')}</label>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${assignChips}</div>
+          </div>
+
+          <div style="margin-bottom:20px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">${t('servicesDone')}</label>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${serviceChips}</div>
+          </div>
+
+          <div style="margin-bottom:24px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">
+              ${t('notes')} <span style="color:#ccc;font-weight:400">${t('optional')}</span>
+            </label>
+            <input id="b-notes" type="text" placeholder="${t('notesPlaceholder')}"
+              style="width:100%;padding:14px 16px;border:2px solid var(--tbd);border-radius:12px;
+                     font-size:18px;color:var(--td);background:var(--tb);outline:none">
+          </div>
+
+          <button onclick="submitBooking()"
+            style="width:100%;padding:18px;background:linear-gradient(135deg,#E9C87A,#D4B060);
+                   color:#4A2D3A;border:none;border-radius:14px;font-size:20px;font-weight:800;
+                   cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.15)">
+            ${t('bookAppointment')}
+          </button>
+        </div>`;
+
+      document.getElementById('sheet-overlay').classList.remove('hidden');
+      requestAnimationFrame(() => document.getElementById('sheet-add').classList.add('open'));
+    }
+
+    async function submitBooking() {
+      const date = document.getElementById('b-date')?.value;
+      const time = document.getElementById('b-time')?.value;
+      const name = (document.getElementById('b-name')?.value || '').trim();
+      const notes = (document.getElementById('b-notes')?.value || '').trim();
+      const assignedChip = document.querySelector('.assign-chip.selected');
+      const assignedTo = assignedChip?.dataset.userId;
+
+      if (!date || !time) {
+        alert(lang === 'vi' ? 'Vui lòng nhập ngày và giờ.' : 'Please enter date and time.');
+        return;
+      }
+      if (!assignedTo) {
+        alert(lang === 'vi' ? 'Vui lòng chọn nhân viên.' : 'Please select a team member.');
+        return;
+      }
+
+      const selectedChips = document.querySelectorAll('.b-svc-chip.selected');
+      const services = Array.from(selectedChips).map(el =>
+        (state.settings.services || DEFAULT_SERVICES)[parseInt(el.dataset.svc)]
+      );
+
+      const apptRow = {
+        salon_id: currentSalon.id,
+        assigned_to: assignedTo,
+        created_by: currentUser.id,
+        date, time,
+        customer_name: name || null,
+        services,
+        notes: notes || null,
+        completed: false
+      };
+
+      const { data, error } = await db.from('appointments').insert(apptRow).select().single();
+      if (error) { alert(error.message); return; }
+
+      appointments.push({ ...apptRow, id: data.id, services });
+      closeSheet();
+      selectedDay = date;
+      renderCalendar();
+    }
+
+    function completeAppointment(apptId) {
+      const appt = appointments.find(a => a.id === apptId);
+      if (!appt) return;
+      completingApptId = apptId;
+      editingEntryId = null;
+      openSheet(appt.date, null);
+    }
+
+    async function cancelAppointment(apptId) {
+      if (!confirm(t('confirmCancelAppt'))) return;
+      await db.from('appointments').delete().eq('id', apptId);
+      appointments = appointments.filter(a => a.id !== apptId);
+      renderCalendar();
+    }
+
     // ── SETTINGS ──────────────────────────────────────────────────────────
     function deleteEntry(id) {
       if (!confirm(t('confirmDelete'))) return;
@@ -1784,19 +2071,24 @@
     // ── ENTRY SHEET ───────────────────────────────────────────────────────
     function openSheet(dateStr, entryId = null) {
       editingEntryId = entryId;
+      if (entryId) completingApptId = null; // editing existing entry clears any completing state
       const entry = entryId ? state.entries.find(e => e.id === entryId) : null;
+      const completingAppt = completingApptId ? appointments.find(a => a.id === completingApptId) : null;
       const now = new Date();
       const hh = String(now.getHours()).padStart(2,'0');
       const mm = String(now.getMinutes()).padStart(2,'0');
-      const defaultDate = entry ? entry.date : (dateStr || formatDate(new Date()));
-      const defaultTime = entry ? (entry.time || `${hh}:${mm}`) : `${hh}:${mm}`;
+      const defaultDate = entry?.date || completingAppt?.date || (dateStr || formatDate(new Date()));
+      const defaultTime = entry?.time || completingAppt?.time || `${hh}:${mm}`;
+      const defaultName = entry?.name || completingAppt?.customer_name || '';
+      const defaultNotes = entry?.notes || completingAppt?.notes || '';
+      const defaultPrice = entry?.price || '';
+      const preSelectedSvcs = entry?.services || completingAppt?.services || [];
       const sym = state.settings.currencySymbol || '$';
       const rate = state.settings.commissionRate;
       const services = state.settings.services || DEFAULT_SERVICES;
 
-      const selectedSvcs = entry ? (entry.services || []) : [];
       const serviceChips = services.map((svc, i) => {
-        const preSelected = selectedSvcs.includes(svc);
+        const preSelected = preSelectedSvcs.includes(svc);
         return `
           <div class="svc-chip ${preSelected ? 'selected' : ''}" data-svc="${i}"
             onclick="this.classList.toggle('selected')"
@@ -1816,14 +2108,14 @@
         <div style="padding:24px 20px 32px">
           <div style="width:40px;height:4px;background:var(--tp);border-radius:4px;margin:0 auto 20px"></div>
           <div style="font-size:22px;font-weight:800;color:var(--td);margin-bottom:4px">${entry ? t('editEntry') : t('addCustomer')}</div>
-          <div style="font-size:13px;color:var(--ts);margin-bottom:24px">${defaultDate}</div>
+          <div style="font-size:13px;color:var(--ts);margin-bottom:24px">${defaultDate}${completingAppt ? ` · 📋 ${t('upcoming')}` : ''}</div>
 
           <div style="margin-bottom:20px">
             <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
                           letter-spacing:0.05em;display:block;margin-bottom:8px">
               ${t('customerName')} <span style="color:#ccc;font-weight:400">${t('optional')}</span>
             </label>
-            <input id="f-name" type="text" placeholder="${t('namePlaceholder')}" value="${entry ? (entry.name || '') : ''}"
+            <input id="f-name" type="text" placeholder="${t('namePlaceholder')}" value="${defaultName.replace(/"/g,'&quot;')}"
               style="width:100%;padding:14px 16px;border:2px solid var(--tbd);border-radius:12px;
                      font-size:18px;color:var(--td);background:var(--tb);outline:none">
           </div>
@@ -1859,7 +2151,7 @@
                           padding:14px 16px;border-radius:12px 0 0 12px;
                           border:2px solid #D4B060;border-right:none">${sym}</div>
               <input id="f-price" type="number" inputmode="decimal" placeholder="0" min="0"
-                value="${entry ? entry.price : ''}"
+                value="${defaultPrice}"
                 style="flex:1;padding:14px 16px;border:2px solid var(--tbd);border-radius:0 12px 12px 0;
                        font-size:22px;font-weight:800;color:var(--td);background:var(--tb);outline:none;
                        border-left:none"
@@ -1873,7 +2165,7 @@
                           letter-spacing:0.05em;display:block;margin-bottom:8px">
               ${t('notes')} <span style="color:#ccc;font-weight:400">${t('optional')}</span>
             </label>
-            <input id="f-notes" type="text" placeholder="${t('notesPlaceholder')}" value="${entry ? (entry.notes || '') : ''}"
+            <input id="f-notes" type="text" placeholder="${t('notesPlaceholder')}" value="${defaultNotes.replace(/"/g,'&quot;')}"
               style="width:100%;padding:14px 16px;border:2px solid var(--tbd);border-radius:12px;
                      font-size:18px;color:var(--td);background:var(--tb);outline:none">
           </div>
@@ -1933,12 +2225,20 @@
         selectedDay = date;
         renderCalendar();
       } else {
-        saveEntry({ name, date, time, price, services, notes });
+        const entryId = saveEntry({ name, date, time, price, services, notes });
+        // Mark appointment complete if this was triggered from completeAppointment()
+        if (completingApptId) {
+          const apptId = completingApptId;
+          appointments = appointments.filter(a => a.id !== apptId);
+          db.from('appointments').update({ completed: true, entry_id: entryId }).eq('id', apptId);
+          completingApptId = null;
+        }
       }
     }
 
     function closeSheet() {
       editingEntryId = null;
+      completingApptId = null;
       document.getElementById('sheet-add').classList.remove('open');
       document.getElementById('sheet-overlay').classList.add('hidden');
     }
@@ -1971,6 +2271,7 @@
       selectedDay = data.date;
       renderCalendar();
       pushEntryToCloud(entry);
+      return entry.id;
     }
 
     // ── INIT ─────────────────────────────────────────────────────────────
