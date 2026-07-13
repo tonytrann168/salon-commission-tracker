@@ -1,0 +1,2612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PolishPay</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style id="theme-vars">
+    :root {
+      --tp: #F9A8C2;
+      --ts: #C97A9A;
+      --tb: #FDF0F5;
+      --tbd: #F5E0EC;
+      --td: #4A2D3A;
+      --tlt: #FFF5F9;
+    }
+  </style>
+  <style>
+    * { box-sizing: border-box; }
+    body { background: var(--tb); font-family: Georgia, serif; margin: 0; min-height: 100vh; }
+    input, button, select, textarea { font-family: Georgia, serif; }
+
+    #sheet-add {
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #sheet-add.open { transform: translateY(0); }
+    #sheet-add { overscroll-behavior: contain; }
+
+    .hidden { display: none !important; }
+    .view { min-height: calc(100vh - 72px); padding-bottom: 80px; }
+
+    .nav-tab.active { color: var(--td); }
+    .nav-tab { color: var(--ts); font-size: 11px; text-align: center; cursor: pointer; background: none; border: none; padding: 4px 8px; }
+
+    .svc-chip.selected { background: var(--tp) !important; border-color: var(--ts) !important; font-weight: 700; }
+    .b-svc-chip.selected { background: var(--tp) !important; border-color: var(--ts) !important; font-weight: 700; }
+    .assign-chip.selected { background: #E9C87A !important; border-color: #D4B060 !important; font-weight: 700; color: #4A2D3A !important; }
+    button { touch-action: manipulation; }
+
+    #screen-loading {
+      position: fixed; inset: 0; background: var(--tb);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 200;
+    }
+    .spinner {
+      width: 48px; height: 48px; border: 5px solid var(--tbd);
+      border-top-color: var(--ts); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #screen-auth, #screen-onboarding {
+      position: fixed; inset: 0; background: var(--tb);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 32px 24px; z-index: 100; overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading screen -->
+  <div id="screen-loading">
+    <div style="font-size:52px;margin-bottom:20px">💅</div>
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Auth screen (login / signup) -->
+  <div id="screen-auth" class="hidden">
+    <div id="auth-content" style="width:100%;max-width:380px"></div>
+  </div>
+
+  <!-- Onboarding screen -->
+  <div id="screen-onboarding" class="hidden">
+    <div id="onboarding-content" style="width:100%;max-width:380px"></div>
+  </div>
+
+  <!-- App views -->
+  <div id="view-calendar" class="view hidden"></div>
+  <div id="view-summary" class="view hidden"></div>
+  <div id="view-team" class="view hidden"></div>
+  <div id="view-settings" class="view hidden"></div>
+
+  <div id="sheet-overlay"
+    class="fixed inset-0 z-40 hidden"
+    style="background:rgba(0,0,0,0.4)"
+    onclick="closeSheet()">
+  </div>
+
+  <div id="sheet-add"
+    class="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl overflow-y-auto"
+    style="max-height:92vh">
+    <div id="sheet-content"></div>
+  </div>
+
+  <nav id="nav-bar"
+    class="fixed bottom-0 left-0 right-0 z-30 bg-white hidden"
+    style="border-top:2px solid var(--tp);padding-bottom:env(safe-area-inset-bottom)">
+  </nav>
+
+  <script>
+    // ── SUPABASE ──────────────────────────────────────────────────────────
+    const SUPABASE_URL = 'https://tfvkonjmacpiggfcikax.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_NlVy8k_j1qVht_SdXaGYJQ_-TJ5ch5N';
+
+    let db;
+    try {
+      const _lib = window.supabase || supabase;
+      const { createClient } = _lib;
+      db = createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch(e) {
+      console.error('Supabase failed to init:', e);
+      document.getElementById('screen-loading').innerHTML =
+        '<div style="padding:32px;text-align:center;color:#c00;font-size:18px">' +
+        'Failed to load app.<br>Please check your internet and refresh.' +
+        '</div>';
+    }
+
+    // ── STRINGS ───────────────────────────────────────────────────────────
+    const STRINGS = {
+      en: {
+        appTitle: 'PolishPay',
+        calendar: 'Calendar', summary: 'Summary', settings: 'Settings', team: 'Team',
+        addCustomer: 'Add Customer', saveCustomer: 'Save',
+        customerName: 'Customer Name', optional: '(optional)',
+        date: 'Date', time: 'Time', servicesDone: 'Services Done',
+        price: 'Price', notes: 'Notes',
+        notesPlaceholder: 'e.g. $15 tip, special request',
+        namePlaceholder: 'e.g. Maria G.',
+        takeHome: 'Take-home:', noEntries: 'No customers logged',
+        tapToAdd: 'Tap + to log your first customer',
+        client: 'client', clients: 'clients',
+        totalGross: 'Total', customersServed: 'Customers Served',
+        byService: 'By Service', times: 'times',
+        weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly',
+        language: 'Language', services: 'Services',
+        currency: 'Currency Symbol', commissionRate: 'Commission Rate',
+        commissionRateSub: 'Optional — shows take-home on all totals',
+        addBtn: 'Add', newServicePlaceholder: 'New service...',
+        cancel: 'Cancel', noServiceData: 'No service data yet',
+        deleteEntry: 'Delete entry', confirmDelete: 'Delete this entry?',
+        editEntry: 'Edit entry',
+        exportCSV: 'Export CSV', exportCSVSub: 'Download all entries as a spreadsheet',
+        theme: 'Theme',
+        themeBlush: 'Blush', themeOcean: 'Ocean', themeForest: 'Forest', themeSlate: 'Slate',
+        // Auth
+        signIn: 'Sign In', createAccount: 'Create Account',
+        phoneNumber: 'Phone Number', pin: 'PIN (4+ digits)',
+        confirmPin: 'Confirm PIN',
+        phonePlaceholder: '555-123-4567',
+        pinPlaceholder: '••••',
+        signingIn: 'Signing in...', signingUp: 'Creating account...',
+        signOut: 'Sign Out', confirmSignOut: 'Sign out of this account?',
+        authError: 'Wrong phone number or PIN',
+        pinMismatch: 'PINs do not match',
+        pinTooShort: 'PIN must be at least 4 digits',
+        phoneRequired: 'Please enter your phone number',
+        noAccount: 'New here?', alreadyHaveAccount: 'Already have an account?',
+        account: 'Account', yourPhone: 'Your phone',
+        // Onboarding
+        welcomeTitle: 'How do you use this app?',
+        iAmSolo: 'Track my own clients', iAmSoloSub: 'Personal commissions only',
+        iAmOwner: 'I own a salon', iAmOwnerSub: 'Track your team\'s commissions',
+        iAmEmployee: 'I work for a salon', iAmEmployeeSub: 'Join your salon\'s account',
+        salonName: 'Salon Name', salonNamePlaceholder: 'e.g. Nails by Tony',
+        yourName: 'Your Name', yourNamePlaceholder: 'e.g. Tony',
+        inviteCode: 'Invite Code', inviteCodePlaceholder: 'e.g. ABCD12',
+        inviteCodeSub: 'Ask your salon owner for this code',
+        creating: 'Creating...', joining: 'Joining...',
+        invalidCode: 'Invalid or expired invite code',
+        salonCreated: 'Salon Created!', salonCreatedSub: 'Share this code with your employees:',
+        goToApp: 'Go to App',
+        // Team view
+        yourInviteCode: 'Your Invite Code',
+        inviteCodeHelp: 'Share with employees to join your salon',
+        refreshCode: 'Refresh Code',
+        employees: 'Employees',
+        noEmployees: 'No employees yet',
+        inviteFirst: 'Share your invite code to add employees',
+        you: '(you)', editRate: 'Edit rate', noRate: 'No rate',
+        // Settings — salon section
+        yourSalon: 'Your Salon', yourRole: 'Your Role',
+        roleOwner: 'Owner', roleEmployee: 'Employee', roleSolo: 'Solo',
+        // Appointments
+        bookAppointment: 'Book Appointment',
+        upcoming: 'Upcoming',
+        noAppointments: 'No upcoming appointments',
+        assignTo: 'Assign To',
+        completeAppt: 'Mark Complete',
+        cancelAppt: 'Cancel Booking',
+        confirmCancelAppt: 'Cancel this appointment?',
+        tomorrowAppt: 'appointment tomorrow',
+        tomorrowAppts: 'appointments tomorrow',
+        todayAppt: 'appointment remaining today',
+        todayAppts: 'appointments remaining today',
+        // PIN reset
+        changePin: 'Change PIN',
+        currentPin: 'Current PIN',
+        newPin: 'New PIN',
+        confirmNewPin: 'Confirm New PIN',
+        changingPin: 'Updating...',
+        pinChanged: 'PIN updated',
+        recoveryCode: 'Recovery Code',
+        recoveryCodeSub: 'Save this — you\'ll need it to reset your PIN if forgotten',
+        forgotPin: 'Forgot PIN?',
+        forgotPinTitle: 'Reset Your PIN',
+        forgotPinSub: 'Enter your phone number and recovery code',
+        resetPin: 'Reset PIN',
+        resettingPin: 'Resetting...',
+        pinReset: 'PIN reset! Sign in with your new PIN.',
+        invalidRecoveryCode: 'Invalid recovery code',
+        backToSignIn: 'Back to Sign In',
+        months: ['January','February','March','April','May','June',
+                 'July','August','September','October','November','December'],
+        days: ['Su','Mo','Tu','We','Th','Fr','Sa'],
+      },
+      vi: {
+        appTitle: 'PolishPay',
+        calendar: 'Lịch', summary: 'Tổng kết', settings: 'Cài đặt', team: 'Đội nhóm',
+        addCustomer: 'Thêm khách', saveCustomer: 'Lưu',
+        customerName: 'Tên khách', optional: '(tùy chọn)',
+        date: 'Ngày', time: 'Giờ', servicesDone: 'Dịch vụ',
+        price: 'Giá', notes: 'Ghi chú',
+        notesPlaceholder: 'VD: tip $15, yêu cầu đặc biệt',
+        namePlaceholder: 'VD: Maria G.',
+        takeHome: 'Thực lĩnh:', noEntries: 'Chưa có khách',
+        tapToAdd: 'Nhấn + để thêm khách đầu tiên',
+        client: 'khách', clients: 'khách',
+        totalGross: 'Tổng', customersServed: 'Số khách',
+        byService: 'Theo dịch vụ', times: 'lần',
+        weekly: 'Tuần', biweekly: '2 tuần', monthly: 'Tháng',
+        language: 'Ngôn ngữ', services: 'Dịch vụ',
+        currency: 'Ký hiệu tiền tệ', commissionRate: 'Tỷ lệ hoa hồng',
+        commissionRateSub: 'Tùy chọn — hiển thị thực lĩnh trên tất cả tổng',
+        addBtn: 'Thêm', newServicePlaceholder: 'Dịch vụ mới...',
+        cancel: 'Hủy', noServiceData: 'Chưa có dữ liệu dịch vụ',
+        deleteEntry: 'Xóa khách', confirmDelete: 'Xóa khách này?',
+        editEntry: 'Sửa khách',
+        exportCSV: 'Xuất CSV', exportCSVSub: 'Tải xuống tất cả dữ liệu',
+        theme: 'Giao diện',
+        themeBlush: 'Hồng', themeOcean: 'Xanh biển', themeForest: 'Xanh lá', themeSlate: 'Xám',
+        // Auth
+        signIn: 'Đăng nhập', createAccount: 'Tạo tài khoản',
+        phoneNumber: 'Số điện thoại', pin: 'Mã PIN (4+ số)',
+        confirmPin: 'Nhập lại PIN',
+        phonePlaceholder: '555-123-4567',
+        pinPlaceholder: '••••',
+        signingIn: 'Đang đăng nhập...', signingUp: 'Đang tạo tài khoản...',
+        signOut: 'Đăng xuất', confirmSignOut: 'Đăng xuất tài khoản này?',
+        authError: 'Sai số điện thoại hoặc PIN',
+        pinMismatch: 'PIN không khớp',
+        pinTooShort: 'PIN phải có ít nhất 4 chữ số',
+        phoneRequired: 'Vui lòng nhập số điện thoại',
+        noAccount: 'Lần đầu dùng?', alreadyHaveAccount: 'Đã có tài khoản?',
+        account: 'Tài khoản', yourPhone: 'Số điện thoại của bạn',
+        // Onboarding
+        welcomeTitle: 'Bạn dùng ứng dụng này như thế nào?',
+        iAmSolo: 'Theo dõi khách của riêng tôi', iAmSoloSub: 'Chỉ theo dõi hoa hồng cá nhân',
+        iAmOwner: 'Tôi là chủ tiệm', iAmOwnerSub: 'Theo dõi hoa hồng của cả đội',
+        iAmEmployee: 'Tôi làm việc tại tiệm', iAmEmployeeSub: 'Tham gia tài khoản tiệm của bạn',
+        salonName: 'Tên tiệm', salonNamePlaceholder: 'VD: Nails by Tony',
+        yourName: 'Tên của bạn', yourNamePlaceholder: 'VD: Tony',
+        inviteCode: 'Mã mời', inviteCodePlaceholder: 'VD: ABCD12',
+        inviteCodeSub: 'Hỏi chủ tiệm để lấy mã này',
+        creating: 'Đang tạo...', joining: 'Đang tham gia...',
+        invalidCode: 'Mã mời không hợp lệ hoặc đã hết hạn',
+        salonCreated: 'Đã tạo tiệm!', salonCreatedSub: 'Chia sẻ mã này với nhân viên:',
+        goToApp: 'Vào ứng dụng',
+        // Team view
+        yourInviteCode: 'Mã mời của bạn',
+        inviteCodeHelp: 'Chia sẻ với nhân viên để tham gia tiệm',
+        refreshCode: 'Làm mới mã',
+        employees: 'Nhân viên',
+        noEmployees: 'Chưa có nhân viên',
+        inviteFirst: 'Chia sẻ mã mời để thêm nhân viên',
+        you: '(bạn)', editRate: 'Sửa tỷ lệ', noRate: 'Chưa có',
+        // Settings — salon section
+        yourSalon: 'Tiệm của bạn', yourRole: 'Vai trò',
+        roleOwner: 'Chủ tiệm', roleEmployee: 'Nhân viên', roleSolo: 'Cá nhân',
+        // Appointments
+        bookAppointment: 'Đặt lịch hẹn',
+        upcoming: 'Sắp tới',
+        noAppointments: 'Không có lịch hẹn',
+        assignTo: 'Giao cho',
+        completeAppt: 'Hoàn thành',
+        cancelAppt: 'Hủy lịch hẹn',
+        confirmCancelAppt: 'Hủy lịch hẹn này?',
+        tomorrowAppt: 'lịch hẹn ngày mai',
+        tomorrowAppts: 'lịch hẹn ngày mai',
+        todayAppt: 'lịch hẹn còn lại hôm nay',
+        todayAppts: 'lịch hẹn còn lại hôm nay',
+        // PIN reset
+        changePin: 'Đổi PIN',
+        currentPin: 'PIN hiện tại',
+        newPin: 'PIN mới',
+        confirmNewPin: 'Xác nhận PIN mới',
+        changingPin: 'Đang cập nhật...',
+        pinChanged: 'Đã đổi PIN',
+        recoveryCode: 'Mã khôi phục',
+        recoveryCodeSub: 'Lưu lại — cần dùng để đặt lại PIN nếu quên',
+        forgotPin: 'Quên PIN?',
+        forgotPinTitle: 'Đặt lại PIN',
+        forgotPinSub: 'Nhập số điện thoại và mã khôi phục của bạn',
+        resetPin: 'Đặt lại PIN',
+        resettingPin: 'Đang đặt lại...',
+        pinReset: 'Đã đặt lại PIN! Đăng nhập với PIN mới.',
+        invalidRecoveryCode: 'Mã khôi phục không đúng',
+        backToSignIn: 'Quay lại đăng nhập',
+        months: ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
+                 'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'],
+        days: ['CN','T2','T3','T4','T5','T6','T7'],
+      }
+    };
+
+    // ── THEMES ────────────────────────────────────────────────────────────
+    const THEMES = {
+      blush:  { tp:'#F9A8C2', ts:'#C97A9A', tb:'#FDF0F5', tbd:'#F5E0EC', td:'#4A2D3A', tlt:'#FFF5F9' },
+      ocean:  { tp:'#7EC8E3', ts:'#4A9FC4', tb:'#F0F8FF', tbd:'#C5DFF0', td:'#1A3D5C', tlt:'#EBF5FF' },
+      forest: { tp:'#86C9A4', ts:'#4E9E7A', tb:'#F0FAF5', tbd:'#C4E8D5', td:'#1B3D2A', tlt:'#E8F7EE' },
+      slate:  { tp:'#94A3B8', ts:'#64748B', tb:'#F8FAFC', tbd:'#E2E8F0', td:'#1E293B', tlt:'#F1F5F9' },
+    };
+
+    const DEFAULT_SERVICES = [
+      'Pedi #1','Pedi #2','Pedi #3','Pedi #4','Pedi #5',
+      'Pedi #6','Pedi #7','Pedi #8','Pedi #9','Pedi #10',
+      'Mani #1','Mani #2','Mani #3','Mani #4','Mani #5',
+      'Mani #6','Mani #7','Mani #8','Mani #9','Mani #10',
+      'Full Set Acrylic','Acrylic Fill',
+      'Dip Powder / SNS','Gel Polish',
+      'Nail Art','French Tip','Chrome / Glitter','Nail Repair',
+      'Gel Removal','Acrylic Removal',
+      'Wax','Eyelash Extensions'
+    ];
+
+    // ── STATE ─────────────────────────────────────────────────────────────
+    let state = { entries: [], settings: {} };
+    let lang = 'en';
+    let currentView = 'calendar';
+    let currentDate = new Date();
+    let selectedDay = null;
+    let editingServiceIdx = null;
+    let editingEntryId = null;
+    let currentPeriod = 'biweekly';
+    let summaryAnchor = new Date();
+    let currentUser = null;
+    let settingsSaveTimer = null;
+    // Owner/employee layer
+    let userRole = null;       // 'solo' | 'owner' | 'employee' | null (triggers onboarding)
+    let currentSalon = null;   // { id, name, invite_code, ... }
+    let salonMembers = [];     // [{ id, user_id, display_name, commission_rate, role }]
+    let teamPeriod = 'biweekly';
+    let teamAnchor = new Date();
+    let editingMemberIdx = null;
+    let appointments = [];
+    let completingApptId = null;
+
+    // ── HELPERS ───────────────────────────────────────────────────────────
+    const t = key => (STRINGS[lang] && STRINGS[lang][key] !== undefined) ? STRINGS[lang][key] : key;
+
+    function applyTheme(name) {
+      const colors = THEMES[name] || THEMES.blush;
+      const root = document.documentElement;
+      Object.entries(colors).forEach(([k, v]) => root.style.setProperty('--' + k, v));
+    }
+
+    function setTheme(name) {
+      state.settings.theme = name;
+      applyTheme(name);
+      saveToStorage();
+      renderSettings();
+    }
+
+    function generateId() {
+      return crypto.randomUUID ? crypto.randomUUID()
+        : Date.now().toString(36) + Math.random().toString(36).slice(2);
+    }
+
+    function generateInviteCode() {
+      const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+      return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
+
+    function generateRecoveryCode() {
+      const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+      const p1 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      const p2 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      return p1 + '-' + p2;
+    }
+
+    function formatDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getDayEntries(dateStr) {
+      return state.entries
+        .filter(e => e.date === dateStr && e.user_id === currentUser?.id)
+        .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    }
+
+    function getDayTotal(dateStr) {
+      return getDayEntries(dateStr).reduce((s, e) => s + (e.price || 0), 0);
+    }
+
+    function getPeriodRange(type, anchor) {
+      const d = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
+      let start, end;
+      if (type === 'weekly') {
+        const dow = d.getDay();
+        start = new Date(d); start.setDate(d.getDate() - dow);
+        end = new Date(start); end.setDate(start.getDate() + 6);
+      } else if (type === 'biweekly') {
+        const dow = d.getDay();
+        start = new Date(d); start.setDate(d.getDate() - dow);
+        end = new Date(start); end.setDate(start.getDate() + 13);
+      } else {
+        start = new Date(d.getFullYear(), d.getMonth(), 1);
+        end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      }
+      return { start: formatDate(start), end: formatDate(end) };
+    }
+
+    function getPeriodEntries(start, end) {
+      return state.entries.filter(e =>
+        e.date >= start && e.date <= end && e.user_id === currentUser?.id
+      );
+    }
+
+    function getDayAppointments(dateStr) {
+      return appointments
+        .filter(a => a.date === dateStr && !a.completed)
+        .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    }
+
+    // ── SUPABASE DATA LAYER ───────────────────────────────────────────────
+    async function loadFromSupabase() {
+      if (!currentUser) return;
+
+      const [{ data: entries }, { data: settings }] = await Promise.all([
+        db.from('entries').select('*').order('date'),
+        db.from('user_settings').select('*').eq('user_id', currentUser.id).single()
+      ]);
+
+      state.entries = (entries || []).map(e => ({
+        id: e.id, date: e.date, time: e.time || '',
+        name: e.name || '', services: e.services || [],
+        price: e.price || 0, notes: e.notes || '',
+        user_id: e.user_id, salon_id: e.salon_id || null
+      }));
+
+      if (settings) {
+        state.settings = {
+          services: (settings.services && settings.services.length) ? settings.services : [...DEFAULT_SERVICES],
+          currencySymbol: settings.currency_symbol || '$',
+          commissionRate: settings.commission_rate || null,
+          language: settings.language || 'en',
+          theme: settings.theme || 'blush',
+          role: settings.role || null,
+          salon_id: settings.salon_id || null,
+          display_name: settings.display_name || null,
+          recovery_code: settings.recovery_code || null,
+        };
+      } else {
+        state.settings = {
+          services: [...DEFAULT_SERVICES],
+          currencySymbol: '$',
+          commissionRate: null,
+          language: 'en',
+          theme: 'blush',
+          role: null,
+          salon_id: null,
+          display_name: null,
+          recovery_code: generateRecoveryCode(),
+        };
+        await pushSettingsToCloud();
+      }
+
+      // Generate recovery code for existing users who don't have one yet
+      if (!state.settings.recovery_code) {
+        state.settings.recovery_code = generateRecoveryCode();
+        pushSettingsToCloud();
+      }
+
+      lang = state.settings.language || 'en';
+      applyTheme(state.settings.theme || 'blush');
+    }
+
+    async function loadSalonContext() {
+      if (!state.settings.salon_id) return;
+      const { data: salon } = await db.from('salons').select('*').eq('id', state.settings.salon_id).single();
+      currentSalon = salon;
+      if (userRole === 'owner') {
+        const { data: members } = await db.from('salon_members').select('*').eq('salon_id', state.settings.salon_id);
+        salonMembers = members || [];
+      }
+      await loadAppointments();
+    }
+
+    async function loadAppointments() {
+      if (!currentSalon) return;
+      const { data } = await db.from('appointments')
+        .select('*')
+        .eq('salon_id', currentSalon.id)
+        .eq('completed', false)
+        .order('date').order('time');
+      appointments = (data || []).map(a => ({
+        ...a,
+        services: Array.isArray(a.services) ? a.services : [],
+        date: typeof a.date === 'string' ? a.date.slice(0, 10) : a.date,
+      }));
+    }
+
+    async function pushEntryToCloud(entry) {
+      if (!currentUser) return;
+      await db.from('entries').upsert({
+        id: entry.id,
+        user_id: currentUser.id,
+        salon_id: entry.salon_id || null,
+        date: entry.date,
+        time: entry.time || '',
+        name: entry.name || '',
+        services: entry.services || [],
+        price: entry.price || 0,
+        notes: entry.notes || ''
+      });
+    }
+
+    async function deleteEntryFromCloud(id) {
+      if (!currentUser) return;
+      await db.from('entries').delete().eq('id', id);
+    }
+
+    async function pushSettingsToCloud() {
+      if (!currentUser) return;
+      await db.from('user_settings').upsert({
+        user_id: currentUser.id,
+        services: state.settings.services || [],
+        currency_symbol: state.settings.currencySymbol || '$',
+        commission_rate: state.settings.commissionRate || null,
+        language: state.settings.language || 'en',
+        theme: state.settings.theme || 'blush',
+        role: state.settings.role || null,
+        salon_id: state.settings.salon_id || null,
+        display_name: state.settings.display_name || null,
+        recovery_code: state.settings.recovery_code || null,
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    async function bulkUploadEntries(entries) {
+      if (!currentUser || !entries.length) return;
+      const rows = entries.map(e => ({
+        id: e.id, user_id: currentUser.id,
+        salon_id: null,
+        date: e.date, time: e.time || '',
+        name: e.name || '', services: e.services || [],
+        price: e.price || 0, notes: e.notes || ''
+      }));
+      await db.from('entries').upsert(rows);
+    }
+
+    function saveToStorage() {
+      localStorage.setItem('salon_entries', JSON.stringify(state.entries));
+      localStorage.setItem('salon_settings', JSON.stringify(state.settings));
+      clearTimeout(settingsSaveTimer);
+      settingsSaveTimer = setTimeout(pushSettingsToCloud, 1500);
+    }
+
+    // ── AUTH ──────────────────────────────────────────────────────────────
+    function phoneToEmail(phone) {
+      return phone.replace(/\D/g, '') + '@nailapp.local';
+    }
+
+    async function routeAfterLoad() {
+      userRole = state.settings.role || null;
+      if (!userRole) {
+        showScreen('onboarding');
+        renderOnboarding('choose');
+      } else if (userRole === 'owner' || userRole === 'employee') {
+        await loadSalonContext();
+        showScreen('app');
+      } else {
+        showScreen('app');
+      }
+    }
+
+    async function doSignIn(phone, pin) {
+      const { data, error } = await db.auth.signInWithPassword({
+        email: phoneToEmail(phone), password: pin
+      });
+      if (error) return t('authError');
+      currentUser = data.user;
+      await loadFromSupabase();
+      await routeAfterLoad();
+      return null;
+    }
+
+    async function doSignUp(phone, pin) {
+      const email = phoneToEmail(phone);
+      const { data, error } = await db.auth.signUp({ email, password: pin });
+      if (error) {
+        if (error.message.includes('already registered')) return t('authError');
+        return error.message;
+      }
+
+      let user = data.user;
+      let session = data.session;
+      if (!session) {
+        const { data: siData, error: siErr } = await db.auth.signInWithPassword({ email, password: pin });
+        if (siErr) return siErr.message;
+        user = siData.user;
+      }
+      currentUser = user;
+
+      const localEntries = JSON.parse(localStorage.getItem('salon_entries') || '[]');
+      const localSettings = JSON.parse(localStorage.getItem('salon_settings') || 'null');
+
+      if (localSettings) {
+        state.settings = { ...localSettings, role: null, salon_id: null, display_name: null };
+      } else {
+        state.settings = {
+          services: [...DEFAULT_SERVICES],
+          currencySymbol: '$', commissionRate: null,
+          language: 'en', theme: 'blush',
+          role: null, salon_id: null, display_name: null,
+        };
+      }
+      if (!state.settings.recovery_code) {
+        state.settings.recovery_code = generateRecoveryCode();
+      }
+      await pushSettingsToCloud();
+
+      if (localEntries.length > 0) {
+        state.entries = localEntries.map(e => ({ ...e, user_id: currentUser.id, salon_id: null }));
+        await bulkUploadEntries(state.entries);
+        localStorage.removeItem('salon_entries');
+        localStorage.removeItem('salon_settings');
+      }
+
+      await loadFromSupabase();
+      await routeAfterLoad();
+      return null;
+    }
+
+    async function doSignOut() {
+      if (!confirm(t('confirmSignOut'))) return;
+      await db.auth.signOut();
+      currentUser = null;
+      state.entries = [];
+      state.settings = {};
+      userRole = null;
+      currentSalon = null;
+      salonMembers = [];
+      appointments = [];
+      localStorage.removeItem('salon_entries');
+      localStorage.removeItem('salon_settings');
+      showScreen('auth');
+    }
+
+    // ── SCREEN MANAGEMENT ─────────────────────────────────────────────────
+    function showScreen(name) {
+      document.getElementById('screen-loading').classList.add('hidden');
+      document.getElementById('screen-auth').classList.add('hidden');
+      document.getElementById('screen-onboarding').classList.add('hidden');
+      document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+      document.getElementById('nav-bar').classList.add('hidden');
+
+      if (name === 'auth') {
+        document.getElementById('screen-auth').classList.remove('hidden');
+        renderAuthScreen('signin');
+      } else if (name === 'onboarding') {
+        document.getElementById('screen-onboarding').classList.remove('hidden');
+      } else if (name === 'app') {
+        document.getElementById('nav-bar').classList.remove('hidden');
+        renderNav();
+        showView('calendar');
+      }
+    }
+
+    function renderAuthScreen(mode) {
+      if (mode === 'forgot') {
+        document.getElementById('auth-content').innerHTML = `
+          <div style="text-align:center;margin-bottom:28px">
+            <div style="font-size:48px;margin-bottom:10px">🔑</div>
+            <div style="font-size:22px;font-weight:800;color:var(--td);margin-bottom:6px">${t('forgotPinTitle')}</div>
+            <div style="font-size:14px;color:var(--ts)">${t('forgotPinSub')}</div>
+          </div>
+
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.07em;display:block;margin-bottom:8px">${t('phoneNumber')}</label>
+            <input id="auth-phone" type="tel" placeholder="${t('phonePlaceholder')}"
+              style="width:100%;padding:16px;border:2px solid var(--tbd);border-radius:14px;
+                     font-size:20px;color:var(--td);background:#fff;outline:none;
+                     box-sizing:border-box;-webkit-appearance:none">
+          </div>
+
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.07em;display:block;margin-bottom:8px">${t('recoveryCode')}</label>
+            <input id="auth-recovery" type="text" placeholder="XXXX-XXXX"
+              autocomplete="off" autocapitalize="characters" spellcheck="false"
+              style="width:100%;padding:16px;border:2px solid var(--tbd);border-radius:14px;
+                     font-size:22px;font-weight:800;color:var(--td);background:#fff;outline:none;
+                     box-sizing:border-box;-webkit-appearance:none;letter-spacing:0.12em">
+          </div>
+
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.07em;display:block;margin-bottom:8px">${t('newPin')}</label>
+            <input id="auth-pin" type="password" inputmode="numeric" placeholder="${t('pinPlaceholder')}"
+              style="width:100%;padding:16px;border:2px solid var(--tbd);border-radius:14px;
+                     font-size:22px;color:var(--td);background:#fff;outline:none;
+                     box-sizing:border-box;-webkit-appearance:none">
+          </div>
+
+          <div style="margin-bottom:8px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.07em;display:block;margin-bottom:8px">${t('confirmNewPin')}</label>
+            <input id="auth-pin2" type="password" inputmode="numeric" placeholder="${t('pinPlaceholder')}"
+              style="width:100%;padding:16px;border:2px solid var(--tbd);border-radius:14px;
+                     font-size:22px;color:var(--td);background:#fff;outline:none;
+                     box-sizing:border-box;-webkit-appearance:none">
+          </div>
+
+          <div id="auth-error" style="color:#d00;font-size:15px;text-align:center;
+                                      min-height:24px;margin:10px 0"></div>
+
+          <button id="auth-btn" onclick="handleForgotPin()"
+            style="width:100%;padding:20px;
+                   background:linear-gradient(135deg,var(--tp),var(--ts));
+                   color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                   cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2);margin-bottom:20px">
+            ${t('resetPin')}
+          </button>
+
+          <div style="text-align:center">
+            <button onclick="renderAuthScreen('signin')"
+              style="background:none;border:none;color:var(--ts);font-size:15px;
+                     cursor:pointer;padding:4px 8px;font-family:Georgia,serif">
+              ← ${t('backToSignIn')}
+            </button>
+          </div>
+        `;
+        requestAnimationFrame(() => { const el = document.getElementById('auth-phone'); if (el) el.focus(); });
+        return;
+      }
+
+      const isSignin = mode === 'signin';
+      document.getElementById('auth-content').innerHTML = `
+        <div style="text-align:center;margin-bottom:32px">
+          <div style="font-size:56px;margin-bottom:12px">💅</div>
+          <div style="font-size:24px;font-weight:800;color:var(--td)">${t('appTitle')}</div>
+        </div>
+
+        <div style="margin-bottom:18px">
+          <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                        letter-spacing:0.07em;display:block;margin-bottom:8px">${t('phoneNumber')}</label>
+          <input id="auth-phone" type="tel" placeholder="${t('phonePlaceholder')}"
+            style="width:100%;padding:18px;border:2px solid var(--tbd);border-radius:14px;
+                   font-size:22px;color:var(--td);background:#fff;outline:none;
+                   box-sizing:border-box;-webkit-appearance:none">
+        </div>
+
+        <div style="margin-bottom:${isSignin ? 8 : 18}px">
+          <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                        letter-spacing:0.07em;display:block;margin-bottom:8px">${t('pin')}</label>
+          <input id="auth-pin" type="password" inputmode="numeric" placeholder="${t('pinPlaceholder')}"
+            style="width:100%;padding:18px;border:2px solid var(--tbd);border-radius:14px;
+                   font-size:22px;color:var(--td);background:#fff;outline:none;
+                   box-sizing:border-box;-webkit-appearance:none">
+        </div>
+
+        ${!isSignin ? `
+        <div style="margin-bottom:8px">
+          <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                        letter-spacing:0.07em;display:block;margin-bottom:8px">${t('confirmPin')}</label>
+          <input id="auth-pin2" type="password" inputmode="numeric" placeholder="${t('pinPlaceholder')}"
+            style="width:100%;padding:18px;border:2px solid var(--tbd);border-radius:14px;
+                   font-size:22px;color:var(--td);background:#fff;outline:none;
+                   box-sizing:border-box;-webkit-appearance:none">
+        </div>` : ''}
+
+        <div id="auth-error" style="color:#d00;font-size:15px;text-align:center;
+                                    min-height:24px;margin:10px 0"></div>
+
+        <button id="auth-btn" onclick="handleAuth('${mode}')"
+          style="width:100%;padding:20px;
+                 background:linear-gradient(135deg,var(--tp),var(--ts));
+                 color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                 cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2);margin-bottom:20px">
+          ${isSignin ? t('signIn') : t('createAccount')}
+        </button>
+
+        <div style="text-align:center;font-size:16px;color:var(--ts)">
+          ${isSignin ? t('noAccount') : t('alreadyHaveAccount')}
+          <button onclick="renderAuthScreen('${isSignin ? 'signup' : 'signin'}')"
+            style="background:none;border:none;color:var(--td);font-size:16px;font-weight:800;
+                   cursor:pointer;text-decoration:underline;padding:4px 8px;font-family:Georgia,serif">
+            ${isSignin ? t('createAccount') : t('signIn')}
+          </button>
+        </div>
+
+        ${isSignin ? `
+        <div style="text-align:center;margin-top:16px">
+          <button onclick="renderAuthScreen('forgot')"
+            style="background:none;border:none;color:var(--ts);font-size:14px;
+                   cursor:pointer;padding:4px 8px;font-family:Georgia,serif">
+            ${t('forgotPin')}
+          </button>
+        </div>` : ''}
+        <div style="text-align:center;margin-top:28px">
+          <a href="/" style="font-size:13px;color:var(--ts);text-decoration:none;
+                             font-family:Georgia,serif;opacity:.6">
+            ← polishpay.app
+          </a>
+        </div>
+      `;
+
+      requestAnimationFrame(() => {
+        const el = document.getElementById('auth-phone');
+        if (el) el.focus();
+      });
+    }
+
+    async function handleAuth(mode) {
+      const phone = (document.getElementById('auth-phone')?.value || '').trim();
+      const pin   = (document.getElementById('auth-pin')?.value || '').trim();
+      const pin2  = (document.getElementById('auth-pin2')?.value || '').trim();
+      const btn   = document.getElementById('auth-btn');
+      const errEl = document.getElementById('auth-error');
+      if (!errEl) return;
+
+      errEl.textContent = '';
+      if (!phone) { errEl.textContent = t('phoneRequired'); return; }
+      if (pin.length < 4) { errEl.textContent = t('pinTooShort'); return; }
+      if (mode === 'signup' && pin !== pin2) { errEl.textContent = t('pinMismatch'); return; }
+
+      btn.disabled = true;
+      btn.textContent = mode === 'signin' ? t('signingIn') : t('signingUp');
+
+      const error = mode === 'signin'
+        ? await doSignIn(phone, pin)
+        : await doSignUp(phone, pin);
+
+      if (error) {
+        errEl.textContent = error;
+        btn.disabled = false;
+        btn.textContent = mode === 'signin' ? t('signIn') : t('createAccount');
+      }
+    }
+
+    async function handleForgotPin() {
+      const phone    = (document.getElementById('auth-phone')?.value || '').trim();
+      const code     = (document.getElementById('auth-recovery')?.value || '').trim();
+      const newPin   = (document.getElementById('auth-pin')?.value || '').trim();
+      const newPin2  = (document.getElementById('auth-pin2')?.value || '').trim();
+      const btn      = document.getElementById('auth-btn');
+      const errEl    = document.getElementById('auth-error');
+      if (!errEl) return;
+
+      errEl.textContent = '';
+      if (!phone) { errEl.textContent = t('phoneRequired'); return; }
+      if (!code)  { errEl.textContent = t('invalidRecoveryCode'); return; }
+      if (newPin.length < 4) { errEl.textContent = t('pinTooShort'); return; }
+      if (newPin !== newPin2) { errEl.textContent = t('pinMismatch'); return; }
+
+      btn.disabled = true;
+      btn.textContent = t('resettingPin');
+
+      try {
+        const res = await fetch(SUPABASE_URL + '/functions/v1/reset-pin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY
+          },
+          body: JSON.stringify({ phone, recovery_code: code, new_pin: newPin })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = data.error === 'not_found'    ? t('authError')
+                    : data.error === 'invalid_code' ? t('invalidRecoveryCode')
+                    : (data.error || 'Server error. Try again.');
+          errEl.textContent = msg;
+          btn.disabled = false;
+          btn.textContent = t('resetPin');
+        } else {
+          document.getElementById('auth-content').innerHTML = `
+            <div style="text-align:center;padding:40px 0">
+              <div style="font-size:56px;margin-bottom:16px">✓</div>
+              <div style="font-size:20px;font-weight:800;color:var(--td);margin-bottom:24px">${t('pinReset')}</div>
+              <button onclick="renderAuthScreen('signin')"
+                style="width:100%;padding:20px;background:linear-gradient(135deg,var(--tp),var(--ts));
+                       color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                       cursor:pointer;font-family:Georgia,serif">
+                ${t('signIn')}
+              </button>
+            </div>
+          `;
+        }
+      } catch (_) {
+        errEl.textContent = 'Network error. Please try again.';
+        btn.disabled = false;
+        btn.textContent = t('resetPin');
+      }
+    }
+
+    async function handleChangePin() {
+      const curPin  = (document.getElementById('change-pin-cur')?.value || '').trim();
+      const newPin  = (document.getElementById('change-pin-new')?.value || '').trim();
+      const newPin2 = (document.getElementById('change-pin-new2')?.value || '').trim();
+      const errEl   = document.getElementById('change-pin-error');
+      const btn     = document.getElementById('change-pin-btn');
+      if (!errEl || !btn) return;
+
+      errEl.style.color = '#d00';
+      errEl.textContent = '';
+      if (curPin.length < 4) { errEl.textContent = t('pinTooShort'); return; }
+      if (newPin.length < 4) { errEl.textContent = t('pinTooShort'); return; }
+      if (newPin !== newPin2) { errEl.textContent = t('pinMismatch'); return; }
+
+      btn.disabled = true;
+      btn.textContent = t('changingPin');
+
+      // Verify current PIN
+      const { error: verifyErr } = await db.auth.signInWithPassword({
+        email: currentUser.email, password: curPin
+      });
+      if (verifyErr) {
+        errEl.textContent = t('authError');
+        btn.disabled = false;
+        btn.textContent = t('changePin');
+        return;
+      }
+
+      // Update to new PIN
+      const { error: updateErr } = await db.auth.updateUser({ password: newPin });
+      if (updateErr) {
+        errEl.textContent = updateErr.message;
+        btn.disabled = false;
+        btn.textContent = t('changePin');
+        return;
+      }
+
+      document.getElementById('change-pin-cur').value = '';
+      document.getElementById('change-pin-new').value = '';
+      document.getElementById('change-pin-new2').value = '';
+      btn.disabled = false;
+      btn.textContent = t('changePin');
+      errEl.style.color = '#2a7a2a';
+      errEl.textContent = t('pinChanged');
+      setTimeout(() => { if (errEl) { errEl.style.color = '#d00'; errEl.textContent = ''; } }, 3000);
+    }
+
+    function copyRecoveryCode() {
+      const code = state.settings.recovery_code;
+      if (!code) return;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('copy-code-btn');
+        if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => { if (btn) btn.textContent = 'Copy'; }, 2000); }
+      }).catch(() => {
+        prompt('Your recovery code:', code);
+      });
+    }
+
+    // ── ONBOARDING ────────────────────────────────────────────────────────
+    function renderOnboarding(mode) {
+      const el = document.getElementById('onboarding-content');
+
+      const inputStyle = `width:100%;padding:18px;border:2px solid var(--tbd);border-radius:14px;
+                         font-size:20px;color:var(--td);background:#fff;outline:none;
+                         box-sizing:border-box;-webkit-appearance:none`;
+
+      const labelStyle = `font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                         letter-spacing:0.07em;display:block;margin-bottom:8px`;
+
+      if (mode === 'choose') {
+        el.innerHTML = `
+          <div style="text-align:center;margin-bottom:32px">
+            <div style="font-size:52px;margin-bottom:12px">💅</div>
+            <div style="font-size:22px;font-weight:800;color:var(--td)">${t('welcomeTitle')}</div>
+          </div>
+
+          <button onclick="chooseSolo()"
+            style="width:100%;padding:20px;background:#fff;border:2px solid var(--tbd);
+                   border-radius:16px;text-align:left;cursor:pointer;margin-bottom:12px;
+                   display:block">
+            <div style="font-size:17px;font-weight:800;color:var(--td)">${t('iAmSolo')}</div>
+            <div style="font-size:13px;color:var(--ts);margin-top:4px">${t('iAmSoloSub')}</div>
+          </button>
+
+          <button onclick="chooseOwner()"
+            style="width:100%;padding:20px;background:#fff;border:2px solid var(--tbd);
+                   border-radius:16px;text-align:left;cursor:pointer;margin-bottom:12px;
+                   display:block">
+            <div style="font-size:17px;font-weight:800;color:var(--td)">${t('iAmOwner')}</div>
+            <div style="font-size:13px;color:var(--ts);margin-top:4px">${t('iAmOwnerSub')}</div>
+          </button>
+
+          <button onclick="chooseEmployee()"
+            style="width:100%;padding:20px;background:#fff;border:2px solid var(--tbd);
+                   border-radius:16px;text-align:left;cursor:pointer;display:block">
+            <div style="font-size:17px;font-weight:800;color:var(--td)">${t('iAmEmployee')}</div>
+            <div style="font-size:13px;color:var(--ts);margin-top:4px">${t('iAmEmployeeSub')}</div>
+          </button>
+        `;
+      } else if (mode === 'setup_salon') {
+        el.innerHTML = `
+          <button onclick="renderOnboarding('choose')"
+            style="background:none;border:none;color:var(--ts);font-size:18px;cursor:pointer;
+                   padding:0;margin-bottom:20px;display:flex;align-items:center;gap:6px;
+                   font-family:Georgia,serif">
+            ← ${t('cancel')}
+          </button>
+
+          <div style="margin-bottom:28px">
+            <div style="font-size:22px;font-weight:800;color:var(--td);margin-bottom:6px">${t('iAmOwner')}</div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <label style="${labelStyle}">${t('salonName')}</label>
+            <input id="ob-salon-name" type="text" placeholder="${t('salonNamePlaceholder')}"
+              style="${inputStyle}">
+          </div>
+
+          <div style="margin-bottom:18px">
+            <label style="${labelStyle}">${t('yourName')}</label>
+            <input id="ob-display-name" type="text" placeholder="${t('yourNamePlaceholder')}"
+              style="${inputStyle}">
+          </div>
+
+          <div id="onboarding-error" style="color:#d00;font-size:15px;text-align:center;min-height:24px;margin:10px 0"></div>
+
+          <button id="onboarding-btn" onclick="handleSetupSalon()"
+            style="width:100%;padding:20px;background:linear-gradient(135deg,var(--tp),var(--ts));
+                   color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                   cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2)">
+            ${t('iAmOwner')}
+          </button>
+        `;
+        requestAnimationFrame(() => document.getElementById('ob-salon-name')?.focus());
+      } else if (mode === 'join_salon') {
+        el.innerHTML = `
+          <button onclick="renderOnboarding('choose')"
+            style="background:none;border:none;color:var(--ts);font-size:18px;cursor:pointer;
+                   padding:0;margin-bottom:20px;display:flex;align-items:center;gap:6px;
+                   font-family:Georgia,serif">
+            ← ${t('cancel')}
+          </button>
+
+          <div style="margin-bottom:28px">
+            <div style="font-size:22px;font-weight:800;color:var(--td);margin-bottom:6px">${t('iAmEmployee')}</div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <label style="${labelStyle}">${t('inviteCode')}</label>
+            <input id="ob-invite-code" type="text" placeholder="${t('inviteCodePlaceholder')}"
+              maxlength="6" autocomplete="off"
+              oninput="this.value=this.value.toUpperCase()"
+              style="${inputStyle};letter-spacing:4px;font-weight:800;text-transform:uppercase">
+            <div style="font-size:13px;color:var(--ts);margin-top:6px">${t('inviteCodeSub')}</div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <label style="${labelStyle}">${t('yourName')}</label>
+            <input id="ob-display-name" type="text" placeholder="${t('yourNamePlaceholder')}"
+              style="${inputStyle}">
+          </div>
+
+          <div id="onboarding-error" style="color:#d00;font-size:15px;text-align:center;min-height:24px;margin:10px 0"></div>
+
+          <button id="onboarding-btn" onclick="handleJoinSalon()"
+            style="width:100%;padding:20px;background:linear-gradient(135deg,var(--tp),var(--ts));
+                   color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                   cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2)">
+            ${t('iAmEmployee')}
+          </button>
+        `;
+        requestAnimationFrame(() => document.getElementById('ob-invite-code')?.focus());
+      } else if (mode === 'salon_created') {
+        const code = currentSalon?.invite_code || '——';
+        el.innerHTML = `
+          <div style="text-align:center;margin-bottom:28px">
+            <div style="font-size:52px;margin-bottom:12px">🎉</div>
+            <div style="font-size:24px;font-weight:800;color:var(--td)">${t('salonCreated')}</div>
+            <div style="font-size:16px;color:var(--ts);margin-top:6px">${currentSalon?.name || ''}</div>
+          </div>
+
+          <div style="text-align:center;margin-bottom:24px">
+            <div style="font-size:15px;color:var(--td);margin-bottom:12px">${t('salonCreatedSub')}</div>
+            <div style="background:var(--td);color:#fff;border-radius:16px;padding:20px;
+                        font-size:36px;font-weight:900;letter-spacing:6px;font-family:monospace">
+              ${code}
+            </div>
+          </div>
+
+          <button id="copy-code-btn" onclick="copyInviteCode()"
+            style="width:100%;padding:16px;background:var(--tb);border:2px solid var(--tp);
+                   border-radius:12px;color:var(--td);font-size:16px;font-weight:700;
+                   cursor:pointer;margin-bottom:12px;font-family:Georgia,serif">
+            Copy Code
+          </button>
+
+          <button onclick="showScreen('app')"
+            style="width:100%;padding:20px;background:linear-gradient(135deg,var(--tp),var(--ts));
+                   color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                   cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2)">
+            ${t('goToApp')}
+          </button>
+        `;
+      }
+    }
+
+    async function chooseSolo() {
+      state.settings.role = 'solo';
+      state.settings.salon_id = null;
+      state.settings.display_name = null;
+      userRole = 'solo';
+      await pushSettingsToCloud();
+      showScreen('app');
+    }
+
+    function chooseOwner() { renderOnboarding('setup_salon'); }
+    function chooseEmployee() { renderOnboarding('join_salon'); }
+
+    async function handleSetupSalon() {
+      const salonName = (document.getElementById('ob-salon-name')?.value || '').trim();
+      const displayName = (document.getElementById('ob-display-name')?.value || '').trim();
+      const btn = document.getElementById('onboarding-btn');
+      const errEl = document.getElementById('onboarding-error');
+      errEl.textContent = '';
+
+      if (!salonName) { errEl.textContent = t('salonName') + ' required'; return; }
+      if (!displayName) { errEl.textContent = t('yourName') + ' required'; return; }
+
+      btn.disabled = true;
+      btn.textContent = t('creating');
+
+      const code = generateInviteCode();
+
+      const { data: salon, error: salonErr } = await db.from('salons').insert({
+        name: salonName, owner_user_id: currentUser.id, invite_code: code
+      }).select().single();
+
+      if (salonErr) {
+        errEl.textContent = salonErr.message;
+        btn.disabled = false; btn.textContent = t('iAmOwner'); return;
+      }
+
+      await db.from('salon_members').insert({
+        salon_id: salon.id, user_id: currentUser.id,
+        role: 'owner', display_name: displayName, commission_rate: null
+      });
+
+      state.settings.role = 'owner';
+      state.settings.salon_id = salon.id;
+      state.settings.display_name = displayName;
+      await pushSettingsToCloud();
+
+      userRole = 'owner';
+      currentSalon = salon;
+      salonMembers = [{
+        id: null, salon_id: salon.id, user_id: currentUser.id,
+        role: 'owner', display_name: displayName, commission_rate: null
+      }];
+
+      // Reload members to get real IDs
+      const { data: members } = await db.from('salon_members').select('*').eq('salon_id', salon.id);
+      salonMembers = members || salonMembers;
+
+      renderOnboarding('salon_created');
+    }
+
+    async function handleJoinSalon() {
+      const inviteCode = (document.getElementById('ob-invite-code')?.value || '').trim().toUpperCase();
+      const displayName = (document.getElementById('ob-display-name')?.value || '').trim();
+      const btn = document.getElementById('onboarding-btn');
+      const errEl = document.getElementById('onboarding-error');
+      errEl.textContent = '';
+
+      if (!inviteCode) { errEl.textContent = t('inviteCode') + ' required'; return; }
+      if (!displayName) { errEl.textContent = t('yourName') + ' required'; return; }
+
+      btn.disabled = true;
+      btn.textContent = t('joining');
+
+      const { data: rows, error: codeErr } = await db.rpc('get_salon_by_invite_code', { p_code: inviteCode });
+
+      if (codeErr || !rows || rows.length === 0) {
+        errEl.textContent = t('invalidCode');
+        btn.disabled = false; btn.textContent = t('iAmEmployee'); return;
+      }
+
+      const { salon_id, salon_name } = rows[0];
+
+      const { error: joinErr } = await db.from('salon_members').insert({
+        salon_id, user_id: currentUser.id,
+        role: 'employee', display_name: displayName, commission_rate: null
+      });
+
+      if (joinErr) {
+        errEl.textContent = joinErr.message;
+        btn.disabled = false; btn.textContent = t('iAmEmployee'); return;
+      }
+
+      state.settings.role = 'employee';
+      state.settings.salon_id = salon_id;
+      state.settings.display_name = displayName;
+      await pushSettingsToCloud();
+
+      userRole = 'employee';
+      currentSalon = { id: salon_id, name: salon_name };
+
+      showScreen('app');
+    }
+
+    // ── ROUTING ───────────────────────────────────────────────────────────
+    function showView(name) {
+      currentView = name;
+      document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+      document.getElementById('view-' + name).classList.remove('hidden');
+      renderNav();
+      if (name === 'calendar') renderCalendar();
+      if (name === 'summary')  renderSummary();
+      if (name === 'team')     renderTeam();
+      if (name === 'settings') renderSettings();
+    }
+
+    function renderNav() {
+      const tabs = [{ key: 'calendar', icon: '📅' }, { key: 'summary', icon: '📊' }];
+      if (userRole === 'owner') tabs.push({ key: 'team', icon: '👥' });
+      tabs.push({ key: 'settings', icon: '⚙️' });
+
+      const tabHtml = (tab) => `
+        <button class="nav-tab ${currentView === tab.key ? 'active' : ''}"
+          onclick="showView('${tab.key}')"
+          style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0">
+          <span style="font-size:20px">${tab.icon}</span>
+          <span style="font-size:10px;font-weight:${currentView === tab.key ? '700' : '400'}">${t(tab.key)}</span>
+        </button>
+      `;
+
+      // Split tabs around center + button
+      const leftTabs = tabs.slice(0, 2).map(tabHtml).join('');
+      const rightTabs = tabs.slice(2).map(tabHtml).join('');
+
+      document.getElementById('nav-bar').innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-around;padding:4px 0">
+          ${leftTabs}
+          <button onclick="openSheet(null)"
+            style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--tp),var(--ts));border:none;
+                   color:#fff;font-size:26px;cursor:pointer;margin-top:-14px;
+                   box-shadow:0 4px 16px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center">
+            +
+          </button>
+          ${rightTabs}
+        </div>
+      `;
+    }
+
+    // ── CALENDAR ──────────────────────────────────────────────────────────
+    function appointmentCardHtml(a) {
+      const isOwner = userRole === 'owner';
+      const assignedMember = salonMembers.find(m => m.user_id === a.assigned_to);
+      return `
+        <div style="background:#FFFBF0;border:2px solid #E9C87A;border-radius:10px;
+                    padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div style="font-size:12px;color:#B8860B;font-weight:700">${a.time || '—'}</div>
+            ${isOwner && assignedMember ? `<div style="font-size:11px;color:#888;font-weight:600">${assignedMember.display_name}</div>` : ''}
+          </div>
+          <div style="font-size:15px;font-weight:700;color:var(--td)">${a.customer_name || '—'}</div>
+          ${(a.services||[]).length ? `<div style="font-size:12px;color:#888;margin-top:2px">${a.services.join(' · ')}</div>` : ''}
+          ${a.notes ? `<div style="font-size:11px;color:#bbb;margin-top:2px">${a.notes}</div>` : ''}
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button onclick="completeAppointment('${a.id}')"
+              style="flex:1;padding:9px;background:#E8F5E9;color:#2E7D32;border:2px solid #A5D6A7;
+                     border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;
+                     font-family:Georgia,serif">
+              ✓ ${t('completeAppt')}
+            </button>
+            ${isOwner ? `
+            <button onclick="cancelAppointment('${a.id}')"
+              style="padding:9px 14px;background:#FFF0F0;color:#C0392B;border:2px solid #FFCCCC;
+                     border-radius:8px;font-size:18px;font-weight:700;cursor:pointer;line-height:1">×</button>` : ''}
+          </div>
+        </div>`;
+    }
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const sym = state.settings.currencySymbol || '$';
+      const rate = state.settings.commissionRate;
+      const today = formatDate(new Date());
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstDow = new Date(year, month, 1).getDay();
+
+      // Tomorrow / today banners
+      const nowTime = `${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}`;
+      const tomorrowDate = new Date(); tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+      const tomorrowStr = formatDate(tomorrowDate);
+      const visibleAppt = (a) =>
+        !a.completed && (userRole === 'owner' || a.assigned_to === currentUser?.id);
+      const todayAppts = appointments.filter(a => a.date === today && visibleAppt(a) && (!a.time || a.time >= nowTime));
+      const tomorrowAppts = appointments.filter(a => a.date === tomorrowStr && visibleAppt(a));
+      let bannerHtml = '';
+      if (todayAppts.length > 0 || tomorrowAppts.length > 0) {
+        const lines = [];
+        if (todayAppts.length > 0) {
+          const names = todayAppts.map(a => [a.time, a.customer_name].filter(Boolean).join(' ')).join(' · ');
+          const word = todayAppts.length === 1 ? t('todayAppt') : t('todayAppts');
+          lines.push(`<div style="font-weight:800;font-size:14px">${todayAppts.length} ${word}</div>`
+            + (names ? `<div style="font-size:12px;opacity:0.8;margin-top:1px">${names}</div>` : ''));
+        }
+        if (tomorrowAppts.length > 0) {
+          const names = tomorrowAppts.map(a => [a.time, a.customer_name].filter(Boolean).join(' ')).join(' · ');
+          const word = tomorrowAppts.length === 1 ? t('tomorrowAppt') : t('tomorrowAppts');
+          lines.push(`<div style="font-weight:800;font-size:14px">${tomorrowAppts.length} ${word}</div>`
+            + (names ? `<div style="font-size:12px;opacity:0.8;margin-top:1px">${names}</div>` : ''));
+        }
+        bannerHtml = `
+          <div style="background:#E9C87A;color:#4A2D3A;padding:10px 16px;
+                      display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">📋</span>
+            <div>${lines.join('<div style="height:4px"></div>')}</div>
+          </div>`;
+      }
+
+      let monthTotal = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        monthTotal += getDayTotal(ds);
+      }
+      const monthTakeHome = (rate && monthTotal > 0)
+        ? `<div style="font-size:12px;color:#E9C87A">${t('takeHome')} ${sym}${Math.round(monthTotal * rate / 100)}</div>`
+        : '';
+
+      const dayHeaders = t('days').map(d =>
+        `<div style="text-align:center;font-size:12px;font-weight:700;color:var(--ts);padding:4px 0">${d}</div>`
+      ).join('');
+
+      let cells = Array(firstDow).fill('<div></div>').join('');
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const entries = getDayEntries(ds);
+        const total = getDayTotal(ds);
+        const dayAppts = getDayAppointments(ds);
+        const isToday = ds === today;
+        const isSelected = ds === selectedDay;
+        const hasData = entries.length > 0;
+
+        let bg = '#fff', border = 'var(--tbd)', numColor = '#888', totalColor = 'var(--ts)', subColor = 'var(--ts)';
+        if (isSelected) { bg = 'var(--ts)'; border = 'var(--ts)'; numColor = '#fff'; totalColor = '#fff'; subColor = 'rgba(255,255,255,0.7)'; }
+        else if (isToday) { bg = 'var(--td)'; border = 'var(--td)'; numColor = 'var(--tp)'; totalColor = 'var(--tp)'; subColor = 'var(--tp)'; }
+        else if (hasData) { bg = 'var(--tlt)'; border = 'var(--tp)'; }
+
+        const takeHomeGold = (rate && hasData && !isSelected && !isToday)
+          ? `<div style="font-size:9px;color:#E9C87A;margin-top:1px">${sym}${Math.round(total * rate / 100)}</div>`
+          : '';
+        const clientWord = entries.length === 1 ? t('client') : t('clients');
+        const apptDot = dayAppts.length > 0
+          ? `<div style="width:6px;height:6px;border-radius:50%;background:#E9C87A;margin:2px auto 0"></div>`
+          : '';
+
+        cells += `
+          <div onclick="selectDay('${ds}')"
+            style="border-radius:10px;padding:6px 3px;min-height:64px;text-align:center;cursor:pointer;
+                   background:${bg};border:2px solid ${border};transition:transform 0.1s">
+            <div style="font-size:12px;font-weight:600;color:${numColor}">${d}</div>
+            ${hasData ? `
+              <div style="font-size:14px;font-weight:800;color:${totalColor};line-height:1;margin-top:2px">${sym}${total}</div>
+              ${takeHomeGold}
+              <div style="font-size:10px;color:${subColor};margin-top:2px">${entries.length} ${clientWord}</div>
+            ` : ''}
+            ${apptDot}
+          </div>`;
+      }
+
+      let dayPanel = '';
+      if (selectedDay) {
+        const dayEntries = getDayEntries(selectedDay);
+        const dayTotal = getDayTotal(selectedDay);
+        const selectedDayAppts = getDayAppointments(selectedDay);
+        const dd = new Date(selectedDay + 'T12:00:00');
+        const dayLabel = `${t('days')[(dd.getDay()+7)%7]} ${t('months')[dd.getMonth()]} ${dd.getDate()}`;
+        const dayTakeHome = rate
+          ? `<div style="font-size:12px;color:#E9C87A;margin-top:2px">${t('takeHome')} ${sym}${Math.round(dayTotal * rate / 100)}</div>`
+          : '';
+
+        const apptSection = selectedDayAppts.length > 0 ? `
+          <div style="font-size:12px;font-weight:700;color:#B8860B;text-transform:uppercase;
+                      letter-spacing:0.05em;margin-bottom:8px">📋 ${t('upcoming')}</div>
+          ${selectedDayAppts.map(a => appointmentCardHtml(a)).join('')}
+          ${dayEntries.length > 0 ? `<div style="height:1px;background:var(--tbd);margin:12px 0"></div>` : ''}
+        ` : '';
+
+        const rows = dayEntries.length
+          ? dayEntries.map(e => `
+              <div style="background:var(--tb);border-radius:10px;padding:12px 14px;margin-bottom:8px;
+                          display:flex;align-items:center;gap:12px">
+                <div style="font-size:12px;color:var(--ts);font-weight:700;min-width:42px">${e.time || '—'}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:15px;font-weight:700;color:var(--td)">${e.name || '—'}</div>
+                  <div style="font-size:12px;color:#888;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(e.services||[]).join(' · ')}</div>
+                  ${e.notes ? `<div style="font-size:11px;color:#bbb;margin-top:2px">${e.notes}</div>` : ''}
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+                  <div style="font-size:17px;font-weight:800;color:var(--td)">${sym}${e.price}</div>
+                  <button onclick="openSheet('${e.date}','${e.id}')" title="${t('editEntry')}"
+                    style="width:28px;height:28px;border-radius:50%;background:var(--tb);border:none;
+                           color:var(--ts);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✎</button>
+                  <button onclick="deleteEntry('${e.id}')" title="${t('deleteEntry')}"
+                    style="width:28px;height:28px;border-radius:50%;background:var(--tb);border:none;
+                           color:var(--tp);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
+                </div>
+              </div>`).join('')
+          : (selectedDayAppts.length === 0 ? `<div style="text-align:center;color:#ccc;padding:24px;font-size:16px">${t('noEntries')}</div>` : '');
+
+        dayPanel = `
+          <div style="background:#fff;border:2px solid var(--tp);border-top:none;border-radius:0 0 16px 16px;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+              <div>
+                <div style="font-size:18px;font-weight:700;color:var(--td)">${dayLabel}</div>
+                ${dayTakeHome}
+              </div>
+              <div style="background:#E9C87A;color:#4A2D3A;border-radius:20px;padding:5px 14px;
+                          font-size:14px;font-weight:800">${sym}${dayTotal} ${t('totalGross')}</div>
+            </div>
+            ${apptSection}
+            ${rows}
+            <button onclick="openSheet('${selectedDay}')"
+              style="width:100%;padding:14px;background:var(--tb);border:2px dashed var(--tp);
+                     border-radius:10px;color:var(--ts);font-size:15px;font-weight:700;
+                     cursor:pointer;margin-top:8px">
+              + ${t('addCustomer')}
+            </button>
+            ${userRole === 'owner' ? `
+            <button onclick="openBookingSheet('${selectedDay}')"
+              style="width:100%;padding:14px;background:#FFFBF0;border:2px dashed #E9C87A;
+                     border-radius:10px;color:#B8860B;font-size:15px;font-weight:700;
+                     cursor:pointer;margin-top:8px">
+              📋 ${t('bookAppointment')}
+            </button>` : ''}
+          </div>`;
+      }
+
+      const hasAnyEntries = state.entries.some(e =>
+        e.user_id === currentUser?.id &&
+        e.date.startsWith(`${year}-${String(month+1).padStart(2,'0')}`)
+      );
+      const emptyState = (!selectedDay && !hasAnyEntries)
+        ? `<div style="text-align:center;padding:32px 24px;color:var(--ts)">
+             <div style="font-size:48px;margin-bottom:12px">💅</div>
+             <div style="font-size:18px;font-weight:700;color:var(--td);margin-bottom:6px">${t('noEntries')}</div>
+             <div style="font-size:14px;opacity:0.7">${t('tapToAdd')}</div>
+           </div>`
+        : '';
+
+      document.getElementById('view-calendar').innerHTML = `
+        <div>
+          ${bannerHtml}
+          <div style="background:var(--tp);padding:20px 16px;display:flex;align-items:center;justify-content:space-between">
+            <button onclick="prevMonth()"
+              style="background:rgba(255,255,255,0.4);border:none;border-radius:50%;
+                     width:40px;height:40px;font-size:22px;cursor:pointer;color:var(--td);
+                     display:flex;align-items:center;justify-content:center">‹</button>
+            <div style="text-align:center">
+              <div style="font-size:22px;font-weight:700;color:var(--td)">${t('months')[month]} ${year}</div>
+              <div style="font-size:13px;color:var(--td);opacity:0.7;margin-top:2px">${sym}${monthTotal} ${t('totalGross')}</div>
+              ${monthTakeHome}
+            </div>
+            <button onclick="nextMonth()"
+              style="background:rgba(255,255,255,0.4);border:none;border-radius:50%;
+                     width:40px;height:40px;font-size:22px;cursor:pointer;color:var(--td);
+                     display:flex;align-items:center;justify-content:center">›</button>
+          </div>
+
+          <div style="background:var(--tb);padding:12px">
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">${dayHeaders}</div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">${cells}</div>
+          </div>
+
+          ${dayPanel}
+          ${emptyState}
+        </div>`;
+    }
+
+    // ── SUMMARY ───────────────────────────────────────────────────────────
+    function renderSummary() {
+      const sym = state.settings.currencySymbol || '$';
+      const rate = state.settings.commissionRate;
+      const anchor = summaryAnchor;
+      const { start, end } = getPeriodRange(currentPeriod, anchor);
+      const entries = getPeriodEntries(start, end);
+      const gross = entries.reduce((s, e) => s + (e.price || 0), 0);
+      const customerCount = entries.length;
+
+      const fmtD = ds => {
+        const d = new Date(ds + 'T12:00:00');
+        return `${t('months')[d.getMonth()].replace('Tháng ','T.')} ${d.getDate()}`;
+      };
+      const rangeLabel = `${fmtD(start)} – ${fmtD(end)}, ${new Date(end + 'T12:00:00').getFullYear()}`;
+
+      const takeHomeCard = (rate && gross > 0)
+        ? `<div style="margin-top:8px;font-size:18px;color:#E9C87A;font-weight:700">
+             ${t('takeHome')} ${sym}${Math.round(gross * rate / 100)}
+           </div>`
+        : '';
+
+      const periods = ['weekly','biweekly','monthly'];
+      const toggleBtns = periods.map(p => `
+        <button onclick="switchPeriod('${p}')"
+          style="flex:1;padding:12px 8px;border:none;border-radius:10px;
+                 font-size:14px;font-weight:700;cursor:pointer;font-family:Georgia,serif;
+                 background:${currentPeriod===p ? '#fff' : 'transparent'};
+                 color:${currentPeriod===p ? 'var(--td)' : 'var(--ts)'};
+                 box-shadow:${currentPeriod===p ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'}">
+          ${t(p)}
+        </button>`).join('');
+
+      const svcCount = {};
+      entries.forEach(e => (e.services||[]).forEach(s => { svcCount[s] = (svcCount[s]||0) + 1; }));
+      const svcSorted = Object.entries(svcCount).sort((a,b) => b[1]-a[1]);
+      const maxCount = svcSorted[0]?.[1] || 1;
+
+      const bars = svcSorted.length
+        ? svcSorted.map(([svc, cnt]) => `
+            <div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span style="font-size:15px;color:var(--td);font-weight:600">${svc}</span>
+                <span style="font-size:15px;color:var(--ts);font-weight:800">${cnt} ${t('times')}</span>
+              </div>
+              <div style="background:var(--tb);border-radius:99px;height:10px">
+                <div style="height:10px;border-radius:99px;
+                            background:linear-gradient(90deg,var(--tp),#E9C87A);
+                            width:${Math.round(cnt/maxCount*100)}%"></div>
+              </div>
+            </div>`).join('')
+        : `<div style="text-align:center;color:#ccc;padding:16px">${t('noServiceData')}</div>`;
+
+      document.getElementById('view-summary').innerHTML = `
+        <div style="padding:24px 16px">
+
+          <div style="background:var(--tb);border-radius:14px;padding:4px;display:flex;gap:4px;margin-bottom:16px">
+            ${toggleBtns}
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <button onclick="shiftAnchor(-1)"
+              style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.06);border:none;
+                     font-size:22px;cursor:pointer;color:var(--td);display:flex;align-items:center;justify-content:center">‹</button>
+            <div style="text-align:center;font-size:13px;color:var(--ts);font-weight:600">${rangeLabel}</div>
+            <button onclick="shiftAnchor(1)"
+              style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.06);border:none;
+                     font-size:22px;cursor:pointer;color:var(--td);display:flex;align-items:center;justify-content:center;
+                     opacity:${end >= formatDate(new Date()) ? '0.25' : '1'};
+                     pointer-events:${end >= formatDate(new Date()) ? 'none' : 'auto'}">›</button>
+          </div>
+
+          <div style="background:linear-gradient(135deg,var(--tp),var(--ts));border-radius:20px;
+                      padding:28px 24px;color:#fff;text-align:center;margin-bottom:16px">
+            <div style="font-size:52px;font-weight:900;line-height:1;letter-spacing:-0.02em">${sym}${gross}</div>
+            <div style="font-size:14px;opacity:0.85;margin-top:6px">${t('totalGross')}</div>
+            ${takeHomeCard}
+          </div>
+
+          <div style="background:#fff;border:1px solid var(--tbd);border-radius:16px;
+                      padding:20px;text-align:center;margin-bottom:16px">
+            <div style="font-size:36px;font-weight:800;color:var(--td)">${customerCount}</div>
+            <div style="font-size:12px;color:var(--ts);font-weight:700;text-transform:uppercase;
+                        letter-spacing:0.05em;margin-top:4px">${t('customersServed')}</div>
+          </div>
+
+          <div style="background:#fff;border:1px solid var(--tbd);border-radius:16px;padding:20px">
+            <div style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                        letter-spacing:0.07em;margin-bottom:16px">${t('byService')}</div>
+            ${bars}
+          </div>
+
+        </div>`;
+    }
+
+    function switchPeriod(period) {
+      currentPeriod = period;
+      summaryAnchor = new Date();
+      renderSummary();
+    }
+
+    function shiftAnchor(dir) {
+      const d = new Date(summaryAnchor);
+      if (currentPeriod === 'weekly')   d.setDate(d.getDate() + dir * 7);
+      if (currentPeriod === 'biweekly') d.setDate(d.getDate() + dir * 14);
+      if (currentPeriod === 'monthly')  d.setMonth(d.getMonth() + dir);
+      summaryAnchor = d;
+      renderSummary();
+    }
+
+    // ── TEAM VIEW ─────────────────────────────────────────────────────────
+    function renderTeam() {
+      if (userRole !== 'owner' || !currentSalon) {
+        document.getElementById('view-team').innerHTML = '';
+        return;
+      }
+
+      const sym = state.settings.currencySymbol || '$';
+      const { start, end } = getPeriodRange(teamPeriod, teamAnchor);
+
+      const salonPeriodEntries = state.entries.filter(e =>
+        e.salon_id === currentSalon.id && e.date >= start && e.date <= end
+      );
+
+      const byUser = {};
+      salonPeriodEntries.forEach(e => {
+        if (!byUser[e.user_id]) byUser[e.user_id] = { total: 0, count: 0 };
+        byUser[e.user_id].total += e.price || 0;
+        byUser[e.user_id].count++;
+      });
+
+      const membersWithTotals = salonMembers.map(m => ({
+        ...m,
+        periodTotal: byUser[m.user_id]?.total || 0,
+        periodCount: byUser[m.user_id]?.count || 0,
+      }));
+
+      const fmtD = ds => {
+        const d = new Date(ds + 'T12:00:00');
+        return `${t('months')[d.getMonth()].replace('Tháng ','T.')} ${d.getDate()}`;
+      };
+      const rangeLabel = `${fmtD(start)} – ${fmtD(end)}, ${new Date(end + 'T12:00:00').getFullYear()}`;
+
+      const periods = ['weekly','biweekly','monthly'];
+      const toggleBtns = periods.map(p => `
+        <button onclick="switchTeamPeriod('${p}')"
+          style="flex:1;padding:12px 8px;border:none;border-radius:10px;
+                 font-size:14px;font-weight:700;cursor:pointer;font-family:Georgia,serif;
+                 background:${teamPeriod===p ? '#fff' : 'transparent'};
+                 color:${teamPeriod===p ? 'var(--td)' : 'var(--ts)'};
+                 box-shadow:${teamPeriod===p ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'}">
+          ${t(p)}
+        </button>`).join('');
+
+      const code = currentSalon.invite_code || '——';
+
+      const employeesOnly = membersWithTotals.filter(m => m.role === 'employee');
+
+      const memberRows = membersWithTotals.map((m, idx) => {
+        const isMe = m.user_id === currentUser?.id;
+        const takeHome = (m.commission_rate && m.periodTotal)
+          ? Math.round(m.periodTotal * m.commission_rate / 100) : null;
+
+        if (editingMemberIdx === idx) {
+          return `
+            <div style="padding:14px 0;border-bottom:1px solid var(--tb)">
+              <div style="font-size:15px;font-weight:700;color:var(--td);margin-bottom:10px">
+                ${m.display_name || '—'}
+                ${isMe ? `<span style="font-size:12px;color:var(--ts);font-weight:400"> ${t('you')}</span>` : ''}
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input id="member-rate-input" type="number" min="0" max="100" placeholder="0"
+                  value="${m.commission_rate || ''}"
+                  style="width:80px;padding:10px;border:2px solid var(--tp);border-radius:10px;
+                         font-size:20px;font-weight:700;text-align:center;outline:none;
+                         font-family:Georgia,serif">
+                <div style="font-size:16px;color:var(--ts);font-weight:700">%</div>
+                <button onclick="saveMemberRate('${m.id}',document.getElementById('member-rate-input').value)"
+                  style="padding:10px 16px;background:var(--tp);color:var(--td);border:none;
+                         border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;
+                         font-family:Georgia,serif">
+                  Save
+                </button>
+                <button onclick="cancelEditMember()"
+                  style="padding:10px 12px;background:var(--tb);color:var(--ts);border:none;
+                         border-radius:9px;font-size:16px;font-weight:800;cursor:pointer">×</button>
+              </div>
+            </div>`;
+        }
+
+        return `
+          <div style="display:flex;align-items:center;justify-content:space-between;
+                      padding:14px 0;border-bottom:1px solid var(--tb)">
+            <div>
+              <div style="font-size:16px;font-weight:700;color:var(--td)">
+                ${m.display_name || '—'}
+                ${isMe ? `<span style="font-size:12px;color:var(--ts);font-weight:400"> ${t('you')}</span>` : ''}
+              </div>
+              <div style="font-size:12px;color:var(--ts);margin-top:3px">
+                ${m.commission_rate != null ? m.commission_rate + '%' : t('noRate')}
+                · ${m.periodCount} ${m.periodCount === 1 ? t('client') : t('clients')}
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:18px;font-weight:800;color:var(--td)">${sym}${m.periodTotal}</div>
+              ${takeHome != null ? `<div style="font-size:13px;color:#E9C87A;font-weight:700">${t('takeHome')} ${sym}${takeHome}</div>` : ''}
+              <button onclick="editMember(${idx})"
+                style="font-size:12px;color:var(--ts);background:none;border:none;cursor:pointer;
+                       padding:2px 0;font-family:Georgia,serif;margin-top:2px">
+                ${t('editRate')} ✎
+              </button>
+            </div>
+          </div>`;
+      }).join('');
+
+      const noEmployeesMsg = employeesOnly.length === 0
+        ? `<div style="text-align:center;color:#ccc;padding:24px 16px">
+             <div style="font-size:32px;margin-bottom:8px">👥</div>
+             <div style="font-size:15px;color:var(--ts)">${t('noEmployees')}</div>
+             <div style="font-size:13px;color:#bbb;margin-top:4px">${t('inviteFirst')}</div>
+           </div>`
+        : '';
+
+      document.getElementById('view-team').innerHTML = `
+        <div style="padding:24px 16px">
+
+          <div style="background:var(--tb);border-radius:14px;padding:4px;display:flex;gap:4px;margin-bottom:16px">
+            ${toggleBtns}
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <button onclick="shiftTeamAnchor(-1)"
+              style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.06);border:none;
+                     font-size:22px;cursor:pointer;color:var(--td);display:flex;align-items:center;justify-content:center">‹</button>
+            <div style="text-align:center;font-size:13px;color:var(--ts);font-weight:600">${rangeLabel}</div>
+            <button onclick="shiftTeamAnchor(1)"
+              style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.06);border:none;
+                     font-size:22px;cursor:pointer;color:var(--td);display:flex;align-items:center;justify-content:center;
+                     opacity:${end >= formatDate(new Date()) ? '0.25' : '1'};
+                     pointer-events:${end >= formatDate(new Date()) ? 'none' : 'auto'}">›</button>
+          </div>
+
+          <div style="background:#fff;border:1px solid var(--tbd);border-radius:16px;padding:20px;margin-bottom:16px">
+            <div style="font-size:13px;font-weight:700;color:var(--ts);text-transform:uppercase;
+                        letter-spacing:0.07em;margin-bottom:10px">${t('yourInviteCode')}</div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <div style="background:var(--td);color:#fff;border-radius:12px;padding:14px 20px;
+                          font-size:28px;font-weight:900;letter-spacing:4px;font-family:monospace;flex:1;text-align:center">
+                ${code}
+              </div>
+              <button id="copy-code-btn" onclick="copyInviteCode()"
+                style="padding:14px 18px;background:var(--tp);color:var(--td);border:none;
+                       border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;
+                       white-space:nowrap;font-family:Georgia,serif">
+                Copy
+              </button>
+            </div>
+            <div style="font-size:12px;color:#aaa;margin-bottom:10px">${t('inviteCodeHelp')}</div>
+            <button onclick="refreshInviteCode()"
+              style="font-size:13px;color:var(--ts);background:none;border:none;cursor:pointer;
+                     padding:0;font-family:Georgia,serif;text-decoration:underline">
+              ${t('refreshCode')}
+            </button>
+          </div>
+
+          <div style="background:#fff;border:1px solid var(--tbd);border-radius:16px;padding:20px">
+            <div style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                        letter-spacing:0.07em;margin-bottom:4px">${t('employees')}</div>
+            ${noEmployeesMsg}
+            <div>${memberRows}</div>
+          </div>
+
+        </div>`;
+
+      if (editingMemberIdx !== null) {
+        requestAnimationFrame(() => {
+          const input = document.getElementById('member-rate-input');
+          if (input) { input.focus(); input.select(); }
+        });
+      }
+    }
+
+    function switchTeamPeriod(period) {
+      teamPeriod = period;
+      teamAnchor = new Date();
+      renderTeam();
+    }
+
+    function shiftTeamAnchor(dir) {
+      const d = new Date(teamAnchor);
+      if (teamPeriod === 'weekly')   d.setDate(d.getDate() + dir * 7);
+      if (teamPeriod === 'biweekly') d.setDate(d.getDate() + dir * 14);
+      if (teamPeriod === 'monthly')  d.setMonth(d.getMonth() + dir);
+      teamAnchor = d;
+      renderTeam();
+    }
+
+    function editMember(idx) {
+      editingMemberIdx = idx;
+      renderTeam();
+    }
+
+    function cancelEditMember() {
+      editingMemberIdx = null;
+      renderTeam();
+    }
+
+    async function saveMemberRate(memberId, rate) {
+      const numRate = (rate !== '' && rate !== null) ? parseFloat(rate) : null;
+      const { error } = await db.from('salon_members')
+        .update({ commission_rate: numRate })
+        .eq('id', memberId);
+      if (error) { alert(error.message); return; }
+      const idx = salonMembers.findIndex(m => m.id === memberId);
+      if (idx !== -1) salonMembers[idx].commission_rate = numRate;
+      editingMemberIdx = null;
+      renderTeam();
+    }
+
+    async function copyInviteCode() {
+      const code = currentSalon?.invite_code;
+      if (!code) return;
+      try {
+        await navigator.clipboard.writeText(code);
+        const btn = document.getElementById('copy-code-btn');
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = '✓ Copied!';
+          setTimeout(() => { if (btn) btn.textContent = orig; }, 2000);
+        }
+      } catch(e) {
+        alert(code);
+      }
+    }
+
+    async function refreshInviteCode() {
+      if (!currentSalon) return;
+      const newCode = generateInviteCode();
+      const { error } = await db.from('salons')
+        .update({ invite_code: newCode })
+        .eq('id', currentSalon.id);
+      if (error) { alert(error.message); return; }
+      currentSalon = { ...currentSalon, invite_code: newCode };
+      renderTeam();
+    }
+
+    // ── EXPORT CSV ────────────────────────────────────────────────────────
+    function exportCSV() {
+      const sym = state.settings.currencySymbol || '$';
+
+      if (userRole === 'owner' && currentSalon) {
+        // Owner: all salon entries with employee name column
+        const salonEntries = [...state.entries]
+          .filter(e => e.salon_id === currentSalon.id)
+          .sort((a, b) => a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''));
+
+        const getMemberName = (userId) => {
+          const m = salonMembers.find(m => m.user_id === userId);
+          return m?.display_name || userId;
+        };
+
+        const headers = ['Employee','Date','Time','Name','Services','Price (' + sym + ')','Notes'];
+        const rows = salonEntries.map(e => [
+          getMemberName(e.user_id),
+          e.date, e.time || '', e.name || '',
+          (e.services||[]).join('; '),
+          e.price, e.notes || ''
+        ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','));
+
+        const csv = [headers.join(','), ...rows].join('\n');
+        const a = document.createElement('a');
+        a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        a.download = 'salon-team-export.csv';
+        a.click();
+      } else {
+        // Solo / employee: own entries only
+        const myEntries = [...state.entries]
+          .filter(e => e.user_id === currentUser?.id)
+          .sort((a, b) => a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''));
+
+        const headers = ['Date','Time','Name','Services','Price (' + sym + ')','Notes'];
+        const rows = myEntries.map(e => [
+          e.date, e.time || '', e.name || '',
+          (e.services||[]).join('; '),
+          e.price, e.notes || ''
+        ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','));
+
+        const csv = [headers.join(','), ...rows].join('\n');
+        const a = document.createElement('a');
+        a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        a.download = 'salon-tracker-export.csv';
+        a.click();
+      }
+    }
+
+    // ── APPOINTMENTS ──────────────────────────────────────────────────────
+    function openBookingSheet(dateStr) {
+      if (userRole !== 'owner' || !currentSalon) return;
+      completingApptId = null;
+      editingEntryId = null;
+
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2,'0');
+      const mm = String(now.getMinutes()).padStart(2,'0');
+      const defaultDate = dateStr || formatDate(new Date());
+      const defaultTime = `${hh}:${mm}`;
+      const services = state.settings.services || DEFAULT_SERVICES;
+
+      const assignChips = salonMembers.map(m => `
+        <div class="assign-chip" data-user-id="${m.user_id}"
+          onclick="document.querySelectorAll('.assign-chip').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')"
+          style="padding:12px 10px;border-radius:10px;border:2px solid var(--tbd);
+                 background:var(--tb);text-align:center;font-size:14px;
+                 color:var(--td);cursor:pointer;transition:all 0.15s;min-height:44px;
+                 display:flex;align-items:center;justify-content:center">
+          ${m.display_name || '—'}
+        </div>`).join('');
+
+      const serviceChips = services.map((svc, i) => `
+        <div class="b-svc-chip" data-svc="${i}"
+          onclick="this.classList.toggle('selected')"
+          style="padding:13px 8px;border-radius:10px;border:2px solid var(--tbd);
+                 background:var(--tb);text-align:center;font-size:14px;
+                 color:var(--td);cursor:pointer;transition:all 0.15s;min-height:48px;
+                 display:flex;align-items:center;justify-content:center">
+          ${svc}
+        </div>`).join('');
+
+      document.getElementById('sheet-content').innerHTML = `
+        <div style="padding:24px 20px 32px">
+          <div style="width:40px;height:4px;background:#E9C87A;border-radius:4px;margin:0 auto 20px"></div>
+          <div style="font-size:22px;font-weight:800;color:var(--td);margin-bottom:24px">📋 ${t('bookAppointment')}</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+            <div>
+              <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                            letter-spacing:0.05em;display:block;margin-bottom:8px">${t('date')}</label>
+              <input id="b-date" type="date" value="${defaultDate}"
+                style="width:100%;padding:14px 12px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:15px;color:var(--td);background:var(--tb);outline:none">
+            </div>
+            <div>
+              <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                            letter-spacing:0.05em;display:block;margin-bottom:8px">${t('time')}</label>
+              <input id="b-time" type="time" value="${defaultTime}"
+                style="width:100%;padding:14px 12px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:15px;color:var(--td);background:var(--tb);outline:none">
+            </div>
+          </div>
+
+          <div style="margin-bottom:20px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">
+              ${t('customerName')} <span style="color:#ccc;font-weight:400">${t('optional')}</span>
+            </label>
+            <input id="b-name" type="text" placeholder="${t('namePlaceholder')}"
+              style="width:100%;padding:14px 16px;border:2px solid var(--tbd);border-radius:12px;
+                     font-size:18px;color:var(--td);background:var(--tb);outline:none">
+          </div>
+
+          <div style="margin-bottom:20px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">${t('assignTo')}</label>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${assignChips}</div>
+          </div>
+
+          <div style="margin-bottom:20px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">${t('servicesDone')}</label>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${serviceChips}</div>
+          </div>
+
+          <div style="margin-bottom:24px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">
+              ${t('notes')} <span style="color:#ccc;font-weight:400">${t('optional')}</span>
+            </label>
+            <input id="b-notes" type="text" placeholder="${t('notesPlaceholder')}"
+              style="width:100%;padding:14px 16px;border:2px solid var(--tbd);border-radius:12px;
+                     font-size:18px;color:var(--td);background:var(--tb);outline:none">
+          </div>
+
+          <button onclick="submitBooking()"
+            style="width:100%;padding:18px;background:linear-gradient(135deg,#E9C87A,#D4B060);
+                   color:#4A2D3A;border:none;border-radius:14px;font-size:20px;font-weight:800;
+                   cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.15)">
+            ${t('bookAppointment')}
+          </button>
+        </div>`;
+
+      document.getElementById('sheet-overlay').classList.remove('hidden');
+      requestAnimationFrame(() => document.getElementById('sheet-add').classList.add('open'));
+    }
+
+    async function submitBooking() {
+      const date = document.getElementById('b-date')?.value;
+      const time = document.getElementById('b-time')?.value;
+      const name = (document.getElementById('b-name')?.value || '').trim();
+      const notes = (document.getElementById('b-notes')?.value || '').trim();
+      const assignedChip = document.querySelector('.assign-chip.selected');
+      const assignedTo = assignedChip?.dataset.userId;
+
+      if (!date || !time) {
+        alert(lang === 'vi' ? 'Vui lòng nhập ngày và giờ.' : 'Please enter date and time.');
+        return;
+      }
+      if (!assignedTo) {
+        alert(lang === 'vi' ? 'Vui lòng chọn nhân viên.' : 'Please select a team member.');
+        return;
+      }
+
+      const selectedChips = document.querySelectorAll('.b-svc-chip.selected');
+      const services = Array.from(selectedChips).map(el =>
+        (state.settings.services || DEFAULT_SERVICES)[parseInt(el.dataset.svc)]
+      );
+
+      const apptRow = {
+        salon_id: currentSalon.id,
+        assigned_to: assignedTo,
+        created_by: currentUser.id,
+        date, time,
+        customer_name: name || null,
+        services,
+        notes: notes || null,
+        completed: false
+      };
+
+      const { data, error } = await db.from('appointments').insert(apptRow).select().single();
+      if (error) { alert(error.message); return; }
+
+      appointments.push({ ...apptRow, id: data.id, services });
+      closeSheet();
+      selectedDay = date;
+      renderCalendar();
+    }
+
+    function completeAppointment(apptId) {
+      const appt = appointments.find(a => a.id === apptId);
+      if (!appt) return;
+      completingApptId = apptId;
+      editingEntryId = null;
+      openSheet(appt.date, null);
+    }
+
+    async function cancelAppointment(apptId) {
+      if (!confirm(t('confirmCancelAppt'))) return;
+      await db.from('appointments').delete().eq('id', apptId);
+      appointments = appointments.filter(a => a.id !== apptId);
+      renderCalendar();
+    }
+
+    // ── SETTINGS ──────────────────────────────────────────────────────────
+    function deleteEntry(id) {
+      if (!confirm(t('confirmDelete'))) return;
+      state.entries = state.entries.filter(e => e.id !== id);
+      saveToStorage();
+      renderCalendar();
+      deleteEntryFromCloud(id);
+    }
+
+    function deleteService(idx) {
+      editingServiceIdx = null;
+      state.settings.services.splice(idx, 1);
+      saveToStorage();
+      renderSettings();
+    }
+
+    function addService(name) {
+      const n = name.trim();
+      if (!n) return;
+      state.settings.services.push(n);
+      saveToStorage();
+      renderSettings();
+    }
+
+    function editService(idx) {
+      editingServiceIdx = idx;
+      renderSettings();
+      requestAnimationFrame(() => {
+        const input = document.getElementById('edit-svc-input');
+        if (input) { input.focus(); input.select(); }
+      });
+    }
+
+    function saveServiceEdit(idx, val) {
+      const n = val.trim();
+      if (n) state.settings.services[idx] = n;
+      editingServiceIdx = null;
+      saveToStorage();
+      renderSettings();
+    }
+
+    function cancelEditService() {
+      editingServiceIdx = null;
+      renderSettings();
+    }
+
+    function saveSettings(updates) {
+      Object.assign(state.settings, updates);
+      saveToStorage();
+    }
+
+    function setLanguage(l) {
+      lang = l;
+      state.settings.language = l;
+      saveToStorage();
+      renderNav();
+      showView('settings');
+    }
+
+    function renderSettings() {
+      const sym = state.settings.currencySymbol || '$';
+      const rate = state.settings.commissionRate || '';
+      const services = state.settings.services || DEFAULT_SERVICES;
+      const activeTheme = state.settings.theme || 'blush';
+
+      const phoneDisplay = currentUser?.email
+        ? currentUser.email.replace('@nailapp.local', '')
+        : '';
+
+      const serviceRows = services.map((svc, i) => {
+        if (i === editingServiceIdx) {
+          return `
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--tb)">
+              <input id="edit-svc-input" type="text" value="${svc.replace(/"/g, '&quot;')}"
+                onkeydown="if(event.key==='Enter'){saveServiceEdit(${i},this.value)}else if(event.key==='Escape'){cancelEditService()}"
+                style="flex:1;padding:10px 12px;border:2px solid var(--tp);border-radius:10px;
+                       font-size:16px;color:var(--td);background:#fff;outline:none;font-family:Georgia,serif">
+              <button onclick="saveServiceEdit(${i},document.getElementById('edit-svc-input').value)"
+                style="padding:9px 14px;background:var(--tp);color:var(--td);border:none;
+                       border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap">
+                ${t('saveCustomer')}
+              </button>
+              <button onclick="cancelEditService()"
+                style="padding:9px 12px;background:var(--tb);color:var(--ts);border:none;
+                       border-radius:9px;font-size:14px;font-weight:800;cursor:pointer">
+                ${t('cancel')}
+              </button>
+            </div>`;
+        }
+        return `
+          <div style="display:flex;align-items:center;justify-content:space-between;
+                      padding:13px 0;border-bottom:1px solid var(--tb)">
+            <span style="font-size:17px;color:var(--td)">${svc}</span>
+            <div style="display:flex;gap:6px">
+              <button onclick="editService(${i})"
+                style="width:32px;height:32px;border-radius:50%;background:var(--tb);border:none;
+                       color:var(--ts);font-size:15px;cursor:pointer;
+                       display:flex;align-items:center;justify-content:center">✎</button>
+              <button onclick="deleteService(${i})"
+                style="width:32px;height:32px;border-radius:50%;background:var(--tb);border:none;
+                       color:var(--tp);font-size:20px;cursor:pointer;
+                       display:flex;align-items:center;justify-content:center;line-height:1">×</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      const sectionTitle = label => `
+        <div style="font-size:13px;font-weight:700;color:var(--ts);text-transform:uppercase;
+                    letter-spacing:0.07em;margin:24px 0 10px">${label}</div>`;
+
+      const card = content => `
+        <div style="background:#fff;border:1px solid var(--tbd);border-radius:16px;overflow:hidden">${content}</div>`;
+
+      const row = content => `
+        <div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between;
+                    border-bottom:1px solid var(--tb)">${content}</div>`;
+
+      const themeSwatches = Object.keys(THEMES).map(name => {
+        const isActive = activeTheme === name;
+        const swatchColor = THEMES[name].tp;
+        const labelKey = 'theme' + name.charAt(0).toUpperCase() + name.slice(1);
+        return `
+          <div onclick="setTheme('${name}')" style="text-align:center;cursor:pointer;padding:4px">
+            <div style="width:52px;height:52px;border-radius:50%;background:${swatchColor};margin:0 auto 6px;
+                        border:3px solid ${isActive ? 'var(--td)' : 'transparent'};
+                        box-shadow:0 2px 8px rgba(0,0,0,0.15);
+                        display:flex;align-items:center;justify-content:center">
+              ${isActive ? '<span style="color:#fff;font-size:20px;font-weight:800">✓</span>' : ''}
+            </div>
+            <div style="font-size:12px;font-weight:${isActive ? '800' : '400'};color:var(--td)">${t(labelKey)}</div>
+          </div>`;
+      }).join('');
+
+      // Salon section (owners and employees only)
+      let salonSection = '';
+      if ((userRole === 'owner' || userRole === 'employee') && currentSalon) {
+        const roleLabel = userRole === 'owner' ? t('roleOwner') : t('roleEmployee');
+        const displayName = state.settings.display_name || '';
+        salonSection = `
+          ${sectionTitle(t('yourSalon'))}
+          ${card(`
+            <div style="padding:16px 18px;border-bottom:1px solid var(--tb)">
+              <div style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;
+                          letter-spacing:0.07em;margin-bottom:4px">${t('yourSalon')}</div>
+              <div style="font-size:18px;font-weight:700;color:var(--td)">${currentSalon.name}</div>
+            </div>
+            <div style="padding:16px 18px;border-bottom:1px solid var(--tb)">
+              <div style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;
+                          letter-spacing:0.07em;margin-bottom:4px">${t('yourRole')}</div>
+              <div style="font-size:18px;font-weight:700;color:var(--td)">${roleLabel}</div>
+            </div>
+            ${displayName ? `
+            <div style="padding:16px 18px">
+              <div style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;
+                          letter-spacing:0.07em;margin-bottom:4px">${t('yourName')}</div>
+              <div style="font-size:18px;font-weight:700;color:var(--td)">${displayName}</div>
+            </div>` : ''}
+          `)}`;
+      }
+
+      document.getElementById('view-settings').innerHTML = `
+        <div style="padding:24px 16px">
+
+          ${sectionTitle(t('theme'))}
+          ${card(`
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:16px 10px">
+              ${themeSwatches}
+            </div>
+          `)}
+
+          ${sectionTitle(t('language'))}
+          ${card(row(`
+            <div>
+              <div style="font-size:17px;color:var(--td);font-weight:600">${t('language')}</div>
+            </div>
+            <div style="display:flex;background:var(--tb);border-radius:10px;padding:3px;gap:3px">
+              <button onclick="setLanguage('en')"
+                style="padding:9px 18px;border:none;border-radius:8px;font-size:14px;font-weight:700;
+                       cursor:pointer;font-family:Georgia,serif;
+                       background:${lang==='en' ? '#fff' : 'transparent'};
+                       color:${lang==='en' ? 'var(--td)' : 'var(--ts)'};
+                       box-shadow:${lang==='en' ? '0 2px 6px rgba(0,0,0,0.1)' : 'none'}">EN</button>
+              <button onclick="setLanguage('vi')"
+                style="padding:9px 18px;border:none;border-radius:8px;font-size:14px;font-weight:700;
+                       cursor:pointer;font-family:Georgia,serif;
+                       background:${lang==='vi' ? '#fff' : 'transparent'};
+                       color:${lang==='vi' ? 'var(--td)' : 'var(--ts)'};
+                       box-shadow:${lang==='vi' ? '0 2px 6px rgba(0,0,0,0.1)' : 'none'}">VI</button>
+            </div>
+          `))}
+
+          ${sectionTitle(t('currency') + ' & ' + t('commissionRate'))}
+          ${card(`
+            ${row(`
+              <div>
+                <div style="font-size:17px;color:var(--td);font-weight:600">${t('currency')}</div>
+              </div>
+              <input type="text" value="${sym}" maxlength="3"
+                onchange="saveSettings({currencySymbol:this.value||'$'})"
+                style="width:60px;padding:10px;border:2px solid var(--tbd);border-radius:10px;
+                       font-size:18px;font-weight:800;color:var(--td);background:var(--tb);
+                       text-align:center;outline:none">
+            `)}
+            <div style="padding:16px 18px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div>
+                  <div style="font-size:17px;color:var(--td);font-weight:600">${t('commissionRate')}</div>
+                  <div style="font-size:12px;color:#aaa;margin-top:2px">${t('commissionRateSub')}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:0">
+                  <input type="number" value="${rate}" min="0" max="100" placeholder="—"
+                    onchange="saveSettings({commissionRate: this.value ? parseFloat(this.value) : null})"
+                    style="width:70px;padding:10px 12px;border:2px solid var(--tbd);border-radius:10px 0 0 10px;
+                           font-size:20px;font-weight:800;color:var(--td);background:var(--tb);
+                           text-align:center;outline:none;border-right:none">
+                  <div style="background:#E9C87A;color:#4A2D3A;font-size:18px;font-weight:800;
+                              padding:10px 14px;border-radius:0 10px 10px 0;
+                              border:2px solid #D4B060;border-left:none">%</div>
+                </div>
+              </div>
+            </div>
+          `)}
+
+          ${sectionTitle(t('exportCSV'))}
+          ${card(`
+            <div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-size:17px;font-weight:600;color:var(--td)">${t('exportCSV')}</div>
+                <div style="font-size:12px;color:#aaa;margin-top:2px">${t('exportCSVSub')}</div>
+              </div>
+              <button onclick="exportCSV()"
+                style="padding:12px 20px;background:var(--tp);color:var(--td);border:none;
+                       border-radius:10px;font-size:15px;font-weight:800;cursor:pointer">
+                ↓ CSV
+              </button>
+            </div>
+          `)}
+
+          ${sectionTitle(t('services'))}
+          ${card(`
+            <div style="padding:0 18px">${serviceRows}</div>
+            <div style="display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--tb)">
+              <input id="new-svc-input" type="text" placeholder="${t('newServicePlaceholder')}"
+                style="flex:1;padding:12px 14px;border:2px solid var(--tbd);border-radius:10px;
+                       font-size:16px;color:var(--td);background:var(--tb);outline:none"
+                onkeydown="if(event.key==='Enter'){addService(this.value);this.value=''}">
+              <button onclick="addService(document.getElementById('new-svc-input').value);document.getElementById('new-svc-input').value=''"
+                style="padding:12px 20px;background:var(--tp);color:var(--td);border:none;
+                       border-radius:10px;font-size:16px;font-weight:800;cursor:pointer">
+                ${t('addBtn')}
+              </button>
+            </div>
+          `)}
+
+          ${salonSection}
+
+          ${sectionTitle(t('account'))}
+          ${card(`
+            <div style="padding:16px 18px;border-bottom:1px solid var(--tb)">
+              <div style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;
+                          letter-spacing:0.07em;margin-bottom:4px">${t('yourPhone')}</div>
+              <div style="font-size:18px;font-weight:700;color:var(--td)">${phoneDisplay}</div>
+            </div>
+
+            <div style="padding:16px 18px;border-bottom:1px solid var(--tb)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div>
+                  <div style="font-size:12px;color:#aaa;font-weight:700;text-transform:uppercase;
+                              letter-spacing:0.07em;margin-bottom:4px">${t('recoveryCode')}</div>
+                  <div style="font-size:22px;font-weight:800;color:var(--td);letter-spacing:0.1em">
+                    ${state.settings.recovery_code || '——'}
+                  </div>
+                </div>
+                <button id="copy-code-btn" onclick="copyRecoveryCode()"
+                  style="padding:10px 16px;background:var(--tb);color:var(--td);
+                         border:2px solid var(--tbd);border-radius:10px;
+                         font-size:14px;font-weight:800;cursor:pointer;font-family:Georgia,serif;
+                         white-space:nowrap;flex-shrink:0">
+                  Copy
+                </button>
+              </div>
+              <div style="font-size:12px;color:#b07;background:#FFF0F7;
+                          border-radius:8px;padding:8px 10px;line-height:1.5">
+                ⚠ ${t('recoveryCodeSub')}
+              </div>
+            </div>
+
+            <div style="padding:16px 18px;border-bottom:1px solid var(--tb)">
+              <div style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.07em;margin-bottom:14px">${t('changePin')}</div>
+              <input id="change-pin-cur" type="password" inputmode="numeric"
+                placeholder="${t('currentPin')}"
+                style="width:100%;padding:14px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:18px;color:var(--td);background:var(--tb);outline:none;
+                       margin-bottom:8px;box-sizing:border-box;-webkit-appearance:none;
+                       font-family:Georgia,serif">
+              <input id="change-pin-new" type="password" inputmode="numeric"
+                placeholder="${t('newPin')}"
+                style="width:100%;padding:14px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:18px;color:var(--td);background:var(--tb);outline:none;
+                       margin-bottom:8px;box-sizing:border-box;-webkit-appearance:none;
+                       font-family:Georgia,serif">
+              <input id="change-pin-new2" type="password" inputmode="numeric"
+                placeholder="${t('confirmNewPin')}"
+                style="width:100%;padding:14px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:18px;color:var(--td);background:var(--tb);outline:none;
+                       margin-bottom:12px;box-sizing:border-box;-webkit-appearance:none;
+                       font-family:Georgia,serif">
+              <div id="change-pin-error" style="color:#d00;font-size:14px;min-height:20px;margin-bottom:10px"></div>
+              <button id="change-pin-btn" onclick="handleChangePin()"
+                style="width:100%;padding:14px;background:var(--tp);color:var(--td);border:none;
+                       border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;
+                       font-family:Georgia,serif">
+                ${t('changePin')}
+              </button>
+            </div>
+
+            <div style="padding:16px 18px">
+              <button onclick="doSignOut()"
+                style="width:100%;padding:16px;background:#FFF0F0;color:#C0392B;
+                       border:2px solid #FFCCCC;border-radius:12px;
+                       font-size:17px;font-weight:800;cursor:pointer;font-family:Georgia,serif">
+                ${t('signOut')}
+              </button>
+            </div>
+          `)}
+
+        </div>`;
+    }
+
+    // ── ENTRY SHEET ───────────────────────────────────────────────────────
+    function openSheet(dateStr, entryId = null) {
+      editingEntryId = entryId;
+      if (entryId) completingApptId = null; // editing existing entry clears any completing state
+      const entry = entryId ? state.entries.find(e => e.id === entryId) : null;
+      const completingAppt = completingApptId ? appointments.find(a => a.id === completingApptId) : null;
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2,'0');
+      const mm = String(now.getMinutes()).padStart(2,'0');
+      const defaultDate = entry?.date || completingAppt?.date || (dateStr || formatDate(new Date()));
+      const defaultTime = entry?.time || completingAppt?.time || `${hh}:${mm}`;
+      const defaultName = entry?.name || completingAppt?.customer_name || '';
+      const defaultNotes = entry?.notes || completingAppt?.notes || '';
+      const defaultPrice = entry?.price || '';
+      const preSelectedSvcs = entry?.services || completingAppt?.services || [];
+      const sym = state.settings.currencySymbol || '$';
+      const rate = state.settings.commissionRate;
+      const services = state.settings.services || DEFAULT_SERVICES;
+
+      const serviceChips = services.map((svc, i) => {
+        const preSelected = preSelectedSvcs.includes(svc);
+        return `
+          <div class="svc-chip ${preSelected ? 'selected' : ''}" data-svc="${i}"
+            onclick="this.classList.toggle('selected')"
+            style="padding:13px 8px;border-radius:10px;border:2px solid var(--tbd);
+                   background:var(--tb);text-align:center;font-size:14px;
+                   color:var(--td);cursor:pointer;transition:all 0.15s;min-height:48px;
+                   display:flex;align-items:center;justify-content:center">
+            ${svc}
+          </div>`;
+      }).join('');
+
+      const rateHelper = rate
+        ? `<div id="rate-helper" style="font-size:13px;color:#E9C87A;margin-top:6px;min-height:20px"></div>`
+        : '';
+
+      document.getElementById('sheet-content').innerHTML = `
+        <div style="padding:24px 20px 32px">
+          <div style="width:40px;height:4px;background:var(--tp);border-radius:4px;margin:0 auto 20px"></div>
+          <div style="font-size:22px;font-weight:800;color:var(--td);margin-bottom:4px">${entry ? t('editEntry') : t('addCustomer')}</div>
+          <div style="font-size:13px;color:var(--ts);margin-bottom:24px">${defaultDate}${completingAppt ? ` · 📋 ${t('upcoming')}` : ''}</div>
+
+          <div style="margin-bottom:20px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">
+              ${t('customerName')} <span style="color:#ccc;font-weight:400">${t('optional')}</span>
+            </label>
+            <input id="f-name" type="text" placeholder="${t('namePlaceholder')}" value="${defaultName.replace(/"/g,'&quot;')}"
+              style="width:100%;padding:14px 16px;border:2px solid var(--tbd);border-radius:12px;
+                     font-size:18px;color:var(--td);background:var(--tb);outline:none">
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+            <div>
+              <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                            letter-spacing:0.05em;display:block;margin-bottom:8px">${t('date')}</label>
+              <input id="f-date" type="date" value="${defaultDate}"
+                style="width:100%;padding:14px 12px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:15px;color:var(--td);background:var(--tb);outline:none">
+            </div>
+            <div>
+              <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                            letter-spacing:0.05em;display:block;margin-bottom:8px">${t('time')}</label>
+              <input id="f-time" type="time" value="${defaultTime}"
+                style="width:100%;padding:14px 12px;border:2px solid var(--tbd);border-radius:12px;
+                       font-size:15px;color:var(--td);background:var(--tb);outline:none">
+            </div>
+          </div>
+
+          <div style="margin-bottom:20px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">${t('servicesDone')}</label>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${serviceChips}</div>
+          </div>
+
+          <div style="margin-bottom:20px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">${t('price')}</label>
+            <div style="display:flex;align-items:center">
+              <div style="background:#E9C87A;color:#4A2D3A;font-size:20px;font-weight:800;
+                          padding:14px 16px;border-radius:12px 0 0 12px;
+                          border:2px solid #D4B060;border-right:none">${sym}</div>
+              <input id="f-price" type="number" inputmode="decimal" placeholder="0" min="0"
+                value="${defaultPrice}"
+                style="flex:1;padding:14px 16px;border:2px solid var(--tbd);border-radius:0 12px 12px 0;
+                       font-size:22px;font-weight:800;color:var(--td);background:var(--tb);outline:none;
+                       border-left:none"
+                ${rate ? `oninput="updateTakeHome(this.value)"` : ''}>
+            </div>
+            ${rateHelper}
+          </div>
+
+          <div style="margin-bottom:24px">
+            <label style="font-size:13px;font-weight:700;color:var(--td);text-transform:uppercase;
+                          letter-spacing:0.05em;display:block;margin-bottom:8px">
+              ${t('notes')} <span style="color:#ccc;font-weight:400">${t('optional')}</span>
+            </label>
+            <input id="f-notes" type="text" placeholder="${t('notesPlaceholder')}" value="${defaultNotes.replace(/"/g,'&quot;')}"
+              style="width:100%;padding:14px 16px;border:2px solid var(--tbd);border-radius:12px;
+                     font-size:18px;color:var(--td);background:var(--tb);outline:none">
+          </div>
+
+          <button onclick="submitSheet()"
+            style="width:100%;padding:18px;background:linear-gradient(135deg,var(--tp),var(--ts));
+                   color:#fff;border:none;border-radius:14px;font-size:20px;font-weight:800;
+                   cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.2)">
+            ${t('saveCustomer')}
+          </button>
+        </div>`;
+
+      document.getElementById('sheet-overlay').classList.remove('hidden');
+      requestAnimationFrame(() => document.getElementById('sheet-add').classList.add('open'));
+    }
+
+    function updateTakeHome(val) {
+      const rate = state.settings.commissionRate;
+      const el = document.getElementById('rate-helper');
+      if (!el || !rate) return;
+      const sym = state.settings.currencySymbol || '$';
+      const price = parseFloat(val) || 0;
+      el.textContent = price > 0 ? `${t('takeHome')} ${sym}${Math.round(price * rate / 100)}` : '';
+    }
+
+    function submitSheet() {
+      const name = document.getElementById('f-name').value.trim();
+      const date = document.getElementById('f-date').value;
+      const time = document.getElementById('f-time').value;
+      const price = parseFloat(document.getElementById('f-price').value) || 0;
+      const notes = document.getElementById('f-notes').value.trim();
+      const selectedChips = document.querySelectorAll('.svc-chip.selected');
+      const services = Array.from(selectedChips).map(el =>
+        (state.settings.services || DEFAULT_SERVICES)[parseInt(el.dataset.svc)]
+      );
+
+      if (!date || !time || price <= 0) {
+        alert(lang === 'vi' ? 'Vui lòng nhập ngày, giờ và giá.' : 'Please enter date, time, and price.');
+        return;
+      }
+
+      if (editingEntryId) {
+        const idx = state.entries.findIndex(e => e.id === editingEntryId);
+        if (idx !== -1) {
+          const existing = state.entries[idx];
+          state.entries[idx] = {
+            id: editingEntryId,
+            user_id: existing.user_id || currentUser?.id,
+            salon_id: existing.salon_id,
+            name, date, time, price, services, notes
+          };
+          pushEntryToCloud(state.entries[idx]);
+        }
+        editingEntryId = null;
+        saveToStorage();
+        closeSheet();
+        selectedDay = date;
+        renderCalendar();
+      } else {
+        const entryId = saveEntry({ name, date, time, price, services, notes });
+        // Mark appointment complete if this was triggered from completeAppointment()
+        if (completingApptId) {
+          const apptId = completingApptId;
+          appointments = appointments.filter(a => a.id !== apptId);
+          db.from('appointments').update({ completed: true, entry_id: entryId }).eq('id', apptId);
+          completingApptId = null;
+        }
+      }
+    }
+
+    function closeSheet() {
+      editingEntryId = null;
+      completingApptId = null;
+      document.getElementById('sheet-add').classList.remove('open');
+      document.getElementById('sheet-overlay').classList.add('hidden');
+    }
+
+    function prevMonth() {
+      currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+      selectedDay = null;
+      renderCalendar();
+    }
+    function nextMonth() {
+      currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+      selectedDay = null;
+      renderCalendar();
+    }
+    function selectDay(dateStr) {
+      selectedDay = selectedDay === dateStr ? null : dateStr;
+      renderCalendar();
+    }
+
+    function saveEntry(data) {
+      const entry = {
+        id: generateId(),
+        user_id: currentUser?.id,
+        salon_id: state.settings.salon_id || null,
+        ...data
+      };
+      state.entries.push(entry);
+      saveToStorage();
+      closeSheet();
+      selectedDay = data.date;
+      renderCalendar();
+      pushEntryToCloud(entry);
+      return entry.id;
+    }
+
+    // ── INIT ─────────────────────────────────────────────────────────────
+    async function init() {
+      if (!db) return;
+
+      try {
+        const cached = JSON.parse(localStorage.getItem('salon_settings') || '{}');
+        if (cached.theme) applyTheme(cached.theme);
+        if (cached.language) lang = cached.language;
+      } catch(e) {}
+
+      const loadingTimeout = setTimeout(() => {
+        const loading = document.getElementById('screen-loading');
+        if (!loading.classList.contains('hidden')) showScreen('auth');
+      }, 8000);
+
+      const { data: { session } } = await db.auth.getSession();
+      clearTimeout(loadingTimeout);
+
+      if (session) {
+        currentUser = session.user;
+        await loadFromSupabase();
+        await routeAfterLoad();
+      } else {
+        showScreen('auth');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

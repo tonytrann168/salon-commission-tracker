@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy &amp; Terms — PolishPay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --plum: #1C0F14; --rose: #C4607A; --bg: #F5EDE8;
+      --card: #FAF4F1; --border: #E2CFC8; --txt2: #6B4A56;
+      --max: 720px;
+    }
+    body {
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      background: var(--bg); color: var(--plum);
+      font-size: 16px; line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px; padding: 0 clamp(20px, 5vw, 80px);
+      background: rgba(245,237,232,.9); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10;
+    }
+    .logo {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 20px; font-weight: 700; text-decoration: none; color: var(--plum);
+    }
+    .logo b { color: var(--rose); }
+    .back-link {
+      font-size: 14px; color: var(--txt2); text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .back-link:hover { color: var(--plum); }
+    main {
+      max-width: var(--max); margin: 64px auto 96px; padding: 0 clamp(20px, 5vw, 0px);
+    }
+    .doc-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 42px; font-weight: 700; letter-spacing: -.02em;
+      color: var(--plum); margin-bottom: 8px; line-height: 1.1;
+    }
+    .doc-date { font-size: 14px; color: var(--txt2); margin-bottom: 48px; }
+    h2 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 26px; font-weight: 700; color: var(--plum);
+      margin: 40px 0 12px; letter-spacing: -.01em;
+    }
+    h3 { font-size: 16px; font-weight: 600; color: var(--plum); margin: 24px 0 8px; }
+    p { color: var(--txt2); margin-bottom: 14px; font-weight: 300; }
+    ul { color: var(--txt2); padding-left: 20px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; font-weight: 300; }
+    a { color: var(--rose); }
+    .divider {
+      border: none; border-top: 1px solid var(--border);
+      margin: 56px 0;
+    }
+    .contact-box {
+      background: var(--card); border-radius: 12px;
+      padding: 24px 28px; border: 1px solid var(--border);
+      margin-top: 40px;
+    }
+    .contact-box p { margin-bottom: 6px; }
+    footer {
+      text-align: center; padding: 32px 20px;
+      font-size: 13px; color: var(--txt2); background: #130810;
+      color: rgba(245,237,232,.3);
+    }
+    footer a { color: var(--rose); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="logo">Polish<b>Pay</b></a>
+    <a href="/" class="back-link">← Back to polishpay.app</a>
+  </nav>
+
+  <main>
+    <h1 class="doc-title">Privacy Policy</h1>
+    <p class="doc-date">Last updated: July 12, 2026</p>
+
+    <p>PolishPay ("we," "us," or "our") is committed to protecting your privacy. This policy explains what data we collect, how we use it, and your rights.</p>
+
+    <h2>1. What We Collect</h2>
+
+    <h3>Account data</h3>
+    <p>When you sign up, we collect your phone number. We do not collect your legal name, email address, or payment information during sign-up.</p>
+
+    <h3>Commission data</h3>
+    <p>We store the service entries you log: customer names, services performed, prices, dates, and notes. This data belongs to you.</p>
+
+    <h3>Salon data</h3>
+    <p>If you create a salon (owner account), we store your salon name and a generated invite code. If you join a salon (employee account), we store the association between your account and the salon.</p>
+
+    <h3>Usage data</h3>
+    <p>We do not currently collect analytics or usage tracking beyond what is necessary for the app to function.</p>
+
+    <h2>2. How We Use Your Data</h2>
+    <ul>
+      <li>To operate the app — authenticate your account, store your entries, and calculate commission summaries</li>
+      <li>To process payments — if you upgrade to an Owner account, we use Stripe for billing (see below)</li>
+      <li>To communicate with you — if you contact us, we respond via email</li>
+    </ul>
+    <p>We do not sell your data. We do not use your data for advertising.</p>
+
+    <h2>3. Data Storage</h2>
+    <p>Your data is stored using Supabase, hosted on AWS in the United States. Data is encrypted at rest and in transit.</p>
+
+    <h2>4. Payment Processing</h2>
+    <p>Owner subscriptions are processed by Stripe. When you subscribe, you are subject to Stripe's privacy policy. We do not store your full credit card number — Stripe handles all payment data.</p>
+
+    <h2>5. Data Sharing</h2>
+    <p>We do not share your personal data with third parties except:</p>
+    <ul>
+      <li><strong>Supabase</strong> — our database and authentication provider</li>
+      <li><strong>Stripe</strong> — payment processing for owner subscriptions</li>
+      <li><strong>Legal requirements</strong> — if required by law or court order</li>
+    </ul>
+
+    <h2>6. Your Rights</h2>
+    <p>You can request deletion of your account and all associated data by emailing <a href="mailto:hello@polishpay.app">hello@polishpay.app</a>. We will process deletion requests within 30 days.</p>
+    <p>You can export your commission data at any time using the CSV export feature in the app.</p>
+
+    <h2>7. Data Retention</h2>
+    <p>We retain your data for as long as your account is active. If you delete your account, all associated data is permanently removed.</p>
+
+    <h2>8. Children's Privacy</h2>
+    <p>PolishPay is not intended for use by anyone under the age of 18. We do not knowingly collect data from minors.</p>
+
+    <h2>9. Changes to This Policy</h2>
+    <p>We may update this policy. If we make material changes, we will notify you via the app. Continued use of PolishPay after changes constitutes acceptance of the updated policy.</p>
+
+    <hr class="divider" id="terms">
+
+    <h1 class="doc-title">Terms of Service</h1>
+    <p class="doc-date">Last updated: July 12, 2026</p>
+
+    <p>By using PolishPay, you agree to these terms. Please read them carefully.</p>
+
+    <h2>1. Who Can Use PolishPay</h2>
+    <p>PolishPay is available to nail salon owners and their employees. You must be at least 18 years old to create an account.</p>
+
+    <h2>2. Your Account</h2>
+    <p>You are responsible for keeping your PIN secure. If you lose access to your PIN, you can reset it using your recovery code. We are not liable for losses resulting from unauthorized access due to a shared or compromised PIN.</p>
+
+    <h2>3. Subscription and Billing</h2>
+    <h3>Owner accounts</h3>
+    <ul>
+      <li>$14.00 per month, billed monthly</li>
+      <li>30-day free trial — no credit card required to start</li>
+      <li>After the trial, billing begins automatically if you choose to subscribe</li>
+    </ul>
+    <h3>Employee accounts</h3>
+    <p>Employee (nail tech) accounts are free forever. No subscription required.</p>
+    <h3>Cancellation</h3>
+    <p>You may cancel your Owner subscription at any time. Access continues through the end of the current billing period. No refunds for partial months.</p>
+
+    <h2>4. Acceptable Use</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>Use PolishPay for any illegal purpose</li>
+      <li>Attempt to reverse-engineer, hack, or disrupt the service</li>
+      <li>Share your account with people outside your salon</li>
+      <li>Use the service to store data you do not have the right to store</li>
+    </ul>
+
+    <h2>5. Your Data</h2>
+    <p>You own your commission data. We do not claim any rights to the data you enter. You can export it at any time and delete your account when you choose.</p>
+
+    <h2>6. Service Availability</h2>
+    <p>We aim for high availability but do not guarantee uninterrupted service. We are not liable for losses resulting from downtime.</p>
+
+    <h2>7. Limitation of Liability</h2>
+    <p>PolishPay is provided "as is." We are not liable for any indirect, incidental, or consequential damages arising from your use of the service, including but not limited to payroll errors resulting from inaccurate data entry.</p>
+
+    <h2>8. Governing Law</h2>
+    <p>These terms are governed by the laws of the State of California, United States.</p>
+
+    <h2>9. Changes to These Terms</h2>
+    <p>We may update these terms. Material changes will be announced in the app. Continued use after changes constitutes acceptance of the updated terms.</p>
+
+    <div class="contact-box">
+      <h3>Questions?</h3>
+      <p>Email us at <a href="mailto:hello@polishpay.app">hello@polishpay.app</a></p>
+      <p>We respond to all inquiries within 2 business days.</p>
+    </div>
+  </main>
+
+  <footer>
+    <a href="/">polishpay.app</a> &nbsp;·&nbsp;
+    <a href="mailto:hello@polishpay.app">hello@polishpay.app</a> &nbsp;·&nbsp;
+    © 2026 PolishPay
+  </footer>
+
+</body>
+</html>
