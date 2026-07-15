@@ -51,7 +51,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    #screen-auth, #screen-onboarding {
+    #screen-auth, #screen-onboarding, #screen-paywall {
       position: fixed; inset: 0; background: var(--tb);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       padding: 32px 24px; z-index: 100; overflow-y: auto;
@@ -69,6 +69,11 @@
   <!-- Auth screen (login / signup) -->
   <div id="screen-auth" class="hidden">
     <div id="auth-content" style="width:100%;max-width:380px"></div>
+  </div>
+
+  <!-- Paywall screen -->
+  <div id="screen-paywall" class="hidden">
+    <div id="paywall-content" style="width:100%;max-width:380px"></div>
   </div>
 
   <!-- Onboarding screen -->
@@ -581,9 +586,113 @@
         renderOnboarding('choose');
       } else if (userRole === 'owner' || userRole === 'employee') {
         await loadSalonContext();
+        // Check subscription for owners
+        if (userRole === 'owner' && currentSalon) {
+          const subStatus = currentSalon.subscription_status || 'trial';
+          const trialEnds = currentSalon.trial_ends_at ? new Date(currentSalon.trial_ends_at) : null;
+          const trialExpired = trialEnds && trialEnds < new Date();
+          const subBlocked = subStatus === 'cancelled' || subStatus === 'past_due' ||
+                             (subStatus === 'trial' && trialExpired);
+          if (subBlocked) {
+            showScreen('paywall');
+            return;
+          }
+        }
         showScreen('app');
+        // Handle return from Stripe checkout
+        if (new URLSearchParams(window.location.search).get('sub') === 'success') {
+          window.history.replaceState({}, '', window.location.pathname);
+          setTimeout(() => alert('🎉 Subscription active! Welcome to PolishPay.'), 400);
+        }
       } else {
         showScreen('app');
+      }
+    }
+
+    function renderPaywall() {
+      const trialEnds = currentSalon?.trial_ends_at ? new Date(currentSalon.trial_ends_at) : null;
+      const subStatus = currentSalon?.subscription_status || 'trial';
+      const isExpiredTrial = subStatus === 'trial';
+      const isPastDue     = subStatus === 'past_due';
+
+      let headline, body;
+      if (isPastDue) {
+        headline = 'Payment failed';
+        body = 'Your last payment didn\'t go through. Update your billing info to continue.';
+      } else if (isExpiredTrial) {
+        headline = 'Your free trial has ended';
+        body = 'Subscribe to keep access to your team dashboard, payroll breakdowns, and CSV exports.';
+      } else {
+        headline = 'Subscription cancelled';
+        body = 'Resubscribe to restore access to your owner features.';
+      }
+
+      document.getElementById('paywall-content').innerHTML = `
+        <div style="text-align:center;margin-bottom:32px">
+          <div style="font-size:48px;margin-bottom:12px">💅</div>
+          <div style="font-family:Georgia,serif;font-size:26px;font-weight:800;
+                      color:var(--td);margin-bottom:12px">${headline}</div>
+          <div style="font-size:16px;color:var(--ts);line-height:1.6">${body}</div>
+        </div>
+
+        <div style="background:#FFF8F0;border:2px solid #E9C87A;border-radius:16px;
+                    padding:20px;margin-bottom:24px;text-align:center">
+          <div style="font-size:13px;color:#8B6914;font-weight:600;margin-bottom:4px">SALON OWNER PLAN</div>
+          <div style="font-size:40px;font-weight:800;color:var(--td);font-family:Georgia,serif">$14</div>
+          <div style="font-size:13px;color:var(--ts)">per month · cancel anytime</div>
+        </div>
+
+        <ul style="list-style:none;margin-bottom:28px;padding:0">
+          ${['Full team dashboard','Payroll breakdown by tech','Appointment booking','CSV export for all employees','English &amp; Vietnamese'].map(f =>
+            `<li style="padding:10px 0;border-bottom:1px solid var(--tb);font-size:15px;color:var(--ts);display:flex;align-items:center;gap:10px">
+              <span style="color:var(--tp);font-weight:700">✓</span>${f}
+            </li>`
+          ).join('')}
+        </ul>
+
+        <button id="paywall-btn"
+          onclick="startCheckout()"
+          style="width:100%;padding:20px;background:linear-gradient(135deg,var(--tp),var(--ts));
+                 color:#fff;border:none;border-radius:16px;font-size:20px;font-weight:800;
+                 cursor:pointer;font-family:Georgia,serif;margin-bottom:16px">
+          Subscribe — $14/mo
+        </button>
+
+        <button onclick="doSignOut()"
+          style="width:100%;padding:14px;background:none;border:none;
+                 color:var(--ts);font-size:14px;cursor:pointer;font-family:Georgia,serif">
+          Sign out
+        </button>
+      `;
+    }
+
+    async function startCheckout() {
+      const btn = document.getElementById('paywall-btn');
+      if (btn) { btn.textContent = 'Redirecting...'; btn.disabled = true; }
+
+      try {
+        const { data: { session } } = await db.auth.getSession();
+        const resp = await fetch(
+          'https://tfvkonjmacpiggfcikax.supabase.co/functions/v1/create-checkout-session',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({}),
+          }
+        );
+        const data = await resp.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error(data.error || 'no_url');
+        }
+      } catch (err) {
+        console.error('Checkout error:', err);
+        if (btn) { btn.textContent = 'Subscribe — $14/mo'; btn.disabled = false; }
+        alert('Something went wrong. Please try again.');
       }
     }
 
@@ -665,6 +774,7 @@
       document.getElementById('screen-loading').classList.add('hidden');
       document.getElementById('screen-auth').classList.add('hidden');
       document.getElementById('screen-onboarding').classList.add('hidden');
+      document.getElementById('screen-paywall').classList.add('hidden');
       document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
       document.getElementById('nav-bar').classList.add('hidden');
 
@@ -673,6 +783,9 @@
         renderAuthScreen('signin');
       } else if (name === 'onboarding') {
         document.getElementById('screen-onboarding').classList.remove('hidden');
+      } else if (name === 'paywall') {
+        document.getElementById('screen-paywall').classList.remove('hidden');
+        renderPaywall();
       } else if (name === 'app') {
         document.getElementById('nav-bar').classList.remove('hidden');
         renderNav();
