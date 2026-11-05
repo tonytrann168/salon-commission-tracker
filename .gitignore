@@ -1,0 +1,10 @@
+# Claude Code (local + runtime state from the Game Studios agents/skills)
+.claude/settings.local.json
+.claude/agent-memory/
+.claude/worktrees/
+CLAUDE.local.md
+project.local.yaml
+production/session-logs/
+production/session-state/
+.scratch/
+.DS_Store

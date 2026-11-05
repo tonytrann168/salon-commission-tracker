@@ -1,0 +1,5 @@
+# Claude Code tooling — not part of the deployed site
+.claude/
+docs/
+design/
+production/
