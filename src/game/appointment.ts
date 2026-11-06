@@ -1,0 +1,134 @@
+import { applyMoodDelta, clampMood, isWalkOut } from './mood';
+import { PHASES } from './types';
+import type { AppointmentResult, ClientPersona, Message, Outcome, Phase, TakeTurn } from './types';
+
+/** Appointment state machine. Story: story-001 (design/game-brief.md, MVP feature 1). */
+
+export type AppointmentStatus = 'awaiting_player' | 'waiting' | 'error' | 'finished';
+
+/** Immutable view of the appointment for the UI. */
+export interface AppointmentSnapshot {
+  status: AppointmentStatus;
+  phase: Phase;
+  mood: number;
+  transcript: readonly Message[];
+  moodHistory: readonly number[];
+  /** Player message sent but not yet answered (shown while waiting or after an error). */
+  pendingPlayerMessage: string | null;
+  /** Set when status is `error`; `retry()` resends the pending message. */
+  error: Error | null;
+  /** Set when status is `finished`. */
+  result: AppointmentResult | null;
+}
+
+export interface AppointmentOptions {
+  client: ClientPersona;
+  takeTurn: TakeTurn;
+  /** Called once when the appointment ends (story 002 consumes this). */
+  onFinished: (result: AppointmentResult) => void;
+}
+
+export interface Appointment {
+  getSnapshot(): AppointmentSnapshot;
+  /** Listen for state changes. Returns an unsubscribe function. */
+  subscribe(listener: (snapshot: AppointmentSnapshot) => void): () => void;
+  /** Send the player's message. Ignored unless the client is waiting for the player. */
+  send(text: string): Promise<void>;
+  /** Resend the message whose turn failed. Ignored unless status is `error`. */
+  retry(): Promise<void>;
+}
+
+/**
+ * The game, not the model, owns the phase: it never goes backwards and
+ * advances at most one step per turn.
+ */
+export function nextPhase(current: Phase, proposed: Phase): Phase {
+  const from = PHASES.indexOf(current);
+  const to = PHASES.indexOf(proposed);
+  return PHASES[Math.min(Math.max(to, from), from + 1)] ?? current;
+}
+
+/** Create an appointment that starts in consultation with the client's opening line. */
+export function createAppointment(options: AppointmentOptions): Appointment {
+  const { client, takeTurn, onFinished } = options;
+  const listeners = new Set<(snapshot: AppointmentSnapshot) => void>();
+
+  let status: AppointmentStatus = 'awaiting_player';
+  let phase: Phase = 'consultation';
+  let mood = clampMood(client.startingMood);
+  let transcript: Message[] = [{ role: 'client', content: client.openingLine }];
+  let moodHistory: number[] = [mood];
+  let pending: string | null = null;
+  let error: Error | null = null;
+  let result: AppointmentResult | null = null;
+
+  const getSnapshot = (): AppointmentSnapshot => ({
+    status,
+    phase,
+    mood,
+    transcript: [...transcript],
+    moodHistory: [...moodHistory],
+    pendingPlayerMessage: pending,
+    error,
+    result,
+  });
+
+  const notify = (): void => {
+    const snapshot = getSnapshot();
+    listeners.forEach((listener) => listener(snapshot));
+  };
+
+  const runTurn = async (playerText: string): Promise<void> => {
+    pending = playerText;
+    error = null;
+    status = 'waiting';
+    notify();
+
+    const candidate: Message[] = [...transcript, { role: 'player', content: playerText }];
+    let turn;
+    try {
+      turn = await takeTurn(candidate, phase, mood);
+    } catch (caught) {
+      // State is untouched so the same message can be retried.
+      error = caught instanceof Error ? caught : new Error(String(caught));
+      status = 'error';
+      notify();
+      return;
+    }
+
+    transcript = [...candidate, { role: 'client', content: turn.reply }];
+    mood = applyMoodDelta(mood, turn.moodDelta);
+    moodHistory = [...moodHistory, mood];
+    phase = nextPhase(phase, turn.phase);
+    pending = null;
+
+    // Walking out takes priority over completing checkout on the same turn.
+    const outcome: Outcome | null = isWalkOut(mood) ? 'walked_out' : phase === 'done' ? 'completed' : null;
+    if (outcome) {
+      status = 'finished';
+      result = { outcome, transcript: [...transcript], moodHistory: [...moodHistory] };
+      notify();
+      onFinished(result);
+      return;
+    }
+    status = 'awaiting_player';
+    notify();
+  };
+
+  return {
+    getSnapshot,
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    async send(text) {
+      const trimmed = text.trim();
+      if (status !== 'awaiting_player' || trimmed === '') return;
+      await runTurn(trimmed);
+    },
+    async retry() {
+      if (status !== 'error' || pending === null) return;
+      await runTurn(pending);
+    },
+  };
+}

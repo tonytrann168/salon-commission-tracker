@@ -1,12 +1,12 @@
 # Story 001: Live client appointment (text)
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-11-06
 
 ## Context
 
@@ -63,10 +63,20 @@
 - `src/api/client-turn.ts`
 - `src/game/appointment.ts`
 - `src/game/mood.ts`
+- `src/game/types.ts`
+- `src/game/client-turn-transport.ts`
+- `src/game/clients/default-client.ts`
+- `src/game/salon-scene.ts`
+- `src/game/title-screen.ts`
 - `src/game/ui/chat-panel.ts`
-- `src/tests/appointment.test.ts`
-
----
+- `src/game/ui/chat-panel.css`
+- `src/game/ui/strings.ts`
+- `src/main.ts`
+- `src/vite.config.ts`
+- `src/tsconfig.json`
+- `src/package.json`
+- `src/.gitignore`
+- `src/.env.example`
 
 ## QA Test Cases
 

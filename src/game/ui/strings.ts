@@ -1,0 +1,17 @@
+/** All player-facing UI text in one place so story 008 can move it to string tables. */
+export const STRINGS = {
+  startAppointment: 'Start appointment',
+  phaseLabels: { consultation: 'Consultation', service: 'Service', checkout: 'Checkout', done: 'Done' },
+  moodLabel: 'Mood',
+  inputPlaceholder: 'Say something to the client...',
+  send: 'Send',
+  typing: 'is typing',
+  retry: 'Try again',
+  aiUnavailable: 'The AI client is not available yet. Please try again in a bit.',
+  aiTrouble: 'The client got distracted and did not answer. Your message is safe. Try again?',
+  endCompleted: 'The appointment is over. Thanks for coming in!',
+  endWalkedOut: 'The client walked out. The appointment is over.',
+  endPlaceholder: 'Your results will show up here soon.',
+  backToTitle: 'Back to title',
+  you: 'You',
+} as const;

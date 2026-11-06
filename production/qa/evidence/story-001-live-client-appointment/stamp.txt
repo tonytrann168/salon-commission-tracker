@@ -1,0 +1,17 @@
+Reviewed-Content-Hash: src/api/client-turn.ts 442c3390054fdbf3e818226a64cd3e6c0bb1f524
+Reviewed-Content-Hash: src/game/appointment.ts 32d840ffc2b89c1521adbabf2a7a3b7f6ef8da1e
+Reviewed-Content-Hash: src/game/mood.ts 7440bce2763bfb82086dbfe92490d8c394173a7a
+Reviewed-Content-Hash: src/game/types.ts 0aa63c8fef7e1b9e7a2afe41b5ae7768df48ae23
+Reviewed-Content-Hash: src/game/client-turn-transport.ts 21ad1fcee5fb88be6dfb0bcb32130e6a12b860ff
+Reviewed-Content-Hash: src/game/clients/default-client.ts 5fe4b369cfd6cbe78e0cf403239b42cda79d56a7
+Reviewed-Content-Hash: src/game/salon-scene.ts fcf1199c57688fffb356889944568c92e3934bb5
+Reviewed-Content-Hash: src/game/title-screen.ts 0e1fe6d9ed8434b977108e3130149c694f74a2b0
+Reviewed-Content-Hash: src/game/ui/chat-panel.ts c037f6ab3b9248dad61ff4ed4df979ad1096266d
+Reviewed-Content-Hash: src/game/ui/chat-panel.css e6e2639d699b009a449459df829f77aba7bcc9ce
+Reviewed-Content-Hash: src/game/ui/strings.ts 78c4cfce9711229d2e49c5a77e647bd53cb2be24
+Reviewed-Content-Hash: src/main.ts 5000bf199172829329c2a4209f5f51b6f9387958
+Reviewed-Content-Hash: src/vite.config.ts 7406351dae7f8271dfd0f429a57edd7459ea0b48
+Reviewed-Content-Hash: src/tsconfig.json bc8d642bab0919b4e5acd955cb016ad2246acfb6
+Reviewed-Content-Hash: src/package.json 6a2a73b4046c65adb911c862321a71cb1e207552
+Reviewed-Content-Hash: src/.gitignore 46f44867e0ee9cb55c142bc301700bf47f1fa224
+Reviewed-Content-Hash: src/.env.example 8b3e12580738e80ab7a020f758ae22a848a8febb
