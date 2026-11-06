@@ -1,0 +1,40 @@
+# CCGS project configuration — single source of truth for project settings.
+# Schema: grep the `## <key>` section of .claude/docs/effects-map.md —
+# it is ~31k tokens whole, ~900 per section. Do not open it entire.
+#
+# This repo holds two things: PolishPay (static site at the root, deployed by
+# Vercel) and the Salon Besties game (everything under src/). This file
+# configures the game studio skills only.
+
+schema_version: 1
+
+framework:
+  version: 1.2.0
+  last_upgraded: 2026-11-06
+
+engine:
+  name: "Web"
+  version: "Vite 8.3 / PixiJS 8.22"
+  language: "TypeScript 7.0"
+  rendering: "PixiJS WebGL (canvas fallback) + DOM/CSS UI"
+  physics: "none"
+
+specialists:
+  code: "gameplay-programmer"
+  shader: "technical-artist"
+  ui: "ui-programmer"
+  additional: ["ai-programmer", "ux-designer"]
+
+naming:
+  classes: PascalCase
+  variables: camelCase
+  constants: UPPER_SNAKE_CASE
+  signals: camelCase events (e.g. moodChanged)
+  files: kebab-case.ts
+  scenes: kebab-case
+
+commands:
+  build: "cd src && npm run build"
+  test: "cd src && npm test"
+  run: "cd src && npm run dev"
+  smoke: "cd src && npm run build && npm test"

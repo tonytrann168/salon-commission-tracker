@@ -10,54 +10,55 @@
 
 ## Engine & Language
 
-- **Engine**: [TO BE CONFIGURED — run /setup-engine]
-- **Language**: [TO BE CONFIGURED]
-- **Rendering**: [TO BE CONFIGURED]
-- **Physics**: [TO BE CONFIGURED]
+- **Engine**: Web (Vite 8.3 + PixiJS 8.22; no game engine — see project.yaml)
+- **Language**: TypeScript 7.0
+- **Rendering**: PixiJS WebGL (canvas fallback) + DOM/CSS UI
+- **Physics**: none
 
 ## Input & Platform
 
 <!-- Written by /setup-engine. Read by /ux-design, /ux-review, /test-setup, /team-ui, and /dev-story -->
 <!-- to scope interaction specs, test helpers, and implementation to the correct input methods. -->
 
-- **Target Platforms**: [TO BE CONFIGURED — e.g., PC, Console, Mobile, Web]
-- **Input Methods**: [TO BE CONFIGURED — e.g., Keyboard/Mouse, Gamepad, Touch, Mixed]
-- **Primary Input**: [TO BE CONFIGURED — the dominant input for this game]
-- **Gamepad Support**: [TO BE CONFIGURED — Full / Partial / None]
-- **Touch Support**: [TO BE CONFIGURED — Full / Partial / None]
-- **Platform Notes**: [TO BE CONFIGURED — any platform-specific UX constraints]
+- **Target Platforms**: Mobile web (installable PWA); iOS/Android via Capacitor later
+- **Input Methods**: Touch, on-screen keyboard, microphone (voice)
+- **Primary Input**: Touch
+- **Gamepad Support**: None
+- **Touch Support**: Full
+- **Platform Notes**: Portrait phone first; Vietnamese text input must work; mic needs a user gesture to start
 
 ## Naming Conventions
 
-- **Classes**: [TO BE CONFIGURED]
-- **Variables**: [TO BE CONFIGURED]
-- **Signals/Events**: [TO BE CONFIGURED]
-- **Files**: [TO BE CONFIGURED]
-- **Scenes/Prefabs**: [TO BE CONFIGURED]
-- **Constants**: [TO BE CONFIGURED]
+- **Classes**: PascalCase
+- **Variables**: camelCase
+- **Signals/Events**: camelCase events (e.g. moodChanged)
+- **Files**: kebab-case.ts
+- **Scenes/Prefabs**: kebab-case
+- **Constants**: UPPER_SNAKE_CASE
 
 ## Performance Budgets
 
-- **Target Framerate**: [TO BE CONFIGURED]
-- **Frame Budget**: [TO BE CONFIGURED]
+- **Target Framerate**: 60 fps on mid-range phones
+- **Frame Budget**: 16.6 ms
 - **Draw Calls**: [TO BE CONFIGURED]
 - **Memory Ceiling**: [TO BE CONFIGURED]
 
 ## Testing
 
-- **Framework**: [TO BE CONFIGURED]
+- **Framework**: Vitest 5.1
 - **Minimum Coverage**: [TO BE CONFIGURED]
 - **Required Tests**: Balance formulas, gameplay systems, networking (if applicable)
 
 ## Forbidden Patterns
 
 <!-- Add patterns that should never appear in this project's codebase -->
-- [None configured yet — add as architectural decisions are made]
+- Claude / voice API keys in client code — all AI calls go through a server function
 
 ## Allowed Libraries / Addons
 
 <!-- Add approved third-party dependencies here -->
-- [None configured yet — add as dependencies are approved]
+- vite, typescript, pixi.js, vitest
+- @rive-app/canvas (animated faces), @anthropic-ai/sdk (server side only), @capacitor/* (store builds, later)
 
 ## Architecture Decisions Log
 
