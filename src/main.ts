@@ -1,5 +1,4 @@
-import { Application } from 'pixi.js';
-import type { Container } from 'pixi.js';
+import { Application, Container } from 'pixi.js';
 import { createAppointment } from './game/appointment';
 import { createFetchTransport } from './game/client-turn-transport';
 import { DEFAULT_CLIENT } from './game/clients/default-client';
@@ -18,9 +17,14 @@ async function boot(): Promise<void> {
   let buildScene: (width: number, height: number) => Container = createTitleScreen;
   let teardownDom: () => void = () => undefined;
 
+  // Scenes are rebuilt on resize. Portraits live on their own layer so they survive redraws.
+  const sceneRoot = new Container();
+  const portraitLayer = new Container();
+  app.stage.addChild(sceneRoot, portraitLayer);
+
   const draw = () => {
-    app.stage.removeChildren();
-    app.stage.addChild(buildScene(app.screen.width, app.screen.height));
+    sceneRoot.removeChildren().forEach((old) => old.destroy({ children: true }));
+    sceneRoot.addChild(buildScene(app.screen.width, app.screen.height));
   };
 
   const showTitle = () => {
@@ -41,7 +45,7 @@ async function boot(): Promise<void> {
       // Story 002 will take the result to its results screen; for now the chat panel shows a placeholder end state.
       onFinished: () => undefined,
     });
-    const panel = createChatPanel(host, appointment, showTitle);
+    const panel = createChatPanel(host, appointment, showTitle, { client: DEFAULT_CLIENT, layer: portraitLayer });
     teardownDom = panel.destroy;
   };
 

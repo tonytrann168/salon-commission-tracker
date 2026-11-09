@@ -1,21 +1,21 @@
 import { Container, Graphics, Text } from 'pixi.js';
+import { createPortrait } from './portraits/definitions';
 import { STRINGS } from './ui/strings';
 import './ui/chat-panel.css';
 
 export const GAME_TITLE = 'Salon Besties';
 export const TAGLINE = 'Work the chair for real.';
 
-/** Placeholder title screen until the first story replaces it. */
+/** Placeholder title screen: the bestie's portrait, title and tagline. */
 export function createTitleScreen(width: number, height: number): Container {
   const screen = new Container();
   screen.label = 'title-screen';
 
   const bg = new Graphics().rect(0, 0, width, height).fill(0xfff4f8);
-  const polish = new Graphics()
-    .roundRect(width / 2 - 28, height * 0.28, 56, 90, 14)
-    .fill(0xff5c9a)
-    .roundRect(width / 2 - 16, height * 0.28 - 40, 32, 44, 8)
-    .fill(0x3b2a33);
+  // Bestie above the title: sized to the space over the title text so nothing overlaps on small phones.
+  const bestieSize = Math.min(width * 0.6, height * 0.3);
+  const bestie = createPortrait('bestie', bestieSize, 'delighted');
+  bestie.view.position.set((width - bestieSize) / 2, height * 0.27 - bestieSize / 2);
 
   const title = new Text({
     text: GAME_TITLE,
@@ -31,7 +31,7 @@ export function createTitleScreen(width: number, height: number): Container {
   tagline.anchor.set(0.5);
   tagline.position.set(width / 2, height * 0.52 + 44);
 
-  screen.addChild(bg, polish, title, tagline);
+  screen.addChild(bg, bestie.view, title, tagline);
   return screen;
 }
 

@@ -1,12 +1,12 @@
 # Story 009: Character portraits & mood expressions
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Presentation
 > **Type**: Visual/Feel
 > **Estimate**: M
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-11-09
 
 ## Context
 
@@ -57,14 +57,19 @@
 
 ## Files
 
+- `src/game/config/expressions.json`
 - `src/game/portraits/portrait.ts`
 - `src/game/portraits/placeholder-faces.ts`
 - `src/game/portraits/definitions.ts`
-- `src/game/config/expressions.json`
+- `src/game/ui/portrait-zone.ts`
 - `src/game/ui/chat-panel.ts`
+- `src/game/ui/chat-panel.css`
+- `src/game/ui/strings.ts`
 - `src/game/title-screen.ts`
-
----
+- `src/game/salon-scene.ts`
+- `src/game/types.ts`
+- `src/game/clients/default-client.ts`
+- `src/main.ts`
 
 ## QA Test Cases
 

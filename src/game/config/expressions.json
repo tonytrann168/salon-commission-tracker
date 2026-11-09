@@ -1,0 +1,18 @@
+{
+  "transitionMs": 200,
+  "bands": [
+    { "expression": "furious", "min": 0, "max": 19 },
+    { "expression": "annoyed", "min": 20, "max": 39 },
+    { "expression": "neutral", "min": 40, "max": 59 },
+    { "expression": "pleased", "min": 60, "max": 79 },
+    { "expression": "delighted", "min": 80, "max": 100 }
+  ],
+  "faces": {
+    "furious": { "browAngle": 28, "browHeight": -0.5, "eyeOpen": 0.6, "mouthCurve": -0.9, "mouthOpen": 0.35, "mouthWidth": 0.9, "blush": 0, "lookX": 0, "headTurn": 0, "headTilt": 0 },
+    "annoyed": { "browAngle": 14, "browHeight": -0.2, "eyeOpen": 0.75, "mouthCurve": -0.6, "mouthOpen": 0, "mouthWidth": 0.8, "blush": 0, "lookX": 0, "headTurn": 0, "headTilt": 0 },
+    "neutral": { "browAngle": 0, "browHeight": 0, "eyeOpen": 0.95, "mouthCurve": 0.1, "mouthOpen": 0, "mouthWidth": 0.7, "blush": 0, "lookX": 0, "headTurn": 0, "headTilt": 0 },
+    "pleased": { "browAngle": -6, "browHeight": 0.3, "eyeOpen": 1, "mouthCurve": 0.65, "mouthOpen": 0, "mouthWidth": 0.95, "blush": 0.5, "lookX": 0, "headTurn": 0, "headTilt": 0 },
+    "delighted": { "browAngle": -10, "browHeight": 0.8, "eyeOpen": 1.1, "mouthCurve": 1, "mouthOpen": 0.8, "mouthWidth": 1.15, "blush": 1, "lookX": 0, "headTurn": 0, "headTilt": 0 },
+    "walkout": { "browAngle": 8, "browHeight": -0.2, "eyeOpen": 0.55, "mouthCurve": -0.1, "mouthOpen": 0, "mouthWidth": 0.35, "blush": 0, "lookX": 1, "headTurn": 0.7, "headTilt": 9 }
+  }
+}

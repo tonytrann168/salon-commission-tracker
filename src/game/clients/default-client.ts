@@ -4,6 +4,7 @@ import type { ClientPersona } from '../types';
 export const DEFAULT_CLIENT: ClientPersona = {
   id: 'dana',
   name: 'Dana',
+  portraitId: 'dana',
   wants:
     'A neat, natural-looking gel manicure in a soft nude or pale pink, short square nails, for a work event on Friday. She has a firm budget of about $45 and a strict 45 minutes.',
   personality:

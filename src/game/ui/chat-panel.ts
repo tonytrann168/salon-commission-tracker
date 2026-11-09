@@ -1,6 +1,11 @@
+import type { Container } from 'pixi.js';
 import type { Appointment, AppointmentSnapshot } from '../appointment';
 import { MOOD_MAX } from '../mood';
+import { poseFor } from '../portraits/portrait';
+import type { Expression } from '../portraits/portrait';
 import { PHASES, TurnError } from '../types';
+import type { ClientPersona } from '../types';
+import { createPortraitZone } from './portrait-zone';
 import { STRINGS } from './strings';
 import './chat-panel.css';
 
@@ -18,12 +23,16 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, t
 /** Mood color from red (angry) through amber to green (happy). */
 const moodColor = (mood: number): string => `hsl(${Math.round((mood / MOOD_MAX) * 120)}, 70%, 50%)`;
 
-/** Mount the appointment UI into `host`. `destroy` removes it. */
+/**
+ * Mount the appointment UI into `host`. `portraits.layer` is the Pixi container the client and bestie portraits
+ * are drawn on, over the portrait zone. `destroy` removes the UI and the portraits.
+ */
 export function createChatPanel(
   host: HTMLElement,
   appointment: Appointment,
   onExit: () => void,
-): { destroy: () => void } {
+  portraits: { client: ClientPersona; layer: Container },
+): { destroy: () => void; setBestieExpression: (expression: Expression) => void } {
   const root = el('div', 'chat-panel');
 
   const header = el('div', 'chat-header');
@@ -40,6 +49,9 @@ export function createChatPanel(
   track.setAttribute('aria-valuemax', String(MOOD_MAX));
   mood.append(el('span', '', STRINGS.moodLabel), track, value);
   header.append(phases, mood);
+
+  const initial = appointment.getSnapshot();
+  const zone = createPortraitZone(host, portraits.layer, portraits.client, poseFor(initial.mood, initial.result?.outcome ?? null));
 
   const log = el('div', 'chat-log');
   const errorBox = el('div', 'chat-error');
@@ -65,7 +77,7 @@ export function createChatPanel(
   sendButton.type = 'submit';
   form.append(input, sendButton);
 
-  root.append(header, log, errorBox, endBox, form);
+  root.append(header, zone.element, log, errorBox, endBox, form);
   host.appendChild(root);
 
   const render = (snapshot: AppointmentSnapshot): void => {
@@ -76,6 +88,8 @@ export function createChatPanel(
       if (index === phaseIndex && !finished) item.setAttribute('aria-current', 'step');
       else item.removeAttribute('aria-current');
     });
+
+    zone.setClientPose(poseFor(snapshot.mood, snapshot.result?.outcome ?? null));
 
     fill.style.width = `${snapshot.mood}%`;
     fill.style.backgroundColor = moodColor(snapshot.mood);
@@ -135,8 +149,10 @@ export function createChatPanel(
   exitButton.addEventListener('click', onExit);
 
   return {
+    setBestieExpression: zone.setBestieExpression,
     destroy() {
       unsubscribe();
+      zone.destroy();
       root.remove();
     },
   };

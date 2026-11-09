@@ -14,4 +14,13 @@ export const STRINGS = {
   endPlaceholder: 'Your results will show up here soon.',
   backToTitle: 'Back to title',
   you: 'You',
+  portraitLabel: (name: string, pose: string): string => `${name}, ${pose}`,
+  poseLabels: {
+    furious: 'furious',
+    annoyed: 'annoyed',
+    neutral: 'neutral',
+    pleased: 'pleased',
+    delighted: 'delighted',
+    walkout: 'walking out',
+  },
 } as const;

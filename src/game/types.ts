@@ -34,6 +34,8 @@ export interface AppointmentResult {
 export interface ClientPersona {
   id: string;
   name: string;
+  /** Id of the portrait definition that draws this client (see portraits/definitions.ts). */
+  portraitId: string;
   /** What the client wants from the appointment. */
   wants: string;
   personality: string;
