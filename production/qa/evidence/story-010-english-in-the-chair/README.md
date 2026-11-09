@@ -1,6 +1,6 @@
 # Story 010 evidence — English in the chair
 
-Captured 2026-11-09, dev build, Chromium (Playwright), iPhone 13 viewport, reduced motion on.
+Captured 2026-11-09 (re-shot after the owner's real-API review fixes), dev build, Chromium (Playwright), iPhone 13 viewport, reduced motion on.
 Client replies and translations were answered by the browser test (no API key yet), except `07b`, which used the real server with no key. Nothing faked ships in the game.
 
 | File | Shows |
@@ -8,7 +8,7 @@ Client replies and translations were answered by the browser test (no API key ye
 | `01-level-picker-first-run.png` | First Start with no saved level: four level cards, Vietnamese first, English under |
 | `02-tap-to-translate.png` | Beginner appointment; tapping Dana's opening line shows its Vietnamese under it |
 | `03a-help-beginner-tiles.png` | Help me say it at Beginner: Vietnamese typed, English shown as shuffled word tiles |
-| `03b-help-beginner-tiles-built.png` | Tiles tapped in order; Send turns on |
+| `03b-help-beginner-tiles-built.png` | Tiles tapped in order; the whole English line shows once; Send turns on |
 | `03c-after-helped-send.png` | The built line sent as the player's own; mood not lowered |
 | `04-settings-some-full-vietnamese.png` | Settings: level changed to Some, full Vietnamese mode on |
 | `05-full-vietnamese-mode.png` | Some + full Vietnamese mode: every client line shows its translation automatically |
@@ -16,6 +16,10 @@ Client replies and translations were answered by the browser test (no API key ye
 | `06b-help-some-retype-match.png` | Lowercase, one typo, no full stop — still matches; Send on |
 | `07a-translate-failed-retry.png` | Translation failed: friendly bilingual message + Try again; chat still usable |
 | `07b-help-no-key-real-server.png` | Real server, no key: friendly message, the player's Vietnamese is kept |
+
+The Vietnamese in these shots is the test's fake text, written in the chị/em style the real prompt now asks for; the real wording comes from the API (`npm run smoke:api`).
+
+The chat box placeholder is now "Your reply…" so it fits beside Help me say it.
 
 Checked in the same run (browser log):
 - Level saved on the device (`salon.englishLevel`), and sent with each client turn (`level: beginner` / `some`).

@@ -29,7 +29,7 @@ export const STRINGS = {
   startAppointment: 'Start appointment',
   phaseLabels: { consultation: 'Consultation', service: 'Service', checkout: 'Checkout', done: 'Done' },
   moodLabel: 'Mood',
-  inputPlaceholder: 'Say something to the client...',
+  inputPlaceholder: 'Your reply…',
   send: 'Send',
   typing: 'is typing',
   retry: 'Try again',

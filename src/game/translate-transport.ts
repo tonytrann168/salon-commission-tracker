@@ -6,14 +6,14 @@ const TIMEOUT_MS = 20_000;
 
 /** Browser transport: posts the text to the translate server function. The API key never reaches the browser. */
 export function createTranslateTransport(): Translate {
-  return async (text, direction) => {
+  return async (text, direction, level) => {
     let response: Response;
     let body: unknown;
     try {
       response = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text, direction }),
+        body: JSON.stringify(level === undefined ? { text, direction } : { text, direction, level }),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       body = await response.json();

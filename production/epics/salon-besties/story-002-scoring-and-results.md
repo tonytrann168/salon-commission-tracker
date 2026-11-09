@@ -110,3 +110,4 @@
 - English weights (clarity/politeness/grammar): Beginner 0.5/0.5/0, Some 0.75/0.75/0, Comfortable and Fluent 1/1/1 (`src/game/config/scoring.json`) · kept 2026-11-09
 - A redo demand only marks a fail; goal and fail can both be true (`src/game/scoring.ts`) · kept 2026-11-09
 - Screen wording and labels — "Dana is writing her review…", the five skill and three English labels, goal/fail lines (`src/game/ui/strings.ts`) · kept 2026-11-09
+- *(Fixed 2026-11-09 after the owner's real-API check.)* The grading model rejects forced `tool_choice`, so grading now uses `tool_choice: auto` with a strict tool and a prompt line to call it, retries once when no valid tool call comes back, then shows the friendly error; `max_tokens` raised to 4000 for the model's thinking (`src/api/grade-appointment.ts`)

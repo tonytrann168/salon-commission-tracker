@@ -123,7 +123,11 @@ export function createHelpMeSayIt(options: HelpMeSayItOptions): { element: HTMLE
     const pool = el('div', 'help-tiles');
     pool.lang = 'en';
     pool.setAttribute('role', 'group');
-    stage.append(label, pool, lineLabel, line);
+    // Once every tile is placed, the whole English line is shown once so the learner sees it in one piece.
+    const fullLine = el('p', 'help-target', target);
+    fullLine.lang = 'en';
+    fullLine.hidden = true;
+    stage.append(label, pool, lineLabel, line, fullLine);
 
     const draw = (): void => {
       const tileButton = (tile: Tile, className: string, onTap: (button: HTMLButtonElement) => void, name?: string): HTMLButtonElement => {
@@ -159,6 +163,7 @@ export function createHelpMeSayIt(options: HelpMeSayItOptions): { element: HTMLE
           }, STRINGS.helpRemoveWord(tile.text)),
         ),
       );
+      fullLine.hidden = placed.length !== correct.length;
       refreshSend();
     };
 
@@ -175,7 +180,7 @@ export function createHelpMeSayIt(options: HelpMeSayItOptions): { element: HTMLE
     translateButton.disabled = true;
     let english: string | null = null;
     try {
-      english = await translate(text, 'vi-to-en');
+      english = await translate(text, 'vi-to-en', level);
     } catch {
       english = null;
     }

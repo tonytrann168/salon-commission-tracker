@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { handleClientTurn, parseClientTurnRequest, parseModelOutput } from '../api/client-turn';
-import { handleTranslate, parseTranslateOutput, parseTranslateRequest } from '../api/translate';
+import { handleTranslate, parseTranslateOutput, parseTranslateRequest, translateSystemPrompt } from '../api/translate';
 import {
   ENGLISH_LEVELS_CONFIG,
   buildWordTiles,
@@ -218,13 +218,14 @@ describe('translate request and output parsers', () => {
   it('accepts both directions and trims the text', () => {
     expect(parseTranslateRequest({ text: ' Xin chào ', direction: 'vi-to-en' })).toEqual({
       ok: true,
-      value: { text: 'Xin chào', direction: 'vi-to-en' },
+      value: { text: 'Xin chào', direction: 'vi-to-en', level: 'some' },
     });
     expect(parseTranslateRequest({ text: 'Hello', direction: 'en-to-vi' }).ok).toBe(true);
   });
 
   it('rejects bad requests', () => {
     expect(parseTranslateRequest(null).ok).toBe(false);
+    expect(parseTranslateRequest({ text: 'Xin chào', direction: 'vi-to-en', level: 'expert' }).ok).toBe(false);
     expect(parseTranslateRequest({ text: 'Hello', direction: 'en-to-fr' }).ok).toBe(false);
     expect(parseTranslateRequest({ text: '   ', direction: 'en-to-vi' }).ok).toBe(false);
     expect(parseTranslateRequest({ text: 'a'.repeat(1001), direction: 'en-to-vi' }).ok).toBe(false);
@@ -275,6 +276,23 @@ describe('translate handler', () => {
     await handleTranslate({ text: 'Xin chào', direction: 'vi-to-en' }, { ANTHROPIC_API_KEY: 'k' }, fetchImpl);
     const [first, second] = calls.map((call) => JSON.parse(String(call.init.body)).system[0].text as string);
     expect(first).not.toBe(second);
+  });
+
+  it('sends the level-specific prompt for Help me say it, defaulting to Some', async () => {
+    const { fetchImpl, calls } = fakeFetch(() => toolReply('translation', { translation: 'Hello' }));
+    await handleTranslate({ text: 'Xin chào', direction: 'vi-to-en', level: 'beginner' }, { ANTHROPIC_API_KEY: 'k' }, fetchImpl);
+    await handleTranslate({ text: 'Xin chào', direction: 'vi-to-en' }, { ANTHROPIC_API_KEY: 'k' }, fetchImpl);
+    const [beginner, unset] = calls.map((call) => JSON.parse(String(call.init.body)).system[0].text as string);
+    expect(beginner).toBe(translateSystemPrompt('vi-to-en', 'beginner'));
+    expect(unset).toBe(translateSystemPrompt('vi-to-en', 'some'));
+  });
+
+  it('asks for natural salon English and salon pronouns, not literal translation', () => {
+    expect(translateSystemPrompt('vi-to-en', 'beginner')).toContain('What color would you like today?');
+    expect(translateSystemPrompt('vi-to-en', 'beginner')).toContain('8 words or fewer');
+    expect(translateSystemPrompt('vi-to-en', 'fluent')).not.toContain('8 words or fewer');
+    expect(translateSystemPrompt('en-to-vi', 'some')).toContain('"chị"');
+    expect(translateSystemPrompt('en-to-vi', 'some')).toContain('Do not use "tôi"');
   });
 
   it('maps upstream failures to 502 codes', async () => {

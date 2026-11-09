@@ -333,7 +333,7 @@ describe('handleGradeAppointment (fetch mocked)', () => {
       redoDemanded: true,
       review: 'Not great.',
     };
-    let sent: { tool_choice: unknown; system: { text: string }[]; messages: { content: string }[] } | undefined;
+    let sent: { tool_choice: unknown; tools: { strict?: boolean }[]; system: { text: string }[]; messages: { content: string }[] } | undefined;
     const fakeFetch = (async (_url: string, init: RequestInit) => {
       sent = JSON.parse(String(init.body));
       return new Response(JSON.stringify({ content: [{ type: 'tool_use', name: 'grade_appointment', input: grading }] }));
@@ -341,18 +341,50 @@ describe('handleGradeAppointment (fetch mocked)', () => {
     const { status, body } = await handleGradeAppointment(request, { ANTHROPIC_API_KEY: 'secret-key' }, fakeFetch);
     expect(status).toBe(200);
     expect(body).toEqual(grading);
-    expect(sent?.tool_choice).toEqual({ type: 'tool', name: 'grade_appointment' });
+    // The grading model rejects forced tool_choice: auto + a strict tool.
+    expect(sent?.tool_choice).toEqual({ type: 'auto' });
+    expect(sent?.tools[0]?.strict).toBe(true);
     expect(sent?.messages[0]?.content).toContain('Stylist (player): Hello!');
     expect(sent?.system[0]?.text).toContain('level is some');
     expect(JSON.stringify(body)).not.toContain('secret-key');
   });
 
-  it('answers 502 invalid_model_output when the model breaks the schema', async () => {
-    const fakeFetch = (async () =>
-      new Response(JSON.stringify({ content: [{ type: 'tool_use', name: 'grade_appointment', input: { review: 'hi' } }] }))) as unknown as typeof fetch;
+  it('retries once, then answers 502 invalid_model_output when the model breaks the schema', async () => {
+    let calls = 0;
+    const fakeFetch = (async () => {
+      calls++;
+      return new Response(JSON.stringify({ content: [{ type: 'tool_use', name: 'grade_appointment', input: { review: 'hi' } }] }));
+    }) as unknown as typeof fetch;
     const { status, body } = await handleGradeAppointment(request, { ANTHROPIC_API_KEY: 'k' }, fakeFetch);
     expect(status).toBe(502);
     expect(body).toMatchObject({ error: { code: 'invalid_model_output' } });
+    expect(calls).toBe(2);
+  });
+
+  it('retries once when the model answers in text without the tool, and uses the second answer', async () => {
+    const grading = { skills: skillsOf(70), english: englishOf(70), rebooked: true, redoDemanded: false, review: 'Lovely.' };
+    const answers = [
+      { content: [{ type: 'text', text: 'Here is my grade: great job.' }] },
+      { content: [{ type: 'tool_use', name: 'grade_appointment', input: grading }] },
+    ];
+    let calls = 0;
+    const fakeFetch = (async () => new Response(JSON.stringify(answers[calls++]))) as unknown as typeof fetch;
+    const { status, body } = await handleGradeAppointment(request, { ANTHROPIC_API_KEY: 'k' }, fakeFetch);
+    expect(status).toBe(200);
+    expect(body).toEqual(grading);
+    expect(calls).toBe(2);
+  });
+
+  it('does not retry an HTTP error from the AI service', async () => {
+    let calls = 0;
+    const fakeFetch = (async () => {
+      calls++;
+      return new Response('{}', { status: 400 });
+    }) as unknown as typeof fetch;
+    const { status, body } = await handleGradeAppointment(request, { ANTHROPIC_API_KEY: 'k' }, fakeFetch);
+    expect(status).toBe(502);
+    expect(body).toMatchObject({ error: { code: 'upstream_error' } });
+    expect(calls).toBe(1);
   });
 
   it('answers 502 upstream_unreachable when fetch throws', async () => {

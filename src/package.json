@@ -7,7 +7,8 @@
     "dev": "vite --host",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
-    "test": "vitest run"
+    "test": "vitest run",
+    "smoke:api": "node scripts/smoke-api.mjs"
   },
   "dependencies": {
     "pixi.js": "^8.22.0"

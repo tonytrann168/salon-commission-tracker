@@ -26,3 +26,7 @@ Listed in build order.
 | 005 | Nail art station | Visual/Feel | Ready | N/A |
 | 006 | Client roster & difficulty | Config/Data | Ready | N/A |
 | 007 | Progression & daily hooks | Logic | Ready | N/A |
+
+## Backlog
+
+- **Before going online (owner, 2026-11-09):** rate-limit the server functions (`src/api/*`): a per-IP limit and/or an origin check, so nobody can spend the API key's credit from outside the game. Also decide where `src/api` is hosted (it is not deployed yet).

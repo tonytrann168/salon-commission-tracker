@@ -63,6 +63,7 @@
 
 - `src/api/translate.ts`
 - `src/api/client-turn.ts`
+- `src/api/grade-appointment.ts`
 - `src/vite.config.ts`
 - `src/main.ts`
 - `src/game/appointment.ts`
@@ -84,7 +85,10 @@
 - `src/game/ui/chat-panel.ts`
 - `src/game/ui/chat-panel.css`
 - `src/game/ui/strings.ts`
+- `src/scripts/smoke-api.mjs`
+- `src/package.json`
 - `src/tests/english-level.test.ts`
+- `src/tests/scoring.test.ts`
 
 ## QA Test Cases
 

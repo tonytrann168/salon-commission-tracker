@@ -6,7 +6,8 @@ import type { Translate } from './types';
  * session. Fixed lines (the persona's opening line) are also saved on the device. Story: story-010.
  */
 
-const STORAGE_PREFIX = 'salon.translation.en-vi.';
+/** v2: the salon-pronoun (chị/em) translations; older saved ones used "tôi" and are ignored. */
+const STORAGE_PREFIX = 'salon.translation.v2.en-vi.';
 
 export interface TranslationCache {
   /** The cached translation, or `undefined` when there is none yet. Instant, no AI call. */

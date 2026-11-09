@@ -123,7 +123,7 @@ export type GradeAppointment = (request: GradingRequest) => Promise<Grading>;
 export type TranslateDirection = 'en-to-vi' | 'vi-to-en';
 
 /** Transport that translates one line through the server. Rejects with TurnError. */
-export type Translate = (text: string, direction: TranslateDirection) => Promise<string>;
+export type Translate = (text: string, direction: TranslateDirection, level?: EnglishLevel) => Promise<string>;
 
 /** How Vietnamese help is shown on client lines: on tap, or always side by side (full Vietnamese mode). Story: story-010. */
 export const HELP_LANGUAGES = ['tap', 'full'] as const;
