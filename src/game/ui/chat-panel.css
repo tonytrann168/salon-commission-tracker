@@ -14,7 +14,17 @@
 .chat-bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 16px; line-height: 1.35; overflow-wrap: anywhere; }
 .chat-bubble.client { align-self: flex-start; background: #fff; border-bottom-left-radius: 4px; }
 .chat-bubble.player { align-self: flex-end; background: #ff5c9a; color: #fff; border-bottom-right-radius: 4px; }
-.chat-bubble.revealing { cursor: pointer; }
+.chat-bubble.client { cursor: pointer; }
+.chat-bubble.client:focus-visible { outline: 3px solid #3b2a33; outline-offset: 2px; }
+.chat-entry { display: flex; flex-direction: column; gap: 4px; max-width: 80%; align-self: flex-start; }
+.chat-entry .chat-bubble { max-width: 100%; }
+.chat-translation { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 0 6px; font-size: 16px; line-height: 1.35; color: #3b2a33; }
+.chat-translation-text { padding: 8px 12px; background: #ffe8f1; border-radius: 12px; overflow-wrap: anywhere; }
+.chat-hint { font-size: 13px; color: #8a6575; }
+.bilingual.inline { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+.bilingual.inline .bi-vi::after { content: ' ·'; }
+.help-button { padding: 0 12px; font-size: 14px; line-height: 1.15; text-align: center; }
+.help-button .bi-en { font-size: 12px; font-weight: 400; }
 .chat-bubble.pending { opacity: 0.6; }
 .chat-typing { align-self: flex-start; font-size: 14px; color: #8a6575; }
 .chat-typing .dots span { animation: chat-blink 1.2s infinite; }
@@ -28,5 +38,5 @@
 .chat-button:disabled, .chat-input:disabled { opacity: 0.5; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .hidden { display: none !important; }
-.title-menu { position: fixed; left: 0; right: 0; top: calc(52% + 90px); display: flex; justify-content: center; padding: 0 16px; }
-.title-menu .chat-button { min-height: 56px; padding: 0 32px; font-size: 18px; }
+.title-menu { position: fixed; left: 0; right: 0; top: calc(52% + 90px); display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 16px; }
+.title-menu .chat-button { min-height: 56px; min-width: 220px; padding: 0 32px; font-size: 18px; }

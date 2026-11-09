@@ -1,12 +1,12 @@
 # Story 010: English in the chair
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-11-09
 
 ## Context
 
@@ -61,16 +61,30 @@
 
 ## Files
 
-- `src/game/english-level.ts`
-- `src/game/config/english-levels.json`
 - `src/api/translate.ts`
 - `src/api/client-turn.ts`
+- `src/vite.config.ts`
+- `src/main.ts`
+- `src/game/appointment.ts`
+- `src/game/client-turn-transport.ts`
+- `src/game/translate-transport.ts`
+- `src/game/translation-cache.ts`
+- `src/game/safe-storage.ts`
+- `src/game/settings.ts`
+- `src/game/english-level.ts`
+- `src/game/config/english-levels.json`
+- `src/game/types.ts`
+- `src/game/title-screen.ts`
+- `src/game/ui/dom.ts`
 - `src/game/ui/level-picker.ts`
+- `src/game/ui/level-picker.css`
+- `src/game/ui/settings-screen.ts`
 - `src/game/ui/help-me-say-it.ts`
+- `src/game/ui/help-me-say-it.css`
 - `src/game/ui/chat-panel.ts`
+- `src/game/ui/chat-panel.css`
+- `src/game/ui/strings.ts`
 - `src/tests/english-level.test.ts`
-
----
 
 ## QA Test Cases
 

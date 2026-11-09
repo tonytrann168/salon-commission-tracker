@@ -1,7 +1,9 @@
 import { Container, Graphics, Text } from 'pixi.js';
 import { createPortrait } from './portraits/definitions';
+import { bilingual } from './ui/dom';
 import { STRINGS } from './ui/strings';
 import './ui/chat-panel.css';
+import './ui/level-picker.css';
 
 export const GAME_TITLE = 'Salon Besties';
 export const TAGLINE = 'Work the chair for real.';
@@ -35,8 +37,8 @@ export function createTitleScreen(width: number, height: number): Container {
   return screen;
 }
 
-/** DOM menu over the title scene. Returns the element so the caller can remove it. */
-export function createTitleMenu(host: HTMLElement, onStart: () => void): HTMLElement {
+/** DOM menu over the title scene: Start and Settings (bilingual until story 008). Returns the element so the caller can remove it. */
+export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void): HTMLElement {
   const menu = document.createElement('div');
   menu.className = 'title-menu';
   const start = document.createElement('button');
@@ -44,7 +46,12 @@ export function createTitleMenu(host: HTMLElement, onStart: () => void): HTMLEle
   start.className = 'chat-button';
   start.textContent = STRINGS.startAppointment;
   start.addEventListener('click', onStart);
-  menu.appendChild(start);
+  const settings = document.createElement('button');
+  settings.type = 'button';
+  settings.className = 'chat-button secondary';
+  settings.append(bilingual(STRINGS.settings));
+  settings.addEventListener('click', onSettings);
+  menu.append(start, settings);
   host.appendChild(menu);
   return menu;
 }

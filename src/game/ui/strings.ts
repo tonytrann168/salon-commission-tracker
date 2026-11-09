@@ -1,5 +1,31 @@
-/** All player-facing UI text in one place so story 008 can move it to string tables. */
+/**
+ * All player-facing UI text in one place so story 008 can move it to string tables.
+ * Story 010 texts are pairs `{ vi, en }`, shown Vietnamese first (bilingual until story 008). The Vietnamese is for native-speaker review.
+ */
 export const STRINGS = {
+  settings: { vi: 'Cài đặt', en: 'Settings' },
+  back: { vi: 'Quay lại', en: 'Back' },
+  levelPickerTitle: { vi: 'Tiếng Anh của bạn ở mức nào?', en: 'How is your English?' },
+  levelSectionTitle: { vi: 'Trình độ tiếng Anh', en: 'English level' },
+  fullVietnameseLabel: { vi: 'Chế độ tiếng Việt đầy đủ', en: 'Full Vietnamese mode' },
+  fullVietnameseNote: { vi: 'Hiện bản dịch tiếng Việt dưới mọi câu của khách.', en: 'Show Vietnamese under every client line.' },
+  translateHint: { vi: 'Chạm để dịch', en: 'Tap to translate' },
+  translating: { vi: 'Đang dịch…', en: 'Translating…' },
+  translateFailed: { vi: 'Chưa dịch được.', en: 'Could not translate this.' },
+  tryAgain: { vi: 'Thử lại', en: 'Try again' },
+  helpButton: { vi: 'Giúp tôi nói', en: 'Help me say it' },
+  helpViLabel: { vi: 'Gõ điều bạn muốn nói bằng tiếng Việt', en: 'Type what you want to say in Vietnamese' },
+  helpViPlaceholder: 'Bạn muốn nói gì?',
+  helpTranslate: { vi: 'Dịch sang tiếng Anh', en: 'Translate to English' },
+  helpWorking: { vi: 'Đang dịch…', en: 'Translating…' },
+  helpFailed: { vi: 'Chưa dịch được. Lời của bạn vẫn còn đó.', en: 'Could not translate. Your words are safe.' },
+  helpRetypeLabel: { vi: 'Tự gõ lại câu tiếng Anh này', en: 'Now type this English line yourself' },
+  helpTilesLabel: { vi: 'Chạm từng từ theo đúng thứ tự', en: 'Tap the words in order' },
+  helpYourLine: { vi: 'Câu của bạn', en: 'Your line' },
+  helpSend: { vi: 'Gửi', en: 'Send' },
+  helpClose: { vi: 'Đóng', en: 'Close' },
+  helpRemoveWord: (word: string): string => `Bỏ từ · Remove word: ${word}`,
+
   startAppointment: 'Start appointment',
   phaseLabels: { consultation: 'Consultation', service: 'Service', checkout: 'Checkout', done: 'Done' },
   moodLabel: 'Mood',

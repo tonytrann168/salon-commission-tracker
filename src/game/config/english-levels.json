@@ -1,0 +1,50 @@
+{
+  "levels": {
+    "beginner": {
+      "name": { "vi": "Mới bắt đầu", "en": "Beginner" },
+      "pickerLine": {
+        "vi": "Tôi biết rất ít tiếng Anh. Khách nói chậm và dễ hiểu.",
+        "en": "I know very little English. Clients speak slowly and simply."
+      },
+      "speakingRules": "Use very short, slow, simple sentences (about 8 words or fewer each, 1-2 sentences per reply). Use only common salon words such as nails, color, shape, price, time and today. Ask ONE question at a time. No idioms, no slang, no phrasal verbs and no long or tricky words.",
+      "englishNeverLowersMood": true,
+      "helpMode": "tiles"
+    },
+    "some": {
+      "name": { "vi": "Biết một ít", "en": "Some" },
+      "pickerLine": {
+        "vi": "Tôi hiểu câu đơn giản. Khách nói rõ ràng, không quá nhanh.",
+        "en": "I understand simple sentences. Clients speak clearly, not too fast."
+      },
+      "speakingRules": "Use simple, clear sentences that sound a little more natural than for a beginner. Common words and short everyday phrases are fine, and so are contractions. Ask at most one or two questions at a time. Avoid slang and idioms.",
+      "englishNeverLowersMood": true,
+      "helpMode": "retype"
+    },
+    "comfortable": {
+      "name": { "vi": "Khá tự tin", "en": "Comfortable" },
+      "pickerLine": {
+        "vi": "Tôi trò chuyện được. Khách nói tự nhiên.",
+        "en": "I can have a conversation. Clients speak naturally."
+      },
+      "speakingRules": "Speak naturally, the way a real client talks at a normal pace, with everyday vocabulary. An occasional common idiom is fine. Do not simplify on purpose.",
+      "englishNeverLowersMood": false,
+      "helpMode": "retype"
+    },
+    "fluent": {
+      "name": { "vi": "Thành thạo", "en": "Fluent" },
+      "pickerLine": {
+        "vi": "Tôi nói tiếng Anh tốt. Khách nói nhanh, dùng tiếng lóng.",
+        "en": "I speak English well. Clients talk fast and use slang."
+      },
+      "speakingRules": "Speak at natural, even fast, speed like a real client chatting in a salon. Use slang, idioms, casual phrasing and contractions freely. Do not simplify or slow down for the stylist.",
+      "englishNeverLowersMood": false,
+      "helpMode": "retype"
+    }
+  },
+  "match": {
+    "maxEditShare": 0.1,
+    "minAllowedEdits": 1,
+    "maxAllowedEdits": 3
+  },
+  "tileShuffleSeed": 20261109
+}

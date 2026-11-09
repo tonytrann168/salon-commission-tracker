@@ -8,6 +8,8 @@ export type Phase = (typeof PHASES)[number];
 export interface Message {
   role: 'player' | 'client';
   content: string;
+  /** Player line written with "Help me say it" (story 010). Never lowers the client's mood. */
+  helped?: boolean;
 }
 
 /** Structured model output for one client turn. */
@@ -17,6 +19,10 @@ export interface ClientTurn {
   moodDelta: number;
   /** Phase the model proposes. The game enforces the real phase. */
   phase: Phase;
+  /** The player's last line was hard to understand or ungrammatical (story 010). */
+  unclearEnglish: boolean;
+  /** The player's last line was rude or disrespectful (story 010). */
+  rude: boolean;
 }
 
 /** How an appointment ended. */
@@ -112,3 +118,14 @@ export interface Grading {
 
 /** Transport that grades a finished appointment. Rejects with TurnError. */
 export type GradeAppointment = (request: GradingRequest) => Promise<Grading>;
+
+/** Which way a line is translated (story 010). */
+export type TranslateDirection = 'en-to-vi' | 'vi-to-en';
+
+/** Transport that translates one line through the server. Rejects with TurnError. */
+export type Translate = (text: string, direction: TranslateDirection) => Promise<string>;
+
+/** How Vietnamese help is shown on client lines: on tap, or always side by side (full Vietnamese mode). Story: story-010. */
+export const HELP_LANGUAGES = ['tap', 'full'] as const;
+
+export type HelpLanguage = (typeof HELP_LANGUAGES)[number];

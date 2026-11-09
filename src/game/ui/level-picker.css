@@ -1,0 +1,19 @@
+.screen { position: fixed; inset: 0; z-index: 10; box-sizing: border-box; overflow-y: auto; padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom)); background: #fff4f8; color: #3b2a33; display: flex; flex-direction: column; gap: 16px; }
+.screen h1 { margin: 0; font-size: 22px; line-height: 1.25; }
+.screen h2 { margin: 0; font-size: 18px; }
+.bilingual { display: flex; flex-direction: column; gap: 2px; }
+.bilingual .bi-vi { font-weight: 700; }
+.bilingual .bi-en { font-size: 0.9em; opacity: 0.85; }
+.level-cards { display: flex; flex-direction: column; gap: 12px; }
+.level-card { display: flex; flex-direction: column; gap: 6px; min-height: 88px; box-sizing: border-box; padding: 14px 16px; text-align: left; font-size: 16px; color: #3b2a33; background: #fff; border: 3px solid #ffc4da; border-radius: 20px; }
+.level-card[aria-pressed='true'] { border-color: #ff5c9a; background: #ffe8f1; }
+.level-card-name { font-size: 18px; }
+.level-card-name .bi-en { font-weight: 400; }
+.level-card-line .bi-vi { font-weight: 400; }
+.level-card:focus-visible, .screen .chat-button:focus-visible { outline: 3px solid #3b2a33; outline-offset: 2px; }
+.screen .chat-button { align-self: stretch; text-align: center; }
+.screen .chat-button.secondary, .chat-button.secondary { color: #3b2a33; background: #f1dde6; }
+.setting-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 12px 16px; background: #fff; border-radius: 20px; font-size: 16px; }
+.setting-row .bilingual { flex: 1; }
+.setting-row input[type='checkbox'] { width: 28px; height: 28px; flex: none; accent-color: #ff5c9a; }
+.setting-text { flex: 1; display: flex; flex-direction: column; gap: 6px; }

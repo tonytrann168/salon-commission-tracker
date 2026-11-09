@@ -1,6 +1,7 @@
+import { moodDeltaAfterEnglishRule } from './english-level';
 import { applyMoodDelta, clampMood, isWalkOut } from './mood';
 import { PHASES } from './types';
-import type { AppointmentResult, ClientPersona, Message, Outcome, Phase, TakeTurn } from './types';
+import type { AppointmentResult, ClientPersona, EnglishLevel, Message, Outcome, Phase, TakeTurn } from './types';
 
 /** Appointment state machine. Story: story-001 (design/game-brief.md, MVP feature 1). */
 
@@ -24,6 +25,8 @@ export interface AppointmentSnapshot {
 export interface AppointmentOptions {
   client: ClientPersona;
   takeTurn: TakeTurn;
+  /** The player's English level: at Beginner and Some English mistakes never lower the mood (story 010). */
+  level: EnglishLevel;
   /** Called once when the appointment ends (story 002 consumes this). */
   onFinished: (result: AppointmentResult) => void;
 }
@@ -32,8 +35,8 @@ export interface Appointment {
   getSnapshot(): AppointmentSnapshot;
   /** Listen for state changes. Returns an unsubscribe function. */
   subscribe(listener: (snapshot: AppointmentSnapshot) => void): () => void;
-  /** Send the player's message. Ignored unless the client is waiting for the player. */
-  send(text: string): Promise<void>;
+  /** Send the player's message. `helped` marks a line written with Help me say it. Ignored unless the client is waiting for the player. */
+  send(text: string, options?: { helped?: boolean }): Promise<void>;
   /** Resend the message whose turn failed. Ignored unless status is `error`. */
   retry(): Promise<void>;
 }
@@ -50,7 +53,7 @@ export function nextPhase(current: Phase, proposed: Phase): Phase {
 
 /** Create an appointment that starts in consultation with the client's opening line. */
 export function createAppointment(options: AppointmentOptions): Appointment {
-  const { client, takeTurn, onFinished } = options;
+  const { client, takeTurn, level, onFinished } = options;
   const listeners = new Set<(snapshot: AppointmentSnapshot) => void>();
 
   let status: AppointmentStatus = 'awaiting_player';
@@ -59,6 +62,7 @@ export function createAppointment(options: AppointmentOptions): Appointment {
   let transcript: Message[] = [{ role: 'client', content: client.openingLine }];
   let moodHistory: number[] = [mood];
   let pending: string | null = null;
+  let pendingHelped = false;
   let error: Error | null = null;
   let result: AppointmentResult | null = null;
 
@@ -78,13 +82,14 @@ export function createAppointment(options: AppointmentOptions): Appointment {
     listeners.forEach((listener) => listener(snapshot));
   };
 
-  const runTurn = async (playerText: string): Promise<void> => {
+  const runTurn = async (playerText: string, helped: boolean): Promise<void> => {
     pending = playerText;
+    pendingHelped = helped;
     error = null;
     status = 'waiting';
     notify();
 
-    const candidate: Message[] = [...transcript, { role: 'player', content: playerText }];
+    const candidate: Message[] = [...transcript, { role: 'player', content: playerText, ...(helped ? { helped: true } : {}) }];
     let turn;
     try {
       turn = await takeTurn(candidate, phase, mood);
@@ -97,7 +102,7 @@ export function createAppointment(options: AppointmentOptions): Appointment {
     }
 
     transcript = [...candidate, { role: 'client', content: turn.reply }];
-    mood = applyMoodDelta(mood, turn.moodDelta);
+    mood = applyMoodDelta(mood, moodDeltaAfterEnglishRule(turn, level, helped));
     moodHistory = [...moodHistory, mood];
     phase = nextPhase(phase, turn.phase);
     pending = null;
@@ -121,14 +126,14 @@ export function createAppointment(options: AppointmentOptions): Appointment {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    async send(text) {
+    async send(text, sendOptions) {
       const trimmed = text.trim();
       if (status !== 'awaiting_player' || trimmed === '') return;
-      await runTurn(trimmed);
+      await runTurn(trimmed, sendOptions?.helped === true);
     },
     async retry() {
       if (status !== 'error' || pending === null) return;
-      await runTurn(pending);
+      await runTurn(pending, pendingHelped);
     },
   };
 }

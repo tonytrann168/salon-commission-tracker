@@ -5,7 +5,10 @@ import { getPortraitDefinition } from '../portraits/definitions';
 import { EXPRESSION_CONFIG, poseFor } from '../portraits/portrait';
 import type { Expression } from '../portraits/portrait';
 import { PHASES, TurnError } from '../types';
-import type { AppointmentResult, ClientPersona } from '../types';
+import type { AppointmentResult, ClientPersona, EnglishLevel, HelpLanguage, Translate } from '../types';
+import type { TranslationCache } from '../translation-cache';
+import { bilingual, el } from './dom';
+import { createHelpMeSayIt } from './help-me-say-it';
 import { createPortraitZone } from './portrait-zone';
 import { startTextReveal } from './text-reveal';
 import type { TextReveal } from './text-reveal';
@@ -15,16 +18,11 @@ import './chat-panel.css';
 /**
  * DOM chat UI over the Pixi scene: chat, mood meter, phase indicator, typing indicator, retry, hand-off to results. Story: story-001, story-002.
  * Client replies (and the opening line) are revealed at speaking pace while the client portrait talks. Story: story-009.
+ * Tap a client line to show or hide its Vietnamese translation (or show it always in full Vietnamese mode); "Help me say it"
+ * sits beside the input. Per-line translation state lives here, not in the DOM, because the log is rebuilt on every snapshot. Story: story-010.
  */
 
 const VISIBLE_PHASES = PHASES.filter((phase) => phase !== 'done');
-
-function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
 
 /** Mood color from red (angry) through amber to green (happy). */
 const moodColor = (mood: number): string => `hsl(${Math.round((mood / MOOD_MAX) * 120)}, 70%, 50%)`;
@@ -41,6 +39,14 @@ export function createChatPanel(
     layer: Container;
     /** Called once, when the appointment is over and the final line has finished revealing. Mount the results into `container`; return a cleanup. */
     onEnded: (container: HTMLElement, result: AppointmentResult) => () => void;
+    /** The player's English level: decides whether Help me say it offers word tiles or re-typing. */
+    level: EnglishLevel;
+    /** `full` shows every client line with its Vietnamese translation automatically. */
+    helpLanguage: HelpLanguage;
+    /** English-to-Vietnamese translations of client lines, cached per line. */
+    translations: TranslationCache;
+    /** Transport for Help me say it (Vietnamese to English). */
+    translate: Translate;
   },
 ): { destroy: () => void; setBestieExpression: (expression: Expression) => void } {
   const root = el('div', 'chat-panel');
@@ -80,6 +86,9 @@ export function createChatPanel(
   const resultsBox = el('div', 'chat-results hidden');
 
   const form = el('form', 'chat-form');
+  const helpButton = el('button', 'chat-button help-button');
+  helpButton.type = 'button';
+  helpButton.append(bilingual(STRINGS.helpButton));
   const input = el('input', 'chat-input');
   input.type = 'text';
   input.placeholder = STRINGS.inputPlaceholder;
@@ -87,7 +96,7 @@ export function createChatPanel(
   input.enterKeyHint = 'send';
   const sendButton = el('button', 'chat-button', STRINGS.send);
   sendButton.type = 'submit';
-  form.append(input, sendButton);
+  form.append(helpButton, input, sendButton);
 
   root.append(header, zone.element, log, errorBox, resultsBox, form, announcer);
   host.appendChild(root);
@@ -96,6 +105,67 @@ export function createChatPanel(
   let reveal: TextReveal | null = null;
   let renderedCount = 0;
   let destroyResults: (() => void) | null = null;
+
+  const { translations, helpLanguage } = portraits;
+  const fullMode = helpLanguage === 'full';
+  /** Transcript indexes whose translation the player opened by tapping. */
+  const shownTranslations = new Set<number>();
+  const translationStatus = new Map<number, 'loading' | 'failed'>();
+  /** Bubble and translation box of each client line in the current DOM. */
+  const clientNodes = new Map<number, { bubble: HTMLElement; box: HTMLElement }>();
+  /** Transcript index of the line being revealed, or -1. */
+  let speakingIndex = -1;
+
+  /** Bring one client line's translation box and `aria-expanded` up to date, and start the fetch when it is needed. */
+  const refreshTranslation = (index: number): void => {
+    const node = clientNodes.get(index);
+    const text = latest.transcript[index]?.content;
+    if (!node || text === undefined) return;
+    const visible = fullMode || shownTranslations.has(index);
+    node.bubble.setAttribute('aria-expanded', String(visible));
+    if (!visible) {
+      const hint = bilingual(STRINGS.translateHint, 'bilingual inline chat-hint');
+      hint.setAttribute('aria-hidden', 'true');
+      node.box.replaceChildren(hint);
+      return;
+    }
+    const cached = translations.peek(text);
+    if (cached !== undefined) {
+      const translated = el('span', 'chat-translation-text', cached);
+      translated.lang = 'vi';
+      node.box.replaceChildren(translated);
+      return;
+    }
+    if (translationStatus.get(index) === 'failed') {
+      const retry = el('button', 'chat-button secondary');
+      retry.type = 'button';
+      retry.append(bilingual(STRINGS.tryAgain));
+      retry.addEventListener('click', () => {
+        translationStatus.delete(index);
+        refreshTranslation(index);
+      });
+      node.box.replaceChildren(bilingual(STRINGS.translateFailed, 'bilingual inline'), retry);
+      return;
+    }
+    node.box.replaceChildren(bilingual(STRINGS.translating, 'bilingual inline chat-hint'));
+    if (translationStatus.get(index) === 'loading') return;
+    translationStatus.set(index, 'loading');
+    translations.get(text).then(
+      () => translationStatus.delete(index),
+      () => translationStatus.set(index, 'failed'),
+    ).finally(() => refreshTranslation(index));
+  };
+
+  /** Tap or Enter/Space on a client line: finish the reveal if it is running, otherwise show or hide the translation. */
+  const activateLine = (index: number): void => {
+    if (reveal !== null && index === speakingIndex) {
+      reveal.finish();
+      return;
+    }
+    if (fullMode) return;
+    if (!shownTranslations.delete(index)) shownTranslations.add(index);
+    refreshTranslation(index);
+  };
 
   /** Swap the chat for the results area (once), after the final line is fully shown. */
   const showEnd = (show: boolean): void => {
@@ -114,11 +184,11 @@ export function createChatPanel(
   };
 
   /** Reveal the client's line in `bubble` (at once under reduced motion). Ends in `settle`, which stops the talking. */
-  const speak = (bubble: HTMLElement, text: string): void => {
+  const speak = (bubble: HTMLElement, line: HTMLElement, text: string): void => {
     const shown = el('span');
     const node = document.createTextNode('');
     shown.appendChild(node);
-    bubble.appendChild(shown);
+    line.appendChild(shown);
     announcer.textContent = STRINGS.clientSaid(clientName, text);
     if (reducedMotion.matches) {
       node.data = text;
@@ -141,7 +211,6 @@ export function createChatPanel(
       },
     );
     reveal = active;
-    bubble.addEventListener('click', () => active.finish());
   };
 
   const render = (snapshot: AppointmentSnapshot): void => {
@@ -167,10 +236,33 @@ export function createChatPanel(
     value.textContent = String(snapshot.mood);
     track.setAttribute('aria-valuenow', String(snapshot.mood));
 
+    speakingIndex = speaking ? snapshot.transcript.length - 1 : -1;
+    clientNodes.clear();
+    const lines = new Map<number, HTMLElement>();
     const bubbles = snapshot.transcript.map((message, index) => {
       const bubble = el('div', `chat-bubble ${message.role}`);
-      if (!speaking || index < snapshot.transcript.length - 1) bubble.textContent = message.content;
-      return bubble;
+      if (message.role === 'player') {
+        bubble.textContent = message.content;
+        return bubble;
+      }
+      const line = el('span');
+      if (index !== speakingIndex) line.textContent = message.content;
+      bubble.appendChild(line);
+      bubble.tabIndex = 0;
+      bubble.setAttribute('role', 'button');
+      bubble.addEventListener('click', () => activateLine(index));
+      bubble.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        activateLine(index);
+      });
+      const box = el('div', 'chat-translation');
+      box.setAttribute('aria-live', 'polite');
+      const entry = el('div', 'chat-entry client');
+      entry.append(bubble, box);
+      clientNodes.set(index, { bubble, box });
+      lines.set(index, line);
+      return entry;
     });
     if (snapshot.pendingPlayerMessage !== null) {
       bubbles.push(el('div', 'chat-bubble player pending', snapshot.pendingPlayerMessage));
@@ -184,8 +276,10 @@ export function createChatPanel(
     }
     log.replaceChildren(...bubbles);
     log.scrollTop = log.scrollHeight;
-    const speakingBubble = bubbles[snapshot.transcript.length - 1];
-    if (speaking && speakingBubble && last) speak(speakingBubble, last.content);
+    clientNodes.forEach((_, index) => refreshTranslation(index));
+    const speakingNode = clientNodes.get(speakingIndex);
+    const speakingLine = lines.get(speakingIndex);
+    if (speakingNode && speakingLine && last) speak(speakingNode.bubble, speakingLine, last.content);
 
     const failed = snapshot.status === 'error';
     errorBox.classList.toggle('hidden', !failed);
@@ -205,6 +299,7 @@ export function createChatPanel(
     const canType = snapshot.status === 'awaiting_player';
     input.disabled = !canType;
     sendButton.disabled = !canType;
+    helpButton.disabled = !canType;
   };
 
   const unsubscribe = appointment.subscribe(render);
@@ -221,6 +316,31 @@ export function createChatPanel(
     });
   });
   retryButton.addEventListener('click', () => void appointment.retry());
+
+  let helpSheet: HTMLElement | null = null;
+  const closeHelp = (): void => {
+    helpSheet?.remove();
+    helpSheet = null;
+    helpButton.focus();
+  };
+  helpButton.addEventListener('click', () => {
+    if (helpSheet) return;
+    const sheet = createHelpMeSayIt({
+      level: portraits.level,
+      translate: portraits.translate,
+      onClose: closeHelp,
+      onSend: (text) => {
+        closeHelp();
+        reveal?.finish();
+        void appointment.send(text, { helped: true }).then(() => {
+          if (appointment.getSnapshot().status === 'awaiting_player') input.focus();
+        });
+      },
+    });
+    helpSheet = sheet.element;
+    root.appendChild(sheet.element);
+    sheet.focus();
+  });
 
   return {
     setBestieExpression: zone.setBestieExpression,
