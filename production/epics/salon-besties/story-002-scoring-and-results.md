@@ -1,7 +1,7 @@
 # Story 002: Scoring & results
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
@@ -94,3 +94,19 @@
 
 - Depends on: `production/epics/salon-besties/story-001-live-client-appointment.md`
 - Unlocks: `production/epics/salon-besties/story-010-english-in-the-chair.md`, `production/epics/salon-besties/story-003-signature-bestie.md`, `production/epics/salon-besties/story-007-progression-and-daily-hooks.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-11-09
+**Criteria**: 10/10 passing or deferred (DEFERRED — requires playtest: AC-3 five skills graded from a real transcript; AC-8 English graded only from the player's lines at their level — both need a real API grading call)
+**Deviations**: Depends on story 001, still In Progress (owner chose to build on it); grading starts from the chat panel's `onEnded` after the final line reveals, and the results screen replaces story 001's end box; dev middleware refactored into one route table, no `.catch` on unexpected handler errors; test file at `src/tests/` rather than `tests/unit/`. Out of scope: `src/api/` is not deployed yet (dev middleware only).
+**Test Evidence**: `src/tests/scoring.test.ts` (waived at qa.level minimal); screenshots in `production/qa/evidence/story-002-scoring-and-results/`
+**Reviewed by**: self, no independent review
+
+## Calls beyond the design
+- Grading model `claude-sonnet-5-5`; client replies stay on `claude-haiku-5-5` (`src/api/grade-appointment.ts`) · kept 2026-11-09
+- Stars = 0.5 × mood + 0.5 × weighted skills; star lines 30/48/64/78; 5 stars needs mood ≥ 70 and every counted score ≥ 40; tip $2–$20 from 3 stars up; good tip ≥ $12 (`src/game/config/scoring.json`) · kept 2026-11-09
+- English weights (clarity/politeness/grammar): Beginner 0.5/0.5/0, Some 0.75/0.75/0, Comfortable and Fluent 1/1/1 (`src/game/config/scoring.json`) · kept 2026-11-09
+- A redo demand only marks a fail; goal and fail can both be true (`src/game/scoring.ts`) · kept 2026-11-09
+- Screen wording and labels — "Dana is writing her review…", the five skill and three English labels, goal/fail lines (`src/game/ui/strings.ts`) · kept 2026-11-09

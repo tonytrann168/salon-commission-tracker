@@ -17,7 +17,7 @@ Listed in build order.
 |---|-------|------|--------|-----|
 | 001 | Live client appointment (text) | Integration | In Progress | N/A |
 | 009 | Character portraits & mood expressions | Visual/Feel | In Progress | N/A |
-| 002 | Scoring & results (+ English score) | Logic | Ready | N/A |
+| 002 | Scoring & results (+ English score) | Logic | Complete | N/A |
 | 010 | English in the chair | Integration | Ready | N/A |
 | 008 | Menus and buttons in Vietnamese | UI | Ready | N/A |
 | 003 | Signature bestie | Integration | Ready | N/A |
