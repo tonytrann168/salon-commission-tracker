@@ -7,7 +7,7 @@
 
 **Scope**: the brief's 7 MVP features — live client appointment, English in the chair, Vietnamese help, signature bestie & learning loop, scoring with an English score, nail art station, clients & progression.
 
-**Order** (the brief's Build order): 001 and 009 are built; then 002 → 010 → 003 → 011 → 004 (with pronunciation practice) → 005 → 006 → 007 → 008.
+**Order** (the brief's Build order): 001 and 009 are built; then 002 → 010 → 008 → 003 → 011 → 004 (with pronunciation practice) → 005 → 006 → 007.
 
 ## Stories
 
@@ -19,10 +19,10 @@ Listed in build order.
 | 009 | Character portraits & mood expressions | Visual/Feel | In Progress | N/A |
 | 002 | Scoring & results (+ English score) | Logic | Ready | N/A |
 | 010 | English in the chair | Integration | Ready | N/A |
+| 008 | Menus and buttons in Vietnamese | UI | Ready | N/A |
 | 003 | Signature bestie | Integration | Ready | N/A |
 | 011 | Learning loop | Integration | Ready | N/A |
 | 004 | Voice in and out (+ pronunciation practice) | Integration | Ready | N/A |
 | 005 | Nail art station | Visual/Feel | Ready | N/A |
 | 006 | Client roster & difficulty | Config/Data | Ready | N/A |
 | 007 | Progression & daily hooks | Logic | Ready | N/A |
-| 008 | Menus and buttons in Vietnamese | UI | Ready | N/A |

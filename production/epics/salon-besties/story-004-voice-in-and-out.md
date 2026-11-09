@@ -43,7 +43,7 @@
 
 - Mic access needs a user gesture on phones; ask for permission the first time the mic button is pressed.
 - Voice provider is chosen in this story; measure real cost per appointment and record it in the story when done.
-- Pronunciation: plain speech-to-text can only say which words it recognised, not how well each sound was made. Choose in this story between that word-level check and a dedicated pronunciation-assessment service, and record the choice and its cost.
+- Pronunciation: plain speech-to-text can only say which words it recognised, not how well each sound was made. Owner decision (2026-11-09): build the free word-level check first; add a paid pronunciation-assessment service only if playtests ask for it. Record the cost per appointment.
 
 ---
 

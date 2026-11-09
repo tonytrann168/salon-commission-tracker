@@ -32,7 +32,7 @@
 - [ ] **Debrief English review:** after each appointment, the bestie's debrief lists the player's lines worth improving — what they said, a better version, and a one-line reason — with the reason in Vietnamese when Vietnamese mode is on.
 - [ ] **Vietnamese recap:** after each appointment, a short recap in Vietnamese of how it went and three better English lines to try next time.
 - [ ] **Phrasebook:** salon phrases the player used well, or was shown in corrections and the recap, are saved with their Vietnamese meaning and a topic (greeting, consultation, price, booking, problems). The player can browse it any time; no duplicates; saved on the device.
-- [ ] **Level auto-adjust:** after a set number of appointments (config, e.g. 3), the game moves the player's level up or down based on their recent English scores, tells them why in Vietnamese and English, and lets them switch back in settings.
+- [ ] **Level auto-adjust:** after a set number of appointments (config, e.g. 3), recent English scores decide. **Up** is automatic, with a small celebration and a line in Vietnamese and English saying why; the player can switch back in settings. **Down** is never automatic: the game suggests it, kindly, and the player accepts or declines.
 - [ ] Corrections are kind and specific: they praise what worked before correcting, never mock, and never comment on the player's accent or background.
 - [ ] Mistakes affect learning, not the appointment: at Beginner and Some, corrections are the only place grammar is addressed (story 010's mood rules stay in force).
 - [ ] All AI calls go through server functions; phrasebook and progress are saved locally and survive closing the app.

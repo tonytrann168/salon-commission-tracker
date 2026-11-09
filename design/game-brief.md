@@ -17,10 +17,22 @@
 1. **Live client appointment:** a Claude-run client you talk to by text or voice — consultation, service, checkout — with a live mood meter and an expressive portrait; voice includes pronunciation practice.
 2. **English in the chair:** pick your English level at the start; clients adapt (short, slow, simple sentences for Beginner → slang, idioms and speed for Fluent); level-fair mood rules as in the fail state above.
 3. **Vietnamese help:** tap any client line to translate it; "Help me say it" (type Vietnamese → English shown → re-type it in English to send); a full Vietnamese mode with English shown side by side; menus and buttons in Vietnamese.
-4. **Signature bestie & learning loop:** optional whispered hints and corrections right after a mistake ("You said… → Better: …"), a debrief with a full English review, a Vietnamese recap with better lines to try, a phrasebook of salon phrases learned, memory of past sessions, and level auto-adjust after a few appointments.
+4. **Signature bestie & learning loop:** optional whispered hints and corrections right after a mistake ("You said… → Better: …"), a debrief with a full English review, a Vietnamese recap with better lines to try, a phrasebook of salon phrases learned, memory of past sessions, and level auto-adjust after a few appointments (up is automatic, with a small celebration; down is only ever a suggestion the player accepts or declines).
 5. **Scoring:** stars, tip and review, plus a scorecard on greeting, consultation, upsell, rebooking and problem handling, and an English score (clarity, politeness, grammar/vocabulary) weighted by the player's level.
 6. **Nail art station:** shape, base color, polish, core art tools (gradients, gems, stickers); the client judges the result against what they asked for.
 7. **Clients & progression:** ~9 clients across easy / medium / hard (picky, rude/impatient, complaints & redos, price & booking issues; realistic but clean); tips buy upgrades and polishes; ranks Junior → Master Tech with badges; daily challenge client with a streak.
+
+## Keep — what must survive every change
+- Expressive faces: moods readable at a glance.
+- 5–20 minute sessions that fit between real clients.
+- A kind bestie.
+- Real-salon situations.
+
+## Avoid — what this game must never do
+- Mistakes punishing Beginner or Some players.
+- Mocking accents or background.
+- Walls of English text at Beginner.
+- Nagging corrections.
 
 ## Out of scope — not building this (v1; all planned for later)
 - Hair salon (next location)
@@ -36,12 +48,12 @@
 1. One client, text only, with mood meter and portraits *(built: stories 001, 009)*.
 2. Scoring with the English score (002).
 3. English in the chair: level pick, client adaptation, tap-to-translate, Help me say it, full Vietnamese mode (010) — the riskiest question now: can a Beginner actually get through an appointment and learn from it?
-4. Signature bestie (003).
-5. Learning loop: whispers and debrief corrections, Vietnamese recap, phrasebook, level auto-adjust (011).
-6. Voice in and out, with pronunciation practice (004).
-7. Nail art station (005).
-8. Client roster (006), then progression and daily hooks (007).
-9. Menus and buttons in Vietnamese (008).
+4. Menus and buttons in Vietnamese (008) — Beginners can't use English menus.
+5. Signature bestie (003).
+6. Learning loop: whispers and debrief corrections, Vietnamese recap, phrasebook, level auto-adjust (011).
+7. Voice in and out, with pronunciation practice (004) — the free word-level check first; a paid pronunciation-assessment service only if playtests ask for it.
+8. Nail art station (005).
+9. Client roster (006), then progression and daily hooks (007).
 
 ---
 **Who it's for / what they feel:** Vietnamese nail techs at any English level, playing 5–20 minutes between clients, who come away less nervous and more confident speaking English with real clients — and proud of how they handle people.

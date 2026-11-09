@@ -34,6 +34,7 @@
 - [ ] At Comfortable and Fluent, the client reacts realistically when the player's English is unclear: she may ask again, and her mood may dip.
 - [ ] **Tap to translate:** tapping any client line shows its Vietnamese translation under it; tapping again hides it. A line already translated shows instantly on the next tap, with no new AI call.
 - [ ] **Help me say it:** the player types in Vietnamese and sees the English. To send, they must re-type the English themselves; Send stays off until their typing matches, allowing for capital letters, punctuation and small typos (tolerance in config). The sent line counts as the player's own. Using Help me say it never lowers the client's mood.
+- [ ] *(Added 2026-11-09 at the owner's request.)* At **Beginner**, Help me say it offers **word tiles** instead of re-typing: the English words appear shuffled, and the player taps them in the right order to build and send the line. At Some and above, the player re-types.
 - [ ] **Full Vietnamese mode:** a setting that shows every client line with its Vietnamese translation side by side, automatically. The same setting is the language the bestie (story 003) and the recap (story 011) will use.
 - [ ] Vietnamese with all its diacritics can be typed on a phone's Vietnamese keyboard in Help me say it, and displays correctly in translations.
 - [ ] All translation goes through a server function; the API key never reaches the browser. A failed translation shows a friendly retry and never breaks the appointment.
@@ -44,6 +45,7 @@
 
 - This changes story 001's client prompt (`src/api/client-turn.ts`): the player's level goes in with each turn, with that level's speaking rules and mood rules. Story 001 is still open (waiting on a real-API check), so re-check its criteria when it is closed.
 - Translations: the default client's own lines are fixed text and can be translated once and cached; live replies are translated on demand and cached per line for the appointment.
+- Word tiles: split the English line into word tiles in game code; shuffle with a seeded order so tests are repeatable; punctuation rides on its word.
 - Matching for Help me say it is done in game code (normalised text plus an edit-distance tolerance from config), not by the AI.
 - The level is an input story 002's English score already reads (it used a default until now).
 
@@ -88,4 +90,4 @@
 ## Dependencies
 
 - Depends on: `production/epics/salon-besties/story-001-live-client-appointment.md`, `production/epics/salon-besties/story-002-scoring-and-results.md`
-- Unlocks: `production/epics/salon-besties/story-003-signature-bestie.md`, `production/epics/salon-besties/story-011-learning-loop.md`, `production/epics/salon-besties/story-008-english-and-vietnamese.md`
+- Unlocks: `production/epics/salon-besties/story-008-english-and-vietnamese.md`, `production/epics/salon-besties/story-003-signature-bestie.md`, `production/epics/salon-besties/story-011-learning-loop.md`
