@@ -21,3 +21,4 @@
 | 006 | Client roster & difficulty | Config/Data | Ready | N/A |
 | 007 | Progression & daily hooks | Logic | Ready | N/A |
 | 008 | English + Vietnamese | UI | Ready | N/A |
+| 009 | Character portraits & mood expressions | Visual/Feel | Ready | N/A |
