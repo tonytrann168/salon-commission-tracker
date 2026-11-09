@@ -10,6 +10,10 @@ Config: `../project.yaml`.
 - **AI**: Claude runs clients, bestie and scoring; a separate voice service for speech. All AI calls go through a server function — never put API keys in client code.
 - **Later**: Rive for animated client/bestie faces.
 
+## Engine Version Reference
+
+@../docs/engine-reference/web/VERSION.md
+
 ## Commands (run in this folder)
 - `npm run dev` — dev server · `npm run build` — type-check + production build · `npm test` — tests
 

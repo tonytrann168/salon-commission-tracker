@@ -9,8 +9,8 @@
 schema_version: 1
 
 framework:
-  version: 1.2.0
-  last_upgraded: 2026-11-06
+  version: 1.3.0
+  last_upgraded: 2026-11-09
 
 engine:
   name: "Web"
@@ -18,6 +18,8 @@ engine:
   language: "TypeScript 7.0"
   rendering: "PixiJS WebGL (canvas fallback) + DOM/CSS UI"
   physics: "none"
+  code_root: src
+  test_root: src/tests
 
 specialists:
   code: "gameplay-programmer"
