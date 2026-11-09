@@ -1,0 +1,13 @@
+Reviewed-Content-Hash: src/api/grade-appointment.ts 310fcef7e4716bc66d4fc95f25541c3c3282f8dc
+Reviewed-Content-Hash: src/game/grade-appointment-transport.ts cd4d783b352ed813a505e00a0bf4c540e07b09d2
+Reviewed-Content-Hash: src/game/scoring.ts d146cd1d6ed9c52bfca99d9780ec635cc800a10a
+Reviewed-Content-Hash: src/game/config/scoring.json c9d299c870631ea46720027cd498851224a5cfc0
+Reviewed-Content-Hash: src/game/ui/results-screen.ts bfdbeee3ba54c1bfd79cacccff010202e2b34738
+Reviewed-Content-Hash: src/game/ui/results-screen.css a8b4827598499ec3a17db2825fb9253af5c16d18
+Reviewed-Content-Hash: src/game/ui/chat-panel.ts 4055059999251af6040f2e7e55c70f95c60ca9e3
+Reviewed-Content-Hash: src/game/ui/chat-panel.css b95b366aa364b6eeb3923a68b364b8dcbd73a87e
+Reviewed-Content-Hash: src/game/ui/strings.ts 66254ea2cbc0df525a09320df38a321833d5c256
+Reviewed-Content-Hash: src/game/types.ts ed29e394df5e00d5645e3dca1a9d0e63d2adc8b5
+Reviewed-Content-Hash: src/main.ts 596ec3c6f515537f2f8694483bfcbf52d0bb6a8d
+Reviewed-Content-Hash: src/vite.config.ts 2f4df854be915fe3009285e1a20f35442afb4975
+Reviewed-Content-Hash: src/tests/scoring.test.ts 961b144f219eac7f73cd0d2424146793c408d409

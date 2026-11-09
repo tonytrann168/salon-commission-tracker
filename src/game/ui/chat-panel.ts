@@ -5,7 +5,7 @@ import { getPortraitDefinition } from '../portraits/definitions';
 import { EXPRESSION_CONFIG, poseFor } from '../portraits/portrait';
 import type { Expression } from '../portraits/portrait';
 import { PHASES, TurnError } from '../types';
-import type { ClientPersona } from '../types';
+import type { AppointmentResult, ClientPersona } from '../types';
 import { createPortraitZone } from './portrait-zone';
 import { startTextReveal } from './text-reveal';
 import type { TextReveal } from './text-reveal';
@@ -13,7 +13,7 @@ import { STRINGS } from './strings';
 import './chat-panel.css';
 
 /**
- * DOM chat UI over the Pixi scene: chat, mood meter, phase indicator, typing indicator, retry, end state. Story: story-001.
+ * DOM chat UI over the Pixi scene: chat, mood meter, phase indicator, typing indicator, retry, hand-off to results. Story: story-001, story-002.
  * Client replies (and the opening line) are revealed at speaking pace while the client portrait talks. Story: story-009.
  */
 
@@ -36,8 +36,12 @@ const moodColor = (mood: number): string => `hsl(${Math.round((mood / MOOD_MAX) 
 export function createChatPanel(
   host: HTMLElement,
   appointment: Appointment,
-  onExit: () => void,
-  portraits: { client: ClientPersona; layer: Container },
+  portraits: {
+    client: ClientPersona;
+    layer: Container;
+    /** Called once, when the appointment is over and the final line has finished revealing. Mount the results into `container`; return a cleanup. */
+    onEnded: (container: HTMLElement, result: AppointmentResult) => () => void;
+  },
 ): { destroy: () => void; setBestieExpression: (expression: Expression) => void } {
   const root = el('div', 'chat-panel');
   const clientName = getPortraitDefinition(portraits.client.portraitId).name;
@@ -72,11 +76,8 @@ export function createChatPanel(
   retryButton.type = 'button';
   errorBox.append(errorText, retryButton);
 
-  const endBox = el('div', 'chat-end');
-  const endText = el('p');
-  const exitButton = el('button', 'chat-button', STRINGS.backToTitle);
-  exitButton.type = 'button';
-  endBox.append(endText, el('p', '', STRINGS.endPlaceholder), exitButton);
+  // Where the results screen mounts once the appointment is over and the final line has been shown.
+  const resultsBox = el('div', 'chat-results hidden');
 
   const form = el('form', 'chat-form');
   const input = el('input', 'chat-input');
@@ -88,21 +89,28 @@ export function createChatPanel(
   sendButton.type = 'submit';
   form.append(input, sendButton);
 
-  root.append(header, zone.element, log, errorBox, endBox, form, announcer);
+  root.append(header, zone.element, log, errorBox, resultsBox, form, announcer);
   host.appendChild(root);
 
   let latest = initial;
   let reveal: TextReveal | null = null;
   let renderedCount = 0;
+  let destroyResults: (() => void) | null = null;
 
-  /** Everything that waits for the reply to be fully shown: the walk-out pose and the end box. */
+  /** Swap the chat for the results area (once), after the final line is fully shown. */
+  const showEnd = (show: boolean): void => {
+    resultsBox.classList.toggle('hidden', !show);
+    log.classList.toggle('hidden', show);
+    form.classList.toggle('hidden', show);
+    if (show && destroyResults === null && latest.result) destroyResults = portraits.onEnded(resultsBox, latest.result);
+  };
+
+  /** Everything that waits for the reply to be fully shown: the walk-out pose and the results. */
   const settle = (): void => {
     reveal = null;
     zone.setClientTalking(false);
     zone.setClientPose(poseFor(latest.mood, latest.result?.outcome ?? null));
-    const finished = latest.status === 'finished';
-    endBox.classList.toggle('hidden', !finished);
-    form.classList.toggle('hidden', finished);
+    showEnd(latest.status === 'finished');
   };
 
   /** Reveal the client's line in `bubble` (at once under reduced motion). Ends in `settle`, which stops the talking. */
@@ -188,14 +196,8 @@ export function createChatPanel(
           : STRINGS.aiTrouble;
     }
 
-    // The end box waits until the final line has finished revealing (settle shows it).
-    const finished = snapshot.status === 'finished';
-    const showEnd = finished && reveal === null;
-    endBox.classList.toggle('hidden', !showEnd);
-    form.classList.toggle('hidden', showEnd);
-    if (snapshot.result) {
-      endText.textContent = snapshot.result.outcome === 'completed' ? STRINGS.endCompleted : STRINGS.endWalkedOut;
-    }
+    // The results wait until the final line has finished revealing (settle shows them).
+    showEnd(snapshot.status === 'finished' && reveal === null);
 
     // She talks from the moment the typing indicator shows until her reply is fully shown; an error stops her.
     zone.setClientTalking(snapshot.status === 'waiting' || reveal !== null);
@@ -219,12 +221,12 @@ export function createChatPanel(
     });
   });
   retryButton.addEventListener('click', () => void appointment.retry());
-  exitButton.addEventListener('click', onExit);
 
   return {
     setBestieExpression: zone.setBestieExpression,
     destroy() {
       unsubscribe();
+      destroyResults?.();
       reveal?.cancel();
       zone.destroy();
       root.remove();

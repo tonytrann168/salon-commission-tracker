@@ -1,12 +1,12 @@
 # Story 002: Scoring & results
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-11-09
 
 ## Context
 
@@ -61,13 +61,19 @@
 
 ## Files
 
+- `src/api/grade-appointment.ts`
+- `src/game/grade-appointment-transport.ts`
 - `src/game/scoring.ts`
 - `src/game/config/scoring.json`
-- `src/api/grade-appointment.ts`
 - `src/game/ui/results-screen.ts`
+- `src/game/ui/results-screen.css`
+- `src/game/ui/chat-panel.ts`
+- `src/game/ui/chat-panel.css`
+- `src/game/ui/strings.ts`
+- `src/game/types.ts`
+- `src/main.ts`
+- `src/vite.config.ts`
 - `src/tests/scoring.test.ts`
-
----
 
 ## QA Test Cases
 

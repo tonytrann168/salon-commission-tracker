@@ -1,0 +1,21 @@
+{
+  "defaultEnglishLevel": "some",
+  "stars": {
+    "moodWeight": 0.5,
+    "skillWeights": { "greeting": 1, "consultation": 1, "upsell": 1, "rebooking": 1, "problemHandling": 1 },
+    "minComposite": { "2": 30, "3": 48, "4": 64, "5": 78 },
+    "fiveStar": { "minMood": 70, "skillFloor": 40 }
+  },
+  "englishWeights": {
+    "beginner": { "clarity": 0.5, "politeness": 0.5, "grammarVocabulary": 0 },
+    "some": { "clarity": 0.75, "politeness": 0.75, "grammarVocabulary": 0 },
+    "comfortable": { "clarity": 1, "politeness": 1, "grammarVocabulary": 1 },
+    "fluent": { "clarity": 1, "politeness": 1, "grammarVocabulary": 1 }
+  },
+  "tip": {
+    "minStars": 3,
+    "min": 2,
+    "max": 20,
+    "goodTipMin": 12
+  }
+}

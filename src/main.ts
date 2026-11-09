@@ -1,10 +1,13 @@
 import { Application, Container } from 'pixi.js';
 import { createAppointment } from './game/appointment';
 import { createFetchTransport } from './game/client-turn-transport';
+import { createGradeTransport } from './game/grade-appointment-transport';
 import { DEFAULT_CLIENT } from './game/clients/default-client';
+import { SCORING_CONFIG } from './game/scoring';
 import { createSalonScene } from './game/salon-scene';
 import { createTitleMenu, createTitleScreen } from './game/title-screen';
 import { createChatPanel } from './game/ui/chat-panel';
+import { createResultsScreen } from './game/ui/results-screen';
 import './game/ui/global.css';
 
 async function boot(): Promise<void> {
@@ -36,6 +39,8 @@ async function boot(): Promise<void> {
     teardownDom = () => menu.remove();
   };
 
+  const gradeAppointment = createGradeTransport();
+
   const startAppointment = () => {
     teardownDom();
     buildScene = createSalonScene;
@@ -43,10 +48,23 @@ async function boot(): Promise<void> {
     const appointment = createAppointment({
       client: DEFAULT_CLIENT,
       takeTurn: createFetchTransport(),
-      // Story 002 will take the result to its results screen; for now the chat panel shows a placeholder end state.
+      // Grading starts from the chat panel's onEnded, once the final line has finished revealing (story 002).
       onFinished: () => undefined,
     });
-    const panel = createChatPanel(host, appointment, showTitle, { client: DEFAULT_CLIENT, layer: portraitLayer });
+    const panel = createChatPanel(host, appointment, {
+      client: DEFAULT_CLIENT,
+      layer: portraitLayer,
+      onEnded: (container, result) =>
+        createResultsScreen(container, {
+          clientName: DEFAULT_CLIENT.name,
+          result,
+          level: SCORING_CONFIG.defaultEnglishLevel, // story 010 replaces this with the player's chosen level
+          config: SCORING_CONFIG,
+          grade: gradeAppointment,
+          onNextClient: startAppointment,
+          onBackToMenu: showTitle,
+        }).destroy,
+    });
     teardownDom = panel.destroy;
   };
 

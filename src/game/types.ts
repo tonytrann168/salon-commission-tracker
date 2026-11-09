@@ -66,3 +66,49 @@ export class TurnError extends Error {
     this.code = code;
   }
 }
+
+/** The player's English level. Story: story-002 (weights); story-010 adds the picker. */
+export const ENGLISH_LEVELS = ['beginner', 'some', 'comfortable', 'fluent'] as const;
+
+/** English level of the player. */
+export type EnglishLevel = (typeof ENGLISH_LEVELS)[number];
+
+/** The five scorecard skills. Story: story-002. */
+export const SKILL_KEYS = ['greeting', 'consultation', 'upsell', 'rebooking', 'problemHandling'] as const;
+
+export type SkillKey = (typeof SKILL_KEYS)[number];
+
+/** Each skill 0-100. */
+export type SkillScores = Record<SkillKey, number>;
+
+/** The three parts of the English score. */
+export const ENGLISH_KEYS = ['clarity', 'politeness', 'grammarVocabulary'] as const;
+
+export type EnglishKey = (typeof ENGLISH_KEYS)[number];
+
+/** Each part 0-100, graded from the player's own lines only. */
+export type EnglishScores = Record<EnglishKey, number>;
+
+/** What the grading call needs to know about a finished appointment. */
+export interface GradingRequest {
+  transcript: readonly Message[];
+  outcome: Outcome;
+  /** Mood when the appointment ended, 0-100. */
+  finalMood: number;
+  level: EnglishLevel;
+}
+
+/** Structured output of the grading call. Stars and tip are computed from it by game code (scoring.ts). */
+export interface Grading {
+  skills: SkillScores;
+  english: EnglishScores;
+  /** The client agreed to book again. */
+  rebooked: boolean;
+  /** The client demanded the work be redone. */
+  redoDemanded: boolean;
+  /** 1-3 sentences in the client's voice. */
+  review: string;
+}
+
+/** Transport that grades a finished appointment. Rejects with TurnError. */
+export type GradeAppointment = (request: GradingRequest) => Promise<Grading>;
