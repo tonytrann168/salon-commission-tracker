@@ -1,30 +1,31 @@
 # Game Brief: Salon Besties
 
-**One-sentence pitch:** A phone game where you work the chair for real: talk (out loud or typed) with AI clients who have moods, opinions and attitude, do their nails while you chat, and your AI best friend coaches you, remembers you and grows with you from Junior Tech to Master Tech.
+**One-sentence pitch:** An educational phone game where Vietnamese nail techs build real-world English by working the chair: talk (typed or out loud) with AI clients who speak at your level, get Vietnamese help the moment you need it, and your AI best friend corrects you gently, remembers what you've learned, and grows with you from Junior Tech to Master Tech.
 
 ## Core loop
-- Pick a client (easy / medium / hard) or start a shift of several clients back to back.
-- Run the appointment: consultation → service in the nail art station while keeping the conversation going → checkout and rebooking. The client's mood moves live with everything you say and do.
-- Get stars, a tip and a written review, plus a bestie debrief and skill scorecard.
-- Spend tips on station upgrades and new polishes, level up, earn badges, unlock harder clients; a daily challenge client brings you back tomorrow.
+- Pick a client (easy / medium / hard) or a shift of several; clients speak English pitched to your English level (Beginner / Some / Comfortable / Fluent).
+- Run the appointment in English: consultation → service in the nail art station while keeping the conversation going → checkout and rebooking. Stuck? Tap a client line to translate it, or type in Vietnamese with "Help me say it" and re-type the English to send.
+- Get stars, a tip and a review, plus a scorecard that includes an English score; the bestie whispers corrections and debriefs you, and a Vietnamese recap gives you better English lines to try. New salon phrases go into your phrasebook.
+- The game raises or lowers your level as you improve; spend tips on upgrades, rank up, and come back for the daily challenge client.
 
 ## Player goal & fail state — what "working" looks like
-- **Goal:** turn every client into a 5-star review with a good tip and a rebooking.
-- **Fail:** the client's mood hits zero and they walk out, or they leave a 1–2 star review / demand a redo.
-- **A session is complete when** the client has checked out and the bestie debrief has been shown.
+- **Goal:** serve a client fully in English at your level — 5 stars, a good tip, a rebooking — and come away with new phrases learned.
+- **Fail:** the client walks out (mood hits zero) or leaves a 1–2 star review. **At Beginner and Some, English mistakes never lower the client's mood or cause a walk-out** — only how you treat the client does; at Comfortable and Fluent, clients react to unclear English realistically.
+- **A session is complete when** the client has checked out, the bestie debrief and the Vietnamese recap have been shown, and new phrases are in the phrasebook.
 
 ## MVP — what must exist to be the game
-1. **Live client appointment:** a Claude-run client you talk to by text or voice — consultation, service, checkout — with a live mood meter.
-2. **Client roster:** ~9 clients across easy / medium / hard: picky / changes mind, rude / impatient, complaints & redos, price & booking issues. Realistic but clean.
-3. **Nail art station:** shape, base color, polish, core art tools (gradients, gems, stickers); the client judges the result against what they asked for.
-4. **Signature bestie:** optional live whispered hints, post-client debrief, memory of past sessions and weak spots, levels up alongside the player, sometimes asks the player to teach them.
-5. **Scoring:** stars, tip and written review, plus a scorecard on greeting, consultation, upsell, rebooking and problem handling.
-6. **Progression & hooks:** tips buy upgrades and polishes; ranks Junior → Master Tech with skill badges; daily challenge client with a streak.
-7. **English + Vietnamese:** UI and bestie coaching in either language; clients speak English by default, Vietnamese optional.
+1. **Live client appointment:** a Claude-run client you talk to by text or voice — consultation, service, checkout — with a live mood meter and an expressive portrait; voice includes pronunciation practice.
+2. **English in the chair:** pick your English level at the start; clients adapt (short, slow, simple sentences for Beginner → slang, idioms and speed for Fluent); level-fair mood rules as in the fail state above.
+3. **Vietnamese help:** tap any client line to translate it; "Help me say it" (type Vietnamese → English shown → re-type it in English to send); a full Vietnamese mode with English shown side by side; menus and buttons in Vietnamese.
+4. **Signature bestie & learning loop:** optional whispered hints and corrections right after a mistake ("You said… → Better: …"), a debrief with a full English review, a Vietnamese recap with better lines to try, a phrasebook of salon phrases learned, memory of past sessions, and level auto-adjust after a few appointments.
+5. **Scoring:** stars, tip and review, plus a scorecard on greeting, consultation, upsell, rebooking and problem handling, and an English score (clarity, politeness, grammar/vocabulary) weighted by the player's level.
+6. **Nail art station:** shape, base color, polish, core art tools (gradients, gems, stickers); the client judges the result against what they asked for.
+7. **Clients & progression:** ~9 clients across easy / medium / hard (picky, rude/impatient, complaints & redos, price & booking issues; realistic but clean); tips buy upgrades and polishes; ranks Junior → Master Tech with badges; daily challenge client with a streak.
 
 ## Out of scope — not building this (v1; all planned for later)
 - Hair salon (next location)
-- Mirror role swap (player as the client; tech copies the player via quiz + play history, or a different tech)
+- Languages other than English (learned) and Vietnamese (help)
+- Mirror role swap (player as the client; tech copies the player, or a different tech)
 - Story campaign chapters (beauty school → salon owner)
 - Leaderboards and sharing
 - Bestie customization shop and any payments (business model decided later)
@@ -32,19 +33,21 @@
 - PolishPay integration
 
 ## Build order
-1. One client, text only, with mood meter and scorecard — the riskiest question: does talking to an AI client feel real and fun?
-2. Bestie whispers, debrief, and memory between sessions.
-3. Voice in and out.
-4. Nail art station, tied to what the client asked for.
-5. Full client roster and the three difficulty tiers.
-6. Progression: tips, upgrades, ranks, badges, daily challenge and streak.
-7. Vietnamese language.
+1. One client, text only, with mood meter and portraits *(built: stories 001, 009)*.
+2. Scoring with the English score (002).
+3. English in the chair: level pick, client adaptation, tap-to-translate, Help me say it, full Vietnamese mode (010) — the riskiest question now: can a Beginner actually get through an appointment and learn from it?
+4. Signature bestie (003).
+5. Learning loop: whispers and debrief corrections, Vietnamese recap, phrasebook, level auto-adjust (011).
+6. Voice in and out, with pronunciation practice (004).
+7. Nail art station (005).
+8. Client roster (006), then progression and daily hooks (007).
+9. Menus and buttons in Vietnamese (008).
 
 ---
-**Who it's for / what they feel:** working nail techs playing 5–20 minutes between clients, who come away more confident and proud of how they handle people.
+**Who it's for / what they feel:** Vietnamese nail techs at any English level, playing 5–20 minutes between clients, who come away less nervous and more confident speaking English with real clients — and proud of how they handle people.
 
 **Art & audio direction:** cute, stylish 2D with very expressive faces (moods readable at a glance), trendy pastel salon, upbeat lo-fi music, voiced characters.
 
-**Reference game:** *Good Pizza, Great Pizza* — v1 keeps its read-the-customer-while-you-make-their-order loop, except the customers talk back live.
+**Reference game:** *Good Pizza, Great Pizza* — v1 keeps its read-the-customer-while-you-make-their-order loop, except the customers talk back live and the conversation is your English lesson.
 
-**Notes:** career sim is the frame (ranks, upgrades); quick single client vs full shift gives the arcade side; story chapters come later. Player chooses session length. AI: Claude for characters and scoring, a separate voice service for speech.
+**Notes:** educational first, still a real game: the hooks stay. Career sim is the frame (ranks, upgrades); quick single client vs full shift gives the arcade side. AI: Claude for clients, bestie, translation, corrections and scoring; a separate voice service for speech.

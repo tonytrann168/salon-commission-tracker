@@ -35,6 +35,9 @@
 - [ ] The result marks the brief's goal (5 stars + good tip + rebooking) and fail (walk-out, 1–2 stars, redo demand) outcomes.
 - [ ] A results screen shows stars, tip, review and scorecard, and offers "next client" or "back to menu".
 - [ ] The scoring formulas live in one config file so they can be tuned without code changes.
+- [ ] *(Added 2026-11-09, educational-first redesign.)* The scorecard adds an **English score** with three parts — clarity, politeness, grammar/vocabulary — each 0–100, graded from the player's own lines only (never the client's), and graded against what is expected at the player's English level.
+- [ ] The English score's weight in stars and tip depends on the player's level (Beginner / Some / Comfortable / Fluent), set in the scoring config: at Beginner and Some, grammar/vocabulary can never cost a star (it counts only toward the English score itself); at Comfortable and Fluent it counts toward stars like the other skills.
+- [ ] The results screen shows the English score with its three parts, in plain words a Beginner can follow.
 
 ---
 
@@ -42,6 +45,8 @@
 
 - Claude grades the transcript into the five skill scores (structured output); game code turns scores + mood into stars and tip.
 - Keep the formula pure and unit-tested; the AI grading call is mocked in tests.
+- The player's English level is an input to grading and weighting. Story 010 adds the level picker; until then, use a default level from config (Some) so this story is buildable and testable on its own.
+- English grading uses the same grading call as the five skills (one structured output), with the level and its expectations in the prompt.
 
 ---
 
@@ -49,6 +54,8 @@
 
 - Story 003: the bestie's spoken debrief of the scorecard.
 - Story 007: spending tips, ranks and badges.
+- Story 010: the English level picker and client adaptation.
+- Story 011: line-by-line corrections, the Vietnamese recap, the phrasebook and level auto-adjust.
 
 ---
 
@@ -80,4 +87,4 @@
 ## Dependencies
 
 - Depends on: `production/epics/salon-besties/story-001-live-client-appointment.md`
-- Unlocks: `production/epics/salon-besties/story-003-signature-bestie.md`, `production/epics/salon-besties/story-007-progression-and-daily-hooks.md`
+- Unlocks: `production/epics/salon-besties/story-010-english-in-the-chair.md`, `production/epics/salon-besties/story-003-signature-bestie.md`, `production/epics/salon-besties/story-007-progression-and-daily-hooks.md`

@@ -1,24 +1,28 @@
 # Epic: Salon Besties (MVP)
 
 > **Source**: `design/game-brief.md` (minimal tier: the brief is the whole design)
-> **Status**: Stories created
+> **Status**: Stories created — rescoped 2026-11-09 (educational-first redesign)
 
-**Goal**: A phone game where you work the chair for real: talk (out loud or typed) with AI clients who have moods, opinions and attitude, do their nails while you chat, and your AI best friend coaches you, remembers you and grows with you from Junior Tech to Master Tech.
+**Goal**: An educational phone game where Vietnamese nail techs build real-world English by working the chair: talk (typed or out loud) with AI clients who speak at your level, get Vietnamese help the moment you need it, and your AI best friend corrects you gently, remembers what you've learned, and grows with you from Junior Tech to Master Tech.
 
-**Scope**: the brief's 7 MVP features — live client appointment, client roster, nail art station, signature bestie, scoring, progression & hooks, English + Vietnamese.
+**Scope**: the brief's 7 MVP features — live client appointment, English in the chair, Vietnamese help, signature bestie & learning loop, scoring with an English score, nail art station, clients & progression.
 
-**Order**: the brief's Build order — text appointment + scoring first (does talking to an AI client feel real and fun?), then bestie, voice, nail art, roster, progression, Vietnamese.
+**Order** (the brief's Build order): 001 and 009 are built; then 002 → 010 → 003 → 011 → 004 (with pronunciation practice) → 005 → 006 → 007 → 008.
 
 ## Stories
 
+Listed in build order.
+
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | Live client appointment (text) | Integration | Ready | N/A |
-| 002 | Scoring & results | Logic | Ready | N/A |
+| 001 | Live client appointment (text) | Integration | In Progress | N/A |
+| 009 | Character portraits & mood expressions | Visual/Feel | In Progress | N/A |
+| 002 | Scoring & results (+ English score) | Logic | Ready | N/A |
+| 010 | English in the chair | Integration | Ready | N/A |
 | 003 | Signature bestie | Integration | Ready | N/A |
-| 004 | Voice in and out | Integration | Ready | N/A |
+| 011 | Learning loop | Integration | Ready | N/A |
+| 004 | Voice in and out (+ pronunciation practice) | Integration | Ready | N/A |
 | 005 | Nail art station | Visual/Feel | Ready | N/A |
 | 006 | Client roster & difficulty | Config/Data | Ready | N/A |
 | 007 | Progression & daily hooks | Logic | Ready | N/A |
-| 008 | English + Vietnamese | UI | Ready | N/A |
-| 009 | Character portraits & mood expressions | Visual/Feel | Ready | N/A |
+| 008 | Menus and buttons in Vietnamese | UI | Ready | N/A |

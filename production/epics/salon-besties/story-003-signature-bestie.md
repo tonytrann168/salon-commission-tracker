@@ -48,7 +48,8 @@
 ## Out of Scope
 
 - Story 004: the bestie speaking aloud.
-- Story 008: bestie coaching in Vietnamese.
+- Story 011: English corrections (whispers after a mistake, the debrief's English review), the Vietnamese recap, the phrasebook and level auto-adjust — this story builds the bestie those ride on.
+- Bestie coaching in Vietnamese follows the full Vietnamese mode from story 010.
 
 ---
 
@@ -80,4 +81,4 @@
 ## Dependencies
 
 - Depends on: `production/epics/salon-besties/story-001-live-client-appointment.md`, `production/epics/salon-besties/story-002-scoring-and-results.md`
-- Unlocks: `production/epics/salon-besties/story-008-english-and-vietnamese.md`
+- Unlocks: `production/epics/salon-besties/story-011-learning-loop.md`
