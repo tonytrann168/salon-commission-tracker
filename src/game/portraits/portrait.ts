@@ -37,9 +37,26 @@ export interface ExpressionBand {
   max: number;
 }
 
+/** How the client "talks": the text reveal pace and the mouth animation layered on the current expression. */
+export interface TalkingConfig {
+  /** Reveal speed of reply text. */
+  charsPerSecond: number;
+  /** Extra pause after . ! ? or an ellipsis that ends a word. */
+  sentencePauseMs: number;
+  /** Extra pause after , ; : that ends a word. */
+  clausePauseMs: number;
+  /** Mouth open-and-close cycles per second while talking. */
+  mouthHz: number;
+  /** Peak extra `mouthOpen` while talking; the mouth oscillates between 0 and this, on top of the expression's own. */
+  mouthOpenMax: number;
+  /** Static extra `mouthOpen` held while talking under prefers-reduced-motion (no oscillation). */
+  reducedMotionMouthOpen: number;
+}
+
 export interface ExpressionConfig {
   /** Length of the expression transition. */
   transitionMs: number;
+  talking: TalkingConfig;
   bands: readonly ExpressionBand[];
   faces: Record<Pose, FaceParams>;
 }
@@ -61,6 +78,12 @@ export interface Portrait {
   setSize(size: number): void;
   /** Show a pose. The first call snaps; later calls animate. */
   setPose(pose: Pose): void;
+  /**
+   * Start or stop talking: the mouth opens and closes on top of the current pose until stopped (under
+   * prefers-reduced-motion it holds still, slightly open). Driven by
+   * "client is speaking" start/stop, so a real token stream can drive it the same way as the timed reveal.
+   */
+  setTalking(talking: boolean): void;
   destroy(): void;
 }
 
@@ -74,10 +97,26 @@ export function parseExpressionConfig(raw: unknown): ExpressionConfig {
   };
   if (!isRecord(raw)) return fail('must be an object');
 
-  const { transitionMs, bands, faces } = raw;
+  const { transitionMs, talking, bands, faces } = raw;
   if (typeof transitionMs !== 'number' || !Number.isFinite(transitionMs) || transitionMs <= 0) {
     return fail('"transitionMs" must be a positive number');
   }
+  if (!isRecord(talking)) return fail('"talking" must be an object');
+  const talkingNumber = (key: keyof TalkingConfig, allowZero: boolean): number => {
+    const value = talking[key];
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || (value === 0 && !allowZero)) {
+      return fail(`"talking.${key}" must be ${allowZero ? 'a non-negative' : 'a positive'} number`);
+    }
+    return value;
+  };
+  const parsedTalking: TalkingConfig = {
+    charsPerSecond: talkingNumber('charsPerSecond', false),
+    sentencePauseMs: talkingNumber('sentencePauseMs', true),
+    clausePauseMs: talkingNumber('clausePauseMs', true),
+    mouthHz: talkingNumber('mouthHz', false),
+    mouthOpenMax: talkingNumber('mouthOpenMax', false),
+    reducedMotionMouthOpen: talkingNumber('reducedMotionMouthOpen', true),
+  };
   if (!Array.isArray(bands) || bands.length === 0) return fail('"bands" must be a non-empty array');
 
   let expectedMin = MOOD_MIN;
@@ -112,7 +151,7 @@ export function parseExpressionConfig(raw: unknown): ExpressionConfig {
     }
   }
 
-  return { transitionMs, bands: parsedBands, faces: faces as Record<Pose, FaceParams> };
+  return { transitionMs, talking: parsedTalking, bands: parsedBands, faces: faces as Record<Pose, FaceParams> };
 }
 
 /** Validated once at load: a bad file fails at startup, not mid-appointment. */

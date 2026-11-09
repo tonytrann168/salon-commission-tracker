@@ -1,5 +1,13 @@
 {
   "transitionMs": 200,
+  "talking": {
+    "charsPerSecond": 24,
+    "sentencePauseMs": 280,
+    "clausePauseMs": 120,
+    "mouthHz": 7,
+    "mouthOpenMax": 0.6,
+    "reducedMotionMouthOpen": 0.25
+  },
   "bands": [
     { "expression": "furious", "min": 0, "max": 19 },
     { "expression": "annoyed", "min": 20, "max": 39 },

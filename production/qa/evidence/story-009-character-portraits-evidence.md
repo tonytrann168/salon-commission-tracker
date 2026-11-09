@@ -19,6 +19,17 @@
 | `07-furious.png` | Dana furious | 10 |
 | `08-walkout.png` | Dana walking out (eyes away, head turned) | 0 |
 
+**Added 2026-11-09 (talking state + font fix):**
+
+| File | What it shows |
+|------|---------------|
+| `09-title-font.png` | Title "Start appointment" button now in the app font (computed: `system-ui, sans-serif`) |
+| `10-opening-line-revealing.png` | Opening line revealing word by word while Dana talks |
+| `11-talking-while-typing.png` | Dana talking (mouth open) while the typing indicator shows |
+| `12-reply-revealing.png` | Reply mid-reveal ("…done by four. Ca"), Dana talking on her annoyed face |
+| `13-reply-done-settled.png` | Reply fully shown, Dana stopped talking |
+| `14-reduced-motion-talking-static.png` | Reduced motion: static slightly-open mouth while the typing indicator shows |
+
 `stamp.txt` hashes the code these were captured from.
 
 ## Checks
@@ -27,6 +38,9 @@
 - The chat log's position and height (top 193 px, height 399 px) were identical before and after every expression change. At walk-out the log shrinks only because story 001's end box appears.
 - The portrait zone's aria-label follows the pose ("Dana, neutral" … "Dana, walking out").
 - No page errors during any run.
+- Talking: repeated screenshots of the portrait were identical while idle and after a reply, and varied while the typing indicator showed (mouth moving at about 7 Hz). Under reduced motion, the face held one still, slightly-open mouth while waiting and returned to the expression when the reply was shown.
+- Text reveal: mid-reveal the bubble held a partial line; the screen-reader live region held the full line ("Dana: …") at once. Under reduced motion the reply appeared whole.
+- Unit test `src/tests/expression-bands.test.ts`: every band edge and the walk-out rule (13 tests) pass.
 
 ## Not covered by a still
 
@@ -34,7 +48,7 @@
 
 ## Observations
 
-- The title screen's "Start appointment" button renders in a fallback serif font. This comes from story 001's button styling, not this story.
+- ~~The title screen's "Start appointment" button renders in a fallback serif font.~~ Fixed 2026-11-09: buttons and inputs take the app font globally (`src/game/ui/global.css`).
 
 ## Sign-Off
 

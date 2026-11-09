@@ -18,6 +18,8 @@ export interface PortraitZone {
   element: HTMLElement;
   /** Show the client's pose. */
   setClientPose(pose: Pose): void;
+  /** Start or stop the client talking (mouth moving over her current pose). */
+  setClientTalking(talking: boolean): void;
   /** Show the bestie's expression (story 003 drives this later). */
   setBestieExpression(expression: Expression): void;
   destroy(): void;
@@ -66,6 +68,9 @@ export function createPortraitZone(host: HTMLElement, layer: Container, client: 
       clientPose = pose;
       clientPortrait.setPose(pose);
       label();
+    },
+    setClientTalking(talking) {
+      clientPortrait.setTalking(talking);
     },
     setBestieExpression(expression) {
       bestiePortrait.setPose(expression);

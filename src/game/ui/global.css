@@ -1,0 +1,3 @@
+/* App-wide base styles, loaded at startup (main.ts). Form controls do not inherit the font by default. */
+html, body { font-family: system-ui, sans-serif; color: #3b2a33; }
+button, input, textarea { font: inherit; }

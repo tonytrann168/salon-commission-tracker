@@ -36,6 +36,7 @@
 - [ ] Placeholder art first: simple, cute 2D faces drawn in code (PixiJS Graphics), no image files required.
 - [ ] Art is swappable: each character points to a portrait definition, so final art (images or Rive faces) can replace the placeholders without changing game code.
 - [ ] Portraits keep the appointment screen at the 60 fps target on a mid-range phone.
+- [ ] *(Added 2026-11-09 at the owner's request.)* While the client's reply is delivered, her portrait is in a "talking" state (mouth moving on top of her current mood expression) and her words appear at speaking pace, so it feels like a conversation, not texting; she stops talking when the reply is fully shown. Until story 001 streams replies, the reveal paces a whole reply; the same talking state then follows real streaming.
 
 ---
 
@@ -62,14 +63,17 @@
 - `src/game/portraits/placeholder-faces.ts`
 - `src/game/portraits/definitions.ts`
 - `src/game/ui/portrait-zone.ts`
+- `src/game/ui/text-reveal.ts`
 - `src/game/ui/chat-panel.ts`
 - `src/game/ui/chat-panel.css`
+- `src/game/ui/global.css`
 - `src/game/ui/strings.ts`
 - `src/game/title-screen.ts`
 - `src/game/salon-scene.ts`
 - `src/game/types.ts`
 - `src/game/clients/default-client.ts`
 - `src/main.ts`
+- `src/tests/expression-bands.test.ts`
 
 ## QA Test Cases
 

@@ -14,6 +14,7 @@ export const STRINGS = {
   endPlaceholder: 'Your results will show up here soon.',
   backToTitle: 'Back to title',
   you: 'You',
+  clientSaid: (name: string, text: string): string => `${name}: ${text}`,
   portraitLabel: (name: string, pose: string): string => `${name}, ${pose}`,
   poseLabels: {
     furious: 'furious',

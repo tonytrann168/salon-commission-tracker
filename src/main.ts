@@ -5,6 +5,7 @@ import { DEFAULT_CLIENT } from './game/clients/default-client';
 import { createSalonScene } from './game/salon-scene';
 import { createTitleMenu, createTitleScreen } from './game/title-screen';
 import { createChatPanel } from './game/ui/chat-panel';
+import './game/ui/global.css';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('app');

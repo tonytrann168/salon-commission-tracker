@@ -21,7 +21,7 @@ const TURN_RANGE = 8;
 
 const easeOutCubic = (t: number): number => 1 - (1 - t) ** 3;
 
-function drawFeatures(g: Graphics, p: FaceParams, palette: PortraitPalette): void {
+function drawFeatures(g: Graphics, p: FaceParams, palette: PortraitPalette, extraMouthOpen: number): void {
   g.clear();
 
   if (p.blush > 0.02) {
@@ -53,7 +53,7 @@ function drawFeatures(g: Graphics, p: FaceParams, palette: PortraitPalette): voi
   const halfWidth = 11 * p.mouthWidth;
   const cornerY = MOUTH_Y - p.mouthCurve * 4;
   const topControlY = MOUTH_Y + p.mouthCurve * 8;
-  const bottomControlY = topControlY + p.mouthOpen * 24;
+  const bottomControlY = topControlY + (p.mouthOpen + extraMouthOpen) * 24;
   g.moveTo(-halfWidth, cornerY)
     .quadraticCurveTo(0, topControlY, halfWidth, cornerY)
     .quadraticCurveTo(0, bottomControlY, -halfWidth, cornerY)
@@ -62,7 +62,7 @@ function drawFeatures(g: Graphics, p: FaceParams, palette: PortraitPalette): voi
     .stroke({ width: 2.5, color: FEATURE_COLOR, cap: 'round', join: 'round' });
 }
 
-/** Build a placeholder face portrait. Pixi's shared ticker runs only while a transition is in progress. */
+/** Build a placeholder face portrait. Pixi's shared ticker runs only while a transition or talking is in progress. */
 export function createPlaceholderFace(palette: PortraitPalette, size: number): Portrait {
   const view = new Container();
   view.label = 'portrait';
@@ -104,30 +104,52 @@ export function createPlaceholderFace(palette: PortraitPalette, size: number): P
   let target: FaceParams = current;
   let elapsed = 0;
   let animating = false;
+  let talking = false;
+  let talkElapsed = 0;
+  let talkStill = false;
+  let running = false;
   let hasPose = false;
 
+  const mouthExtra = (): number => {
+    if (!talking) return 0;
+    const { mouthHz, mouthOpenMax, reducedMotionMouthOpen } = EXPRESSION_CONFIG.talking;
+    if (talkStill) return reducedMotionMouthOpen;
+    // Raised-cosine wave from 0 to mouthOpenMax: starts closed, so the mouth eases open on top of the pose's own.
+    return mouthOpenMax * (0.5 - 0.5 * Math.cos((2 * Math.PI * mouthHz * talkElapsed) / 1000));
+  };
+
   const apply = (): void => {
-    drawFeatures(features, current, palette);
+    drawFeatures(features, current, palette, mouthExtra());
     features.x = current.headTurn * TURN_RANGE;
     head.rotation = (current.headTilt * Math.PI) / 180;
   };
 
   const tick = (ticker: Ticker): void => {
-    elapsed += ticker.deltaMS;
-    const t = Math.min(1, elapsed / EXPRESSION_CONFIG.transitionMs);
-    const eased = easeOutCubic(t);
-    for (const key of FACE_PARAM_KEYS) current[key] = from[key] + (target[key] - from[key]) * eased;
+    if (animating) {
+      elapsed += ticker.deltaMS;
+      const t = Math.min(1, elapsed / EXPRESSION_CONFIG.transitionMs);
+      const eased = easeOutCubic(t);
+      for (const key of FACE_PARAM_KEYS) current[key] = from[key] + (target[key] - from[key]) * eased;
+      if (t >= 1) animating = false;
+    }
+    if (talking && !talkStill) talkElapsed += ticker.deltaMS;
     apply();
-    if (t >= 1) stop();
+    if (!animating && (!talking || talkStill)) halt();
   };
 
-  function stop(): void {
-    if (!animating) return;
-    animating = false;
+  function start(): void {
+    if (running) return;
+    running = true;
+    Ticker.shared.add(tick);
+  }
+
+  function halt(): void {
+    if (!running) return;
+    running = false;
     Ticker.shared.remove(tick);
   }
 
-  view.once('destroyed', stop);
+  view.once('destroyed', halt);
 
   const setSize = (next: number): void => {
     view.scale.set(next / DESIGN_SIZE);
@@ -150,13 +172,23 @@ export function createPlaceholderFace(palette: PortraitPalette, size: number): P
       for (const key of FACE_PARAM_KEYS) from[key] = current[key];
       target = next;
       elapsed = 0;
-      if (!animating) {
-        animating = true;
-        Ticker.shared.add(tick);
+      animating = true;
+      start();
+    },
+    setTalking(next: boolean): void {
+      if (next === talking) return;
+      talking = next;
+      talkElapsed = 0;
+      talkStill = next && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (next && !talkStill) {
+        start();
+      } else if (!animating) {
+        halt();
+        apply();
       }
     },
     destroy(): void {
-      stop();
+      halt();
       view.destroy({ children: true });
     },
   };
