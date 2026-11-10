@@ -14,11 +14,33 @@
   ],
   "stickers": ["heart", "star", "flower"],
   "grid": { "cols": 6, "rows": 10 },
-  "brushCells": 1.6,
+  "hand": {
+    "_note": "One hand, palm down, fingers up, in hand units (box w x h). Per finger: nail centre (x, y), angle in degrees (0 = straight up, + leans right), nail size, finger length below the nail and width (x nail width). Two hands later = a second list.",
+    "box": { "w": 100, "h": 52 },
+    "fingers": [
+      { "id": "thumb", "x": 12, "y": 41, "angle": -38, "nail": { "w": 15, "h": 13 }, "length": 26, "width": 1.3 },
+      { "id": "index", "x": 32.5, "y": 16, "angle": -7, "nail": { "w": 12.5, "h": 16 }, "length": 44, "width": 1.32 },
+      { "id": "middle", "x": 50, "y": 11, "angle": 0, "nail": { "w": 13.5, "h": 18 }, "length": 50, "width": 1.3 },
+      { "id": "ring", "x": 66.5, "y": 15, "angle": 6, "nail": { "w": 12, "h": 16 }, "length": 46, "width": 1.32 },
+      { "id": "pinky", "x": 81.5, "y": 27, "angle": 13, "nail": { "w": 9, "h": 12 }, "length": 34, "width": 1.38 }
+    ]
+  },
+  "brushRadius": 3.4,
+  "spill": { "marginCells": 3, "forgiveRing": 1, "zeroNeatnessAt": 0.35 },
+  "cleanupRadius": 4.5,
   "maxDecorationsPerNail": 3,
   "fullCoverage": 0.92,
-  "matchWeights": { "shape": 25, "color": 35, "coverage": 25, "extras": 15 },
-  "decorationLevels": { "few": [1, 4], "lots": [5, 15] },
+  "matchWeights": {
+    "shape": 25,
+    "color": 35,
+    "coverage": 25,
+    "extras": 15,
+    "neatness": 15
+  },
+  "decorationLevels": {
+    "few": [1, 4],
+    "lots": [5, 15]
+  },
   "moodByMatch": [
     { "min": 85, "delta": 10 },
     { "min": 65, "delta": 4 },

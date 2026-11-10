@@ -3,6 +3,8 @@ import nailJson from '../config/nail-art.json';
 /**
  * The nail design as data (story 005, design/game-brief.md MVP feature 6), so it can be drawn, compared to the
  * client's request, described to the AI and saved. One hand, five nails. Config: config/nail-art.json.
+ * The hand is data (owner, 2026-11-10): each finger has its own position, angle and nail size, so the thumb and pinky
+ * are harder to paint cleanly, and a second hand later is just more config.
  */
 
 export type NailShape = 'square' | 'round' | 'oval' | 'almond' | 'stiletto';
@@ -15,18 +17,40 @@ export interface PaletteColor {
   name: { en: string; vi: string };
 }
 
+/** One finger, in hand units: the nail's centre, the finger's lean (degrees, 0 = straight up), the nail's size. */
+export interface FingerConfig {
+  id: string;
+  x: number;
+  y: number;
+  angle: number;
+  nail: { w: number; h: number };
+  /** How far the finger reaches below the nail, and its width as a multiple of the nail width. */
+  length: number;
+  width: number;
+}
+
+export interface HandConfig {
+  box: { w: number; h: number };
+  fingers: FingerConfig[];
+}
+
 export interface NailArtConfig {
   shapes: NailShape[];
   palette: PaletteColor[];
   stickers: StickerKind[];
   /** Polish coverage is tracked on this grid per nail. */
   grid: { cols: number; rows: number };
-  /** Brush radius, in grid cells. */
-  brushCells: number;
+  hand: HandConfig;
+  /** Brush radius in hand units: the same on every finger, so it fills a small nail faster and spills off it more easily. */
+  brushRadius: number;
+  /** Paint off the nail is tracked this many grid cells out; a nail's neatness hits 0 when its spill reaches this share of its area. */
+  spill: { marginCells: number; forgiveRing: number; zeroNeatnessAt: number };
+  /** The Clean up tool's radius, in hand units. */
+  cleanupRadius: number;
   maxDecorationsPerNail: number;
   /** Coverage that counts as fully painted (0-1). */
   fullCoverage: number;
-  matchWeights: { shape: number; color: number; coverage: number; extras: number };
+  matchWeights: { shape: number; color: number; coverage: number; extras: number; neatness: number };
   /** Decoration counts on the whole hand that count as "few" and "lots" ([min, max]). */
   decorationLevels: { few: [number, number]; lots: [number, number] };
   /** Mood change for a finished design, by match score (first band whose min the score reaches). */
@@ -51,6 +75,8 @@ export interface NailDesign {
   gradient: string | null;
   /** Painted grid cells per nail (indexes into cols x rows). */
   painted: number[][];
+  /** Polish on the skin or cuticle around each nail: cells of the grid widened by spill.marginCells on every side. */
+  spill: number[][];
   decorations: Decoration[];
 }
 
@@ -89,6 +115,23 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
   const parsedBands = bands.map((band, index) => (isRecord(band) ? { min: num(band.min, `moodByMatch[${index}].min`, 0, 100), delta: num(band.delta, `moodByMatch[${index}].delta`, -30, 30) } : fail(`"moodByMatch[${index}]" must be an object`)));
   if (!parsedBands.some((band) => band.min === 0)) fail('"moodByMatch" needs a band with min 0');
   const fps = isRecord(raw.fps) ? raw.fps : fail('"fps" must be an object');
+  const hand = isRecord(raw.hand) ? raw.hand : fail('"hand" must be an object');
+  const box = isRecord(hand.box) ? hand.box : fail('"hand.box" must be an object');
+  const fingers = Array.isArray(hand.fingers) && hand.fingers.length > 0 ? hand.fingers : fail('"hand.fingers" must be a non-empty list');
+  const parsedFingers = fingers.map((finger, i): FingerConfig => {
+    const at = `hand.fingers[${i}]`;
+    if (!isRecord(finger) || typeof finger.id !== 'string' || !isRecord(finger.nail)) return fail(`"${at}" needs an id and a nail size`);
+    return {
+      id: finger.id,
+      x: num(finger.x, `${at}.x`, 0, 1000),
+      y: num(finger.y, `${at}.y`, 0, 1000),
+      angle: num(finger.angle, `${at}.angle`, -90, 90),
+      nail: { w: num(finger.nail.w, `${at}.nail.w`, 1, 100), h: num(finger.nail.h, `${at}.nail.h`, 1, 100) },
+      length: num(finger.length, `${at}.length`, 0, 200),
+      width: num(finger.width, `${at}.width`, 1, 3),
+    };
+  });
+  const spill = isRecord(raw.spill) ? raw.spill : fail('"spill" must be an object');
   return {
     shapes: (Array.isArray(raw.shapes) ? raw.shapes : fail('"shapes" must be a list')).map((shape, index) =>
       ['square', 'round', 'oval', 'almond', 'stiletto'].includes(shape as string) ? (shape as NailShape) : fail(`"shapes[${index}]" is not a shape`),
@@ -98,10 +141,13 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
       ['heart', 'star', 'flower'].includes(kind as string) ? (kind as StickerKind) : fail(`"stickers[${index}]" is not a sticker`),
     ),
     grid: { cols: num(grid.cols, 'grid.cols', 2, 20), rows: num(grid.rows, 'grid.rows', 2, 30) },
-    brushCells: num(raw.brushCells, 'brushCells', 0.5, 5),
+    hand: { box: { w: num(box.w, 'hand.box.w', 10, 1000), h: num(box.h, 'hand.box.h', 10, 1000) }, fingers: parsedFingers },
+    brushRadius: num(raw.brushRadius, 'brushRadius', 0.5, 20),
+    spill: { marginCells: num(spill.marginCells, 'spill.marginCells', 0, 6), forgiveRing: num(spill.forgiveRing, 'spill.forgiveRing', 0, 3), zeroNeatnessAt: num(spill.zeroNeatnessAt, 'spill.zeroNeatnessAt', 0.05, 2) },
+    cleanupRadius: num(raw.cleanupRadius, 'cleanupRadius', 0.5, 30),
     maxDecorationsPerNail: num(raw.maxDecorationsPerNail, 'maxDecorationsPerNail', 0, 10),
     fullCoverage: num(raw.fullCoverage, 'fullCoverage', 0.5, 1),
-    matchWeights: { shape: num(weights.shape, 'matchWeights.shape', 0, 100), color: num(weights.color, 'matchWeights.color', 0, 100), coverage: num(weights.coverage, 'matchWeights.coverage', 0, 100), extras: num(weights.extras, 'matchWeights.extras', 0, 100) },
+    matchWeights: { shape: num(weights.shape, 'matchWeights.shape', 0, 100), color: num(weights.color, 'matchWeights.color', 0, 100), coverage: num(weights.coverage, 'matchWeights.coverage', 0, 100), extras: num(weights.extras, 'matchWeights.extras', 0, 100), neatness: num(weights.neatness, 'matchWeights.neatness', 0, 100) },
     decorationLevels: { few: range(levels.few, 'decorationLevels.few'), lots: range(levels.lots, 'decorationLevels.lots') },
     moodByMatch: [...parsedBands].sort((a, b) => b.min - a.min),
     fps: { target: num(fps.target, 'fps.target', 30, 120) },
@@ -110,9 +156,11 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
 
 export const NAIL_ART_CONFIG: NailArtConfig = parseNailArtConfig(nailJson);
 
-export const NAIL_COUNT = 5;
+/** One nail per finger of the configured hand. */
+export const NAIL_COUNT = NAIL_ART_CONFIG.hand.fingers.length;
 
-export const emptyDesign = (shape: NailShape = 'round'): NailDesign => ({ shape, base: null, gradient: null, painted: Array.from({ length: NAIL_COUNT }, () => []), decorations: [] });
+const empties = (): number[][] => Array.from({ length: NAIL_COUNT }, () => []);
+export const emptyDesign = (shape: NailShape = 'round'): NailDesign => ({ shape, base: null, gradient: null, painted: empties(), spill: empties(), decorations: [] });
 
 export const paletteColor = (id: string | null, config: NailArtConfig = NAIL_ART_CONFIG): PaletteColor | undefined => config.palette.find((color) => color.id === id);
 
@@ -156,23 +204,80 @@ export function insidePolygon(points: readonly [number, number][], x: number, y:
   return inside;
 }
 
+const paintableCache = new Map<string, number[]>();
+
 /** The grid cells inside the nail (the cells that need polish), for a unit-size nail (w = cols, h = rows). */
 export function paintableCells(shape: NailShape, config: NailArtConfig = NAIL_ART_CONFIG): number[] {
   const { cols, rows } = config.grid;
+  const key = `${shape}:${cols}x${rows}`;
+  const cached = config === NAIL_ART_CONFIG ? paintableCache.get(key) : undefined;
+  if (cached) return cached;
   const outline = nailOutline(shape, cols, rows);
   const cells: number[] = [];
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (insidePolygon(outline, c + 0.5, r + 0.5)) cells.push(r * cols + c);
+  if (config === NAIL_ART_CONFIG) paintableCache.set(key, cells);
   return cells;
 }
 
-/** Cells the brush covers at grid position (gx, gy) (in cells). */
-export function brushCells(shape: NailShape, gx: number, gy: number, config: NailArtConfig = NAIL_ART_CONFIG): number[] {
-  const radius = config.brushCells;
-  return paintableCells(shape, config).filter((cell) => {
-    const cx = (cell % config.grid.cols) + 0.5;
-    const cy = Math.floor(cell / config.grid.cols) + 0.5;
-    return (cx - gx) ** 2 + (cy - gy) ** 2 <= radius * radius;
-  });
+/**
+ * Cells just outside the nail (within spill.forgiveRing cells of it), in nail-grid (col, row) form "c,r": a brush that
+ * reaches the edge always grazes these, so they count as neither paint nor spill. Real slips land further out.
+ */
+function forgivenCells(shape: NailShape, config: NailArtConfig): Set<string> {
+  const { cols } = config.grid;
+  const ring = Math.round(config.spill.forgiveRing);
+  const forgiven = new Set<string>();
+  for (const cell of paintableCells(shape, config)) {
+    const c = cell % cols;
+    const r = Math.floor(cell / cols);
+    for (let dr = -ring; dr <= ring; dr++) for (let dc = -ring; dc <= ring; dc++) forgiven.add(`${c + dc},${r + dr}`);
+  }
+  return forgiven;
+}
+
+/** The spill grid: the nail grid widened by spill.marginCells on every side (cell index = row * width + col). */
+export const spillGrid = (config: NailArtConfig = NAIL_ART_CONFIG): { margin: number; cols: number; rows: number } => {
+  const margin = Math.round(config.spill.marginCells);
+  return { margin, cols: config.grid.cols + 2 * margin, rows: config.grid.rows + 2 * margin };
+};
+
+/**
+ * One brush dab on a nail of size (w, h) hand units, centred at (x, y) in the nail's own units (0..w across, 0..h
+ * from tip to cuticle). Cells inside the nail get polish; cells further out (skin, cuticle, past the tip), beyond the
+ * forgiven ring and within the spill margin, are spill. The radius is in hand units, so the same dab is a bigger share of a small nail.
+ */
+export function dab(shape: NailShape, nail: { w: number; h: number }, x: number, y: number, radius: number, config: NailArtConfig = NAIL_ART_CONFIG): { paint: number[]; spill: number[] } {
+  const { cols, rows } = config.grid;
+  const inside = new Set(paintableCells(shape, config));
+  const forgiven = forgivenCells(shape, config);
+  const grid = spillGrid(config);
+  const cw = nail.w / cols;
+  const ch = nail.h / rows;
+  const paint: number[] = [];
+  const spill: number[] = [];
+  for (let r = -grid.margin; r < rows + grid.margin; r++) {
+    for (let c = -grid.margin; c < cols + grid.margin; c++) {
+      if (((c + 0.5) * cw - x) ** 2 + ((r + 0.5) * ch - y) ** 2 > radius * radius) continue;
+      const cell = r * cols + c;
+      if (c >= 0 && c < cols && r >= 0 && r < rows && inside.has(cell)) paint.push(cell);
+      else if (!forgiven.has(`${c},${r}`)) spill.push((r + grid.margin) * grid.cols + (c + grid.margin));
+    }
+  }
+  return { paint, spill };
+}
+
+/** Spill cells within `radius` of (x, y) on a nail of size (w, h) (what one Clean up wipe removes). */
+export function wipeCells(nail: { w: number; h: number }, x: number, y: number, radius: number, config: NailArtConfig = NAIL_ART_CONFIG): number[] {
+  const grid = spillGrid(config);
+  const cw = nail.w / config.grid.cols;
+  const ch = nail.h / config.grid.rows;
+  const cells: number[] = [];
+  for (let r = 0; r < grid.rows; r++) {
+    for (let c = 0; c < grid.cols; c++) {
+      if (((c - grid.margin + 0.5) * cw - x) ** 2 + ((r - grid.margin + 0.5) * ch - y) ** 2 <= radius * radius) cells.push(r * grid.cols + c);
+    }
+  }
+  return cells;
 }
 
 /** Share of each nail's paintable cells that are painted (0-1). Changing shape keeps only cells inside the new shape. */
@@ -187,6 +292,29 @@ export function paint(design: NailDesign, nail: number, cells: readonly number[]
   const merged = [...new Set([...current, ...cells])];
   if (merged.length === current.length) return design;
   return { ...design, painted: design.painted.map((list, index) => (index === nail ? merged : list)) };
+}
+
+/** Add spill cells to a nail (no duplicates). Returns a new design, or the same one if nothing changed. */
+export function addSpill(design: NailDesign, nail: number, cells: readonly number[]): NailDesign {
+  const current = design.spill[nail] ?? [];
+  const merged = [...new Set([...current, ...cells])];
+  if (merged.length === current.length) return design;
+  return { ...design, spill: design.spill.map((list, index) => (index === nail ? merged : list)) };
+}
+
+/** Wipe spill cells off a nail's skin (the Clean up tool). Returns the same design if there was nothing to wipe. */
+export function cleanUp(design: NailDesign, nail: number, cells: readonly number[]): NailDesign {
+  const current = design.spill[nail] ?? [];
+  const wipe = new Set(cells);
+  const kept = current.filter((cell) => !wipe.has(cell));
+  if (kept.length === current.length) return design;
+  return { ...design, spill: design.spill.map((list, index) => (index === nail ? kept : list)) };
+}
+
+/** Neatness per nail, 0-1: 1 with no paint on the skin, 0 when the spill reaches spill.zeroNeatnessAt of the nail's area. */
+export function neatness(design: NailDesign, config: NailArtConfig = NAIL_ART_CONFIG): number[] {
+  const area = Math.max(1, paintableCells(design.shape, config).length);
+  return design.spill.map((cells) => Math.max(0, 1 - cells.length / area / config.spill.zeroNeatnessAt));
 }
 
 /** Place a gem or sticker, unless the nail already has the maximum. */

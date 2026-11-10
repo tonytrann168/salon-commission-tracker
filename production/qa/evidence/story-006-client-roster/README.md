@@ -4,7 +4,7 @@ Chromium (Playwright), 320×568, en and vi. AI answers mocked (the mock moves th
 
 | File | Shows |
 |------|-------|
-| `*-320-01-picker-easy` | The client picker, Easy tab: Grace, Mia, Rosa. Each card has a face drawn from the client's look colours, a one-line description (en/vi), and Random / Start a shift (3) buttons. The chosen tab is remembered |
+| `*-320-01-picker-easy` | The client picker, Easy tab: Grace, Mia, Rosa. Each card shows the client's own placeholder portrait face (neutral; drawn once with Pixi and kept as an image, the look colours show until it is ready), a one-line description (en/vi), and Random / Start a shift (3) buttons. The chosen tab is remembered |
 | `*-320-02-picker-hard` | Hard tab: Victoria, Brenda, Tom, each with their type |
 | `*-320-03-shift-client-1` | A hard shift starts with Tom (price and booking, rude): his own opening line and his own face. Tom uses the new `look.hairStyle: "short"` (no long side hair and no bow) |
 | `*-320-04-results-next-in-shift` | Results after client 1: the button says "Next client (2/3)" |

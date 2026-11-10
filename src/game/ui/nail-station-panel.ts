@@ -57,6 +57,8 @@ function shapeIcon(shape: NailShape): string {
   return `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="${paths[shape]}" fill="#ffd1e3" stroke="#5a2e43" stroke-width="1.6"/></svg>`;
 }
 
+const HINT_MS = 3000;
+
 export function createNailStation(options: NailStationOptions): NailStation {
   const view = createStationView(emptyDesign(SHAPES[1] ?? 'round'));
   options.layer.addChild(view.container);
@@ -74,8 +76,16 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const tabs = el('div', 'station-tabs');
   tabs.setAttribute('role', 'tablist');
   const optionsRow = el('div', 'station-row');
-  const status = el('p', 'station-status', t('station.hint'));
+  const status = el('p', 'station-status show', t('station.hint'));
   status.setAttribute('aria-live', 'polite');
+  // The hint floats over the hand (it would cover the thumb), so it shows for a few seconds after each change.
+  let hideHint = 0;
+  const say = (text: string, keep = false): void => {
+    status.textContent = text;
+    status.classList.add('show');
+    window.clearTimeout(hideHint);
+    if (!keep) hideHint = window.setTimeout(() => status.classList.remove('show'), HINT_MS);
+  };
   type Tab = 'shape' | 'colour' | 'art';
   let tab: Tab = 'colour';
 
@@ -88,8 +98,11 @@ export function createNailStation(options: NailStationOptions): NailStation {
     return node;
   };
 
+  const spillCount = (d: NailDesign): number => d.spill.reduce((sum, cells) => sum + cells.length, 0);
   const setDesign = (next: NailDesign): void => {
     if (next === design) return;
+    // Polish landed on the skin: say so once per slip, and point at Clean up (owner, 2026-11-10).
+    if (spillCount(next) > spillCount(design) && tool !== 'cleanup' && !status.classList.contains('show')) say(t('station.spill'));
     design = next;
     view.setDesign(design);
     options.onChange(design);
@@ -103,9 +116,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
   );
   const doneButton = button(t('station.done'), 'station-done', () => {
     if (done) return;
-    if (done) return;
     const result = finish();
-    status.textContent = t('station.doneMessage', { score: result.score });
+    say(t('station.doneMessage', { score: result.score }), true);
     emitSound(result.moodDelta >= 0 ? 'moodUp' : 'moodDown');
     options.onDone(design, result);
   });
@@ -116,6 +128,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     polish: button(t('station.polish'), 'station-tool', () => selectTool('polish')),
     gradient: button(`<span aria-hidden="true">🌈</span><span class="tab-text">${t('station.gradient').replace('🌈', '').trim()}</span>`, 'station-tool', () => selectTool('gradient'), t('station.gradient').replace('🌈', '').trim()),
     gem: button(t('station.gem'), 'station-tool', () => selectTool('gem')),
+    cleanup: button(`<span aria-hidden="true">🧽</span><span class="tab-text">${t('station.cleanup')}</span>`, 'station-tool', () => selectTool('cleanup'), t('station.cleanup')),
     sticker: button(t(`station.sticker.${sticker}`), 'station-tool', () => {
       // Tapping Sticker again cycles heart → star → flower.
       if (tool === 'sticker') {
@@ -130,8 +143,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
     const swatch = button('', 'station-swatch', () => {
       if (tool === 'gradient') setDesign({ ...design, gradient: design.gradient === color.id ? null : color.id });
       else {
-        setDesign({ ...design, base: color.id });
         if (tool !== 'polish') selectTool('polish');
+        setDesign({ ...design, base: color.id });
       }
       refresh();
     }, t('station.colorLabel', { color: color.name[lang] }));
@@ -151,18 +164,18 @@ export function createNailStation(options: NailStationOptions): NailStation {
   function selectTab(next: Tab): void {
     tab = next;
     if (tab === 'shape') optionsRow.replaceChildren(...shapeButtons, resetButton);
-    else if (tab === 'colour') optionsRow.replaceChildren(toolButtons.gradient, ...swatches);
+    else if (tab === 'colour') optionsRow.replaceChildren(toolButtons.cleanup, toolButtons.gradient, ...swatches);
     else optionsRow.replaceChildren(toolButtons.gem, toolButtons.sticker);
-    if (tab === 'colour' && tool !== 'gradient') tool = 'polish';
+    if (tab === 'colour' && tool !== 'gradient' && tool !== 'cleanup') tool = 'polish';
     if (tab === 'art' && tool !== 'gem' && tool !== 'sticker') tool = 'gem';
     optionsRow.scrollLeft = 0;
     refresh();
   }
 
   function selectTool(next: StationTool): void {
-    // Gradient toggles back to plain polish when tapped again.
-    tool = next === 'gradient' && tool === 'gradient' ? 'polish' : next;
-    status.textContent = tool === 'gradient' ? t('station.gradientOn') : t('station.hint');
+    // Gradient and Clean up toggle back to plain polish when tapped again.
+    tool = (next === 'gradient' || next === 'cleanup') && tool === next ? 'polish' : next;
+    say(tool === 'gradient' ? t('station.gradientOn') : tool === 'cleanup' ? t('station.cleanupOn') : t('station.hint'));
     refresh();
   }
 
@@ -189,6 +202,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
     setDesign(view.pointer(event.clientX - box.left, event.clientY - box.top, phase, tool, sticker));
   };
   touch.addEventListener('pointerdown', (event) => {
+    // No text selection or native drag from a mouse stroke (either cancels the stroke part-way).
+    event.preventDefault();
     drawing = true;
     try {
       touch.setPointerCapture(event.pointerId);
@@ -198,7 +213,10 @@ export function createNailStation(options: NailStationOptions): NailStation {
     forward(event, 'down');
   });
   touch.addEventListener('pointermove', (event) => {
-    if (drawing) forward(event, 'move');
+    if (!drawing) return;
+    // Every point the finger passed this frame, where the browser keeps them (the station also fills gaps).
+    const points = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [];
+    for (const point of points.length > 0 ? points : [event]) forward(point, 'move');
   });
   const stop = (): void => {
     drawing = false;
@@ -210,10 +228,11 @@ export function createNailStation(options: NailStationOptions): NailStation {
     if (!open) return;
     const r = options.rect();
     const side = options.maiSide();
-    // Leave room for the client's small face (top-left) and Mai's bubble (her corner).
-    const left = 66;
+    // Leave room for Mai's bubble (her corner). The client's small face is top-left, where the hand is empty (the
+    // thumb sits low), so only a little room is kept on that side unless Mai is there too.
+    const left = side === 'left' ? 70 : 20;
     const right = side === 'right' ? 70 : 8;
-    view.layout(r.left, r.top, r.width, r.height, side === 'left' ? Math.max(left, 70) : left, right);
+    view.layout(r.left, r.top, r.width, r.height, left, right);
     view.setDesign(design);
   };
 
@@ -232,7 +251,10 @@ export function createNailStation(options: NailStationOptions): NailStation {
       toolbar.classList.toggle('hidden', !open);
       touch.classList.toggle('hidden', !open);
       view.container.visible = open;
-      if (open) requestAnimationFrame(relayout);
+      if (open) {
+        requestAnimationFrame(relayout);
+        if (!done) say(status.textContent ?? t('station.hint'));
+      }
     },
     relayout,
     design: () => design,
@@ -241,6 +263,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
       return done;
     },
     destroy() {
+      window.clearTimeout(hideHint);
       view.destroy();
       toolbar.remove();
       touch.remove();

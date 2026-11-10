@@ -1,4 +1,4 @@
-import { NAIL_ART_CONFIG, coverage, paletteColor } from './design';
+import { NAIL_ART_CONFIG, coverage, neatness, paletteColor } from './design';
 import type { DecorationLevel, NailArtConfig, NailDesign, NailRequest } from './design';
 
 /**
@@ -9,7 +9,7 @@ import type { DecorationLevel, NailArtConfig, NailDesign, NailRequest } from './
 
 export interface MatchResult {
   score: number;
-  parts: { shape: number; color: number; coverage: number; extras: number };
+  parts: { shape: number; color: number; coverage: number; extras: number; neatness: number };
   /** Average polish coverage across the five nails, 0-1. */
   covered: number;
   moodDelta: number;
@@ -50,11 +50,15 @@ export function matchDesign(design: NailDesign, request: NailRequest, config: Na
   const gradient = request.gradient === 'ok' || (request.gradient === 'yes') === usedGradient ? 100 : 0;
   const extras = Math.round((levelScore(gems, request.gems, config) + levelScore(stickers, request.stickers, config) + gradient) / 3);
 
+  // Neatness (owner, 2026-11-10): polish on the skin around any nail lowers it.
+  const perNailNeat = neatness(design, config);
+  const neat = Math.round((perNailNeat.reduce((sum, value) => sum + value, 0) / perNailNeat.length) * 100);
+
   const w = config.matchWeights;
-  const total = w.shape + w.color + w.coverage + w.extras;
-  const score = Math.round((shape * w.shape + color * w.color + coverageScore * w.coverage + extras * w.extras) / total);
+  const total = w.shape + w.color + w.coverage + w.extras + w.neatness;
+  const score = Math.round((shape * w.shape + color * w.color + coverageScore * w.coverage + extras * w.extras + neat * w.neatness) / total);
   const moodDelta = (config.moodByMatch.find((band) => score >= band.min) ?? { delta: 0 }).delta;
-  return { score, parts: { shape, color, coverage: coverageScore, extras }, covered, moodDelta };
+  return { score, parts: { shape, color, coverage: coverageScore, extras, neatness: neat }, covered, moodDelta };
 }
 
 /** One English line about the nails for the AI client and the review, e.g. "square, pale pink, 2 gems; 96% painted". */
@@ -66,7 +70,9 @@ export function describeDesign(design: NailDesign, config: NailArtConfig = NAIL_
   const counts = new Map<string, number>();
   design.decorations.forEach((d) => counts.set(d.kind, (counts.get(d.kind) ?? 0) + 1));
   const extras = [...counts].map(([kind, n]) => `${n} ${kind}${n === 1 ? '' : 's'}`).join(', ');
-  return `${design.shape} shape, ${base}${fade}${extras ? `, ${extras}` : ', no gems or stickers'}; ${covered}% painted`;
+  const messy = design.spill.filter((cells) => cells.length > 0).length;
+  const edges = messy === 0 ? 'clean edges' : `polish on the skin around ${messy} nail${messy === 1 ? '' : 's'}`;
+  return `${design.shape} shape, ${base}${fade}${extras ? `, ${extras}` : ', no gems or stickers'}; ${covered}% painted, ${edges}`;
 }
 
 /** The request in plain English, for the client's prompt. */

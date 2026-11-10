@@ -1,4 +1,5 @@
-import { Application, Container } from 'pixi.js';
+import { Application, Container, Graphics } from 'pixi.js';
+import { createPortrait } from './game/portraits/definitions';
 import { createAppointment } from './game/appointment';
 import { createFetchTransport } from './game/client-turn-transport';
 import { createGradeTransport } from './game/grade-appointment-transport';
@@ -139,6 +140,29 @@ async function boot(): Promise<void> {
     else showClientPicker();
   };
 
+  /** The client picker's faces: each client's placeholder portrait (neutral), drawn once and kept as an image. */
+  const faces = new Map<string, Promise<string | null>>();
+  const FACE_PX = 96;
+  const faceImage = (client: ClientPersona): Promise<string | null> => {
+    const cached = faces.get(client.id);
+    if (cached) return cached;
+    const drawn = (async () => {
+      const portrait = createPortrait(client.portraitId, FACE_PX, 'neutral');
+      // A clear square behind the face keeps every image the same size and centred.
+      const frame = new Container();
+      frame.addChild(new Graphics().rect(0, 0, FACE_PX, FACE_PX).fill({ color: 0xffffff, alpha: 0 }), portrait.view);
+      try {
+        return await app.renderer.extract.base64({ target: frame, resolution: 2 });
+      } catch {
+        return null;
+      } finally {
+        frame.destroy({ children: true });
+      }
+    })();
+    faces.set(client.id, drawn);
+    return drawn;
+  };
+
   /** Story 006: choose a difficulty, then a client, a random one, or a shift. */
   const showClientPicker = () => {
     teardownDom();
@@ -154,6 +178,7 @@ async function boot(): Promise<void> {
         begin(clients[0] ?? DEFAULT_CLIENT);
       },
       onBack: showTitle,
+      faceImage,
     });
     teardownDom = () => screen.remove();
   };

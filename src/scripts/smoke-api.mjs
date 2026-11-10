@@ -60,12 +60,12 @@ const checks = [
   // Story 005: the review mentions the finished nails (overseer's request). Harsh words fail the low-match case.
   ['grade-appointment with nails, match 85', () => handleGradeAppointment({
       transcript: [...transcript, { role: 'client', content: 'Pale pink, short and square, please.' }, { role: 'player', content: 'Okay! All done. Do you like them?' }, { role: 'client', content: 'Yes, lovely.' }],
-      outcome: 'completed', finalMood: 75, level: 'some', nails: { description: 'square shape, pale pink, no gems or stickers; 96% painted', match: 85 } }, env, fetch),
+      outcome: 'completed', finalMood: 75, level: 'some', nails: { description: 'square shape, pale pink, no gems or stickers; 96% painted, clean edges', match: 85 } }, env, fetch),
     (b) => typeof b.review === 'string' && /nail|polish|manicure|pink|colou?r|shape/i.test(b.review),
     (b) => `review "${b.review}"`],
   ['grade-appointment with nails, match 30 (gentle)', () => handleGradeAppointment({
       transcript: [...transcript, { role: 'client', content: 'Pale pink, short and square, please.' }, { role: 'player', content: 'Okay! All done.' }, { role: 'client', content: 'Hmm, okay.' }],
-      outcome: 'completed', finalMood: 50, level: 'some', nails: { description: 'stiletto shape, navy, 3 gems; 60% painted', match: 30 } }, env, fetch),
+      outcome: 'completed', finalMood: 50, level: 'some', nails: { description: 'stiletto shape, navy, 3 gems; 60% painted, polish on the skin around 3 nails', match: 30 } }, env, fetch),
     (b) => typeof b.review === 'string' && /nail|polish|manicure|colou?r|shape|stiletto|navy|gem/i.test(b.review) && !/terrible|awful|horrible|worst|disgusting|hate|ugly|stupid|useless/i.test(b.review),
     (b) => `review "${b.review}"`],
   // Story 006: a hard roster client (Victoria: rude/impatient) stays in character and clean.

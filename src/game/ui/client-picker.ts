@@ -16,17 +16,26 @@ export interface ClientPickerOptions {
   onRandom: (difficulty: Difficulty) => void;
   onShift: (difficulty: Difficulty) => void;
   onBack: () => void;
+  /** The client's real placeholder face (neutral), as an image URL; the colour avatar shows until it arrives. */
+  faceImage?: (client: ClientPersona) => Promise<string | null>;
 }
 
 const DIFFICULTY_KEY = 'salon.pickerDifficulty';
 
-/** A small placeholder face from the client's look colours. */
-function avatar(client: ClientPersona): HTMLElement {
+/** A small face: the look colours at once, then the client's real portrait face when it has been drawn. */
+function avatar(client: ClientPersona, faceImage?: ClientPickerOptions['faceImage']): HTMLElement {
   const face = el('span', client.look.hairStyle === 'short' ? 'picker-avatar short' : 'picker-avatar');
   face.style.setProperty('--hair', client.look.hair);
   face.style.setProperty('--skin', client.look.skin);
   face.style.setProperty('--accent', client.look.accent);
   face.setAttribute('aria-hidden', 'true');
+  faceImage?.(client)
+    .then((url) => {
+      if (!url) return;
+      face.style.backgroundImage = `url("${url}")`;
+      face.classList.add('has-face');
+    })
+    .catch(() => undefined);
   return face;
 }
 
@@ -86,7 +95,7 @@ export function createClientPicker(host: HTMLElement, options: ClientPickerOptio
         card.setAttribute('aria-label', t('picker.choose', { name: client.name }));
         const words = el('span', 'picker-words');
         words.append(el('strong', '', client.name), el('span', 'picker-line', client.description[lang]));
-        card.append(avatar(client), words);
+        card.append(avatar(client, options.faceImage), words);
         card.addEventListener('click', () => options.onPick(client));
         return card;
       }),

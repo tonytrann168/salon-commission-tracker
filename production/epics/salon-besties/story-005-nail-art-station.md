@@ -91,3 +91,13 @@
 - **Frame rate**: see the evidence README. The station's own cost per paint move is ~0.1 ms; 60 fps needs the phone.
 - **Placeholder art**: simple vector hand and nails; an art pass later.
 
+### Realistic hand (owner request, 2026-11-10)
+
+- **The hand is data** (`config/nail-art.json` → `hand`): a finger list with each nail's centre, lean and size, and each finger's length and width. The thumb is low on the left at −38° with a wide short nail; the middle nail is longest; the pinky is the smallest and narrowest. A second hand (10 nails) or another hand shape is more entries in the list (tested with 10).
+- **Nail size is difficulty**: the brush has one size in hand units (`brushRadius`), so it covers a bigger share of a small nail and slips off it sooner. The same off-centre stroke stays on the middle nail and spills off the pinky (test).
+- **Outside the lines**: paint beyond the nail's edge (skin, cuticle, past the tip) within `spill.marginCells` is kept as spill, drawn as polish on the skin. Grazing the edge by one cell is forgiven (`spill.forgiveRing`). Neatness per nail drops to 0 when the spill reaches `spill.zeroNeatnessAt` of the nail's area.
+- **Clean up** (🧽, Colour tab): rub to wipe spill (`cleanupRadius`); tap again to go back to polish. A hint points to it when polish lands on the skin.
+- **Scoring**: neatness is a fifth part of `matchDesign` (`matchWeights.neatness` 15). The AI client and the review hear "clean edges" or "polish on the skin around N nails".
+- **Input fixes**: no text selection on the station (it was cancelling mouse strokes); every merged pointer point is used, and gaps between points are filled in half-brush steps.
+- **Layout**: the hand fits inside the same zone (the 320 px chat space is unchanged). The hint now shows for 3 s after each change so it doesn't cover the thumb.
+

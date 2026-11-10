@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NAIL_ART_CONFIG, NAIL_COUNT, brushCells, coverage, decorate, emptyDesign, insidePolygon, nailOutline, paint, paintableCells, parseNailArtConfig } from '../game/nail-art/design';
+import { NAIL_ART_CONFIG, NAIL_COUNT, addSpill, cleanUp, coverage, dab, decorate, emptyDesign, insidePolygon, nailOutline, neatness, paint, paintableCells, parseNailArtConfig, wipeCells } from '../game/nail-art/design';
 import type { NailDesign, NailRequest } from '../game/nail-art/design';
 import { describeDesign, describeRequest, matchDesign } from '../game/nail-art/match';
 
@@ -33,7 +33,8 @@ describe('nail outline and coverage', () => {
   });
 
   it('paints with a round brush, without duplicates', () => {
-    const cells = brushCells('square', 3, 5);
+    const middle = NAIL_ART_CONFIG.hand.fingers[2]!;
+    const cells = dab('square', middle.nail, middle.nail.w / 2, middle.nail.h / 2, NAIL_ART_CONFIG.brushRadius).paint;
     expect(cells.length).toBeGreaterThan(3);
     const once = paint(emptyDesign('square'), 2, cells);
     expect(paint(once, 2, cells)).toBe(once);
@@ -75,7 +76,7 @@ describe('matching the client request', () => {
 
   it('describes the design and the request in plain English for the AI', () => {
     const design = decorate(fullyPainted({ ...emptyDesign('square'), base: 'pale-pink', gradient: 'white' }), { nail: 1, x: 0.5, y: 0.5, kind: 'heart' });
-    expect(describeDesign(design)).toBe('square shape, pale pink fading to white at the tips, 1 heart; 100% painted');
+    expect(describeDesign(design)).toBe('square shape, pale pink fading to white at the tips, 1 heart; 100% painted, clean edges');
     expect(describeRequest(DANA)).toBe('square shape, nude or pale pink, no gems, no stickers, no gradient');
   });
 
@@ -108,5 +109,74 @@ describe('the nails affect mood and stars', async () => {
     expect(good.tip).toBeGreaterThan(poor.tip);
     expect(good.stars).toBeGreaterThanOrEqual(poor.stars);
     expect(DEFAULT_CLIENT.nailRequest?.shapes).toEqual(['square']);
+  });
+});
+
+describe('a realistic hand: finger sizes, spill and clean-up (owner, 2026-11-10)', () => {
+  const { fingers } = NAIL_ART_CONFIG.hand;
+  const finger = (id: string) => fingers.find((f) => f.id === id)!;
+  const R = NAIL_ART_CONFIG.brushRadius;
+  const share = (paint: number[]) => paint.length / paintableCells('square').length;
+
+  it('has five different fingers: a wide, short, angled thumb set low; the middle nail longest; the pinky smallest', () => {
+    expect(fingers.map((f) => f.id)).toEqual(['thumb', 'index', 'middle', 'ring', 'pinky']);
+    const thumb = finger('thumb');
+    expect(thumb.nail.w).toBeGreaterThan(thumb.nail.h);
+    expect(Math.abs(thumb.angle)).toBeGreaterThanOrEqual(25);
+    expect(thumb.y).toBeGreaterThan(finger('index').y);
+    for (const f of fingers.filter((f) => f.id !== 'middle')) expect(finger('middle').nail.h).toBeGreaterThan(f.nail.h);
+    for (const f of fingers.filter((f) => f.id !== 'pinky')) expect(finger('pinky').nail.w * finger('pinky').nail.h).toBeLessThan(f.nail.w * f.nail.h);
+    expect(new Set(fingers.map((f) => `${f.nail.w}x${f.nail.h}`)).size).toBe(5);
+  });
+
+  it('the same brush covers a bigger share of a small nail', () => {
+    const middle = finger('middle').nail;
+    const pinky = finger('pinky').nail;
+    const onMiddle = dab('square', middle, middle.w / 2, middle.h / 2, R).paint;
+    const onPinky = dab('square', pinky, pinky.w / 2, pinky.h / 2, R).paint;
+    expect(share(onPinky)).toBeGreaterThan(share(onMiddle));
+  });
+
+  it('the same off-centre stroke stays on the middle nail but spills off the pinky (smaller nails are harder to paint cleanly)', () => {
+    const offset = 3.5;
+    const stroke = (nail: { w: number; h: number }) => {
+      let spill = 0;
+      for (let y = nail.h * 0.3; y <= nail.h * 0.7; y += 0.5) spill += dab('square', nail, nail.w / 2 + offset, y, R).spill.length;
+      return spill;
+    };
+    expect(stroke(finger('middle').nail)).toBe(0);
+    expect(stroke(finger('pinky').nail)).toBeGreaterThan(0);
+  });
+
+  it('paint at the cuticle or past the side lands on the skin as spill, a centred dab does not', () => {
+    const nail = finger('index').nail;
+    expect(dab('square', nail, nail.w / 2, nail.h / 2, R).spill).toEqual([]);
+    expect(dab('square', nail, nail.w / 2, nail.h, R).spill.length).toBeGreaterThan(0);
+    expect(dab('square', nail, -0.5, nail.h / 2, R).spill.length).toBeGreaterThan(0);
+  });
+
+  it('spill lowers neatness, the match and the description; Clean up wipes it back to neat', () => {
+    const clean = fullyPainted({ ...emptyDesign('square'), base: 'pale-pink' });
+    const pinky = finger('pinky').nail;
+    const slip = dab('square', pinky, pinky.w + 1, pinky.h / 2, R).spill;
+    const messy = addSpill(clean, 4, slip);
+    expect(neatness(messy)[4]).toBeLessThan(1);
+    expect(neatness(messy)[0]).toBe(1);
+    expect(matchDesign(messy, DANA).parts.neatness).toBeLessThan(100);
+    expect(matchDesign(messy, DANA).score).toBeLessThan(matchDesign(clean, DANA).score);
+    expect(describeDesign(messy)).toMatch(/polish on the skin around 1 nail$/);
+    const wiped = cleanUp(messy, 4, wipeCells(pinky, pinky.w + 1, pinky.h / 2, NAIL_ART_CONFIG.cleanupRadius));
+    expect(wiped.spill[4]).toEqual([]);
+    expect(matchDesign(wiped, DANA).score).toBe(matchDesign(clean, DANA).score);
+    expect(cleanUp(wiped, 4, [0, 1, 2])).toBe(wiped);
+  });
+
+  it('the hand is data: a second hand is just more fingers; a bad finger is refused', () => {
+    const twoHands = structuredClone(NAIL_ART_CONFIG);
+    twoHands.hand.fingers = [...fingers, ...fingers.map((f) => ({ ...f, id: `left-${f.id}`, x: 200 - f.x, angle: -f.angle }))];
+    expect(parseNailArtConfig(twoHands).hand.fingers).toHaveLength(10);
+    const bad = structuredClone(NAIL_ART_CONFIG);
+    (bad.hand.fingers[0] as { nail: unknown }).nail = { w: 0, h: 5 };
+    expect(() => parseNailArtConfig(bad)).toThrow(/hand\.fingers\[0\]\.nail\.w/);
   });
 });
