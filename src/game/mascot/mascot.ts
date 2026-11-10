@@ -41,25 +41,45 @@ export interface MascotSkin {
   id: string;
   /** Short description for the concept page. */
   concept: string;
-  draw(expression: MascotExpression, equipped: Equipped): string;
+  draw(expression: MascotExpression, equipped: Equipped, crop?: 'bust' | 'full'): string;
   /** Moods this skin draws itself beyond the six (image skins list theirs); others use MOOD_FALLBACK. */
   extraMoods?: readonly MascotMood[];
   /** Draw one of `extraMoods` (image skins). */
-  drawMood?(mood: MascotMood, equipped: Equipped): string;
+  drawMood?(mood: MascotMood, equipped: Equipped, crop?: 'bust' | 'full'): string;
   /** Optional one-colour logo (app icon): shapes in `fg`, eye and mouth cut-outs in `bg`. */
   logo?(fg: string, bg: string): string;
 }
 
+/** One mood's art: a full-body image, plus an optional head-and-shoulders crop for the 56 px bubble. */
+export interface MoodImage {
+  full: string;
+  bust?: string;
+}
+
+/** A small round region (x, y, r in the 100x100 box) on one image, e.g. a fingertip the nails slot can recolour. */
+export interface TipRegion {
+  x: number;
+  y: number;
+  r: number;
+}
+
+export const ANCHOR_NAMES = ['head', 'face', 'neck', 'handLeft', 'handRight', 'feet', 'tail'] as const;
+export type AnchorName = (typeof ANCHOR_NAMES)[number];
+
 /**
- * Final art as files, no code (owner, 2026-11-10: an outside designer is drawing Mai). Each expression or mood is an
- * image or SVG path (served from src/public/), drawn in the same 100x100 box; `anchors` say where each accessory slot
- * sits on this art (x, y in that box); `accessoryImages` optionally swap an accessory's built-in drawing for a file.
+ * Final art as files, no code (owner, 2026-11-10: outside designers draw Mai as a complete figure with arms, hands,
+ * legs and maybe a tail or horns). Per mood: a full-body image and an optional bust crop (the 56 px bubble uses the
+ * bust, or else an automatic crop of the top of the full image; bigger views use the full body). `anchors` say where
+ * accessories sit on this art (x, y in a 100x100 box): head, face, neck, handLeft, handRight (`hand` is accepted as
+ * an alias for handRight), feet (shoes, a future shop slot) and an optional tail (bows, charms). `nailTips` lists
+ * Mai's fingertips per mood, so the nails slot can recolour them later (data only for now).
  */
 export interface ImageSkinConfig {
   id: string;
-  /** Required: at least `idle`. Any of the six expressions and the extra moods. */
-  images: Partial<Record<MascotMood, string>>;
-  anchors: Record<'head' | 'face' | 'neck' | 'hand', [number, number]>;
+  /** Required: at least `idle`. A plain string means a full-body image with no bust. */
+  images: Partial<Record<MascotMood, MoodImage>>;
+  anchors: Partial<Record<AnchorName, [number, number]>> & Record<'head' | 'face' | 'neck' | 'handRight', [number, number]>;
+  nailTips?: Partial<Record<MascotMood, TipRegion[]>>;
   accessoryImages?: Record<string, string>;
 }
 
@@ -105,19 +125,45 @@ export function parseMascotConfig(raw: unknown): MascotConfig {
     const path = `imageSkins[${index}]`;
     if (!isRecord(item) || typeof item.id !== 'string' || item.id === '') return fail(`"${path}.id" must be text`);
     const moods = [...MASCOT_EXPRESSIONS, ...EXTRA_MOODS] as readonly string[];
-    const images = isRecord(item.images) ? item.images : fail(`"${path}.images" must be an object`);
-    for (const [mood, file] of Object.entries(images)) {
-      if (!moods.includes(mood)) fail(`"${path}.images.${mood}" is not a mood (${moods.join(', ')})`);
-      if (typeof file !== 'string' || !/^\/[\w./-]+\.(svg|png|webp)$/.test(file)) fail(`"${path}.images.${mood}" must be a /path/to/file.svg|png|webp`);
+    const file = (value: unknown, where: string): string =>
+      typeof value === 'string' && /^\/[\w./-]+\.(svg|png|webp)$/.test(value) ? value : fail(`"${where}" must be a /path/to/file.svg|png|webp`);
+    const rawImages = isRecord(item.images) ? item.images : fail(`"${path}.images" must be an object`);
+    const images: Partial<Record<MascotMood, MoodImage>> = {};
+    for (const [mood, value] of Object.entries(rawImages)) {
+      const where = `${path}.images.${mood}`;
+      if (!moods.includes(mood)) fail(`"${where}" is not a mood (${moods.join(', ')})`);
+      if (typeof value === 'string') images[mood as MascotMood] = { full: file(value, where) };
+      else if (isRecord(value)) {
+        if (value.full === undefined) fail(`"${where}.full" is required (a bust needs its full-body image)`);
+        images[mood as MascotMood] = { full: file(value.full, `${where}.full`), ...(value.bust === undefined ? {} : { bust: file(value.bust, `${where}.bust`) }) };
+      } else fail(`"${where}" must be a file path or { full, bust }`);
     }
-    if (typeof images.idle !== 'string') fail(`"${path}.images.idle" is required`);
-    const anchors = isRecord(item.anchors) ? item.anchors : fail(`"${path}.anchors" must be an object`);
-    const point = (key: string): [number, number] => {
-      const value = anchors[key];
-      return Array.isArray(value) && value.length === 2 && value.every((n) => typeof n === 'number' && n >= 0 && n <= 100) ? [value[0], value[1]] : fail(`"${path}.anchors.${key}" must be [x, y] in 0-100`);
-    };
-    const accessoryImages = isRecord(item.accessoryImages) ? (item.accessoryImages as Record<string, string>) : undefined;
-    return { id: item.id, images: images as ImageSkinConfig['images'], anchors: { head: point('head'), face: point('face'), neck: point('neck'), hand: point('hand') }, ...(accessoryImages ? { accessoryImages } : {}) };
+    if (!images.idle) fail(`"${path}.images.idle" is required`);
+    const rawAnchors = isRecord(item.anchors) ? item.anchors : fail(`"${path}.anchors" must be an object`);
+    const anchors: Partial<Record<AnchorName, [number, number]>> = {};
+    for (const [key, value] of Object.entries(rawAnchors)) {
+      const name = key === 'hand' ? 'handRight' : key;
+      if (!(ANCHOR_NAMES as readonly string[]).includes(name)) fail(`"${path}.anchors.${key}" is not an anchor (${ANCHOR_NAMES.join(', ')}, or hand)`);
+      if (!(Array.isArray(value) && value.length === 2 && value.every((n) => typeof n === 'number' && n >= 0 && n <= 100))) fail(`"${path}.anchors.${key}" must be [x, y] in 0-100`);
+      const [x, y] = value as [number, number];
+      anchors[name as AnchorName] = [x, y];
+    }
+    for (const required of ['head', 'face', 'neck', 'handRight'] as const) if (!anchors[required]) fail(`"${path}.anchors.${required}" is required (or "hand")`);
+    let nailTips: ImageSkinConfig['nailTips'];
+    if (item.nailTips !== undefined) {
+      const rawTips = isRecord(item.nailTips) ? item.nailTips : fail(`"${path}.nailTips" must be an object of mood -> regions`);
+      nailTips = {};
+      for (const [mood, list] of Object.entries(rawTips)) {
+        if (!images[mood as MascotMood]) fail(`"${path}.nailTips.${mood}" has no image for that mood`);
+        if (!Array.isArray(list) || list.length > 20) fail(`"${path}.nailTips.${mood}" must be a list of up to 20 regions`);
+        nailTips[mood as MascotMood] = (list as unknown[]).map((tip, i) => {
+          const ok = isRecord(tip) && [tip.x, tip.y].every((n) => typeof n === 'number' && n >= 0 && n <= 100) && typeof tip.r === 'number' && tip.r > 0 && tip.r <= 10;
+          return ok ? { x: (tip as { x: number }).x, y: (tip as { y: number }).y, r: (tip as { r: number }).r } : fail(`"${path}.nailTips.${mood}[${i}]" must be { x, y, r } (x, y 0-100, r up to 10)`);
+        });
+      }
+    }
+    const accessoryImages = isRecord(item.accessoryImages) ? Object.fromEntries(Object.entries(item.accessoryImages).map(([id, value]) => [id, file(value, `${path}.accessoryImages.${id}`)])) : undefined;
+    return { id: item.id, images, anchors: anchors as ImageSkinConfig['anchors'], ...(nailTips ? { nailTips } : {}), ...(accessoryImages ? { accessoryImages } : {}) };
   });
   return { name: root.name as string, skin: root.skin as string, accessories, equipped, imageSkins };
 }
@@ -140,7 +186,8 @@ export function getSkin(id: string): MascotSkin {
 export const skinIds = (): string[] => [...SKINS.keys()];
 
 /** Mai as an element, `size` px square. `skinId` defaults to the configured skin (concept pages pass their own). */
-export function renderMascot(mood: MascotMood, size: number, options: { skinId?: string; equipped?: Equipped; label?: string } = {}): HTMLElement {
+/** `crop: 'bust'` asks image skins for the head-and-shoulders view (the 56 px bubble); code skins ignore it. */
+export function renderMascot(mood: MascotMood, size: number, options: { skinId?: string; equipped?: Equipped; label?: string; crop?: 'bust' | 'full' } = {}): HTMLElement {
   const skin = getSkin(options.skinId ?? MASCOT_CONFIG.skin);
   const own = skin.extraMoods?.includes(mood) && skin.drawMood;
   const expression: MascotExpression = (MASCOT_EXPRESSIONS as readonly string[]).includes(mood) ? (mood as MascotExpression) : MOOD_FALLBACK[mood as keyof typeof MOOD_FALLBACK];
@@ -148,7 +195,7 @@ export function renderMascot(mood: MascotMood, size: number, options: { skinId?:
   box.className = `mascot mascot-${skin.id} mascot-${expression}`;
   box.style.width = `${size}px`;
   box.style.height = `${size}px`;
-  box.innerHTML = `<svg viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true">${own ? skin.drawMood!(mood, options.equipped ?? MASCOT_CONFIG.equipped) : skin.draw(expression, options.equipped ?? MASCOT_CONFIG.equipped)}</svg>`;
+  box.innerHTML = `<svg viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true">${own ? skin.drawMood!(mood, options.equipped ?? MASCOT_CONFIG.equipped, options.crop) : skin.draw(expression, options.equipped ?? MASCOT_CONFIG.equipped, options.crop)}</svg>`;
   if (options.label) {
     box.setAttribute('role', 'img');
     box.setAttribute('aria-label', options.label);

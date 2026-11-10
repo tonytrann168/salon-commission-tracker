@@ -73,7 +73,7 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
   let hintRequest = 0;
 
   const drawBubble = (): void => {
-    const face = renderMascot(queue.unseen > 0 ? 'tipWaiting' : expression, BUBBLE_PX);
+    const face = renderMascot(queue.unseen > 0 ? 'tipWaiting' : expression, BUBBLE_PX, { crop: 'bust' });
     badge.textContent = String(queue.unseen);
     badge.classList.toggle('hidden', queue.unseen === 0);
     bubble.replaceChildren(face, badge);

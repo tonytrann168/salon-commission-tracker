@@ -63,21 +63,50 @@ describe('mascot skin', () => {
 describe('final art drops in as files (owner, 2026-11-10)', () => {
   const art = {
     id: 'mai-final',
-    images: { idle: '/mascot/mai/idle.svg', happy: '/mascot/mai/happy.png', proud: '/mascot/mai/proud.webp', sleepy: '/mascot/mai/sleepy.svg' },
-    anchors: { head: [50, 8], face: [50, 50], neck: [50, 76], hand: [82, 80] },
+    images: {
+      idle: { full: '/mascot/mai/idle.svg', bust: '/mascot/mai/idle-bust.svg' },
+      happy: '/mascot/mai/happy.png',
+      proud: { full: '/mascot/mai/proud.webp' },
+      sleepy: '/mascot/mai/sleepy.svg',
+    },
+    anchors: { head: [50, 8], face: [50, 22], neck: [50, 32], handLeft: [20, 55], hand: [80, 55], feet: [50, 96], tail: [78, 78] },
+    nailTips: { idle: [{ x: 18, y: 58, r: 1.5 }, { x: 82, y: 58, r: 1.5 }] },
     accessoryImages: { 'bow-pink': '/mascot/acc/bow.svg' },
   };
+  const parse = (change: Record<string, unknown>) => () => parseMascotConfig({ ...structuredClone(MASCOT_CONFIG), imageSkins: [{ ...art, ...change }] });
 
-  it('accepts an image skin with per-mood files and accessory anchors', () => {
-    const parsed = parseMascotConfig({ ...structuredClone(MASCOT_CONFIG), imageSkins: [art] });
-    expect(parsed.imageSkins[0]).toMatchObject({ id: 'mai-final', anchors: { head: [50, 8] } });
+  it('accepts a full-body + bust skin with hand, feet and tail anchors and fingertip regions', () => {
+    const skin = parseMascotConfig({ ...structuredClone(MASCOT_CONFIG), imageSkins: [art] }).imageSkins[0];
+    expect(skin?.images.idle).toEqual({ full: '/mascot/mai/idle.svg', bust: '/mascot/mai/idle-bust.svg' });
+    expect(skin?.images.happy).toEqual({ full: '/mascot/mai/happy.png' });
+    expect(skin?.anchors.handRight).toEqual([80, 55]);
+    expect(skin?.anchors.tail).toEqual([78, 78]);
+    expect(skin?.nailTips?.idle).toHaveLength(2);
   });
 
-  it('refuses a missing idle image, an unknown mood, a bad file path or a bad anchor', () => {
-    const bad = (change: Record<string, unknown>) => () => parseMascotConfig({ ...structuredClone(MASCOT_CONFIG), imageSkins: [{ ...art, ...change }] });
-    expect(bad({ images: { happy: '/a.svg' } })).toThrow(/images\.idle/);
-    expect(bad({ images: { idle: '/a.svg', angry: '/b.svg' } })).toThrow(/not a mood/);
-    expect(bad({ images: { idle: 'javascript:alert(1)' } })).toThrow(/must be a \/path/);
-    expect(bad({ anchors: { ...art.anchors, head: [50, 200] } })).toThrow(/anchors\.head/);
+  it('refuses a bust without its full-body image, unknown anchors, and bad files, anchors or tips', () => {
+    expect(parse({ images: { idle: { bust: '/mascot/mai/idle-bust.svg' } } })).toThrow(/full" is required/);
+    expect(parse({ anchors: { ...art.anchors, horns: [50, 2] } })).toThrow(/anchors\.horns" is not an anchor/);
+    expect(parse({ images: { happy: '/a.svg' } })).toThrow(/images\.idle/);
+    expect(parse({ images: { idle: 'javascript:alert(1)' } })).toThrow(/must be a \/path/);
+    expect(parse({ anchors: { head: [50, 8], face: [50, 22], neck: [50, 32] } })).toThrow(/handRight" is required/);
+    expect(parse({ nailTips: { idle: [{ x: 18, y: 58, r: 40 }] } })).toThrow(/nailTips\.idle\[0\]/);
+    expect(parse({ nailTips: { talking: [] } })).toThrow(/no image for that mood/);
+  });
+});
+
+describe('image skin drawing', async () => {
+  const { imageMarkup } = await import('../game/mascot/image-skins');
+  const config = parseMascotConfig({
+    ...structuredClone(MASCOT_CONFIG),
+    imageSkins: [{ id: 'mai-final', images: { idle: { full: '/m/idle.svg', bust: '/m/idle-bust.svg' }, happy: '/m/happy.svg' }, anchors: { head: [50, 8], face: [50, 22], neck: [50, 32], hand: [80, 55] } }],
+  }).imageSkins[0]!;
+
+  it('the bubble uses the bust, else zooms into the top of the full body; bigger views use the full body', () => {
+    expect(imageMarkup(config, 'idle', {}, 'bust')).toContain('/m/idle-bust.svg');
+    expect(imageMarkup(config, 'happy', {}, 'bust')).toMatch(/<g transform="translate\(-41 0\) scale\(1\.82\)"><image href="\/m\/happy\.svg"/);
+    expect(imageMarkup(config, 'idle', { head: 'bow-pink' })).toContain('/m/idle.svg');
+    // A mood without art shows idle.
+    expect(imageMarkup(config, 'sleepy', {})).toContain('/m/idle.svg');
   });
 });
