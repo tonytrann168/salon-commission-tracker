@@ -68,12 +68,16 @@ export function createNailStation(options: NailStationOptions): NailStation {
   let done = false;
   const lang = getLanguage();
 
+  // One compact row (overseer, 320 px review): Shape | Colour | Art tabs, the active tab's options (scrolling, with
+  // faded edges so it's clear there is more), and Done. The hint/status sits inside the hand area, not under it.
   const toolbar = el('div', 'station-tools hidden');
-  const rowA = el('div', 'station-row');
-  const rowB = el('div', 'station-row');
+  const tabs = el('div', 'station-tabs');
+  tabs.setAttribute('role', 'tablist');
+  const optionsRow = el('div', 'station-row');
   const status = el('p', 'station-status', t('station.hint'));
   status.setAttribute('aria-live', 'polite');
-  toolbar.append(rowA, rowB, status);
+  type Tab = 'shape' | 'colour' | 'art';
+  let tab: Tab = 'colour';
 
   const button = (label: string, className: string, onClick: () => void, aria?: string): HTMLButtonElement => {
     const node = el('button', `station-button ${className}`);
@@ -99,17 +103,18 @@ export function createNailStation(options: NailStationOptions): NailStation {
   );
   const doneButton = button(t('station.done'), 'station-done', () => {
     if (done) return;
+    if (done) return;
     const result = finish();
     status.textContent = t('station.doneMessage', { score: result.score });
     emitSound(result.moodDelta >= 0 ? 'moodUp' : 'moodDown');
     options.onDone(design, result);
   });
-  const resetButton = button(t('station.reset'), 'station-reset', () => setDesign(emptyDesign(design.shape)));
-  rowA.append(...shapeButtons, resetButton, doneButton);
+  doneButton.setAttribute('aria-label', t('station.doneLabel'));
+  const resetButton = button(t('station.reset'), 'station-reset', () => setDesign(emptyDesign(design.shape)), t('station.resetLabel'));
 
   const toolButtons: Record<StationTool, HTMLButtonElement> = {
     polish: button(t('station.polish'), 'station-tool', () => selectTool('polish')),
-    gradient: button(t('station.gradient'), 'station-tool', () => selectTool('gradient')),
+    gradient: button(`<span aria-hidden="true">🌈</span><span class="tab-text">${t('station.gradient').replace('🌈', '').trim()}</span>`, 'station-tool', () => selectTool('gradient'), t('station.gradient').replace('🌈', '').trim()),
     gem: button(t('station.gem'), 'station-tool', () => selectTool('gem')),
     sticker: button(t(`station.sticker.${sticker}`), 'station-tool', () => {
       // Tapping Sticker again cycles heart → star → flower.
@@ -133,15 +138,36 @@ export function createNailStation(options: NailStationOptions): NailStation {
     swatch.style.background = color.hex;
     return swatch;
   });
-  rowB.append(...Object.values(toolButtons), ...swatches);
+  const tabButtons: Record<Tab, HTMLButtonElement> = {
+    // Icon + word; narrow phones show the icon only (the word stays as the accessible name).
+    shape: button(`<span class="tab-icon" aria-hidden="true">▢</span><span class="tab-text">${t('station.tab.shape')}</span>`, 'station-tab', () => selectTab('shape'), t('station.tab.shape')),
+    colour: button(`<span class="tab-icon" aria-hidden="true">🎨</span><span class="tab-text">${t('station.tab.colour')}</span>`, 'station-tab', () => selectTab('colour'), t('station.tab.colour')),
+    art: button(`<span class="tab-icon" aria-hidden="true">✨</span><span class="tab-text">${t('station.tab.art')}</span>`, 'station-tab', () => selectTab('art'), t('station.tab.art')),
+  };
+  Object.values(tabButtons).forEach((node) => node.setAttribute('role', 'tab'));
+  tabs.append(...Object.values(tabButtons));
+  toolbar.append(tabs, optionsRow, doneButton);
+
+  function selectTab(next: Tab): void {
+    tab = next;
+    if (tab === 'shape') optionsRow.replaceChildren(...shapeButtons, resetButton);
+    else if (tab === 'colour') optionsRow.replaceChildren(toolButtons.gradient, ...swatches);
+    else optionsRow.replaceChildren(toolButtons.gem, toolButtons.sticker);
+    if (tab === 'colour' && tool !== 'gradient') tool = 'polish';
+    if (tab === 'art' && tool !== 'gem' && tool !== 'sticker') tool = 'gem';
+    optionsRow.scrollLeft = 0;
+    refresh();
+  }
 
   function selectTool(next: StationTool): void {
-    tool = next;
-    status.textContent = next === 'gradient' ? t('station.gradientOn') : t('station.hint');
+    // Gradient toggles back to plain polish when tapped again.
+    tool = next === 'gradient' && tool === 'gradient' ? 'polish' : next;
+    status.textContent = tool === 'gradient' ? t('station.gradientOn') : t('station.hint');
     refresh();
   }
 
   function refresh(): void {
+    (Object.keys(tabButtons) as Tab[]).forEach((key) => tabButtons[key].setAttribute('aria-selected', String(key === tab)));
     shapeButtons.forEach((node, index) => node.setAttribute('aria-pressed', String(SHAPES[index] === design.shape)));
     (Object.keys(toolButtons) as StationTool[]).forEach((key) => toolButtons[key].setAttribute('aria-pressed', String(key === tool)));
     swatches.forEach((node, index) => {
@@ -155,7 +181,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
 
   // Touch layer: forwards pointer positions to the station (relative to the zone).
   const touch = el('div', 'station-touch hidden');
-  touch.setAttribute('aria-hidden', 'true');
+  touch.append(status);
   let drawing = false;
   const forward = (event: PointerEvent, phase: 'down' | 'move'): void => {
     if (done) return;
@@ -197,7 +223,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     return matchDesign(design, options.request);
   }
 
-  refresh();
+  selectTab('colour');
   return {
     toolbar,
     touch,

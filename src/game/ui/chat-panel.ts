@@ -203,7 +203,11 @@ export function createChatPanel(
   /** While the station is open, Mai's bubble sits above its toolbar (in the station's corner), never over the tools. */
   function liftMai(): void {
     if (!station || !mai) return;
-    mai.element.style.setProperty('--mai-bottom', stationOpen ? `${station.toolbar.offsetHeight + 8}px` : '8px');
+    // Top-right corner of the hand area (the hand layout keeps that corner clear), so she never covers a nail or the tools.
+    if (stationOpen) {
+      mai.element.style.setProperty('--mai-top', `${zone.element.offsetTop + 4}px`);
+      mai.element.classList.add('over-station');
+    } else mai.element.classList.remove('over-station');
   }
   stationToggle.addEventListener('click', () => setStationOpen(!stationOpen));
   if (station) {

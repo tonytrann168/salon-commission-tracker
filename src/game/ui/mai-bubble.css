@@ -1,7 +1,10 @@
 /* Laid over the fixed top strip (header + portraits). Mai's bubble sits in a bottom corner of the portrait strip. */
 .mai-layer { position: absolute; inset: 0; pointer-events: none; }
 .mai-layer > * { pointer-events: auto; }
-.mai-bubble { position: absolute; bottom: var(--mai-bottom, 8px); right: 12px; width: 60px; height: 60px; padding: 2px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 2px 10px rgba(59, 42, 51, 0.25); touch-action: none; cursor: pointer; }
+.mai-layer.over-station .mai-bubble { top: var(--mai-top, 8px); bottom: auto; width: 52px; height: 52px; }
+.mai-layer.over-station .mai-bubble .mascot { width: 48px !important; height: 48px !important; }
+.mai-layer.over-station .mai-bubble svg { width: 48px; height: 48px; }
+.mai-bubble { position: absolute; bottom: 8px; right: 12px; width: 60px; height: 60px; padding: 2px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 2px 10px rgba(59, 42, 51, 0.25); touch-action: none; cursor: pointer; }
 .mai-layer[data-side='left'] .mai-bubble { right: auto; left: 12px; }
 .mai-bubble .mascot { display: block; border-radius: 50%; overflow: hidden; }
 .mai-badge { position: absolute; top: -4px; right: -4px; min-width: 22px; height: 22px; padding: 0 6px; box-sizing: border-box; border-radius: 11px; background: #ff5c9a; color: #fff; font: 700 13px/22px system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px #fff; }

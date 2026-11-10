@@ -193,8 +193,8 @@
   "station.gradient": "🌈 Ombre",
   "station.gem": "💎 Đá",
   "station.sticker": "Sticker",
-  "station.reset": "↺ Làm lại",
-  "station.done": "✓ Xong",
+  "station.reset": "↺",
+  "station.done": "✓",
   "station.doneMessage": "Móng xong rồi! Giống yêu cầu của khách: {score}%.",
   "station.shapeLabel": "Dáng móng: {shape}",
   "station.colorLabel": "Màu sơn: {color}",
@@ -206,5 +206,10 @@
   "station.shape.stiletto": "Nhọn",
   "station.sticker.heart": "❤ Tim",
   "station.sticker.star": "⭐ Sao",
-  "station.sticker.flower": "🌸 Hoa"
+  "station.sticker.flower": "🌸 Hoa",
+  "station.tab.shape": "Dáng",
+  "station.tab.colour": "Màu",
+  "station.tab.art": "Trang trí",
+  "station.doneLabel": "Xong",
+  "station.resetLabel": "Làm lại"
 }

@@ -193,8 +193,8 @@
   "station.gradient": "🌈 Gradient",
   "station.gem": "💎 Gem",
   "station.sticker": "Sticker",
-  "station.reset": "↺ Start over",
-  "station.done": "✓ Done",
+  "station.reset": "↺",
+  "station.done": "✓",
   "station.doneMessage": "Nails done! They match her request: {score}%.",
   "station.shapeLabel": "Nail shape: {shape}",
   "station.colorLabel": "Polish colour: {color}",
@@ -206,5 +206,10 @@
   "station.shape.stiletto": "Stiletto",
   "station.sticker.heart": "❤ Heart",
   "station.sticker.star": "⭐ Star",
-  "station.sticker.flower": "🌸 Flower"
+  "station.sticker.flower": "🌸 Flower",
+  "station.tab.shape": "Shape",
+  "station.tab.colour": "Colour",
+  "station.tab.art": "Art",
+  "station.doneLabel": "Done",
+  "station.resetLabel": "Start over"
 }
