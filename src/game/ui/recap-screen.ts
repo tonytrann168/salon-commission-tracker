@@ -12,6 +12,7 @@ import { TurnError } from '../types';
 import type { EnglishLevel, Message, Outcome } from '../types';
 import { emitSound } from '../sound-events';
 import { el } from './dom';
+import { guardMessage } from './guard-message';
 import { practiceButton } from './practice-sheet';
 import './recap-screen.css';
 
@@ -106,7 +107,7 @@ export function createLearningPanel(options: LearningPanelOptions): HTMLElement 
         const retry = button(t('common.tryAgain'), true);
         retry.addEventListener('click', run);
         const failed = el('section', 'results-section');
-        failed.append(el('p', '', unavailable ? t('bestie.unavailable', { name: NAME }) : t('learning.failed', { name: NAME })), ...(unavailable ? [] : [retry]));
+        failed.append(el('p', '', guardMessage(error) ?? (unavailable ? t('bestie.unavailable', { name: NAME }) : t('learning.failed', { name: NAME }))), ...(unavailable ? [] : [retry]));
         box.replaceChildren(failed);
       },
     );

@@ -19,6 +19,7 @@ import { openPracticeSheet, practiceButton } from './practice-sheet';
 import type { VoiceIO } from '../voice';
 import { createPortraitZone } from './portrait-zone';
 import { emitSound } from '../sound-events';
+import { guardMessage } from './guard-message';
 import { createScrollFollower, fitToVisualViewport } from './scroll-follow';
 import { startTextReveal } from './text-reveal';
 import type { TextReveal } from './text-reveal';
@@ -381,9 +382,10 @@ export function createChatPanel(
     errorBox.classList.toggle('hidden', !failed);
     if (failed) {
       errorText.textContent =
-        snapshot.error instanceof TurnError && snapshot.error.code === 'missing_api_key'
+        guardMessage(snapshot.error) ??
+        (snapshot.error instanceof TurnError && snapshot.error.code === 'missing_api_key'
           ? t('chat.aiUnavailable')
-          : t('chat.aiTrouble');
+          : t('chat.aiTrouble'));
     }
 
     // The results wait until the final line has finished revealing (settle shows them).

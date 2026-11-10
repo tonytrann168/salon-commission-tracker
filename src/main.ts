@@ -14,6 +14,7 @@ import { loadMemory } from './game/bestie-memory';
 import { createCorrectionsTransport } from './game/learning/corrections';
 import { addPhrases, loadPhrasebook, savePhrasebook } from './game/learning/phrasebook';
 import { createPhrasebookScreen } from './game/ui/phrasebook-screen';
+import { askForInvite, hasSession } from './game/ui/invite-screen';
 import { openPracticeSheet } from './game/ui/practice-sheet';
 import { createBrowserVoice, withSpeakingSignal } from './game/voice';
 import { createAudioEngine } from './game/audio';
@@ -34,6 +35,8 @@ async function boot(): Promise<void> {
   const host = document.getElementById('app');
   if (!host) throw new Error('#app element missing');
   applyDocumentLanguage();
+  // Hosted preview only (VITE_INVITE_GATE=1, set by scripts/build-preview.mjs): ask for an invite code first.
+  if (import.meta.env.VITE_INVITE_GATE === '1' && !(await hasSession())) await askForInvite(host);
 
   const app = new Application();
   await app.init({ resizeTo: host, background: 0xfff4f8, antialias: true, autoDensity: true, resolution: window.devicePixelRatio || 1 });

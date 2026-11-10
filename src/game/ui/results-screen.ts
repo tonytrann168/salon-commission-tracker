@@ -5,6 +5,7 @@ import type { TranslationCache } from '../translation-cache';
 import type { AppointmentResult, EnglishLevel, GradeAppointment, Grading, HelpLanguage } from '../types';
 import { t } from '../i18n';
 import { emitSound } from '../sound-events';
+import { guardMessage } from './guard-message';
 import './results-screen.css';
 
 /**
@@ -147,7 +148,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     box.setAttribute('role', 'alert');
     const unavailable = error instanceof TurnError && error.code === 'missing_api_key';
     box.append(
-      el('p', '', unavailable ? t('results.reviewUnavailable') : t('results.reviewTrouble', { name: clientName })),
+      el('p', '', guardMessage(error) ?? (unavailable ? t('results.reviewUnavailable') : t('results.reviewTrouble', { name: clientName }))),
       button(t('common.tryAgain'), () => void run()),
       button(t('results.backToMenu'), onBackToMenu, true),
     );

@@ -1,0 +1,10 @@
+{
+  "cookieName": "sb_tester",
+  "cookieDays": 30,
+  "perCodePerMinute": 20,
+  "perIpPerMinute": 40,
+  "loginTriesPerIpPerMinute": 10,
+  "perCodePerDay": 300,
+  "defaultGlobalPerDay": 2000,
+  "maxBodyBytes": 65536
+}

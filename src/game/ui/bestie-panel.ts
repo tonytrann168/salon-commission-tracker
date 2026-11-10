@@ -10,6 +10,7 @@ import type { EnglishLevel, Grading, Message, Outcome, Phase } from '../types';
 import { emitSound } from '../sound-events';
 import { renderMascot } from '../mascot';
 import { el } from './dom';
+import { guardMessage } from './guard-message';
 import './mai-bubble.css';
 import './bestie-panel.css';
 
@@ -158,7 +159,7 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
         (error: unknown) => {
           const retry = button(t('common.tryAgain'), 'chat-button secondary');
           retry.addEventListener('click', run);
-          body.replaceChildren(el('p', '', unavailable(error) ? t('bestie.unavailable', { name: NAME }) : t('bestie.debriefFailed', { name: NAME })), ...(unavailable(error) ? [] : [retry]));
+          body.replaceChildren(el('p', '', guardMessage(error) ?? (unavailable(error) ? t('bestie.unavailable', { name: NAME }) : t('bestie.debriefFailed', { name: NAME }))), ...(unavailable(error) ? [] : [retry]));
         },
       );
   };

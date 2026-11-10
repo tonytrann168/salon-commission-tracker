@@ -1,25 +1,10 @@
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { defineConfig, loadEnv } from 'vite';
 import type { Plugin } from 'vite';
-import { handleClientTurn } from './server/handlers/client-turn';
-import { handleGradeAppointment } from './server/handlers/grade-appointment';
-import { handleBestie } from './server/handlers/bestie';
-import { handleCorrections } from './server/handlers/corrections';
-import { handleTranslate } from './server/handlers/translate';
+import { AI_ROUTES } from './server/routes';
 
-type ApiHandler = (
-  body: unknown,
-  env: Record<string, string | undefined>,
-  fetchImpl: typeof fetch,
-) => Promise<{ status: number; body: unknown }>;
-
-const API_ROUTES: Record<string, ApiHandler> = {
-  '/api/client-turn': handleClientTurn,
-  '/api/grade-appointment': handleGradeAppointment,
-  '/api/translate': handleTranslate,
-  '/api/bestie': handleBestie,
-  '/api/corrections': handleCorrections,
-};
+/** Dev serves the AI routes directly (no invite code; the hosted preview adds that, see server/preview-function.ts). */
+const API_ROUTES = Object.fromEntries(Object.entries(AI_ROUTES).map(([name, handler]) => [`/api/${name}`, handler]));
 
 /** Dev-only: serve the POST /api routes with the same handlers Vercel runs in production. */
 function devApi(env: Record<string, string>): Plugin {

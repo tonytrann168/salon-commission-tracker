@@ -55,6 +55,10 @@ export type TakeTurn = (transcript: readonly Message[], phase: Phase, mood: numb
 /** Error codes the turn transport can raise (server codes plus client-side ones). */
 export type TurnErrorCode =
   | 'missing_api_key'
+  /** Hosted preview (owner, 2026-11-10): no valid invite cookie, a per-minute limit, or a daily cap. */
+  | 'unauthorized'
+  | 'rate_limited'
+  | 'daily_cap'
   | 'invalid_request'
   | 'upstream_error'
   | 'upstream_unreachable'

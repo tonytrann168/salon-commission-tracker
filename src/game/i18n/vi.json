@@ -175,5 +175,15 @@
   "bestie.greetingStreakNamed": "{days} ngày liên tiếp rồi, {player}! Chị thích tập với em lắm. Sẵn sàng đón khách thứ {count} chưa?",
   "settings.playerName": "Tên của em",
   "settings.playerNameNote": "Mai dùng tên để chào em. Không bắt buộc, chỉ lưu trên điện thoại này.",
-  "settings.playerNamePlaceholder": "Ví dụ: Lan"
+  "settings.playerNamePlaceholder": "Ví dụ: Lan",
+  "guard.rest": "Mai cần nghỉ một chút! Hôm nay em tập nhiều rồi. Mai mình gặp lại nha.",
+  "guard.signedOut": "Mã mời của em đã hết hạn. Tải lại trang và nhập lại nha.",
+  "invite.title": "Chào mừng đến Salon Besties",
+  "invite.note": "Đây là bản thử riêng. Em nhập mã mời đã được gửi nha.",
+  "invite.label": "Mã mời",
+  "invite.enter": "Vào",
+  "invite.wrong": "Mã này chưa đúng. Em kiểm tra lại và thử lần nữa nha.",
+  "invite.trouble": "Chưa kiểm tra được mã. Em thử lại sau một chút nha.",
+  "invite.busy": "Thử nhiều quá rồi. Em đợi một phút rồi thử lại nha.",
+  "invite.notReady": "Bản thử chưa được cài đặt. Em hỏi người đã mời em nha."
 }

@@ -175,5 +175,15 @@
   "bestie.greetingStreakNamed": "{days} days in a row, {player}! I love practising with you. Ready for client number {count}?",
   "settings.playerName": "Your name",
   "settings.playerNameNote": "Mai uses it to greet you. Optional, saved only on this phone.",
-  "settings.playerNamePlaceholder": "For example: Lan"
+  "settings.playerNamePlaceholder": "For example: Lan",
+  "guard.rest": "Mai needs a rest! You've practised a lot today. Come back tomorrow.",
+  "guard.signedOut": "Your invite code has expired. Reload the page and enter it again.",
+  "invite.title": "Welcome to Salon Besties",
+  "invite.note": "This is a private test. Enter the invite code you were given.",
+  "invite.label": "Invite code",
+  "invite.enter": "Enter",
+  "invite.wrong": "That code didn't work. Check it and try again.",
+  "invite.trouble": "Couldn't check the code right now. Try again in a moment.",
+  "invite.busy": "Too many tries. Wait a minute and try again.",
+  "invite.notReady": "The test isn't set up yet. Please ask the person who invited you."
 }

@@ -12,6 +12,7 @@ import { emitSound } from '../sound-events';
 import { TurnError } from '../types';
 import type { EnglishLevel, Message, Phase } from '../types';
 import { el } from './dom';
+import { guardMessage } from './guard-message';
 import './mai-bubble.css';
 
 /**
@@ -178,7 +179,7 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
         (error: unknown) => {
           if (mine !== hintRequest) return;
           const missing = error instanceof TurnError && error.code === 'missing_api_key';
-          hintBox.replaceChildren(el('p', 'bestie-text', t(missing ? 'bestie.unavailable' : 'bestie.hintFailed', { name: NAME })));
+          hintBox.replaceChildren(el('p', 'bestie-text', guardMessage(error) ?? t(missing ? 'bestie.unavailable' : 'bestie.hintFailed', { name: NAME })));
           setExpression('idle');
         },
       );
