@@ -158,5 +158,13 @@
   "settings.mute": "Mute",
   "settings.volumeLabel": "{name} volume",
   "settings.soundNote": "Sound starts after your first tap. Music goes quiet while the client speaks.",
-  "chat.newMessage": "New message ↓"
+  "chat.newMessage": "New message ↓",
+  "mai.open": "Open {name}",
+  "mai.openTips": "Open {name}: {count} tips waiting",
+  "mai.tipsTitle": "Tips from {name}",
+  "mai.noTips": "No tips waiting. You're doing great!",
+  "mai.hint": "💡 Give me a hint",
+  "mai.notesCard": "{name} has notes for you",
+  "mai.notesTap": "Tap to read",
+  "mai.notesHide": "Hide"
 }

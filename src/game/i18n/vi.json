@@ -158,5 +158,13 @@
   "settings.mute": "Tắt tiếng",
   "settings.volumeLabel": "Âm lượng {name}",
   "settings.soundNote": "Âm thanh bắt đầu sau lần chạm đầu tiên. Nhạc nhỏ lại khi khách nói.",
-  "chat.newMessage": "Tin nhắn mới ↓"
+  "chat.newMessage": "Tin nhắn mới ↓",
+  "mai.open": "Mở {name}",
+  "mai.openTips": "Mở {name}: {count} mẹo đang chờ",
+  "mai.tipsTitle": "Mẹo của {name}",
+  "mai.noTips": "Chưa có mẹo nào. Em đang làm tốt lắm!",
+  "mai.hint": "💡 Gợi ý cho em",
+  "mai.notesCard": "{name} có lời nhắn cho em",
+  "mai.notesTap": "Chạm để đọc",
+  "mai.notesHide": "Thu gọn"
 }

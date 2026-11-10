@@ -9,7 +9,7 @@ import type { AppointmentResult, ClientPersona, EnglishLevel, HelpLanguage, Tran
 import type { TranslationCache } from '../translation-cache';
 import { t } from '../i18n';
 import { el } from './dom';
-import { createHintBar } from './bestie-panel';
+import { createMaiBubble } from './mai-bubble';
 import type { BestieLanguage, BestieTransport } from '../bestie';
 import { LEARNING_CONFIG, shouldCheckLine } from '../learning/corrections';
 import type { CorrectionsTransport, Phrase } from '../learning/corrections';
@@ -111,7 +111,7 @@ export function createChatPanel(
   header.append(phases, mood);
 
   const initial = appointment.getSnapshot();
-  const zone = createPortraitZone(host, portraits.layer, portraits.client, poseFor(initial.mood, initial.result?.outcome ?? null));
+  const zone = createPortraitZone(host, portraits.layer, portraits.client, poseFor(initial.mood, initial.result?.outcome ?? null), !portraits.bestie);
 
   const log = el('div', 'chat-log');
   const errorBox = el('div', 'chat-error');
@@ -138,20 +138,23 @@ export function createChatPanel(
   form.append(helpButton, input, sendButton);
 
   const bestie = portraits.bestie;
-  const hintBar = bestie && (bestie.hints || bestie.corrections)
-    ? createHintBar({
+  // Mai, on demand (owner, 2026-11-10): a bubble in the portrait strip; her panel opens over the top strip, so neither
+  // ever covers the newest line or the reply box. Corrections wait behind her badge; nothing pops up by itself.
+  const mai = bestie
+    ? createMaiBubble({
         hints: bestie.hints,
         transport: bestie.transport,
         level: portraits.level,
         language: bestie.language,
+        tipCap: LEARNING_CONFIG.whispers.maxPerAppointment,
         current: () => ({ phase: latest.phase, mood: latest.mood, transcript: latest.transcript }),
-        onWhispering: (whispering) => zone.setBestieExpression(whispering ? 'pleased' : 'neutral'),
+        onHelpMeSayIt: () => helpButton.click(),
+        onTipSeen: (tip) => bestie.corrections?.onPhrase(tip.better),
       })
     : null;
 
-  // The Hint button and an open whisper sit over the header and portraits, so they never push the chat down (small phones).
   const top = el('div', 'chat-top');
-  top.append(header, zone.element, ...(hintBar ? [hintBar.element] : []));
+  top.append(header, zone.element, ...(mai ? [mai.element] : []));
 
   // Voice messages (listening, mic blocked, fall back to typing) sit just above the reply box.
   const voiceStatus = el('p', 'voice-status');
@@ -394,27 +397,23 @@ export function createChatPanel(
     sendButton.disabled = !canType;
     helpButton.disabled = !canType;
     if (mic) mic.element.disabled = !canType;
-    hintBar?.setEnabled(canType);
-    hintBar?.element.classList.toggle('hidden', snapshot.status === 'finished');
+    mai?.setEnabled(canType);
+    mai?.element.classList.toggle('hidden', snapshot.status === 'finished');
   };
 
-  /** Whispered corrections shown this appointment (capped in config/learning.json). */
-  let whispersShown = 0;
-  /** After the player sends a line: check it in the background and, if it needs it, whisper a correction. Never blocks the chat. */
+  /** Corrections queued for Mai this appointment (capped in config/learning.json). */
+  let tipsQueued = 0;
+  /** After the player sends a line: check it in the background and, if it needs it, queue a tip on Mai's badge. Never blocks the chat. */
   const checkLine = (line: string, helped: boolean, before: AppointmentSnapshot): void => {
     const corrections = bestie?.corrections;
-    if (!corrections || !hintBar || !shouldCheckLine(line, helped, whispersShown)) return;
+    if (!corrections || !mai || !shouldCheckLine(line, helped, tipsQueued)) return;
     const clientLine = [...before.transcript].reverse().find((message) => message.role === 'client')?.content ?? '';
     corrections.transport
       .checkLine({ level: portraits.level, language: bestie.language, phase: before.phase, line: line.trim(), clientLine })
       .then((result) => {
         if (!result.needsCorrection || !result.better || latest.status === 'finished') return;
         // Checks run side by side, so the cap is checked again when each answer lands.
-        if (whispersShown >= LEARNING_CONFIG.whispers.maxPerAppointment) return;
-        const shown = hintBar.whisperCorrection({ praise: result.praise, said: line.trim(), better: result.better.en, reason: result.reason, language: bestie.language });
-        if (!shown) return;
-        whispersShown++;
-        corrections.onPhrase(result.better);
+        if (mai.queueTip({ praise: result.praise, said: line.trim(), better: result.better, reason: result.reason, language: bestie.language })) tipsQueued++;
       })
       .catch(() => undefined);
   };
@@ -469,6 +468,7 @@ export function createChatPanel(
   return {
     setBestieExpression: zone.setBestieExpression,
     destroy() {
+      mai?.destroy();
       follower.destroy();
       unfit();
       mic?.stop();

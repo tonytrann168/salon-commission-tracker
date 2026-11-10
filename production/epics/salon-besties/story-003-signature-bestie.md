@@ -103,3 +103,14 @@
 - Hints stay **on by default**.
 - Vietnamese wording approved.
 - Status stays open until the owner's phone playtest.
+
+## Owner Decision: Mai on demand (2026-11-10, relayed by the overseer)
+
+"I want Mai as an available assistant, not a person who fixes the problem every time. Mai should be a 'bubble' available when needed."
+- Built: a round Mai bubble (`src/game/ui/mai-bubble.ts`) in the fixed portrait strip, draggable to either corner (saved). It never covers the newest line or the reply box. The old corner portrait is hidden in the chat.
+- Nothing pops up by itself. Live corrections are still checked in the background with the same cap (3 per appointment) but are **queued** (`src/game/mai-tips.ts`); the bubble shows a badge. Tapping Mai opens a small panel over the top strip: "Give me a hint", "Help me say it" and her waiting tips (You said → Better + reason). It closes by tap-outside, Escape or Close. A tip's better line goes into the phrasebook when it is seen.
+- The separate Hint button and the auto-opening whisper are removed. The Settings switches stay (hints off = no hint button in the panel; corrections off = no badge).
+- Results: Mai's debrief and her question sit behind one collapsed card, "Mai has notes for you". The English review, recap and phrasebook are unchanged.
+- Mood rules unchanged; nothing from Mai reaches the client call.
+- Her look is a swappable mascot skin (`src/game/mascot/`, `config/mascot.json`, accessory slots as data); placeholder until the owner picks a concept.
+- Evidence: `production/qa/evidence/mai-bubble/`. Tests: `src/tests/mai-bubble.test.ts`.

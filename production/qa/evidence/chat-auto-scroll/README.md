@@ -9,7 +9,7 @@ test's mock ("(VI) ..." where it has no fixed translation).
 | `*-01-following` | After two exchanges: the newest line is in view; header and portraits never moved |
 | `*-02-reread-new-message-pill` | Player scrolled up (mouse wheel); a new reply arrived; no jump, the "New message ↓" / "Tin nhắn mới ↓" pill shows |
 | `*-03-after-pill` | Pill tapped: at the bottom, pill gone |
-| `*-04-whisper-open-following` | With Mai's whisper open, new content (the newest line's translation) still follows |
+| `*-04-mai-panel-open-following` | With Mai's panel open, the player sends a line (Enter); the reply still follows and the panel stays open |
 | `*-05-keyboard-open` | Visible area shrunk to 55% (phone keyboard): the reply box and newest line stay in view; on 320×568 the portraits fold away |
 
 Measured (script log, all four runs): distance from the bottom 0–1 px mid-reveal and when settled; header top 0 → 0;

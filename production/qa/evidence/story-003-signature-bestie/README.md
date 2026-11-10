@@ -24,3 +24,5 @@ Checked in the same run (script log):
 Still needs the real API: how Mai actually sounds (kind, short, in Vietnamese with English example lines), and that her memory notes stay useful over several sessions.
 
 **Mock translations (re-shot 2026-11-10):** the browser test now gives every client line its own Vietnamese, and the script checks that each bubble shows its own translation (it found no mismatches). An earlier capture showed one fixed mock string under every line; that was the test mock, not the game.
+
+**Superseded (owner, 2026-11-10):** the Hint button and the auto-opening whisper shown here were replaced by Mai's on-demand bubble. Current screens: `production/qa/evidence/mai-bubble/`.

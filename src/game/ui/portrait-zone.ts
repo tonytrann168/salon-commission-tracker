@@ -26,7 +26,7 @@ export interface PortraitZone {
 }
 
 /** Create the zone element (the caller mounts it) and put the client and bestie portraits on `layer`, over the zone. */
-export function createPortraitZone(host: HTMLElement, layer: Container, client: ClientPersona, initialPose: Pose): PortraitZone {
+export function createPortraitZone(host: HTMLElement, layer: Container, client: ClientPersona, initialPose: Pose, showBestie = true): PortraitZone {
   const element = document.createElement('div');
   element.className = 'portrait-zone';
   element.setAttribute('role', 'img');
@@ -34,6 +34,8 @@ export function createPortraitZone(host: HTMLElement, layer: Container, client: 
   const clientName = getPortraitDefinition(client.portraitId).name;
   const clientPortrait = createPortrait(client.portraitId, 1, initialPose);
   const bestiePortrait: Portrait = createPortrait(BESTIE_ID, 1, 'neutral');
+  // With the Mai bubble on screen (owner, 2026-11-10) the corner portrait would be a second Mai: hide it.
+  bestiePortrait.view.visible = showBestie;
   layer.addChild(clientPortrait.view, bestiePortrait.view);
 
   let clientPose = initialPose;
