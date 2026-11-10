@@ -1,0 +1,35 @@
+{
+  "id": "grace",
+  "name": "Grace",
+  "difficulty": "easy",
+  "types": [],
+  "description": {
+    "en": "A friendly regular. Patient and chatty.",
+    "vi": "Khách quen thân thiện. Kiên nhẫn, thích trò chuyện."
+  },
+  "look": {
+    "skin": "#f1c8a8",
+    "hair": "#d9d4cf",
+    "accent": "#ff9e7a"
+  },
+  "wants": "A classic manicure with round nails in a warm coral, nothing fancy. She is not in a hurry and her budget is about $35.",
+  "personality": "Warm, patient and chatty, a retired teacher who loves hearing about the stylist's day. Easy to please; she thanks the stylist often and only gets cooler if she is ignored.",
+  "startingMood": 65,
+  "moodSensitivity": {
+    "up": 1.2,
+    "down": 0.6
+  },
+  "openingLine": "Hello, dear! I'm here for my manicure. No rush at all, I've got the whole afternoon.",
+  "nailRequest": {
+    "shapes": [
+      "round"
+    ],
+    "colors": [
+      "coral"
+    ],
+    "gradient": "no",
+    "gems": "none",
+    "stickers": "none"
+  },
+  "portraitId": "grace"
+}

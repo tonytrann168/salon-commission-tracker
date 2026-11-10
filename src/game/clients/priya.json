@@ -1,0 +1,37 @@
+{
+  "id": "priya",
+  "name": "Priya",
+  "difficulty": "medium",
+  "types": [
+    "picky"
+  ],
+  "description": {
+    "en": "Changes her mind once or twice. Check what she really wants.",
+    "vi": "Hay đổi ý. Em hỏi lại xem khách thật sự muốn gì."
+  },
+  "look": {
+    "skin": "#b98060",
+    "hair": "#1d1412",
+    "accent": "#ff7f61"
+  },
+  "wants": "She first asks for navy, then changes her mind to coral almond nails with a couple of gems. Budget about $45.",
+  "personality": "Indecisive and picky. She changes her mind once during the consultation (navy, then coral) and wants the stylist to confirm the final choice before starting. She is happy when the stylist checks with her patiently.",
+  "startingMood": 50,
+  "moodSensitivity": {
+    "up": 1.0,
+    "down": 1.0
+  },
+  "openingLine": "Hi. I want navy... or maybe not. Hmm. Can I see your colors first?",
+  "nailRequest": {
+    "shapes": [
+      "almond"
+    ],
+    "colors": [
+      "coral"
+    ],
+    "gradient": "no",
+    "gems": "few",
+    "stickers": "none"
+  },
+  "portraitId": "priya"
+}

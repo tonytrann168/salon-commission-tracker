@@ -1,0 +1,39 @@
+{
+  "id": "tom",
+  "name": "Tom",
+  "difficulty": "hard",
+  "types": [
+    "price-booking",
+    "rude-impatient"
+  ],
+  "description": {
+    "en": "Argues about the price and wants a discount.",
+    "vi": "Cãi về giá và muốn được giảm."
+  },
+  "look": {
+    "skin": "#d9a684",
+    "hair": "#4a3328",
+    "accent": "#27325c",
+    "hairStyle": "short"
+  },
+  "wants": "A clean, natural men's manicure: short square nails, clear or nude polish. He thinks the price is too high and asks for a discount, and he wants to book a time that is already taken.",
+  "personality": "Gruff and skeptical. He says salons overcharge, pushes for a discount, and complains about waiting. He softens when the stylist explains the value calmly and offers a fair option. He is never abusive, just stubborn.",
+  "startingMood": 40,
+  "moodSensitivity": {
+    "up": 0.9,
+    "down": 1.3
+  },
+  "openingLine": "Just a basic manicure. And why is it so expensive here? The place down the street is cheaper.",
+  "nailRequest": {
+    "shapes": [
+      "square"
+    ],
+    "colors": [
+      "nude"
+    ],
+    "gradient": "no",
+    "gems": "none",
+    "stickers": "none"
+  },
+  "portraitId": "tom"
+}

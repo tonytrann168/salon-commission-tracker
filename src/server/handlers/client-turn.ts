@@ -1,4 +1,7 @@
 import { DEFAULT_CLIENT } from '../../game/clients/default-client';
+import { getClient } from '../../game/clients/roster';
+import difficultyJson from '../../game/config/difficulty.json';
+import { describeRequest } from '../../game/nail-art/match';
 import { ENGLISH_LEVELS_CONFIG } from '../../game/english-level';
 import { MAX_MOOD_DELTA, MIN_MOOD_DELTA } from '../../game/mood';
 import { ENGLISH_LEVELS, PHASES } from '../../game/types';
@@ -28,6 +31,8 @@ export interface ClientTurnRequest {
   level: EnglishLevel;
   /** Story 005: a one-line description of the nails being done (and, once finished, how they match the request). */
   nails?: string;
+  /** Story 006: which roster client this is (Dana when missing, for older clients). */
+  clientId?: string;
 }
 
 export interface HandlerResponse {
@@ -48,6 +53,7 @@ const isPhase = (value: unknown): value is Phase => PHASES.some((phase) => phase
 export function parseClientTurnRequest(body: unknown): ParseResult<ClientTurnRequest> {
   if (!isRecord(body)) return { ok: false, message: 'Body must be a JSON object.' };
   const { transcript, phase, mood, level } = body;
+  if (body.clientId !== undefined && (typeof body.clientId !== 'string' || !getClient(body.clientId))) return { ok: false, message: 'clientId is not a known client.' };
   // Optional, from the game (not typed by the player); cleaned to plain words anyway.
   const nails = typeof body.nails === 'string' && body.nails.trim() !== '' ? (({ value }: { value: string }) => value.replace(/[^\p{L}\p{N} ,.;:%'()/-]/gu, '').slice(0, 300))({ value: body.nails }) : undefined;
 
@@ -74,7 +80,7 @@ export function parseClientTurnRequest(body: unknown): ParseResult<ClientTurnReq
   if (messages[messages.length - 1]?.role !== 'player') {
     return { ok: false, message: 'The last message must be from the player.' };
   }
-  return { ok: true, value: { transcript: messages, phase, mood, level, ...(nails ? { nails } : {}) } };
+  return { ok: true, value: { transcript: messages, phase, mood, level, ...(nails ? { nails } : {}), ...(typeof body.clientId === 'string' ? { clientId: body.clientId } : {}) } };
 }
 
 /** Strictly validate the model's response and extract the structured turn from the forced tool call. */
@@ -112,6 +118,7 @@ export function buildSystemPrompt(client: ClientPersona, level: EnglishLevel): s
 PERSONA
 - What ${client.name} wants: ${client.wants}
 - Personality: ${client.personality}
+- How hard you are: ${(difficultyJson as Record<string, { pushback: string }>)[client.difficulty]?.pushback ?? ''}${client.nailRequest ? `\n- Your nails: you want ${describeRequest(client.nailRequest)}. Say what you want during the consultation when asked (or if the stylist forgets to ask, mention it).` : ''}
 
 STYLE
 - Reply as ${client.name} speaking aloud: 1-3 short, natural sentences. No stage directions, no narration, no emojis.
@@ -194,7 +201,7 @@ export async function handleClientTurn(
       body: JSON.stringify({
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        system: [{ type: 'text', text: buildSystemPrompt(DEFAULT_CLIENT, parsed.value.level), cache_control: { type: 'ephemeral' } }],
+        system: [{ type: 'text', text: buildSystemPrompt(getClient(parsed.value.clientId ?? '') ?? DEFAULT_CLIENT, parsed.value.level), cache_control: { type: 'ephemeral' } }],
         tools: [TOOL],
         tool_choice: { type: 'tool', name: TOOL_NAME },
         messages: toApiMessages(parsed.value),

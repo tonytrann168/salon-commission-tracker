@@ -1,4 +1,5 @@
 import { DEFAULT_CLIENT } from '../../game/clients/default-client';
+import { getClient } from '../../game/clients/roster';
 import { MOOD_MAX, MOOD_MIN } from '../../game/mood';
 import { ENGLISH_KEYS, ENGLISH_LEVELS, SKILL_KEYS } from '../../game/types';
 import type {
@@ -53,6 +54,7 @@ const isScore = (value: unknown): value is number =>
 export function parseGradingRequest(body: unknown): ParseResult<GradingRequest> {
   if (!isRecord(body)) return { ok: false, message: 'Body must be a JSON object.' };
   const { transcript, outcome, finalMood, level } = body;
+  if (body.clientId !== undefined && (typeof body.clientId !== 'string' || !getClient(body.clientId))) return { ok: false, message: 'clientId is not a known client.' };
 
   if (outcome !== 'completed' && outcome !== 'walked_out') return { ok: false, message: 'outcome must be completed or walked_out.' };
   if (typeof finalMood !== 'number' || !Number.isFinite(finalMood) || finalMood < MOOD_MIN || finalMood > MOOD_MAX) {
@@ -81,7 +83,7 @@ export function parseGradingRequest(body: unknown): ParseResult<GradingRequest> 
     rawNails && typeof rawNails.description === 'string' && typeof rawNails.match === 'number' && rawNails.match >= 0 && rawNails.match <= 100
       ? { description: rawNails.description.replace(/[^\p{L}\p{N} ,.;:%'()/-]/gu, '').slice(0, 300), match: Math.round(rawNails.match) }
       : undefined;
-  return { ok: true, value: { transcript: messages, outcome, finalMood, level, ...(nails ? { nails } : {}) } };
+  return { ok: true, value: { transcript: messages, outcome, finalMood, level, ...(nails ? { nails } : {}), ...(typeof body.clientId === 'string' ? { clientId: body.clientId } : {}) } };
 }
 
 /** Strictly validate the model's response and extract the grading from the forced tool call. */
@@ -212,13 +214,14 @@ export async function handleGradeAppointment(
   const apiKey = env.ANTHROPIC_API_KEY;
   if (!apiKey) return failure(503, 'missing_api_key', 'The AI grader is not configured on the server.');
 
+  const client = getClient(parsed.value.clientId ?? '') ?? DEFAULT_CLIENT;
   const request = JSON.stringify({
     model: MODEL,
     max_tokens: MAX_TOKENS,
-    system: [{ type: 'text', text: buildSystemPrompt(DEFAULT_CLIENT, parsed.value.level), cache_control: { type: 'ephemeral' } }],
+    system: [{ type: 'text', text: buildSystemPrompt(client, parsed.value.level), cache_control: { type: 'ephemeral' } }],
     tools: [TOOL],
     tool_choice: { type: 'auto' },
-    messages: [{ role: 'user', content: toUserMessage(DEFAULT_CLIENT, parsed.value) }],
+    messages: [{ role: 'user', content: toUserMessage(client, parsed.value) }],
   });
 
   let lastFailure = failure(502, 'invalid_model_output', 'The AI grader did not return a grade.');

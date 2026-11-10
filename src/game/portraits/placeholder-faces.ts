@@ -70,13 +70,10 @@ export function createPlaceholderFace(palette: PortraitPalette, size: number): P
   head.position.set(DESIGN_SIZE / 2, HEAD_CENTER_Y);
   view.addChild(head);
 
-  const hairBack = new Graphics()
-    .ellipse(0, -4, 42, 40)
-    .fill(palette.hair)
-    .roundRect(-43, -6, 18, 50, 9)
-    .fill(palette.hair)
-    .roundRect(25, -6, 18, 50, 9)
-    .fill(palette.hair);
+  const short = palette.hairStyle === 'short';
+  const hairBack = short
+    ? new Graphics().ellipse(0, -10, 40, 32).fill(palette.hair)
+    : new Graphics().ellipse(0, -4, 42, 40).fill(palette.hair).roundRect(-43, -6, 18, 50, 9).fill(palette.hair).roundRect(25, -6, 18, 50, 9).fill(palette.hair);
   const ears = new Graphics().circle(-36, 6, 7).fill(palette.skin).circle(36, 6, 7).fill(palette.skin);
   const skin = new Graphics().ellipse(0, 4, 36, 33).fill(palette.skin);
   const fringe = new Graphics()
@@ -96,6 +93,7 @@ export function createPlaceholderFace(palette: PortraitPalette, size: number): P
     .fill(palette.accent)
     .stroke({ width: 1, color: FEATURE_COLOR, alpha: 0.35 });
   const features = new Graphics();
+  bow.visible = !short;
   head.addChild(hairBack, ears, skin, fringe, features, bow);
 
   // Preallocated so a transition allocates nothing per frame.

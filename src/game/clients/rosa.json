@@ -1,0 +1,35 @@
+{
+  "id": "rosa",
+  "name": "Rosa",
+  "difficulty": "easy",
+  "types": [],
+  "description": {
+    "en": "A busy mom on her one break of the week.",
+    "vi": "Mẹ bỉm bận rộn, đây là lúc nghỉ duy nhất trong tuần."
+  },
+  "look": {
+    "skin": "#c99572",
+    "hair": "#2e1d16",
+    "accent": "#d7263d"
+  },
+  "wants": "Classic red nails, oval shape, simple and long-lasting. Budget about $30.",
+  "personality": "Tired but kind. This is her only break this week and she wants to relax. She appreciates a calm stylist and small talk about family.",
+  "startingMood": 55,
+  "moodSensitivity": {
+    "up": 1.0,
+    "down": 0.8
+  },
+  "openingLine": "Hi. Finally, a little break for me. Can I get a classic red today?",
+  "nailRequest": {
+    "shapes": [
+      "oval"
+    ],
+    "colors": [
+      "red"
+    ],
+    "gradient": "no",
+    "gems": "none",
+    "stickers": "none"
+  },
+  "portraitId": "rosa"
+}

@@ -211,5 +211,14 @@
   "station.tab.colour": "Màu",
   "station.tab.art": "Trang trí",
   "station.doneLabel": "Xong",
-  "station.resetLabel": "Làm lại"
+  "station.resetLabel": "Làm lại",
+  "picker.title": "Khách nào ngồi ghế hôm nay?",
+  "picker.easy": "Dễ",
+  "picker.medium": "Vừa",
+  "picker.hard": "Khó",
+  "picker.random": "🎲 Khách ngẫu nhiên",
+  "picker.shift": "Bắt đầu ca làm: {count} khách",
+  "picker.choose": "Chọn {name}",
+  "results.nextInShift": "Khách tiếp theo ({n}/{total})",
+  "results.shiftDone": "Hết ca! Về danh sách khách"
 }

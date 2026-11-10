@@ -3,6 +3,8 @@ import { createAppointment } from './game/appointment';
 import { createFetchTransport } from './game/client-turn-transport';
 import { createGradeTransport } from './game/grade-appointment-transport';
 import { DEFAULT_CLIENT } from './game/clients/default-client';
+import { ROSTER, clientsByDifficulty, pickShift } from './game/clients/roster';
+import { createClientPicker } from './game/ui/client-picker';
 import { SCORING_CONFIG } from './game/scoring';
 import { createSalonScene } from './game/salon-scene';
 import { createTitleMenu, createTitleScreen } from './game/title-screen';
@@ -31,7 +33,7 @@ import { el } from './game/ui/dom';
 import { createLevelPicker } from './game/ui/level-picker';
 import { createResultsScreen } from './game/ui/results-screen';
 import { createSettingsScreen } from './game/ui/settings-screen';
-import type { EnglishLevel } from './game/types';
+import type { ClientPersona, EnglishLevel } from './game/types';
 import './game/ui/global.css';
 
 async function boot(): Promise<void> {
@@ -92,7 +94,7 @@ async function boot(): Promise<void> {
         current: null,
         onPick: (level) => {
           if (chooseEnglishLevel(level)) applyDocumentLanguage();
-          beginAppointment(level);
+          showClientPicker();
         },
       }),
       back,
@@ -123,41 +125,72 @@ async function boot(): Promise<void> {
     ? (line: string) => openPracticeSheet(host, { voice, line, level: getEnglishLevel() ?? 'beginner' })
     : undefined;
   const translateTransport = createTranslateTransport();
-  // The default client's opening line is fixed text, so its translation is also kept on the device.
-  const translations = createTranslationCache(translateTransport, [DEFAULT_CLIENT.openingLine]);
+  // Every client's opening line is fixed text, so its translation is also kept on the device.
+  const translations = createTranslationCache(translateTransport, ROSTER.map((client) => client.openingLine));
+
+  /** Story 006: the clients still to come in a shift (empty outside a shift) and its size. */
+  let shift: { queue: ClientPersona[]; total: number } = { queue: [], total: 0 };
+  const SHIFT_SIZE = 3;
 
   const startAppointment = () => {
     // Inside the Start tap: lets the client's voice play on iPhone (story 004).
     voice.unlock();
-    const level = getEnglishLevel();
-    if (level === null) showLevelPicker();
-    else beginAppointment(level);
+    if (getEnglishLevel() === null) showLevelPicker();
+    else showClientPicker();
   };
 
-  const beginAppointment = (level: EnglishLevel) => {
+  /** Story 006: choose a difficulty, then a client, a random one, or a shift. */
+  const showClientPicker = () => {
+    teardownDom();
+    shift = { queue: [], total: 0 };
+    const begin = (client: ClientPersona) => beginAppointment(getEnglishLevel() ?? 'beginner', client);
+    const screen = createClientPicker(host, {
+      shiftSize: SHIFT_SIZE,
+      onPick: begin,
+      onRandom: (difficulty) => begin(pickShift(clientsByDifficulty(difficulty), 1)[0] ?? DEFAULT_CLIENT),
+      onShift: (difficulty) => {
+        const clients = pickShift(clientsByDifficulty(difficulty), SHIFT_SIZE);
+        shift = { queue: clients.slice(1), total: clients.length };
+        begin(clients[0] ?? DEFAULT_CLIENT);
+      },
+      onBack: showTitle,
+    });
+    teardownDom = () => screen.remove();
+  };
+
+  /** After the results: the next client in the shift, or back to the picker. */
+  const nextClient = () => {
+    voice.unlock();
+    const next = shift.queue.shift();
+    if (next) beginAppointment(getEnglishLevel() ?? 'beginner', next);
+    else showClientPicker();
+  };
+
+  const beginAppointment = (level: EnglishLevel, client: ClientPersona) => {
+    const shiftPosition = shift.total > 0 ? shift.total - shift.queue.length : 0;
     teardownDom();
     buildScene = createSalonScene;
     draw();
     // Story 005: what the client hears about her nails, and the finished result for the review and the stars.
     const nails: { note: string | undefined; finished: { description: string; match: number } | undefined } = { note: undefined, finished: undefined };
     const appointment = createAppointment({
-      client: DEFAULT_CLIENT,
-      takeTurn: createFetchTransport(() => level, () => nails.note),
+      client,
+      takeTurn: createFetchTransport(() => level, () => nails.note, client.id),
       level,
       // Grading starts from the chat panel's onEnded, once the final line has finished revealing (story 002).
       onFinished: () => undefined,
     });
     const panel = createChatPanel(host, appointment, {
-      client: DEFAULT_CLIENT,
+      client,
       layer: portraitLayer,
       level,
       helpLanguage: getHelpLanguage(),
       translations,
       translate: translateTransport,
-      ...(DEFAULT_CLIENT.nailRequest
+      ...(client.nailRequest
         ? {
             nailArt: {
-              request: DEFAULT_CLIENT.nailRequest,
+              request: client.nailRequest,
               onNote: (note: string | undefined) => {
                 nails.note = note;
               },
@@ -167,7 +200,7 @@ async function boot(): Promise<void> {
             },
           }
         : {}),
-      voice: { io: voice, clientId: DEFAULT_CLIENT.id, speakReplies: getClientVoiceEnabled(), onSpeakerChange: setClientVoiceEnabled },
+      voice: { io: voice, clientId: client.id, speakReplies: getClientVoiceEnabled(), onSpeakerChange: setClientVoiceEnabled },
       bestie: {
         transport: bestie,
         language: getLanguage(),
@@ -188,12 +221,16 @@ async function boot(): Promise<void> {
       },
       onEnded: (container, result) =>
         createResultsScreen(container, {
-          clientName: DEFAULT_CLIENT.name,
+          clientName: client.name,
+          clientId: client.id,
           result,
           level,
           config: SCORING_CONFIG,
           grade: gradeAppointment,
-          onNextClient: startAppointment,
+          onNextClient: nextClient,
+          ...(shift.total > 0
+            ? { nextLabel: shift.queue.length > 0 ? t('results.nextInShift', { n: shiftPosition + 1, total: shift.total }) : t('results.shiftDone') }
+            : {}),
           onBackToMenu: showTitle,
           translations,
           helpLanguage: getHelpLanguage(),

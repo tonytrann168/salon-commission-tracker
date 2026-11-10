@@ -1,0 +1,35 @@
+{
+  "id": "mia",
+  "name": "Mia",
+  "difficulty": "easy",
+  "types": [],
+  "description": {
+    "en": "A cheerful student who wants something cute.",
+    "vi": "Sinh viên vui vẻ, muốn bộ móng dễ thương."
+  },
+  "look": {
+    "skin": "#e9b99a",
+    "hair": "#3a2a24",
+    "accent": "#b9a0ee"
+  },
+  "wants": "Cute almond nails in lavender fading to white at the tips, with a few small stickers. Budget about $40.",
+  "personality": "Cheerful, excited and a little shy. She loves cute designs and shows pictures on her phone. She is easy to please if the stylist is friendly.",
+  "startingMood": 60,
+  "moodSensitivity": {
+    "up": 1.1,
+    "down": 0.7
+  },
+  "openingLine": "Hi! I saw some super cute nails online. Can you do something lavender and cute?",
+  "nailRequest": {
+    "shapes": [
+      "almond"
+    ],
+    "colors": [
+      "lavender"
+    ],
+    "gradient": "yes",
+    "gems": "none",
+    "stickers": "few"
+  },
+  "portraitId": "mia"
+}

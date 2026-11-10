@@ -50,7 +50,23 @@ export interface ClientPersona {
   openingLine: string;
   /** Story 005: what the client wants done to her nails, as data (compared with the finished design). */
   nailRequest?: NailRequest;
+  /** Story 006: roster data. */
+  difficulty: Difficulty;
+  /** The hard-client types this client covers (the brief's list). */
+  types: ClientType[];
+  /** One line for the client picker, en and vi. */
+  description: { en: string; vi: string };
+  /** Placeholder portrait colours (#rrggbb). */
+  look: { skin: string; hair: string; accent: string; hairStyle?: 'long' | 'short' };
+  /** Multipliers on the model's mood changes: up for raises, down for drops (sensitive clients drop faster). */
+  moodSensitivity: { up: number; down: number };
 }
+
+export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
+export type Difficulty = (typeof DIFFICULTIES)[number];
+/** The brief's hard-client types (story 006). */
+export const CLIENT_TYPES = ['picky', 'rude-impatient', 'complaint-redo', 'price-booking'] as const;
+export type ClientType = (typeof CLIENT_TYPES)[number];
 
 /** Transport that asks the AI for the client's next turn. `transcript` already ends with the new player message. */
 export type TakeTurn = (transcript: readonly Message[], phase: Phase, mood: number) => Promise<ClientTurn>;
@@ -111,6 +127,8 @@ export interface GradingRequest {
   level: EnglishLevel;
   /** Story 005: the finished nails and their match with the request (0-100), so the review mentions them. */
   nails?: { description: string; match: number };
+  /** Story 006: which roster client (Dana when missing). */
+  clientId?: string;
 }
 
 /** Structured output of the grading call. Stars and tip are computed from it by game code (scoring.ts). */

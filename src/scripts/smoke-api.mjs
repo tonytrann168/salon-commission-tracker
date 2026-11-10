@@ -1,6 +1,6 @@
 // npm run smoke:api — calls each server function once against the real Claude API and prints pass/fail.
 // Reads ANTHROPIC_API_KEY from the environment or src/.env.local (never printed). Skips cleanly when there is no key.
-// Each run spends a little API credit (eleven short calls).
+// Each run spends a little API credit (twelve short calls).
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer, loadEnv } from 'vite';
@@ -68,6 +68,10 @@ const checks = [
       outcome: 'completed', finalMood: 50, level: 'some', nails: { description: 'stiletto shape, navy, 3 gems; 60% painted', match: 30 } }, env, fetch),
     (b) => typeof b.review === 'string' && /nail|polish|manicure|colou?r|shape|stiletto|navy|gem/i.test(b.review) && !/terrible|awful|horrible|worst|disgusting|hate|ugly|stupid|useless/i.test(b.review),
     (b) => `review "${b.review}"`],
+  // Story 006: a hard roster client (Victoria: rude/impatient) stays in character and clean.
+  ['client-turn hard client (victoria, some)', () => handleClientTurn({ transcript: [{ role: 'client', content: "I'm in a hurry. Black stilettos, lots of sparkle. Can you do it in forty minutes or not?" }, { role: 'player', content: 'Yes, I can. Please sit here. Black with gems, right?' }], phase: 'consultation', mood: 35, level: 'some', clientId: 'victoria' }, env, fetch),
+    (b) => typeof b.reply === 'string' && !/\b(fuck|shit|bitch|slut|retard)/i.test(b.reply),
+    (b) => `"${b.reply}" mood ${b.moodDelta >= 0 ? '+' : ''}${b.moodDelta}`],
 ];
 
 let failed = 0;

@@ -1,0 +1,37 @@
+{
+  "id": "victoria",
+  "name": "Victoria",
+  "difficulty": "hard",
+  "types": [
+    "rude-impatient"
+  ],
+  "description": {
+    "en": "Rude and impatient. Stay calm and professional.",
+    "vi": "Khó tính và thiếu kiên nhẫn. Em giữ bình tĩnh và chuyên nghiệp."
+  },
+  "look": {
+    "skin": "#f3d1bd",
+    "hair": "#0f0d10",
+    "accent": "#26222a"
+  },
+  "wants": "Long black stiletto nails covered in gems, done fast. She has 40 minutes before a party and will pay well if it looks perfect.",
+  "personality": "Impatient and sharp. She checks her phone, sighs, and makes short, cold remarks when things are slow or unclear. She respects confidence and speed. She never uses slurs, but she can be blunt and cold, and she may walk out if she feels ignored or rushed badly.",
+  "startingMood": 35,
+  "moodSensitivity": {
+    "up": 0.8,
+    "down": 1.4
+  },
+  "openingLine": "I'm in a hurry. Black stilettos, lots of sparkle. Can you do it in forty minutes or not?",
+  "nailRequest": {
+    "shapes": [
+      "stiletto"
+    ],
+    "colors": [
+      "black"
+    ],
+    "gradient": "no",
+    "gems": "lots",
+    "stickers": "none"
+  },
+  "portraitId": "victoria"
+}

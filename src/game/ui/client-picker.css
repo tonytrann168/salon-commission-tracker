@@ -1,0 +1,17 @@
+.picker-tabs { display: flex; gap: 6px; padding: 4px; background: #f1dde6; border-radius: 22px; }
+.picker-tab { flex: 1 1 0; min-height: 40px; border: 0; border-radius: 18px; background: transparent; color: #3b2a33; font: 700 15px system-ui, sans-serif; }
+.picker-tab[aria-selected='true'] { background: #fff; box-shadow: 0 1px 4px rgba(59, 42, 51, 0.15); }
+.picker-tab.easy[aria-selected='true'] { color: #1f8a4c; }
+.picker-tab.medium[aria-selected='true'] { color: #b26a00; }
+.picker-tab.hard[aria-selected='true'] { color: #c0244a; }
+.picker-list { display: flex; flex-direction: column; gap: 10px; }
+.picker-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 2px solid #ffc4da; border-radius: 18px; background: #fff; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.picker-card:focus-visible { outline: 3px solid #3b2a33; outline-offset: 2px; }
+.picker-words { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.picker-words strong { font-size: 17px; }
+.picker-line { font-size: 14px; color: #5b4a53; }
+.picker-avatar { position: relative; flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--hair); box-shadow: 0 0 0 3px var(--accent); }
+.picker-avatar::after { content: ''; position: absolute; left: 9px; top: 12px; width: 30px; height: 30px; border-radius: 50%; background: var(--skin); }
+.picker-actions { display: flex; flex-direction: column; gap: 8px; }
+.picker-avatar.short::after { top: 14px; }
+.picker-avatar.short { border-radius: 50% 50% 46% 46%; }

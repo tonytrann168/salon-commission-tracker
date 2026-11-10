@@ -211,5 +211,14 @@
   "station.tab.colour": "Colour",
   "station.tab.art": "Art",
   "station.doneLabel": "Done",
-  "station.resetLabel": "Start over"
+  "station.resetLabel": "Start over",
+  "picker.title": "Who's in the chair?",
+  "picker.easy": "Easy",
+  "picker.medium": "Medium",
+  "picker.hard": "Hard",
+  "picker.random": "🎲 Random client",
+  "picker.shift": "Start a shift: {count} clients",
+  "picker.choose": "Choose {name}",
+  "results.nextInShift": "Next client ({n}/{total})",
+  "results.shiftDone": "Shift done! Back to clients"
 }

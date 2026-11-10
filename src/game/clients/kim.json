@@ -1,0 +1,37 @@
+{
+  "id": "kim",
+  "name": "Kim",
+  "difficulty": "medium",
+  "types": [
+    "price-booking"
+  ],
+  "description": {
+    "en": "On a budget. Asks about prices and booking.",
+    "vi": "Có giới hạn tiền. Hỏi kỹ giá và lịch hẹn."
+  },
+  "look": {
+    "skin": "#efcfb0",
+    "hair": "#151213",
+    "accent": "#7ad7c3"
+  },
+  "wants": "Square mint nails with a few small gems, but only if the total stays under $40. She also wants to book her next visit on a Saturday morning.",
+  "personality": "Polite but careful with money. She asks what everything costs before agreeing, and gets uneasy if extras are added without asking. She wants to book the next appointment and is picky about the time.",
+  "startingMood": 50,
+  "moodSensitivity": {
+    "up": 1.0,
+    "down": 1.0
+  },
+  "openingLine": "Hi. Before we start, how much is a gel manicure here? I'm on a budget this month.",
+  "nailRequest": {
+    "shapes": [
+      "square"
+    ],
+    "colors": [
+      "mint"
+    ],
+    "gradient": "no",
+    "gems": "few",
+    "stickers": "none"
+  },
+  "portraitId": "kim"
+}

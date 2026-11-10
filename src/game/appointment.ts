@@ -107,7 +107,9 @@ export function createAppointment(options: AppointmentOptions): Appointment {
     }
 
     transcript = [...candidate, { role: 'client', content: turn.reply }];
-    mood = applyMoodDelta(mood, moodDeltaAfterEnglishRule(turn, level, helped));
+    // Story 006: each client reacts more or less strongly (moodSensitivity up for raises, down for drops).
+    const delta = moodDeltaAfterEnglishRule(turn, level, helped);
+    mood = applyMoodDelta(mood, delta * (delta > 0 ? client.moodSensitivity.up : client.moodSensitivity.down));
     moodHistory = [...moodHistory, mood];
     phase = nextPhase(phase, turn.phase);
     pending = null;

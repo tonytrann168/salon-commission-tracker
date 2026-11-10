@@ -1,0 +1,37 @@
+{
+  "id": "brenda",
+  "name": "Brenda",
+  "difficulty": "hard",
+  "types": [
+    "complaint-redo"
+  ],
+  "description": {
+    "en": "Back with a complaint: her polish chipped. Fix it kindly.",
+    "vi": "Quay lại phàn nàn: sơn bị tróc. Em sửa giúp khách thật nhẹ nhàng."
+  },
+  "look": {
+    "skin": "#e2b08e",
+    "hair": "#8d5a3a",
+    "accent": "#ff4f8b"
+  },
+  "wants": "Her hot pink round nails from last week chipped after two days. She wants them redone properly, ideally free, and an apology.",
+  "personality": "Upset and suspicious at first. She expects the stylist to argue. She calms down when the stylist listens, apologizes and offers a fair fix. If she feels blamed, she demands a refund or a redo.",
+  "startingMood": 30,
+  "moodSensitivity": {
+    "up": 1.0,
+    "down": 1.3
+  },
+  "openingLine": "Look at these. I paid for these last week and they chipped in two days. What are you going to do about it?",
+  "nailRequest": {
+    "shapes": [
+      "round"
+    ],
+    "colors": [
+      "hot-pink"
+    ],
+    "gradient": "no",
+    "gems": "none",
+    "stickers": "none"
+  },
+  "portraitId": "brenda"
+}

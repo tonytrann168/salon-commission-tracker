@@ -1,40 +1,51 @@
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { defineConfig, loadEnv } from 'vite';
 import type { Plugin } from 'vite';
-import { AI_ROUTES } from './server/routes';
 
-/** Dev serves the AI routes directly (no invite code; the hosted preview adds that, see server/preview-function.ts). */
-const API_ROUTES = Object.fromEntries(Object.entries(AI_ROUTES).map(([name, handler]) => [`/api/${name}`, handler]));
+type ApiHandler = (body: unknown, env: Record<string, string | undefined>, fetchImpl: typeof fetch) => Promise<{ status: number; body: unknown }>;
 
-/** Dev-only: serve the POST /api routes with the same handlers Vercel runs in production. */
+/**
+ * Dev-only: serve POST /api/<route> with the same handlers the hosted preview runs (server/routes.ts), loaded through
+ * Vite on each request so they can use Vite features (the client roster is a folder of JSON files, story 006) and pick
+ * up edits without a restart. No invite code in dev (the preview adds that, see server/preview-function.ts).
+ */
 function devApi(env: Record<string, string>): Plugin {
   return {
     name: 'salon-dev-api',
     configureServer(server) {
-      for (const [route, handler] of Object.entries(API_ROUTES)) {
-        server.middlewares.use(route, (req, res) => {
-          if (req.method !== 'POST') {
-            res.statusCode = 405;
-            res.end();
-            return;
-          }
-          const chunks: Buffer[] = [];
-          req.on('data', (chunk: Buffer) => chunks.push(chunk));
-          req.on('end', () => {
+      server.middlewares.use('/api', (req, res, next) => {
+        const route = (req.url ?? '').replace(/^\//, '').split('?')[0] ?? '';
+        if (req.method !== 'POST') {
+          next();
+          return;
+        }
+        const chunks: Buffer[] = [];
+        req.on('data', (chunk: Buffer) => chunks.push(chunk));
+        req.on('end', () => {
+          void (async () => {
+            const { AI_ROUTES } = (await server.ssrLoadModule('/server/routes.ts')) as { AI_ROUTES: Record<string, ApiHandler> };
+            const handler = AI_ROUTES[route];
+            if (!handler) {
+              res.statusCode = 404;
+              res.end();
+              return;
+            }
             let body: unknown;
             try {
               body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
             } catch {
               body = undefined;
             }
-            void handler(body, env, fetch).then(({ status, body: payload }) => {
-              res.statusCode = status;
-              res.setHeader('content-type', 'application/json');
-              res.end(JSON.stringify(payload));
-            });
+            const { status, body: payload } = await handler(body, env, fetch);
+            res.statusCode = status;
+            res.setHeader('content-type', 'application/json');
+            res.end(JSON.stringify(payload));
+          })().catch((error: unknown) => {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: { code: 'unknown', message: String(error) } }));
           });
         });
-      }
+      });
     },
   };
 }

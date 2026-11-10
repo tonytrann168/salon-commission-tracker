@@ -66,6 +66,8 @@ export interface PortraitPalette {
   skin: number;
   hair: number;
   accent: number;
+  /** Story 006: `short` drops the long side hair and the bow (e.g. Tom). Default long. */
+  hairStyle?: 'long' | 'short';
 }
 
 /** Renderer kinds. Final art (images, Rive faces) adds a kind here and a registry entry in definitions.ts. */

@@ -27,6 +27,10 @@ export interface ResultsScreenOptions {
   translations: TranslationCache;
   /** `full` shows the review's Vietnamese automatically; `tap` shows it when the review is tapped. */
   helpLanguage: HelpLanguage;
+  /** Story 006: which roster client (sent to grading). */
+  clientId?: string;
+  /** Story 006: the Next client button's label during a shift ("Next client (2/3)", "Shift done!"). */
+  nextLabel?: string;
   /** Story 005: the finished nails and their match (0-100), for the review and the stars. */
   nails?: { description: string; match: number };
   /** Sections built once the scorecard is ready: the bestie's debrief (story 003), the English review, recap and level change (story 011). */
@@ -172,7 +176,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     score.failReasons.forEach((reason) => notes.push(el('p', 'results-note bad', t(`results.fail.${reason}`))));
 
     const actions = el('div', 'results-actions');
-    actions.append(button(t('results.nextClient'), onNextClient), button(t('results.backToMenu'), onBackToMenu, true));
+    actions.append(button(options.nextLabel ?? t('results.nextClient'), onNextClient), button(t('results.backToMenu'), onBackToMenu, true));
 
     show(
       stars,
@@ -197,7 +201,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     const finalMood = result.moodHistory[result.moodHistory.length - 1] ?? 0;
     let grading: Grading;
     try {
-      grading = await grade({ transcript: result.transcript, outcome: result.outcome, finalMood, level, ...(options.nails ? { nails: options.nails } : {}) });
+      grading = await grade({ transcript: result.transcript, outcome: result.outcome, finalMood, level, ...(options.nails ? { nails: options.nails } : {}), ...(options.clientId ? { clientId: options.clientId } : {}) });
     } catch (error) {
       showError(error);
       return;

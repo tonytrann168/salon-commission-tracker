@@ -1,0 +1,38 @@
+{
+  "id": "dana",
+  "name": "Dana",
+  "difficulty": "medium",
+  "types": [
+    "picky"
+  ],
+  "description": {
+    "en": "Short on time and a little picky. Listen well.",
+    "vi": "Ít thời gian và hơi kỹ tính. Em lắng nghe kỹ nha."
+  },
+  "look": {
+    "skin": "#e8b596",
+    "hair": "#5b3a29",
+    "accent": "#ff8fb1"
+  },
+  "wants": "A neat, natural-looking gel manicure in a soft nude or pale pink, short square nails, for a work event on Friday. She has a firm budget of about $45 and a strict 45 minutes.",
+  "personality": "Polite but guarded and a little picky. She has been disappointed by rushed salons before, dislikes pushy upselling, and warms up when the stylist listens, asks good questions and is honest about price and timing. She gets cooler when ignored, rushed or talked over.",
+  "startingMood": 45,
+  "moodSensitivity": {
+    "up": 1.0,
+    "down": 1.0
+  },
+  "openingLine": "Hi. I booked a manicure for 3 o'clock. I'm kind of short on time, so I hope we can get started soon.",
+  "nailRequest": {
+    "shapes": [
+      "square"
+    ],
+    "colors": [
+      "nude",
+      "pale-pink"
+    ],
+    "gradient": "no",
+    "gems": "none",
+    "stickers": "none"
+  },
+  "portraitId": "dana"
+}
