@@ -1,3 +1,4 @@
+import type { NailRequest } from './nail-art/design';
 /** Appointment phases in order. `done` is terminal. */
 export const PHASES = ['consultation', 'service', 'checkout', 'done'] as const;
 
@@ -47,6 +48,8 @@ export interface ClientPersona {
   personality: string;
   startingMood: number;
   openingLine: string;
+  /** Story 005: what the client wants done to her nails, as data (compared with the finished design). */
+  nailRequest?: NailRequest;
 }
 
 /** Transport that asks the AI for the client's next turn. `transcript` already ends with the new player message. */
@@ -106,6 +109,8 @@ export interface GradingRequest {
   /** Mood when the appointment ended, 0-100. */
   finalMood: number;
   level: EnglishLevel;
+  /** Story 005: the finished nails and their match with the request (0-100), so the review mentions them. */
+  nails?: { description: string; match: number };
 }
 
 /** Structured output of the grading call. Stars and tip are computed from it by game code (scoring.ts). */

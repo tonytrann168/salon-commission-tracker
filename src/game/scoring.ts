@@ -21,6 +21,8 @@ export interface ScoringConfig {
     /** Lowest composite (0-100) that earns 2, 3, 4 and 5 stars. Below the 2-star line is 1 star. */
     minComposite: Record<2 | 3 | 4 | 5, number>;
     fiveStar: { minMood: number; skillFloor: number };
+    /** Story 005: weight of the nail match (0-100) among the skills, when the nails were done. */
+    nailWeight: number;
   };
   /** Weight of each English part in the composite, per level. 0 means it has no effect on stars, tip or the floor. */
   englishWeights: Record<EnglishLevel, Record<EnglishKey, number>>;
@@ -44,6 +46,8 @@ export interface ScoreInput {
   level: EnglishLevel;
   rebooked: boolean;
   redoDemanded: boolean;
+  /** Story 005: how well the nails matched the request, 0-100 (absent when there was no nail work). */
+  nailMatch?: number;
 }
 
 export interface ScoreResult {
@@ -131,6 +135,7 @@ export function parseScoringConfig(raw: unknown): ScoringConfig {
         minMood: number(fiveStar.minMood, 'stars.fiveStar.minMood', MOOD_MIN, MOOD_MAX),
         skillFloor: number(fiveStar.skillFloor, 'stars.fiveStar.skillFloor', 0, 100),
       },
+      nailWeight: number(stars.nailWeight, 'stars.nailWeight', 0, 10),
     },
     englishWeights,
     tip: { minStars: minStars as 2 | 3 | 4 | 5, min: tipMin, max: tipMax, goodTipMin: number(tip.goodTipMin, 'tip.goodTipMin', tipMin, tipMax) },
@@ -152,6 +157,7 @@ export function scoreAppointment(input: ScoreInput, config: ScoringConfig = SCOR
   const counted: { score: number; weight: number }[] = [
     ...SKILL_KEYS.map((key) => ({ score: skills[key], weight: config.stars.skillWeights[key] })),
     ...ENGLISH_KEYS.map((key) => ({ score: english[key], weight: config.englishWeights[level][key] })),
+    ...(input.nailMatch === undefined ? [] : [{ score: input.nailMatch, weight: config.stars.nailWeight }]),
   ].filter((entry) => entry.weight > 0);
 
   let stars: Stars = 1;

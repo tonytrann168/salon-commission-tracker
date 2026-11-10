@@ -26,6 +26,8 @@ export interface ClientTurnRequest {
   mood: number;
   /** The player's English level (story 010): sets how the client speaks and how English mistakes affect mood. */
   level: EnglishLevel;
+  /** Story 005: a one-line description of the nails being done (and, once finished, how they match the request). */
+  nails?: string;
 }
 
 export interface HandlerResponse {
@@ -46,6 +48,8 @@ const isPhase = (value: unknown): value is Phase => PHASES.some((phase) => phase
 export function parseClientTurnRequest(body: unknown): ParseResult<ClientTurnRequest> {
   if (!isRecord(body)) return { ok: false, message: 'Body must be a JSON object.' };
   const { transcript, phase, mood, level } = body;
+  // Optional, from the game (not typed by the player); cleaned to plain words anyway.
+  const nails = typeof body.nails === 'string' && body.nails.trim() !== '' ? (({ value }: { value: string }) => value.replace(/[^\p{L}\p{N} ,.;:%'()/-]/gu, '').slice(0, 300))({ value: body.nails }) : undefined;
 
   if (!isPhase(phase) || phase === 'done') return { ok: false, message: 'phase must be consultation, service or checkout.' };
   if (typeof mood !== 'number' || !Number.isFinite(mood) || mood < 0 || mood > 100) {
@@ -70,7 +74,7 @@ export function parseClientTurnRequest(body: unknown): ParseResult<ClientTurnReq
   if (messages[messages.length - 1]?.role !== 'player') {
     return { ok: false, message: 'The last message must be from the player.' };
   }
-  return { ok: true, value: { transcript: messages, phase, mood, level } };
+  return { ok: true, value: { transcript: messages, phase, mood, level, ...(nails ? { nails } : {}) } };
 }
 
 /** Strictly validate the model's response and extract the structured turn from the forced tool call. */
@@ -119,7 +123,7 @@ ${rules.speakingRules}
 
 PHASES (consultation, service, checkout, done)
 - consultation: you have just sat down. The stylist should find out what you want. Move to service once the look, budget and timing have been discussed and you agree to start.
-- service: the manicure is happening. Only conversation is simulated. Chat naturally and react to how the stylist treats you. Move to checkout when the stylist wraps up the work and you are ready to pay.
+- service: the manicure is happening. Chat naturally and react to how the stylist treats you. The game note may describe your nails (shape, colour, extras, how much is painted, and once finished how well they match what you asked for). Now and then react to them naturally: pleased when they match your request, politely saying what is different when they don't. Move to checkout when the stylist wraps up the work and you are ready to pay.
 - checkout: payment, tip and goodbye. Move to done once you have paid and said goodbye.
 - Never go back to an earlier phase and never skip a phase. Keep the same phase unless the conditions above are met.
 
@@ -157,11 +161,12 @@ const failure = (status: number, code: TurnErrorCode, message: string): HandlerR
 });
 
 /** Anthropic needs the first message to be from the user; the client's opening line comes first in our transcript. */
-function toApiMessages({ transcript, phase, mood }: ClientTurnRequest): { role: 'user' | 'assistant'; content: string }[] {
+function toApiMessages({ transcript, phase, mood, nails }: ClientTurnRequest): { role: 'user' | 'assistant'; content: string }[] {
   const messages = transcript.map((message, index) => {
     const isLast = index === transcript.length - 1;
     const helpNote = message.helped ? ', stylist_used_help_me_say_it=yes' : '';
-    const note = isLast ? `\n\n[Game note: phase=${phase}, mood=${mood}${helpNote}]` : '';
+    const nailNote = nails ? `, nails=${nails}` : '';
+    const note = isLast ? `\n\n[Game note: phase=${phase}, mood=${mood}${helpNote}${nailNote}]` : '';
     return { role: message.role === 'player' ? ('user' as const) : ('assistant' as const), content: message.content + note };
   });
   return messages[0]?.role === 'assistant'

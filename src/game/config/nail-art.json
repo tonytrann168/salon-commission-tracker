@@ -1,0 +1,29 @@
+{
+  "shapes": ["square", "round", "oval", "almond", "stiletto"],
+  "palette": [
+    { "id": "nude", "hex": "#e8c4a8", "name": { "en": "Nude", "vi": "Màu nude" } },
+    { "id": "pale-pink", "hex": "#f6c6d0", "name": { "en": "Pale pink", "vi": "Hồng nhạt" } },
+    { "id": "hot-pink", "hex": "#ff4f8b", "name": { "en": "Hot pink", "vi": "Hồng đậm" } },
+    { "id": "red", "hex": "#d7263d", "name": { "en": "Red", "vi": "Đỏ" } },
+    { "id": "coral", "hex": "#ff7f61", "name": { "en": "Coral", "vi": "Cam san hô" } },
+    { "id": "lavender", "hex": "#b9a0ee", "name": { "en": "Lavender", "vi": "Tím oải hương" } },
+    { "id": "mint", "hex": "#7ad7c3", "name": { "en": "Mint", "vi": "Xanh bạc hà" } },
+    { "id": "navy", "hex": "#27325c", "name": { "en": "Navy", "vi": "Xanh navy" } },
+    { "id": "white", "hex": "#fbfbf8", "name": { "en": "White", "vi": "Trắng" } },
+    { "id": "black", "hex": "#26222a", "name": { "en": "Black", "vi": "Đen" } }
+  ],
+  "stickers": ["heart", "star", "flower"],
+  "grid": { "cols": 6, "rows": 10 },
+  "brushCells": 1.6,
+  "maxDecorationsPerNail": 3,
+  "fullCoverage": 0.92,
+  "matchWeights": { "shape": 25, "color": 35, "coverage": 25, "extras": 15 },
+  "decorationLevels": { "few": [1, 4], "lots": [5, 15] },
+  "moodByMatch": [
+    { "min": 85, "delta": 10 },
+    { "min": 65, "delta": 4 },
+    { "min": 40, "delta": -4 },
+    { "min": 0, "delta": -10 }
+  ],
+  "fps": { "target": 60 }
+}

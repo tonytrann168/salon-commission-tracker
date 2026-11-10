@@ -11,4 +11,6 @@ export const DEFAULT_CLIENT: ClientPersona = {
     'Polite but guarded and a little picky. She has been disappointed by rushed salons before, dislikes pushy upselling, and warms up when the stylist listens, asks good questions and is honest about price and timing. She gets cooler when ignored, rushed or talked over.',
   startingMood: 45,
   openingLine: "Hi. I booked a manicure for 3 o'clock. I'm kind of short on time, so I hope we can get started soon.",
+  // Matches `wants`: short square nails, soft nude or pale pink, nothing flashy.
+  nailRequest: { shapes: ['square'], colors: ['nude', 'pale-pink'], gradient: 'no', gems: 'none', stickers: 'none' },
 };

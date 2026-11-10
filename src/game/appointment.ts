@@ -39,6 +39,11 @@ export interface Appointment {
   send(text: string, options?: { helped?: boolean }): Promise<void>;
   /** Resend the message whose turn failed. Ignored unless status is `error`. */
   retry(): Promise<void>;
+  /**
+   * A game-side mood change outside a turn (story 005: the client sees her finished nails). Clamped to 1-100 so the
+   * nails alone never make her walk out; ignored once the appointment is over.
+   */
+  adjustMood(delta: number): void;
 }
 
 /**
@@ -134,6 +139,12 @@ export function createAppointment(options: AppointmentOptions): Appointment {
     async retry() {
       if (status !== 'error' || pending === null) return;
       await runTurn(pending, pendingHelped);
+    },
+    adjustMood(delta) {
+      if (status === 'finished' || delta === 0) return;
+      mood = Math.max(1, applyMoodDelta(mood, delta));
+      moodHistory = [...moodHistory, mood];
+      notify();
     },
   };
 }

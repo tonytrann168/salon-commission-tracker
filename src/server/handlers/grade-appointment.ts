@@ -76,7 +76,12 @@ export function parseGradingRequest(body: unknown): ParseResult<GradingRequest> 
   if (!messages.some((message) => message.role === 'player')) {
     return { ok: false, message: 'The transcript needs at least one player message.' };
   }
-  return { ok: true, value: { transcript: messages, outcome, finalMood, level } };
+  const rawNails = isRecord(body.nails) ? body.nails : undefined;
+  const nails =
+    rawNails && typeof rawNails.description === 'string' && typeof rawNails.match === 'number' && rawNails.match >= 0 && rawNails.match <= 100
+      ? { description: rawNails.description.replace(/[^\p{L}\p{N} ,.;:%'()/-]/gu, '').slice(0, 300), match: Math.round(rawNails.match) }
+      : undefined;
+  return { ok: true, value: { transcript: messages, outcome, finalMood, level, ...(nails ? { nails } : {}) } };
 }
 
 /** Strictly validate the model's response and extract the grading from the forced tool call. */
@@ -188,9 +193,11 @@ const failure = (status: number, code: TurnErrorCode, message: string): GradeHan
 });
 
 /** The grading input as one user message. The player's lines are labelled so English is graded from them only. */
-function toUserMessage(client: ClientPersona, { transcript, outcome, finalMood }: GradingRequest): string {
+function toUserMessage(client: ClientPersona, { transcript, outcome, finalMood, nails }: GradingRequest): string {
   const lines = transcript.map((message) => `${message.role === 'player' ? 'Stylist (player)' : client.name}: ${message.content}`);
-  return `Outcome: ${outcome === 'walked_out' ? `${client.name} walked out` : 'checked out normally'}. Final mood: ${finalMood}/100.\n\n<transcript>\n${lines.join('\n')}\n</transcript>`;
+  // Story 005: the finished nails, so the review can mention them.
+  const nailLine = nails ? `\nNails: ${nails.description}. Match with what ${client.name} asked for: ${nails.match}/100. The review must mention the nails.` : '';
+  return `Outcome: ${outcome === 'walked_out' ? `${client.name} walked out` : 'checked out normally'}. Final mood: ${finalMood}/100.${nailLine}\n\n<transcript>\n${lines.join('\n')}\n</transcript>`;
 }
 
 /** Framework-neutral handler. Never logs or echoes the key or the transcript. */
