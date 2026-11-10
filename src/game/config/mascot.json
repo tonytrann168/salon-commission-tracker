@@ -89,6 +89,36 @@
       },
       "free": true,
       "unlock": "first-five-stars"
+    },
+    {
+      "id": "nails-french",
+      "slot": "nails",
+      "name": {
+        "en": "French tip",
+        "vi": "Móng kiểu Pháp"
+      },
+      "free": true,
+      "unlock": "start"
+    },
+    {
+      "id": "nails-gradient",
+      "slot": "nails",
+      "name": {
+        "en": "Pink-lilac gradient",
+        "vi": "Móng ombre hồng tím"
+      },
+      "free": true,
+      "unlock": "streak-3"
+    },
+    {
+      "id": "nails-dots",
+      "slot": "nails",
+      "name": {
+        "en": "Mint with dots",
+        "vi": "Móng bạc hà chấm bi"
+      },
+      "free": true,
+      "unlock": "phrasebook-20"
     }
   ],
   "equipped": {}

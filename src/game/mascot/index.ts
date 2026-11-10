@@ -4,5 +4,6 @@ import './polish-bottle';
 import './hoa-mai';
 import './salon-kitty';
 import './concepts-round-2';
+import './concepts-round-3';
 
 export * from './mascot';

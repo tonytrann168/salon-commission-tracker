@@ -33,6 +33,8 @@ export interface MascotSkin {
   /** Short description for the concept page. */
   concept: string;
   draw(expression: MascotExpression, equipped: Equipped): string;
+  /** Optional one-colour logo (app icon): shapes in `fg`, eye and mouth cut-outs in `bg`. */
+  logo?(fg: string, bg: string): string;
 }
 
 export interface MascotConfig {

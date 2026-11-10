@@ -25,8 +25,18 @@ const ROUND_2: Concept[] = [
   { id: 'd-bunny', sample: { head: 'bow-pink' }, sampleName: 'pink bow (head slot)', score: 'Cute 4/5 · Ownable 2/5 · Dress-up 4/5 (ears fight with hats) · Salon identity 2/5.' },
   { id: 'e-mochi', sample: { face: 'glasses-round' }, sampleName: 'round glasses (face slot)', score: 'Cute at 56 px 5/5 · Ownable 3/5 · Dress-up 3/5 (no paws to hold items) · Salon identity 3/5 (polish-cap hat).' },
 ];
-const ROUND = new URLSearchParams(location.search).get('round') === '2' ? 2 : 1;
-const CONCEPTS = ROUND === 2 ? ROUND_2 : ROUND_1;
+/** Round 3 (owner: "make it original but also resemble nail art... like Duolingo's owl"): four G-based iconic concepts. */
+const ROUND_3: Concept[] = [
+  { id: 'g1-almond-mochi', sample: { head: 'bow-pink' }, sampleName: 'pink bow (head slot)', score: 'Cute at 56 px 4/5 · Ownable 5/5 (a nail-shaped creature) · Dress-up 5/5 (her body is her polish: every nail-art pattern is an outfit) · Salon identity 5/5 (almond nail + French-tip crown) · Iconic at a glance 5/5 (one almond silhouette). Recommended.' },
+  { id: 'g2-gel-drop', sample: { neck: 'scarf-mint' }, sampleName: 'mint scarf (neck slot)', score: 'Cute 4/5 · Ownable 4/5 · Dress-up 4/5 (body = polish; ears + tail crowd hats) · Salon identity 5/5 (gel drop + brush tail) · Iconic 4/5 (drop shapes are common for water brands).' },
+  { id: 'g3-moon-mochi', sample: { face: 'glasses-round' }, sampleName: 'round glasses (face slot)', score: 'Cute 4/5 · Ownable 4/5 · Dress-up 4/5 · Salon identity 4/5 (lunula + stiletto ears; nail techs get it at once, others may not) · Iconic 4/5 (strong two-spike silhouette).' },
+  { id: 'g4-mochi-refined', sample: { head: 'bow-pink' }, sampleName: 'pink bow (head slot)', score: 'Cute 5/5 · Ownable 4/5 · Dress-up 5/5 (clear head, belly, paws) · Salon identity 3/5 (painted tips + pouch only) · Iconic 3/5 (the busiest silhouette of the four).' },
+];
+const ROUND = (() => {
+  const round = new URLSearchParams(location.search).get('round');
+  return round === '3' ? 3 : round === '2' ? 2 : 1;
+})();
+const CONCEPTS = ROUND === 3 ? ROUND_3 : ROUND === 2 ? ROUND_2 : ROUND_1;
 
 const LABELS: Record<MascotExpression, string> = {
   idle: 'idle',
@@ -58,10 +68,10 @@ document.head.append(style);
 
 const root = document.getElementById('concepts') as HTMLElement;
 const title = document.createElement('h1');
-title.textContent = ROUND === 2 ? 'Mai mascot concepts, round 2' : 'Mai mascot concepts';
+title.textContent = ROUND === 1 ? 'Mai mascot concepts' : `Mai mascot concepts, round ${ROUND}`;
 const lede = document.createElement('p');
 lede.className = 'lede';
-lede.textContent = ROUND === 2 ? 'Owner: cute, personal, easy to customize, not just a cat. Hybrids F and G first, then kitty variants C1-C4 (more contrast at 56 px) and non-cat ideas D, E. Each scored on: cute at 56 px · ownable · dress-up friendly · nail-salon identity. "Do Mai\'s nails": the nails row shows three polish colours (her own ear and claw tips). Round 1: ?round=1.' : 'Owner: pick A, B or C (or a mix). Each is a swappable skin; the bubble in the game uses whichever is picked. Round 2: ?round=2.';
+lede.textContent = ROUND === 3 ? 'Owner: "Like Duolingo: people know the owl right away." Four G-based concepts aiming at one simple silhouette, one signature colour (coral-hot pink #FF5A87) and instantly nail art. Each sheet adds a solid SILHOUETTE check at 56 px and a one-colour LOGO (app icon), plus do-Mai\'s-nails variants (French tip, gradient, dots). Scored on cute · ownable · dress-up · salon identity · iconic at a glance.' : ROUND === 2 ? 'Owner: cute, personal, easy to customize, not just a cat. Hybrids F and G first, then kitty variants C1-C4 (more contrast at 56 px) and non-cat ideas D, E. Each scored on: cute at 56 px · ownable · dress-up friendly · nail-salon identity. "Do Mai\'s nails": the nails row shows three polish colours (her own ear and claw tips). Round 1: ?round=1.' : 'Owner: pick A, B or C (or a mix). Each is a swappable skin; the bubble in the game uses whichever is picked. Round 2: ?round=2.';
 root.append(title, lede);
 
 const cell = (node: HTMLElement, label: string): HTMLElement => {
@@ -111,14 +121,40 @@ for (const concept of CONCEPTS) {
     cell(strip, 'in the chat strip (320 px)'),
     cell(renderMascot('talking', 160, { skinId: id }), 'panel size, 160 px'),
     cell(renderMascot('happy', 120, { skinId: id, equipped: sample }), `sample accessory: ${sampleName}`),
-    cell(renderMascot('happy', 120, { skinId: id, equipped: { head: 'bow-pink', face: 'glasses-round', neck: 'scarf-mint', held: 'brush-gold', outfit: 'color-lavender', nails: 'nails-mint' } }), 'all 6 slots (dress-up test)'),
+    cell(renderMascot('happy', 120, { skinId: id, equipped: { head: 'bow-pink', face: 'glasses-round', neck: 'scarf-mint', held: 'brush-gold', outfit: 'color-lavender', nails: ROUND === 3 ? 'nails-dots' : 'nails-mint' } }), 'all 6 slots (dress-up test)'),
   );
   const extras: HTMLElement[] = [];
-  if (ROUND === 2) {
+  if (ROUND === 3) {
+    const checks = document.createElement('div');
+    checks.className = 'row';
+    const silhouette = (size: number): HTMLElement => {
+      const node = renderMascot('idle', size, { skinId: id });
+      node.style.filter = 'brightness(0)';
+      node.style.background = 'transparent';
+      return node;
+    };
+    const logo = (size: number, fg: string, bg: string, tile: boolean): HTMLElement => {
+      const box = document.createElement('span');
+      box.style.cssText = `display:inline-block;width:${size}px;height:${size}px;border-radius:${tile ? size * 0.22 : 0}px;background:${tile ? bg : 'transparent'}`;
+      const skin = getSkin(id);
+      box.innerHTML = `<svg viewBox="-8 -8 116 116" width="${size}" height="${size}" aria-hidden="true">${skin.logo ? skin.logo(fg, bg) : ''}</svg>`;
+      return box;
+    };
+    checks.append(
+      cell(silhouette(56), 'silhouette, 56 px'),
+      cell(silhouette(32), 'silhouette, 32 px'),
+      cell(logo(96, '#fff', '#ff5a87', true), 'app icon, 96 px'),
+      cell(logo(56, '#fff', '#ff5a87', true), 'app icon, 56 px'),
+      cell(logo(72, '#ff5a87', '#fff', false), 'one-colour logo'),
+    );
+    extras.push(checks);
+  }
+  if (ROUND >= 2) {
+    const nailIds = ROUND === 3 ? (['nails-french', 'nails-gradient', 'nails-dots'] as const) : (['nails-pink', 'nails-mint', 'nails-gold-glitter'] as const);
     const nails = document.createElement('div');
     nails.className = 'row';
     nails.append(
-      ...(['nails-pink', 'nails-mint', 'nails-gold-glitter'] as const).map((nailsId) =>
+      ...nailIds.map((nailsId) =>
         cell(renderMascot('happy', 100, { skinId: id, equipped: { nails: nailsId } }), `do Mai's nails: ${nailsId.replace('nails-', '').replace('-', ' ')}`),
       ),
     );
