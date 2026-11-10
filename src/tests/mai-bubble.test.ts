@@ -59,3 +59,25 @@ describe('mascot skin', () => {
     }
   });
 });
+
+describe('final art drops in as files (owner, 2026-11-10)', () => {
+  const art = {
+    id: 'mai-final',
+    images: { idle: '/mascot/mai/idle.svg', happy: '/mascot/mai/happy.png', proud: '/mascot/mai/proud.webp', sleepy: '/mascot/mai/sleepy.svg' },
+    anchors: { head: [50, 8], face: [50, 50], neck: [50, 76], hand: [82, 80] },
+    accessoryImages: { 'bow-pink': '/mascot/acc/bow.svg' },
+  };
+
+  it('accepts an image skin with per-mood files and accessory anchors', () => {
+    const parsed = parseMascotConfig({ ...structuredClone(MASCOT_CONFIG), imageSkins: [art] });
+    expect(parsed.imageSkins[0]).toMatchObject({ id: 'mai-final', anchors: { head: [50, 8] } });
+  });
+
+  it('refuses a missing idle image, an unknown mood, a bad file path or a bad anchor', () => {
+    const bad = (change: Record<string, unknown>) => () => parseMascotConfig({ ...structuredClone(MASCOT_CONFIG), imageSkins: [{ ...art, ...change }] });
+    expect(bad({ images: { happy: '/a.svg' } })).toThrow(/images\.idle/);
+    expect(bad({ images: { idle: '/a.svg', angry: '/b.svg' } })).toThrow(/not a mood/);
+    expect(bad({ images: { idle: 'javascript:alert(1)' } })).toThrow(/must be a \/path/);
+    expect(bad({ anchors: { ...art.anchors, head: [50, 200] } })).toThrow(/anchors\.head/);
+  });
+});
