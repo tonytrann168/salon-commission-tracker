@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { handleBestie, parseBestieOutput, parseBestieRequest } from '../api/bestie';
 import { BESTIE_CONFIG, parseBestieConfig } from '../game/bestie';
 import type { BestieConfig, DebriefRequest } from '../game/bestie';
-import { EMPTY_MEMORY, afterAnswer, afterDebrief, bestieLevel, parseStoredMemory, shouldAskQuestion } from '../game/bestie-memory';
+import { EMPTY_MEMORY, afterAnswer, afterDebrief, bestieLevel, currentStreak, greetingKind, nextStreak, parseStoredMemory, shouldAskQuestion } from '../game/bestie-memory';
+import { cleanPlayerName } from '../game/settings';
 
 /** Story 003: bestie config, memory, level, the question rule and the server function. No network, time or randomness. */
 
@@ -59,14 +60,14 @@ describe('bestie memory', () => {
     expect(parseStoredMemory(null, config)).toEqual(EMPTY_MEMORY);
     expect(parseStoredMemory('not json', config)).toEqual(EMPTY_MEMORY);
     expect(parseStoredMemory(JSON.stringify({ summary: 'Likes pink.', sessions: 3, xp: 40, lastQuestionAt: 1 }), config))
-      .toEqual({ summary: 'Likes pink.', sessions: 3, xp: 40, lastQuestionAt: 1 });
+      .toEqual({ ...EMPTY_MEMORY, summary: 'Likes pink.', sessions: 3, xp: 40, lastQuestionAt: 1 });
     expect(parseStoredMemory(JSON.stringify({ summary: 7, sessions: -2, xp: 1.5 }), config)).toEqual(EMPTY_MEMORY);
     expect(parseStoredMemory(JSON.stringify({ summary: 'x'.repeat(500) }), config).summary).toHaveLength(100);
   });
 
   it('counts a session and XP after a debrief, and marks a question', () => {
-    const after = afterDebrief({ ...EMPTY_MEMORY, sessions: 2, xp: 20 }, { summary: '  New notes. ', outcome: 'completed', asked: true }, config);
-    expect(after).toEqual({ summary: 'New notes.', sessions: 3, xp: 30, lastQuestionAt: 2 });
+    const after = afterDebrief({ ...EMPTY_MEMORY, sessions: 2, xp: 20 }, { summary: '  New notes. ', outcome: 'completed', asked: true, today: '2026-11-10' }, config);
+    expect(after).toEqual({ summary: 'New notes.', sessions: 3, xp: 30, lastQuestionAt: 2, lastDay: '2026-11-10', streak: 1, lastTough: false });
     const walked = afterDebrief(EMPTY_MEMORY, { summary: '', outcome: 'walked_out', asked: false }, config);
     expect(walked.xp).toBe(5);
     expect(walked.lastQuestionAt).toBe(-1);
@@ -159,5 +160,47 @@ describe('bestie server: handler', () => {
     const { fetchImpl } = fakeFetch(() => toolReply('whisper_hint', { hint: '' }));
     const result = await handleBestie({ kind: 'hint', level: 'some', language: 'en', memory: '', phase: 'service', mood: 50, transcript }, { ANTHROPIC_API_KEY: 'k' }, fetchImpl);
     expect(result).toMatchObject({ status: 502, body: { error: { code: 'invalid_model_output' } } });
+  });
+});
+
+describe('Mai is warm and personal (owner, 2026-11-10)', () => {
+  it('counts days in a row: same day keeps it, the next day adds one, a gap starts again', () => {
+    expect(nextStreak('', 0, '2026-11-10')).toBe(1);
+    expect(nextStreak('2026-11-10', 1, '2026-11-10')).toBe(1);
+    expect(nextStreak('2026-11-09', 2, '2026-11-10')).toBe(3);
+    expect(nextStreak('2026-10-31', 4, '2026-11-01')).toBe(5);
+    expect(nextStreak('2026-11-07', 5, '2026-11-10')).toBe(1);
+  });
+
+  it('only mentions a streak that is still alive (never a missed day)', () => {
+    const memory = { ...EMPTY_MEMORY, sessions: 4, lastDay: '2026-11-09', streak: 3 };
+    expect(currentStreak(memory, '2026-11-10')).toBe(3);
+    expect(currentStreak(memory, '2026-11-12')).toBe(0);
+    expect(greetingKind(memory, '2026-11-10')).toBe('streak');
+    expect(greetingKind(memory, '2026-11-12')).toBe('back');
+  });
+
+  it('greets a new friend first, and is gentle after a tough appointment', () => {
+    expect(greetingKind(EMPTY_MEMORY, '2026-11-10')).toBe('first');
+    const tough = afterDebrief({ ...EMPTY_MEMORY, sessions: 1 }, { summary: '', outcome: 'completed', asked: false, today: '2026-11-10', tough: true });
+    expect(tough.lastTough).toBe(true);
+    expect(greetingKind(tough, '2026-11-10')).toBe('tough');
+    expect(afterDebrief(EMPTY_MEMORY, { summary: '', outcome: 'walked_out', asked: false, today: '2026-11-10' }).lastTough).toBe(true);
+  });
+
+  it('keeps a player name to letters and simple punctuation, capped', () => {
+    expect(cleanPlayerName('  Lan  ')).toBe('Lan');
+    expect(cleanPlayerName('Ngọc Ánh')).toBe('Ngọc Ánh');
+    expect(cleanPlayerName('<script>Bo</script>')).toBe('scriptBoscript');
+    expect(cleanPlayerName('x'.repeat(50))).toHaveLength(30);
+  });
+
+  it('sends the name as data and asks for gentleness after a tough visit', async () => {
+    const { fetchImpl, calls } = fakeFetch(() => toolReply('give_debrief', { praise: 'p', tryNext: 't', question: '', memory: 'm' }));
+    await handleBestie({ ...debriefBody(), playerName: 'Lan<>' }, { ANTHROPIC_API_KEY: 'k' }, fetchImpl);
+    const sent = JSON.parse(String(calls[0]?.init.body));
+    expect(sent.messages[0].content).toContain("Player's name: Lan\n");
+    expect(sent.system[0].text).toContain('After a tough appointment');
+    expect(sent.system[0].text).toContain('supportive coach, not a fixer');
   });
 });

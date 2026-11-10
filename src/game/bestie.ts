@@ -82,6 +82,8 @@ export interface HintRequest {
   transcript: readonly Message[];
   /** The bestie's memory of past sessions (may be empty). */
   memory: string;
+  /** The player's name, if they gave one in Settings ('' or missing otherwise). */
+  playerName?: string;
 }
 
 /** The debrief after an appointment, built on the scorecard. */
@@ -102,6 +104,7 @@ export interface DebriefRequest {
   sessionNumber: number;
   /** Ask the player a "how would you handle..." question this time. */
   askQuestion: boolean;
+  playerName?: string;
 }
 
 /** The player's answer to the bestie's question. */
@@ -112,6 +115,7 @@ export interface AnswerRequest {
   question: string;
   answer: string;
   memory: string;
+  playerName?: string;
 }
 
 export type BestieRequest = HintRequest | DebriefRequest | AnswerRequest;

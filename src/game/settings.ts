@@ -42,6 +42,24 @@ export function setHintsEnabled(enabled: boolean): void {
   writeStored(HINTS_KEY, enabled ? 'on' : 'off');
 }
 
+const NAME_KEY = 'salon.playerName';
+/** Longest player name kept. */
+export const PLAYER_NAME_MAX = 30;
+
+/** Keep a name to letters, spaces and simple punctuation, trimmed and capped (it goes into Mai's prompts as data). */
+export function cleanPlayerName(raw: string): string {
+  return raw.normalize('NFC').replace(/[^\p{L}\p{M}\p{N} .'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, PLAYER_NAME_MAX);
+}
+
+/** The player's name for Mai to use ('' when not given). Owner, 2026-11-10. */
+export function getPlayerName(): string {
+  return cleanPlayerName(readStored(NAME_KEY) ?? '');
+}
+
+export function setPlayerName(name: string): void {
+  writeStored(NAME_KEY, cleanPlayerName(name));
+}
+
 const CORRECTIONS_KEY = 'salon.bestieCorrections';
 
 /** Whether the bestie whispers corrections after a player line (story 011). On unless the player turned it off. */

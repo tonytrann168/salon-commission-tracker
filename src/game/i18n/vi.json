@@ -166,5 +166,14 @@
   "mai.hint": "💡 Gợi ý cho em",
   "mai.notesCard": "{name} có lời nhắn cho em",
   "mai.notesTap": "Chạm để đọc",
-  "mai.notesHide": "Thu gọn"
+  "mai.notesHide": "Thu gọn",
+  "bestie.greetingFirstNamed": "Chào {player}! Chị là {name}, bạn thân của em ở tiệm. Mình cùng tập tiếng Anh nha!",
+  "bestie.greetingBackNamed": "{player} quay lại rồi! Sẵn sàng đón khách thứ {count} chưa? Có chị đây.",
+  "bestie.greetingTough": "Em quay lại rồi! Khách lần trước hơi khó. Ai cũng gặp vậy hết, mà em học nhanh lắm. Mình thử lại cùng nhau nha?",
+  "bestie.greetingToughNamed": "{player} quay lại rồi! Khách lần trước hơi khó. Ai cũng gặp vậy hết, mà em học nhanh lắm. Mình thử lại cùng nhau nha?",
+  "bestie.greetingStreak": "{days} ngày liên tiếp rồi! Chị thích tập với em lắm. Sẵn sàng đón khách thứ {count} chưa?",
+  "bestie.greetingStreakNamed": "{days} ngày liên tiếp rồi, {player}! Chị thích tập với em lắm. Sẵn sàng đón khách thứ {count} chưa?",
+  "settings.playerName": "Tên của em",
+  "settings.playerNameNote": "Mai dùng tên để chào em. Không bắt buộc, chỉ lưu trên điện thoại này.",
+  "settings.playerNamePlaceholder": "Ví dụ: Lan"
 }

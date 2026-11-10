@@ -7,6 +7,7 @@ import type { Tip } from '../mai-tips';
 import { renderMascot } from '../mascot';
 import type { MascotExpression } from '../mascot';
 import { readStored, writeStored } from '../safe-storage';
+import { getPlayerName } from '../settings';
 import { emitSound } from '../sound-events';
 import { TurnError } from '../types';
 import type { EnglishLevel, Message, Phase } from '../types';
@@ -165,7 +166,7 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
     hintBox.replaceChildren(el('p', 'chat-hint', t('bestie.thinking', { name: NAME })));
     const now = options.current();
     options.transport
-      .hint({ level: options.level, language: options.language, phase: now.phase, mood: now.mood, transcript: now.transcript, memory: loadMemory().summary })
+      .hint({ level: options.level, language: options.language, phase: now.phase, mood: now.mood, transcript: now.transcript, memory: loadMemory().summary, playerName: getPlayerName() })
       .then(
         ({ hint }) => {
           if (mine !== hintRequest) return;

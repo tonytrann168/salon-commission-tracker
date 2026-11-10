@@ -3,7 +3,7 @@ import { loadAudioSettings, saveAudioSettings } from '../audio';
 import type { AudioSettings } from '../audio';
 import { BESTIE_CONFIG } from '../bestie';
 import { LEARNING_CONFIG } from '../learning/corrections';
-import { getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, chooseEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
+import { getPlayerName, setPlayerName, PLAYER_NAME_MAX, getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, chooseEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
 import { bilingual, el } from './dom';
 import { createLevelPicker } from './level-picker';
 import './level-picker.css';
@@ -20,6 +20,22 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void): HTM
   const render = (): void => {
     const title = el('h1', '', t('settings.title'));
     title.id = 'settings-title';
+
+    // Mai greets the player by name (owner, 2026-11-10). Optional; saved only on this phone.
+    const nameRow = el('label', 'setting-row');
+    const nameText = el('span', 'setting-text');
+    nameText.append(el('strong', '', t('settings.playerName')), el('span', 'setting-note', t('settings.playerNameNote')));
+    const nameInput = el('input', 'help-input setting-name');
+    nameInput.type = 'text';
+    nameInput.maxLength = PLAYER_NAME_MAX;
+    nameInput.autocomplete = 'given-name';
+    nameInput.placeholder = t('settings.playerNamePlaceholder');
+    nameInput.value = getPlayerName();
+    nameInput.addEventListener('change', () => {
+      setPlayerName(nameInput.value);
+      nameInput.value = getPlayerName();
+    });
+    nameRow.append(nameText, nameInput);
 
     const levelTitle = el('h2', '', t('settings.levelSection'));
     const picker = createLevelPicker({
@@ -105,7 +121,7 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void): HTM
     back.type = 'button';
     back.addEventListener('click', onBack);
 
-    screen.replaceChildren(title, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, back);
+    screen.replaceChildren(title, nameRow, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, back);
   };
 
   render();

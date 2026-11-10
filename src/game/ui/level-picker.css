@@ -15,7 +15,7 @@
 .level-card:focus-visible, .screen .chat-button:focus-visible { outline: 3px solid #3b2a33; outline-offset: 2px; }
 .screen .chat-button { align-self: stretch; text-align: center; }
 .screen .chat-button.secondary, .chat-button.secondary { color: #3b2a33; background: #f1dde6; }
-.setting-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 12px 16px; background: #fff; border-radius: 20px; font-size: 16px; }
+.setting-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; min-height: 56px; padding: 12px 16px; background: #fff; border-radius: 20px; font-size: 16px; }
 .setting-row .bilingual { flex: 1; }
 .setting-row input[type='checkbox'] { width: 28px; height: 28px; flex: none; accent-color: #ff5c9a; }
 .setting-text { flex: 1; display: flex; flex-direction: column; gap: 6px; }
@@ -26,3 +26,4 @@
 .sound-mute { display: flex; align-items: center; gap: 6px; font-size: 14px; flex: none; }
 .sound-mute input { width: 24px; height: 24px; accent-color: #ff5c9a; }
 .sound-note { margin: -8px 4px 0; }
+.setting-row .setting-name { flex: 1 1 140px; min-width: 0; min-height: 44px; }

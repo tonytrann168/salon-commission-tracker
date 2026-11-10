@@ -166,5 +166,14 @@
   "mai.hint": "💡 Give me a hint",
   "mai.notesCard": "{name} has notes for you",
   "mai.notesTap": "Tap to read",
-  "mai.notesHide": "Hide"
+  "mai.notesHide": "Hide",
+  "bestie.greetingFirstNamed": "Hi {player}! I'm {name}, your bestie at the salon. Let's practice English together!",
+  "bestie.greetingBackNamed": "Welcome back, {player}! Ready for client number {count}? I'm right here.",
+  "bestie.greetingTough": "Welcome back! The last client was a tough one. That happens to everyone, and you're learning fast. Ready to try again together?",
+  "bestie.greetingToughNamed": "Welcome back, {player}! The last client was a tough one. That happens to everyone, and you're learning fast. Ready to try again together?",
+  "bestie.greetingStreak": "{days} days in a row! I love practising with you. Ready for client number {count}?",
+  "bestie.greetingStreakNamed": "{days} days in a row, {player}! I love practising with you. Ready for client number {count}?",
+  "settings.playerName": "Your name",
+  "settings.playerNameNote": "Mai uses it to greet you. Optional, saved only on this phone.",
+  "settings.playerNamePlaceholder": "For example: Lan"
 }

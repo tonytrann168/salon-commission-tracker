@@ -1,6 +1,7 @@
 import { BESTIE_CONFIG } from '../bestie';
 import type { BestieLanguage, BestieTransport } from '../bestie';
-import { afterAnswer, afterDebrief, bestieLevel, loadMemory, saveMemory, shouldAskQuestion } from '../bestie-memory';
+import { afterAnswer, afterDebrief, bestieLevel, currentStreak, greetingKind, loadMemory, localDay, saveMemory, shouldAskQuestion } from '../bestie-memory';
+import { getPlayerName } from '../settings';
 import type { BestieMemory } from '../bestie-memory';
 import { t } from '../i18n';
 import type { ScoreResult } from '../scoring';
@@ -29,8 +30,18 @@ function button(label: string, className = 'chat-button'): HTMLButtonElement {
 }
 
 /** The bestie's greeting bubble for the title screen: a first hello, or welcome back with the client count. */
-export function createBestieGreeting(memory: BestieMemory = loadMemory()): HTMLElement {
-  const text = memory.sessions === 0 ? t('bestie.greetingFirst', { name: NAME }) : t('bestie.greetingBack', { count: memory.sessions + 1 });
+export function createBestieGreeting(memory: BestieMemory = loadMemory(), player: string = getPlayerName()): HTMLElement {
+  // Warm and personal (owner, 2026-11-10): her name for the player, a streak when there is one (a missed day is never
+  // mentioned), and a gentle welcome after a tough appointment.
+  const today = localDay();
+  const kind = greetingKind(memory, today);
+  const params = { name: NAME, player, count: memory.sessions + 1, days: currentStreak(memory, today) };
+  const named = player !== '';
+  const text =
+    kind === 'first' ? t(named ? 'bestie.greetingFirstNamed' : 'bestie.greetingFirst', params)
+    : kind === 'tough' ? t(named ? 'bestie.greetingToughNamed' : 'bestie.greetingTough', params)
+    : kind === 'streak' ? t(named ? 'bestie.greetingStreakNamed' : 'bestie.greetingStreak', params)
+    : t(named ? 'bestie.greetingBackNamed' : 'bestie.greetingBack', params);
   const bubble = el('p', 'bestie-bubble bestie-greeting', text);
   bubble.setAttribute('aria-live', 'polite');
   return bubble;
@@ -102,7 +113,7 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
       input.disabled = true;
       status.textContent = t('bestie.thinking', { name: NAME });
       const memory = loadMemory();
-      transport.answer({ level, language, question, answer, memory: memory.summary }).then(
+      transport.answer({ level, language, question, answer, memory: memory.summary, playerName: getPlayerName() }).then(
         (reply) => {
           const before = bestieLevel(memory.xp);
           const next = afterAnswer(memory, reply.memory);
@@ -134,11 +145,11 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
       .debrief({
         level, language, outcome, transcript, review: grading.review, skills: grading.skills, english: grading.english,
         stars: score.stars, tip: score.tip, englishScore: score.englishScore,
-        memory: memory.summary, sessionNumber: memory.sessions + 1, askQuestion,
+        memory: memory.summary, sessionNumber: memory.sessions + 1, askQuestion, playerName: getPlayerName(),
       })
       .then(
         (debrief) => {
-          const next = afterDebrief(memory, { summary: debrief.memory, outcome, asked: debrief.question !== null });
+          const next = afterDebrief(memory, { summary: debrief.memory, outcome, asked: debrief.question !== null, tough: outcome === 'walked_out' || score.stars <= 2 });
           saveMemory(next);
           body.replaceChildren(line(t('bestie.praise'), debrief.praise), line(t('bestie.tryNext'), debrief.tryNext));
           showLevel(bestieLevel(memory.xp), next);
