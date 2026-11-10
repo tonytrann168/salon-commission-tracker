@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { handleClientTurn, parseClientTurnRequest, parseModelOutput } from '../api/client-turn';
-import { handleTranslate, parseTranslateOutput, parseTranslateRequest, translateSystemPrompt } from '../api/translate';
+import { handleClientTurn, parseClientTurnRequest, parseModelOutput } from '../server/handlers/client-turn';
+import { handleTranslate, parseTranslateOutput, parseTranslateRequest, translateSystemPrompt } from '../server/handlers/translate';
 import {
   ENGLISH_LEVELS_CONFIG,
   buildWordTiles,

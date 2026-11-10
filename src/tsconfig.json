@@ -10,5 +10,5 @@
     "isolatedModules": true,
     "types": ["vite/client", "node"]
   },
-  "include": ["main.ts", "vite.config.ts", "api", "game", "tests"]
+  "include": ["main.ts", "vite.config.ts", "server", "game", "tests"]
 }

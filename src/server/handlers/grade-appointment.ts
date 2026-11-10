@@ -1,6 +1,6 @@
-import { DEFAULT_CLIENT } from '../game/clients/default-client';
-import { MOOD_MAX, MOOD_MIN } from '../game/mood';
-import { ENGLISH_KEYS, ENGLISH_LEVELS, SKILL_KEYS } from '../game/types';
+import { DEFAULT_CLIENT } from '../../game/clients/default-client';
+import { MOOD_MAX, MOOD_MIN } from '../../game/mood';
+import { ENGLISH_KEYS, ENGLISH_LEVELS, SKILL_KEYS } from '../../game/types';
 import type {
   ClientPersona,
   EnglishLevel,
@@ -10,7 +10,7 @@ import type {
   Message,
   SkillScores,
   TurnErrorCode,
-} from '../game/types';
+} from '../../game/types';
 
 /**
  * Server function: grades a finished appointment with one Claude call (strict tool, tool_choice auto: this model

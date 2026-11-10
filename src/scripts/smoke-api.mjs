@@ -13,12 +13,12 @@ if (!env.ANTHROPIC_API_KEY) {
 }
 
 const vite = await createServer({ root, configFile: false, logLevel: 'error', server: { middlewareMode: true }, appType: 'custom' });
-const { handleClientTurn } = await vite.ssrLoadModule('/api/client-turn.ts');
-const { handleTranslate } = await vite.ssrLoadModule('/api/translate.ts');
-const { handleGradeAppointment } = await vite.ssrLoadModule('/api/grade-appointment.ts');
+const { handleClientTurn } = await vite.ssrLoadModule('/server/handlers/client-turn.ts');
+const { handleTranslate } = await vite.ssrLoadModule('/server/handlers/translate.ts');
+const { handleGradeAppointment } = await vite.ssrLoadModule('/server/handlers/grade-appointment.ts');
 const { DEFAULT_CLIENT } = await vite.ssrLoadModule('/game/clients/default-client.ts');
-const { handleBestie } = await vite.ssrLoadModule('/api/bestie.ts');
-const { handleCorrections } = await vite.ssrLoadModule('/api/corrections.ts');
+const { handleBestie } = await vite.ssrLoadModule('/server/handlers/bestie.ts');
+const { handleCorrections } = await vite.ssrLoadModule('/server/handlers/corrections.ts');
 
 const transcript = [
   { role: 'client', content: DEFAULT_CLIENT.openingLine },

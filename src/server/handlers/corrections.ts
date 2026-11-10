@@ -1,9 +1,9 @@
-import type { BestieLanguage } from '../game/bestie';
-import { BESTIE_CONFIG } from '../game/bestie';
-import { LEARNING_CONFIG, TOPICS } from '../game/learning/corrections';
-import type { LineCheckRequest, LineCheckResult, Phrase, ReviewLine, ReviewRequest, ReviewResult, Topic } from '../game/learning/corrections';
-import { ENGLISH_LEVELS, PHASES } from '../game/types';
-import type { EnglishLevel, Message, TurnErrorCode } from '../game/types';
+import type { BestieLanguage } from '../../game/bestie';
+import { BESTIE_CONFIG } from '../../game/bestie';
+import { LEARNING_CONFIG, TOPICS } from '../../game/learning/corrections';
+import type { LineCheckRequest, LineCheckResult, Phrase, ReviewLine, ReviewRequest, ReviewResult, Topic } from '../../game/learning/corrections';
+import { ENGLISH_LEVELS, PHASES } from '../../game/types';
+import type { EnglishLevel, Message, TurnErrorCode } from '../../game/types';
 
 /**
  * Server function for the learning loop: checks one player line for a whispered correction, or reviews a finished

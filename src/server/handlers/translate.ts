@@ -1,5 +1,5 @@
-import { ENGLISH_LEVELS } from '../game/types';
-import type { EnglishLevel, TranslateDirection, TurnErrorCode } from '../game/types';
+import { ENGLISH_LEVELS } from '../../game/types';
+import type { EnglishLevel, TranslateDirection, TurnErrorCode } from '../../game/types';
 
 /**
  * Server function: translates one line between English and Vietnamese via the Anthropic Messages API (forced tool use).

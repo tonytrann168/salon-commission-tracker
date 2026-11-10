@@ -1,8 +1,8 @@
-import { DEFAULT_CLIENT } from '../game/clients/default-client';
-import { ENGLISH_LEVELS_CONFIG } from '../game/english-level';
-import { MAX_MOOD_DELTA, MIN_MOOD_DELTA } from '../game/mood';
-import { ENGLISH_LEVELS, PHASES } from '../game/types';
-import type { ClientPersona, ClientTurn, EnglishLevel, Message, Phase, TurnErrorCode } from '../game/types';
+import { DEFAULT_CLIENT } from '../../game/clients/default-client';
+import { ENGLISH_LEVELS_CONFIG } from '../../game/english-level';
+import { MAX_MOOD_DELTA, MIN_MOOD_DELTA } from '../../game/mood';
+import { ENGLISH_LEVELS, PHASES } from '../../game/types';
+import type { ClientPersona, ClientTurn, EnglishLevel, Message, Phase, TurnErrorCode } from '../../game/types';
 
 /**
  * Server function: plays the client via the Anthropic Messages API.

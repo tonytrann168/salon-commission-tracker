@@ -1,11 +1,11 @@
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { defineConfig, loadEnv } from 'vite';
 import type { Plugin } from 'vite';
-import { handleClientTurn } from './api/client-turn';
-import { handleGradeAppointment } from './api/grade-appointment';
-import { handleBestie } from './api/bestie';
-import { handleCorrections } from './api/corrections';
-import { handleTranslate } from './api/translate';
+import { handleClientTurn } from './server/handlers/client-turn';
+import { handleGradeAppointment } from './server/handlers/grade-appointment';
+import { handleBestie } from './server/handlers/bestie';
+import { handleCorrections } from './server/handlers/corrections';
+import { handleTranslate } from './server/handlers/translate';
 
 type ApiHandler = (
   body: unknown,

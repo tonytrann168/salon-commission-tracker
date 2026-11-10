@@ -1,4 +1,4 @@
-import { BESTIE_CONFIG } from '../game/bestie';
+import { BESTIE_CONFIG } from '../../game/bestie';
 import type {
   AnswerRequest,
   AnswerResult,
@@ -8,10 +8,10 @@ import type {
   DebriefResult,
   HintRequest,
   HintResult,
-} from '../game/bestie';
-import { MOOD_MAX, MOOD_MIN } from '../game/mood';
-import { ENGLISH_KEYS, ENGLISH_LEVELS, PHASES, SKILL_KEYS } from '../game/types';
-import type { EnglishLevel, Message, TurnErrorCode } from '../game/types';
+} from '../../game/bestie';
+import { MOOD_MAX, MOOD_MIN } from '../../game/mood';
+import { ENGLISH_KEYS, ENGLISH_LEVELS, PHASES, SKILL_KEYS } from '../../game/types';
+import type { EnglishLevel, Message, TurnErrorCode } from '../../game/types';
 
 /**
  * Server function for the signature bestie: a whispered hint, the post-appointment debrief, or a reply to the

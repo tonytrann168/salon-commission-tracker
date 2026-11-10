@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { handleBestie, parseBestieOutput, parseBestieRequest } from '../api/bestie';
+import { handleBestie, parseBestieOutput, parseBestieRequest } from '../server/handlers/bestie';
 import { BESTIE_CONFIG, parseBestieConfig } from '../game/bestie';
 import type { BestieConfig, DebriefRequest } from '../game/bestie';
 import { EMPTY_MEMORY, afterAnswer, afterDebrief, bestieLevel, currentStreak, greetingKind, nextStreak, parseStoredMemory, shouldAskQuestion } from '../game/bestie-memory';

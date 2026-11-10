@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { handleCorrections, parseCorrectionsOutput, parseCorrectionsRequest } from '../api/corrections';
+import { handleCorrections, parseCorrectionsOutput, parseCorrectionsRequest } from '../server/handlers/corrections';
 import { ENGLISH_LEVELS_CONFIG, parseEnglishLevelsConfig } from '../game/english-level';
 import en from '../game/i18n/en.json';
 import { LEARNING_CONFIG, TOPICS, parseLearningConfig, shouldCheckLine } from '../game/learning/corrections';

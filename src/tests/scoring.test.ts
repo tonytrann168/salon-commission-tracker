@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { handleGradeAppointment, parseGradingOutput, parseGradingRequest } from '../api/grade-appointment';
+import { handleGradeAppointment, parseGradingOutput, parseGradingRequest } from '../server/handlers/grade-appointment';
 import { SCORING_CONFIG, parseScoringConfig, scoreAppointment } from '../game/scoring';
 import type { ScoreInput } from '../game/scoring';
 import { ENGLISH_KEYS, SKILL_KEYS } from '../game/types';
