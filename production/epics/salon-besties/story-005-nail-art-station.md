@@ -71,7 +71,7 @@
 **Story Type**: Visual/Feel
 **Required evidence**: a retained screenshot in `production/qa/evidence/` + sign-off in `production/qa/evidence/nail-art-station-evidence.md`
 
-**Status**: [x] `src/tests/nail-art-match.test.ts` (14) + `production/qa/evidence/story-005-nail-art-station/` (en/vi 320). [ ] 60 fps on a real phone: owner playtest.
+**Status**: [x] `src/tests/nail-art-match.test.ts` (12) + `production/qa/evidence/story-005-nail-art-station/` (en/vi 320). [ ] 60 fps on a real phone: owner playtest.
 
 ---
 
