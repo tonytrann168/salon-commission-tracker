@@ -19,6 +19,7 @@ import { openPracticeSheet, practiceButton } from './practice-sheet';
 import type { VoiceIO } from '../voice';
 import { createPortraitZone } from './portrait-zone';
 import { emitSound } from '../sound-events';
+import { createScrollFollower, fitToVisualViewport } from './scroll-follow';
 import { startTextReveal } from './text-reveal';
 import type { TextReveal } from './text-reveal';
 import './chat-panel.css';
@@ -176,7 +177,13 @@ export function createChatPanel(
     : null;
   if (mic) form.insertBefore(mic.element, sendButton);
 
-  root.append(top, log, errorBox, resultsBox, voiceStatus, form, announcer);
+  // Only the message list scrolls (the header and portraits stay put), and it follows the conversation.
+  const logWrap = el('div', 'chat-log-wrap');
+  const follower = createScrollFollower(log, { reducedMotion: () => reducedMotion.matches });
+  logWrap.append(log, follower.pill);
+  const unfit = fitToVisualViewport(root);
+
+  root.append(top, logWrap, errorBox, resultsBox, voiceStatus, form, announcer);
   host.appendChild(root);
 
   let latest = initial;
@@ -210,11 +217,9 @@ export function createChatPanel(
     const cached = translations.peek(text);
     if (cached !== undefined) {
       // A translation that lands under the newest line would push it below the fold: keep the chat scrolled to the end.
-      const atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 8;
       const translated = el('span', 'chat-translation-text', cached);
       translated.lang = 'vi';
       node.box.replaceChildren(translated);
-      if (atEnd || index === latest.transcript.length - 1) log.scrollTop = log.scrollHeight;
       return;
     }
     if (translationStatus.get(index) === 'failed') {
@@ -250,7 +255,7 @@ export function createChatPanel(
   /** Swap the chat for the results area (once), after the final line is fully shown. */
   const showEnd = (show: boolean): void => {
     resultsBox.classList.toggle('hidden', !show);
-    log.classList.toggle('hidden', show);
+    logWrap.classList.toggle('hidden', show);
     form.classList.toggle('hidden', show);
     if (show && destroyResults === null && latest.result) destroyResults = portraits.onEnded(resultsBox, latest.result);
   };
@@ -282,9 +287,7 @@ export function createChatPanel(
       node,
       text,
       EXPRESSION_CONFIG.talking,
-      () => {
-        log.scrollTop = log.scrollHeight;
-      },
+      () => undefined,
       () => {
         shown.removeAttribute('aria-hidden');
         bubble.classList.remove('revealing');
@@ -366,7 +369,6 @@ export function createChatPanel(
       bubbles.push(typing);
     }
     log.replaceChildren(...bubbles);
-    log.scrollTop = log.scrollHeight;
     clientNodes.forEach((_, index) => refreshTranslation(index));
     const speakingNode = clientNodes.get(speakingIndex);
     const speakingLine = lines.get(speakingIndex);
@@ -467,6 +469,8 @@ export function createChatPanel(
   return {
     setBestieExpression: zone.setBestieExpression,
     destroy() {
+      follower.destroy();
+      unfit();
       mic?.stop();
       voice?.io.cancelSpeech();
       unsubscribe();

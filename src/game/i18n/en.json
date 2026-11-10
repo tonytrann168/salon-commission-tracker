@@ -157,5 +157,6 @@
   "settings.sfx": "Sound effects",
   "settings.mute": "Mute",
   "settings.volumeLabel": "{name} volume",
-  "settings.soundNote": "Sound starts after your first tap. Music goes quiet while the client speaks."
+  "settings.soundNote": "Sound starts after your first tap. Music goes quiet while the client speaks.",
+  "chat.newMessage": "New message ↓"
 }

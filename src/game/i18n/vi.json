@@ -157,5 +157,6 @@
   "settings.sfx": "Hiệu ứng âm thanh",
   "settings.mute": "Tắt tiếng",
   "settings.volumeLabel": "Âm lượng {name}",
-  "settings.soundNote": "Âm thanh bắt đầu sau lần chạm đầu tiên. Nhạc nhỏ lại khi khách nói."
+  "settings.soundNote": "Âm thanh bắt đầu sau lần chạm đầu tiên. Nhạc nhỏ lại khi khách nói.",
+  "chat.newMessage": "Tin nhắn mới ↓"
 }
