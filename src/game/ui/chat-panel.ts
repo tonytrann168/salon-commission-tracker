@@ -11,7 +11,8 @@ import { t } from '../i18n';
 import { el } from './dom';
 import { createMaiBubble } from './mai-bubble';
 import { createNailStation, nailsNote } from './nail-station-panel';
-import type { NailDesign, NailRequest } from '../nail-art/design';
+import type { NailDesign, NailRequest, PaletteColor } from '../nail-art/design';
+import type { StationTools } from '../nail-art/station';
 import type { MatchResult } from '../nail-art/match';
 import type { BestieLanguage, BestieTransport } from '../bestie';
 import { LEARNING_CONFIG, shouldCheckLine } from '../learning/corrections';
@@ -75,6 +76,9 @@ export function createChatPanel(
       onNote: (note: string | undefined) => void;
       /** Finished (Done, or the appointment ended): the design and its match. */
       onDone: (design: NailDesign, result: MatchResult) => void;
+      /** Story 007: bought polishes and upgraded tools. */
+      palette?: PaletteColor[];
+      tools?: StationTools;
     };
     /** Voice in and out (story 004): the mic button, the client speaking aloud, and practising the last line. */
     voice?: { io: VoiceIO; clientId: string; speakReplies: boolean; onSpeakerChange: (on: boolean) => void };
@@ -173,6 +177,8 @@ export function createChatPanel(
         zone: zone.element,
         layer: portraits.layer,
         request: nailArt.request,
+        ...(nailArt.palette ? { palette: nailArt.palette } : {}),
+        ...(nailArt.tools ? { tools: nailArt.tools } : {}),
         maiSide: () => (mai ? ((mai.element.dataset.side as 'left' | 'right' | undefined) ?? 'right') : null),
         onChange: (design) => nailArt.onNote(nailsNote(design, null)),
         onDone: (design, result) => {

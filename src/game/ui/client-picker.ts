@@ -18,6 +18,11 @@ export interface ClientPickerOptions {
   onBack: () => void;
   /** The client's real placeholder face (neutral), as an image URL; the colour avatar shows until it arrives. */
   faceImage?: (client: ClientPersona) => Promise<string | null>;
+  /** Story 007: difficulties open at the player's rank (default: all), and the line for a locked one. */
+  unlocked?: readonly Difficulty[];
+  lockedLine?: (difficulty: Difficulty) => string;
+  /** Story 007: today's challenge client, whether it's done, and the live streak. */
+  daily?: { client: ClientPersona; done: boolean; streak: number; onPick: () => void };
 }
 
 const DIFFICULTY_KEY = 'salon.pickerDifficulty';
@@ -68,9 +73,28 @@ export function createClientPicker(host: HTMLElement, options: ClientPickerOptio
   back.type = 'button';
   back.addEventListener('click', options.onBack);
   actions.append(random, shift);
+  const isOpen = (d: Difficulty): boolean => !options.unlocked || options.unlocked.includes(d);
+
+  // Today's challenge (story 007): one client a day; finishing it keeps the streak going.
+  const daily = options.daily ? el('button', options.daily.done ? 'picker-daily done' : 'picker-daily') : null;
+  if (daily && options.daily) {
+    const { client, done, streak } = options.daily;
+    daily.type = 'button';
+    const words = el('span', 'picker-words');
+    words.append(
+      el('span', 'picker-daily-label', done ? t('daily.doneLabel') : t('daily.label')),
+      el('strong', '', client.name),
+      el('span', 'picker-line', streak > 0 ? t('daily.streak', { days: streak }) : t('daily.start')),
+    );
+    daily.append(avatar(client, options.faceImage), words);
+    daily.setAttribute('aria-label', done ? t('daily.doneAria', { name: client.name }) : t('daily.aria', { name: client.name }));
+    daily.disabled = done;
+    daily.addEventListener('click', () => options.daily?.onPick());
+  }
 
   const tabButtons = DIFFICULTIES.map((d) => {
-    const tab = el('button', `picker-tab ${d}`, t(`picker.${d}`));
+    const tab = el('button', isOpen(d) ? `picker-tab ${d}` : `picker-tab ${d} locked`, t(`picker.${d}`));
+    if (!isOpen(d)) tab.setAttribute('aria-label', t('picker.lockedTab', { name: t(`picker.${d}`) }));
     tab.type = 'button';
     tab.setAttribute('role', 'tab');
     tab.addEventListener('click', () => {
@@ -88,6 +112,13 @@ export function createClientPicker(host: HTMLElement, options: ClientPickerOptio
 
   function draw(): void {
     tabButtons.forEach((tab, index) => tab.setAttribute('aria-selected', String(DIFFICULTIES[index] === difficulty)));
+    const open = isOpen(difficulty);
+    random.disabled = !open;
+    shift.disabled = !open;
+    if (!open) {
+      list.replaceChildren(el('p', 'picker-locked', options.lockedLine?.(difficulty) ?? ''));
+      return;
+    }
     list.replaceChildren(
       ...clientsByDifficulty(difficulty).map((client) => {
         const card = el('button', 'picker-card');
@@ -103,7 +134,7 @@ export function createClientPicker(host: HTMLElement, options: ClientPickerOptio
   }
   draw();
 
-  screen.append(title, tabs, list, actions, back);
+  screen.append(title, ...(daily ? [daily] : []), tabs, list, actions, back);
   host.appendChild(screen);
   return screen;
 }

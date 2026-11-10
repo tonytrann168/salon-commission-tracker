@@ -1,11 +1,11 @@
 import type { Container } from 'pixi.js';
 import { getLanguage, t } from '../i18n';
 import { NAIL_ART_CONFIG, emptyDesign } from '../nail-art/design';
-import type { NailDesign, NailRequest, NailShape, StickerKind } from '../nail-art/design';
+import type { NailDesign, NailRequest, NailShape, PaletteColor, StickerKind } from '../nail-art/design';
 import { describeDesign, matchDesign } from '../nail-art/match';
 import type { MatchResult } from '../nail-art/match';
 import { SHAPES, createStationView } from '../nail-art/station';
-import type { StationTool } from '../nail-art/station';
+import type { StationTool, StationTools } from '../nail-art/station';
 import { emitSound } from '../sound-events';
 import { el } from './dom';
 import './nail-station.css';
@@ -28,6 +28,9 @@ export interface NailStationOptions {
   onChange: (design: NailDesign) => void;
   /** The player tapped Done. */
   onDone: (design: NailDesign, result: MatchResult) => void;
+  /** Story 007: the colours on offer (free ones plus bought shop polishes) and the tool sizes (shop upgrades). */
+  palette?: PaletteColor[];
+  tools?: StationTools;
 }
 
 export interface NailStation {
@@ -60,7 +63,8 @@ function shapeIcon(shape: NailShape): string {
 const HINT_MS = 3000;
 
 export function createNailStation(options: NailStationOptions): NailStation {
-  const view = createStationView(emptyDesign(SHAPES[1] ?? 'round'));
+  const view = createStationView(emptyDesign(SHAPES[1] ?? 'round'), options.tools);
+  const palette = options.palette ?? NAIL_ART_CONFIG.palette.filter((colour) => !colour.shop);
   options.layer.addChild(view.container);
   view.container.visible = false;
   let design = emptyDesign(SHAPES[1] ?? 'round');
@@ -139,7 +143,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
       selectTool('sticker');
     }),
   };
-  const swatches = NAIL_ART_CONFIG.palette.map((color) => {
+  const swatches = palette.map((color) => {
     const swatch = button('', 'station-swatch', () => {
       if (tool === 'gradient') setDesign({ ...design, gradient: design.gradient === color.id ? null : color.id });
       else {
@@ -184,7 +188,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     shapeButtons.forEach((node, index) => node.setAttribute('aria-pressed', String(SHAPES[index] === design.shape)));
     (Object.keys(toolButtons) as StationTool[]).forEach((key) => toolButtons[key].setAttribute('aria-pressed', String(key === tool)));
     swatches.forEach((node, index) => {
-      const id = NAIL_ART_CONFIG.palette[index]?.id;
+      const id = palette[index]?.id;
       node.setAttribute('aria-pressed', String(tool === 'gradient' ? id === design.gradient : id === design.base));
     });
     toolbar.querySelectorAll('button').forEach((node) => {

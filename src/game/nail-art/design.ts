@@ -15,6 +15,8 @@ export interface PaletteColor {
   id: string;
   hex: string;
   name: { en: string; vi: string };
+  /** Story 007: sold in the shop; in the station only once bought. */
+  shop?: boolean;
 }
 
 /** One finger, in hand units: the nail's centre, the finger's lean (degrees, 0 = straight up), the nail's size. */
@@ -104,7 +106,8 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
   const parsedPalette = palette.map((item, index): PaletteColor => {
     if (!isRecord(item) || typeof item.id !== 'string' || typeof item.hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(item.hex)) return fail(`"palette[${index}]" needs an id and a #rrggbb hex`);
     if (!isRecord(item.name) || typeof item.name.en !== 'string' || typeof item.name.vi !== 'string') return fail(`"palette[${index}].name" needs en and vi`);
-    return { id: item.id, hex: item.hex, name: { en: item.name.en, vi: item.name.vi } };
+    if (item.shop !== undefined && typeof item.shop !== 'boolean') return fail(`"palette[${index}].shop" must be true or false`);
+    return { id: item.id, hex: item.hex, name: { en: item.name.en, vi: item.name.vi }, ...(item.shop ? { shop: true } : {}) };
   });
   const grid = isRecord(raw.grid) ? raw.grid : fail('"grid" must be an object');
   const weights = isRecord(raw.matchWeights) ? raw.matchWeights : fail('"matchWeights" must be an object');

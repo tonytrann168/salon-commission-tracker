@@ -1,0 +1,41 @@
+/* Story 007: shop, profile, progress panel and celebrations. */
+.shop-wallet { margin: 0; font-size: 18px; font-weight: 700; }
+.shop-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 2px #f6d5e3; }
+.shop-item.owned { box-shadow: 0 0 0 2px #b9e6c9; }
+.shop-swatch { flex: none; width: 36px; height: 36px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7), 0 0 0 1px #d9b8c6; }
+.shop-icon { flex: none; width: 36px; font-size: 26px; text-align: center; }
+.shop-words { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.shop-about { font-size: 13px; color: #5b4a53; }
+.shop-buy { flex: none; min-width: 72px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 20px; background: #ff5c9a; color: #fff; font: 700 15px system-ui, sans-serif; }
+.shop-buy:disabled { background: #f1dde6; color: #7a6871; }
+.shop-item.owned .shop-buy:disabled { background: #e3f6ea; color: #1f8a4c; }
+.results-section .shop-item + .shop-item { margin-top: 8px; }
+.rank-box { display: flex; flex-direction: column; gap: 6px; }
+.rank-name { font-size: 20px; }
+.rank-bar { height: 12px; border-radius: 6px; background: #f1dde6; overflow: hidden; }
+.rank-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #ff8fb8, #ff5c9a); }
+.rank-label { font-size: 13px; color: #5b4a53; }
+.profile-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.profile-stat { display: flex; flex-direction: column; padding: 10px 12px; border-radius: 14px; background: #fff; box-shadow: 0 0 0 2px #f6d5e3; }
+.profile-stat strong { font-size: 20px; }
+.profile-stat span { font-size: 13px; color: #5b4a53; }
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.badge { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 8px; border-radius: 14px; background: #f7eef2; color: #7a6871; text-align: center; }
+.badge.earned { background: #fff; color: #3b2a33; box-shadow: 0 0 0 2px #ffc4da; }
+.badge-icon { font-size: 28px; filter: grayscale(1); opacity: 0.45; }
+.badge.earned .badge-icon { filter: none; opacity: 1; }
+.badge strong { font-size: 14px; }
+.badge-goal { font-size: 12px; }
+.progress-gains { margin: 0; font-weight: 700; }
+.progress-streak { margin: 0; color: #c0245f; font-weight: 700; }
+.celebration { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(59, 42, 51, 0.45); }
+.celebration-card { position: relative; width: min(320px, 100%); box-sizing: border-box; padding: 24px 20px 18px; border-radius: 24px; background: #fff; text-align: center; display: flex; flex-direction: column; gap: 10px; animation: celebrate-pop 0.35s ease-out; }
+.celebration-card h2 { margin: 0; font-size: 20px; }
+.celebration-card p { margin: 0; color: #5b4a53; }
+.celebration-icon { font-size: 52px; line-height: 1; }
+.celebration-icon.many { font-size: 34px; letter-spacing: 4px; overflow-wrap: anywhere; }
+.celebration-burst { position: absolute; left: 50%; top: 56px; width: 0; height: 0; pointer-events: none; }
+.confetti { position: absolute; width: 8px; height: 12px; border-radius: 2px; background: hsl(var(--hue) 85% 65%); transform: rotate(var(--angle)) translateY(0); opacity: 0; animation: confetti-fly 0.9s ease-out forwards; }
+@keyframes celebrate-pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes confetti-fly { 0% { opacity: 1; transform: rotate(var(--angle)) translateY(0); } 100% { opacity: 0; transform: rotate(var(--angle)) translateY(-90px); } }
+@media (prefers-reduced-motion: reduce) { .celebration-card, .confetti { animation: none; } .confetti { display: none; } }

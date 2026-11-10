@@ -10,7 +10,12 @@
     { "id": "mint", "hex": "#7ad7c3", "name": { "en": "Mint", "vi": "Xanh bạc hà" } },
     { "id": "navy", "hex": "#27325c", "name": { "en": "Navy", "vi": "Xanh navy" } },
     { "id": "white", "hex": "#fbfbf8", "name": { "en": "White", "vi": "Trắng" } },
-    { "id": "black", "hex": "#26222a", "name": { "en": "Black", "vi": "Đen" } }
+    { "id": "black", "hex": "#26222a", "name": { "en": "Black", "vi": "Đen" } },
+    { "id": "rose-gold", "hex": "#e3a493", "shop": true, "name": { "en": "Rose gold", "vi": "Vàng hồng" } },
+    { "id": "sky-blue", "hex": "#8ec5ef", "shop": true, "name": { "en": "Sky blue", "vi": "Xanh da trời" } },
+    { "id": "burgundy", "hex": "#7a1f3d", "shop": true, "name": { "en": "Burgundy", "vi": "Đỏ rượu vang" } },
+    { "id": "chrome", "hex": "#c5cad3", "shop": true, "name": { "en": "Chrome", "vi": "Tráng gương" } },
+    { "id": "gold-shimmer", "hex": "#d8b25a", "shop": true, "name": { "en": "Gold shimmer", "vi": "Nhũ vàng" } }
   ],
   "stickers": ["heart", "star", "flower"],
   "grid": { "cols": 6, "rows": 10 },

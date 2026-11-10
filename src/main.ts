@@ -6,6 +6,14 @@ import { createGradeTransport } from './game/grade-appointment-transport';
 import { DEFAULT_CLIENT } from './game/clients/default-client';
 import { ROSTER, clientsByDifficulty, pickShift } from './game/clients/roster';
 import { createClientPicker } from './game/ui/client-picker';
+import { NAIL_ART_CONFIG } from './game/nail-art/design';
+import { applyAppointment, dailyChallenge, dailyDoneToday, liveStreak, rankUnlocking, stationPalette, unlockedDifficulties, upgradeEffects } from './game/progression';
+import { loadSave, writeSave } from './game/save';
+import { localDay } from './game/bestie-memory';
+import { createShopScreen } from './game/ui/shop-screen';
+import { createProfileScreen } from './game/ui/profile-screen';
+import { celebrationsFor, createProgressPanel } from './game/ui/progress-panel';
+import { celebrate } from './game/ui/celebration';
 import { SCORING_CONFIG } from './game/scoring';
 import { createSalonScene } from './game/salon-scene';
 import { createTitleMenu, createTitleScreen } from './game/title-screen';
@@ -34,12 +42,14 @@ import { el } from './game/ui/dom';
 import { createLevelPicker } from './game/ui/level-picker';
 import { createResultsScreen } from './game/ui/results-screen';
 import { createSettingsScreen } from './game/ui/settings-screen';
-import type { ClientPersona, EnglishLevel } from './game/types';
+import type { ClientPersona, EnglishLevel, Grading, Outcome } from './game/types';
+import type { ScoreResult } from './game/scoring';
 import './game/ui/global.css';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('app');
   if (!host) throw new Error('#app element missing');
+  const appHost: HTMLElement = host;
   applyDocumentLanguage();
   // Hosted preview only (VITE_INVITE_GATE=1, set by scripts/build-preview.mjs): ask for an invite code first.
   if (import.meta.env.VITE_INVITE_GATE === '1' && !(await hasSession())) await askForInvite(host);
@@ -65,13 +75,26 @@ async function boot(): Promise<void> {
     teardownDom();
     buildScene = createTitleScreen;
     draw();
-    const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook);
+    const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook, showShop, showProfile);
     teardownDom = () => menu.remove();
   };
 
   const showSettings = () => {
     teardownDom();
     const screen = createSettingsScreen(host, showTitle);
+    teardownDom = () => screen.remove();
+  };
+
+  /** Story 007: the shop and the profile. */
+  const showShop = () => {
+    teardownDom();
+    const screen = createShopScreen(host, { load: loadSave, save: writeSave, onBack: showTitle });
+    teardownDom = () => screen.remove();
+  };
+
+  const showProfile = () => {
+    teardownDom();
+    const screen = createProfileScreen(host, { save: loadSave(), today: localDay(), onBack: showTitle });
     teardownDom = () => screen.remove();
   };
 
@@ -132,6 +155,8 @@ async function boot(): Promise<void> {
   /** Story 006: the clients still to come in a shift (empty outside a shift) and its size. */
   let shift: { queue: ClientPersona[]; total: number } = { queue: [], total: 0 };
   const SHIFT_SIZE = 3;
+  /** Let the stars land before a celebration card covers them. */
+  const CELEBRATE_DELAY_MS = 900;
 
   const startAppointment = () => {
     // Inside the Start tap: lets the client's voice play on iPhone (story 004).
@@ -167,8 +192,16 @@ async function boot(): Promise<void> {
   const showClientPicker = () => {
     teardownDom();
     shift = { queue: [], total: 0 };
-    const begin = (client: ClientPersona) => beginAppointment(getEnglishLevel() ?? 'beginner', client);
+    const begin = (client: ClientPersona, daily = false) => beginAppointment(getEnglishLevel() ?? 'beginner', client, daily);
+    // Story 007: harder clients open with rank; today's challenge is fixed in the save once offered.
+    const today = localDay();
+    const offered = dailyChallenge(loadSave(), today, ROSTER);
+    if (offered) writeSave(offered.save);
+    const save = loadSave();
     const screen = createClientPicker(host, {
+      unlocked: unlockedDifficulties(save.xp),
+      lockedLine: (difficulty) => t('picker.locked', { rank: rankUnlocking(difficulty).name[getLanguage()] }),
+      ...(offered ? { daily: { client: offered.client, done: dailyDoneToday(save, today), streak: liveStreak(save, today), onPick: () => begin(offered.client, true) } } : {}),
       shiftSize: SHIFT_SIZE,
       onPick: begin,
       onRandom: (difficulty) => begin(pickShift(clientsByDifficulty(difficulty), 1)[0] ?? DEFAULT_CLIENT),
@@ -191,7 +224,10 @@ async function boot(): Promise<void> {
     else showClientPicker();
   };
 
-  const beginAppointment = (level: EnglishLevel, client: ClientPersona) => {
+  const beginAppointment = (level: EnglishLevel, persona: ClientPersona, daily = false) => {
+    // Story 007: owned upgrades (a comfier chair starts clients happier; finer brush; better clean-up pen).
+    const effects = upgradeEffects(loadSave());
+    const client: ClientPersona = { ...persona, startingMood: Math.min(90, persona.startingMood + effects.startMood) };
     const shiftPosition = shift.total > 0 ? shift.total - shift.queue.length : 0;
     teardownDom();
     buildScene = createSalonScene;
@@ -216,6 +252,8 @@ async function boot(): Promise<void> {
         ? {
             nailArt: {
               request: client.nailRequest,
+              palette: stationPalette(NAIL_ART_CONFIG.palette, loadSave()),
+              tools: { brushRadius: NAIL_ART_CONFIG.brushRadius * effects.brushScale, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius * effects.cleanupScale },
               onNote: (note: string | undefined) => {
                 nails.note = note;
               },
@@ -261,6 +299,8 @@ async function boot(): Promise<void> {
           helpLanguage: getHelpLanguage(),
           ...(nails.finished ? { nails: nails.finished } : {}),
           extras: (grading, score) => [
+            // Story 007: tips into the wallet, XP and rank, badges and the daily streak, once per appointment.
+            progressPanel(grading, score, result.outcome),
             createDebriefPanel({ transport: bestie, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, grading, score }),
             createLearningPanel({ transport: corrections, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, ...(practice ? { onPractice: practice } : {}) }),
             ...[createLevelChangePanel(level, score.englishScore)].filter((panel): panel is HTMLElement => panel !== null),
@@ -268,6 +308,30 @@ async function boot(): Promise<void> {
         }).destroy,
     });
     teardownDom = panel.destroy;
+
+    let progress: HTMLElement | null = null;
+    function progressPanel(grading: Grading, score: ScoreResult, outcome: Outcome): HTMLElement {
+      if (progress) return progress;
+      const update = applyAppointment(loadSave(), {
+        stars: score.stars,
+        tip: score.tip,
+        goalMet: score.goalMet,
+        walkedOut: outcome === 'walked_out',
+        skills: grading.skills,
+        englishScore: score.englishScore,
+        ...(nails.finished ? { nailMatch: nails.finished.match } : {}),
+        difficulty: persona.difficulty,
+        daily,
+        today: localDay(),
+      });
+      writeSave(update.save);
+      const items = celebrationsFor(update);
+      const panel = createProgressPanel(update);
+      // Only while the results are still showing (the player may already have tapped Next).
+      if (items.length > 0) window.setTimeout(() => panel.isConnected && celebrate(appHost, items), CELEBRATE_DELAY_MS);
+      progress = panel;
+      return panel;
+    }
   };
 
   app.renderer.on('resize', draw);

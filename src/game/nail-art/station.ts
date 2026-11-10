@@ -51,7 +51,13 @@ const rad = (deg: number): number => (deg * Math.PI) / 180;
 /** Pixels kept clear above the hand box. */
 const TOP_MARGIN = 7;
 
-export function createStationView(initial: NailDesign = emptyDesign()): StationView {
+/** Tool sizes in hand units (story 007: shop upgrades change them). */
+export interface StationTools {
+  brushRadius: number;
+  cleanupRadius: number;
+}
+
+export function createStationView(initial: NailDesign = emptyDesign(), tools: StationTools = { brushRadius: NAIL_ART_CONFIG.brushRadius, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius }): StationView {
   const container = new Container();
   container.label = 'nail-station';
   const fingersLayer = new Container();
@@ -268,7 +274,7 @@ export function createStationView(initial: NailDesign = emptyDesign()): StationV
       const from = phase === 'move' ? last : null;
       last = { x, y };
       if (!from || tool === 'gem' || tool === 'sticker') return applyAt(x, y, phase, tool, sticker);
-      const step = Math.max(1, NAIL_ART_CONFIG.brushRadius * scale * 0.5);
+      const step = Math.max(1, tools.brushRadius * scale * 0.5);
       const steps = Math.min(64, Math.ceil(Math.hypot(x - from.x, y - from.y) / step));
       // applyAt reads `design`; step it through the in-between points, then put the stored design back for setDesign.
       const stored = design;
@@ -312,9 +318,9 @@ export function createStationView(initial: NailDesign = emptyDesign()): StationV
     if (strokeNail < 0) return design;
     const v = views[strokeNail] as NailView;
     const p = local[strokeNail] as { x: number; y: number };
-    if (tool === 'cleanup') return cleanUp(design, strokeNail, wipeCells(v.finger.nail, p.x, p.y, NAIL_ART_CONFIG.cleanupRadius));
+    if (tool === 'cleanup') return cleanUp(design, strokeNail, wipeCells(v.finger.nail, p.x, p.y, tools.cleanupRadius));
     if (!design.base) return design;
-    const hit = dab(design.shape, v.finger.nail, p.x, p.y, NAIL_ART_CONFIG.brushRadius);
+    const hit = dab(design.shape, v.finger.nail, p.x, p.y, tools.brushRadius);
     return addSpill(paint(design, strokeNail, hit.paint), strokeNail, hit.spill);
   }
   view.setDesign(initial);

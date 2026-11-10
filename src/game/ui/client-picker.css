@@ -17,3 +17,14 @@
 .picker-avatar.short { border-radius: 50% 50% 46% 46%; }
 .picker-avatar.has-face { background-color: #ffe8f1; background-size: cover; background-position: center; }
 .picker-avatar.has-face::after { display: none; }
+/* Story 007: today's challenge and locked difficulties. */
+.picker-daily { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 0; border-radius: 18px; background: linear-gradient(135deg, #ffe1ee, #fff1d6); text-align: left; font: inherit; color: inherit; cursor: pointer; box-shadow: 0 0 0 2px #ffb3cf; }
+.picker-daily.done { box-shadow: 0 0 0 2px #b9e6c9; background: #effaf3; cursor: default; }
+.picker-daily:disabled { opacity: 1; }
+.picker-daily-label { font-size: 12px; font-weight: 700; color: #c0245f; text-transform: uppercase; letter-spacing: 0.04em; }
+.picker-daily.done .picker-daily-label { color: #1f8a4c; }
+.picker-locked { margin: 0; padding: 18px 14px; border: 2px dashed #e3c3d2; border-radius: 18px; color: #5b4a53; text-align: center; }
+.picker-actions .chat-button:disabled { opacity: 0.45; }
+.picker-tab { white-space: nowrap; }
+.picker-tab.locked { color: #8a7680; }
+.picker-tab.locked::before { content: '🔒'; margin-right: 3px; font-size: 11px; }

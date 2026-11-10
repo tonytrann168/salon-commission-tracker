@@ -27,7 +27,7 @@ Listed in build order.
 | 005 | Nail art station | Visual/Feel | Complete (review + phone 60 fps) | N/A |
 | 013 | Mai companion and dress-up | Feature | Ready (needs mascot pick) | N/A |
 | 006 | Client roster & difficulty | Config/Data | Complete (review) | N/A |
-| 007 | Progression & daily hooks | Logic | Ready | N/A |
+| 007 | Progression & daily hooks | Logic | Complete (review) | N/A |
 | 014 | Companion contests & social visits (v2, not scheduled) | Design only | Not scheduled | N/A |
 
 ## Backlog

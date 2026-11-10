@@ -1,0 +1,41 @@
+{
+  "_note": "Story 007. All tuning for ranks, XP, badges, the shop and the daily challenge. Tips are earned in play only (never bought).",
+  "ranks": [
+    { "id": "junior", "xp": 0, "name": { "en": "Junior Tech", "vi": "Thợ mới" }, "unlocks": ["easy"] },
+    { "id": "nail-tech", "xp": 60, "name": { "en": "Nail Tech", "vi": "Thợ nail" }, "unlocks": ["medium"] },
+    { "id": "senior", "xp": 250, "name": { "en": "Senior Tech", "vi": "Thợ lành nghề" }, "unlocks": ["hard"] },
+    { "id": "master", "xp": 600, "name": { "en": "Master Tech", "vi": "Thợ bậc thầy" }, "unlocks": [] }
+  ],
+  "xp": {
+    "byStars": [5, 10, 20, 35, 50],
+    "goalBonus": 15,
+    "dailyBonus": 20,
+    "difficulty": { "easy": 1, "medium": 1.25, "hard": 1.5 }
+  },
+  "badges": [
+    { "id": "first-client", "icon": "🌱", "rule": { "type": "appointments", "min": 1 }, "name": { "en": "First client", "vi": "Khách đầu tiên" }, "goal": { "en": "Finish your first appointment.", "vi": "Làm xong cuộc hẹn đầu tiên." } },
+    { "id": "five-stars", "icon": "⭐", "rule": { "type": "stars", "min": 5 }, "name": { "en": "Five stars", "vi": "Năm sao" }, "goal": { "en": "Get 5 stars from a client.", "vi": "Được khách cho 5 sao." } },
+    { "id": "upsell-pro", "icon": "💎", "rule": { "type": "skill", "skill": "upsell", "min": 90 }, "name": { "en": "Upsell pro", "vi": "Giỏi mời thêm dịch vụ" }, "goal": { "en": "Score 90+ on upsell.", "vi": "Được 90+ điểm mời thêm dịch vụ." } },
+    { "id": "rebook-pro", "icon": "📅", "rule": { "type": "skill", "skill": "rebooking", "min": 90 }, "name": { "en": "Regulars", "vi": "Khách quen" }, "goal": { "en": "Score 90+ on rebooking.", "vi": "Được 90+ điểm hẹn lần sau." } },
+    { "id": "calm-pro", "icon": "🧘", "rule": { "type": "skill", "skill": "problemHandling", "min": 85, "difficulty": "hard" }, "name": { "en": "Cool and calm", "vi": "Bình tĩnh" }, "goal": { "en": "Score 85+ on problem handling with a hard client.", "vi": "Được 85+ điểm xử lý vấn đề với khách khó." } },
+    { "id": "clear-english", "icon": "💬", "rule": { "type": "english", "min": 90 }, "name": { "en": "Clear English", "vi": "Tiếng Anh rõ ràng" }, "goal": { "en": "Get an English score of 90+.", "vi": "Được 90+ điểm tiếng Anh." } },
+    { "id": "perfect-nails", "icon": "💅", "rule": { "type": "nailMatch", "min": 95 }, "name": { "en": "Perfect nails", "vi": "Móng hoàn hảo" }, "goal": { "en": "Match a nail request 95% or better.", "vi": "Làm móng giống yêu cầu 95% trở lên." } },
+    { "id": "streak-3", "icon": "🔥", "rule": { "type": "streak", "min": 3 }, "name": { "en": "3-day streak", "vi": "Chuỗi 3 ngày" }, "goal": { "en": "Finish the daily client 3 days in a row.", "vi": "Làm khách mỗi ngày 3 ngày liền." } },
+    { "id": "streak-7", "icon": "🏆", "rule": { "type": "streak", "min": 7 }, "name": { "en": "7-day streak", "vi": "Chuỗi 7 ngày" }, "goal": { "en": "Finish the daily client 7 days in a row.", "vi": "Làm khách mỗi ngày 7 ngày liền." } }
+  ],
+  "streakMilestones": [3, 7, 14, 30],
+  "shop": {
+    "polishes": [
+      { "id": "rose-gold", "price": 25 },
+      { "id": "sky-blue", "price": 25 },
+      { "id": "burgundy", "price": 30 },
+      { "id": "chrome", "price": 40 },
+      { "id": "gold-shimmer", "price": 45 }
+    ],
+    "upgrades": [
+      { "id": "cleanup-pen", "icon": "🖊", "price": 40, "effect": { "cleanupScale": 1.4 }, "name": { "en": "Clean-up pen", "vi": "Bút lau sơn" }, "about": { "en": "Wipes spills faster.", "vi": "Lau vết sơn nhanh hơn." } },
+      { "id": "fine-brush", "icon": "🖌", "price": 60, "effect": { "brushScale": 0.85 }, "name": { "en": "Fine brush", "vi": "Cọ nét mảnh" }, "about": { "en": "A smaller brush: fewer slips on small nails.", "vi": "Cọ nhỏ hơn: ít lem ở móng nhỏ." } },
+      { "id": "comfy-chair", "icon": "🪑", "price": 90, "effect": { "startMood": 3 }, "name": { "en": "Comfy chair", "vi": "Ghế êm" }, "about": { "en": "Clients start a little happier (+3 mood).", "vi": "Khách vui hơn một chút khi ngồi (+3 tâm trạng)." } }
+    ]
+  }
+}
