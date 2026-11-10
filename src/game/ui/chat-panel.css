@@ -30,6 +30,13 @@
 @keyframes chat-blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
 .chat-error { margin: 0; padding: 12px 16px; background: #ffe1e1; display: flex; flex-direction: column; gap: 8px; font-size: 16px; }
 .chat-form { display: flex; gap: 8px; padding: 12px 16px; background: #fff4f8; }
+.chat-top { position: relative; flex: none; display: flex; flex-direction: column; }
+/* Narrow phones: the reply box gets its own full-width row, Help me say it and Send share the row under it. */
+@media (max-width: 480px) {
+  .chat-form { flex-wrap: wrap; padding: 8px 16px 12px; }
+  .chat-form .chat-input { order: -1; flex: 1 1 100%; }
+  .chat-form .chat-button { flex: 1 1 0; padding: 0 10px; white-space: nowrap; }
+}
 .chat-input { flex: 1; min-width: 0; min-height: 48px; box-sizing: border-box; padding: 0 14px; font-size: 16px; font-family: inherit; border: 2px solid #ffc4da; border-radius: 24px; }
 .chat-button { min-height: 48px; min-width: 48px; padding: 0 20px; font-size: 16px; font-weight: 700; font-family: inherit; color: #fff; background: #ff5c9a; border: 0; border-radius: 24px; }
 .chat-button:disabled, .chat-input:disabled { opacity: 0.5; }

@@ -112,7 +112,11 @@ export function createChatPanel(
       })
     : null;
 
-  root.append(header, zone.element, ...(hintBar ? [hintBar.element] : []), log, errorBox, resultsBox, form, announcer);
+  // The Hint button and an open whisper sit over the header and portraits, so they never push the chat down (small phones).
+  const top = el('div', 'chat-top');
+  top.append(header, zone.element, ...(hintBar ? [hintBar.element] : []));
+
+  root.append(top, log, errorBox, resultsBox, form, announcer);
   host.appendChild(root);
 
   let latest = initial;
