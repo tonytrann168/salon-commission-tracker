@@ -140,8 +140,6 @@ describe('english-levels.json validation', () => {
     for (const level of ENGLISH_LEVELS) {
       const rules = ENGLISH_LEVELS_CONFIG.levels[level];
       expect(rules.speakingRules.length).toBeGreaterThan(0);
-      expect(rules.pickerLine.vi.length).toBeGreaterThan(0);
-      expect(rules.pickerLine.en.length).toBeGreaterThan(0);
     }
     expect(ENGLISH_LEVELS_CONFIG.levels.beginner.helpMode).toBe('tiles');
     expect(ENGLISH_LEVELS_CONFIG.levels.some.helpMode).toBe('retype');
@@ -157,9 +155,6 @@ describe('english-levels.json validation', () => {
     const noRules = rawConfig();
     noRules.levels.fluent.speakingRules = '  ';
     expect(() => parseEnglishLevelsConfig(noRules)).toThrow(/levels\.fluent\.speakingRules/);
-    const noVietnamese = rawConfig();
-    delete noVietnamese.levels.beginner.pickerLine.vi;
-    expect(() => parseEnglishLevelsConfig(noVietnamese)).toThrow(/levels\.beginner\.pickerLine\.vi/);
     const badMode = rawConfig();
     badMode.levels.beginner.helpMode = 'speak';
     expect(() => parseEnglishLevelsConfig(badMode)).toThrow(/helpMode/);

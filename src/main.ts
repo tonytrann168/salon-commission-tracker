@@ -10,17 +10,18 @@ import { createTranslateTransport } from './game/translate-transport';
 import { createTranslationCache } from './game/translation-cache';
 import { getEnglishLevel, getHelpLanguage, setEnglishLevel } from './game/settings';
 import { createChatPanel } from './game/ui/chat-panel';
-import { bilingual, el } from './game/ui/dom';
+import { applyDocumentLanguage, t } from './game/i18n';
+import { el } from './game/ui/dom';
 import { createLevelPicker } from './game/ui/level-picker';
 import { createResultsScreen } from './game/ui/results-screen';
 import { createSettingsScreen } from './game/ui/settings-screen';
-import { STRINGS } from './game/ui/strings';
 import type { EnglishLevel } from './game/types';
 import './game/ui/global.css';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('app');
   if (!host) throw new Error('#app element missing');
+  applyDocumentLanguage();
 
   const app = new Application();
   await app.init({ resizeTo: host, background: 0xfff4f8, antialias: true, autoDensity: true, resolution: window.devicePixelRatio || 1 });
@@ -57,11 +58,9 @@ async function boot(): Promise<void> {
   const showLevelPicker = () => {
     teardownDom();
     const screen = el('section', 'screen');
-    const title = el('h1');
-    title.append(bilingual(STRINGS.levelPickerTitle));
-    const back = el('button', 'chat-button secondary');
+    const title = el('h1', '', t('level.pickerTitle'));
+    const back = el('button', 'chat-button secondary', t('common.back'));
     back.type = 'button';
-    back.append(bilingual(STRINGS.back));
     back.addEventListener('click', showTitle);
     screen.append(
       title,

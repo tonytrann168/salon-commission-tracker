@@ -1,12 +1,10 @@
 import { Container, Graphics, Text } from 'pixi.js';
 import { createPortrait } from './portraits/definitions';
-import { bilingual } from './ui/dom';
-import { STRINGS } from './ui/strings';
+import { t } from './i18n';
 import './ui/chat-panel.css';
 import './ui/level-picker.css';
 
 export const GAME_TITLE = 'Salon Besties';
-export const TAGLINE = 'Work the chair for real.';
 
 /** Placeholder title screen: the bestie's portrait, title and tagline. */
 export function createTitleScreen(width: number, height: number): Container {
@@ -27,7 +25,7 @@ export function createTitleScreen(width: number, height: number): Container {
   title.position.set(width / 2, height * 0.52);
 
   const tagline = new Text({
-    text: TAGLINE,
+    text: t('title.tagline'),
     style: { fontFamily: 'system-ui, sans-serif', fontSize: 18, fill: 0x8a6575 },
   });
   tagline.anchor.set(0.5);
@@ -37,19 +35,19 @@ export function createTitleScreen(width: number, height: number): Container {
   return screen;
 }
 
-/** DOM menu over the title scene: Start and Settings (bilingual until story 008). Returns the element so the caller can remove it. */
+/** DOM menu over the title scene: Start and Settings (story 008: in the interface language). Returns the element so the caller can remove it. */
 export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void): HTMLElement {
   const menu = document.createElement('div');
   menu.className = 'title-menu';
   const start = document.createElement('button');
   start.type = 'button';
   start.className = 'chat-button';
-  start.textContent = STRINGS.startAppointment;
+  start.textContent = t('title.start');
   start.addEventListener('click', onStart);
   const settings = document.createElement('button');
   settings.type = 'button';
   settings.className = 'chat-button secondary';
-  settings.append(bilingual(STRINGS.settings));
+  settings.textContent = t('title.settings');
   settings.addEventListener('click', onSettings);
   menu.append(start, settings);
   host.appendChild(menu);

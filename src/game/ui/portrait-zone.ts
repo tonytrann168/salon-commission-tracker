@@ -2,7 +2,7 @@ import type { Container } from 'pixi.js';
 import { createPortrait, getPortraitDefinition } from '../portraits/definitions';
 import type { Expression, Portrait, Pose } from '../portraits/portrait';
 import type { ClientPersona } from '../types';
-import { STRINGS } from './strings';
+import { t } from '../i18n';
 
 /**
  * Fixed-height transparent zone between the chat header and log (sized in chat-panel.css). The Pixi
@@ -38,7 +38,7 @@ export function createPortraitZone(host: HTMLElement, layer: Container, client: 
 
   let clientPose = initialPose;
   const label = (): void =>
-    element.setAttribute('aria-label', STRINGS.portraitLabel(clientName, STRINGS.poseLabels[clientPose]));
+    element.setAttribute('aria-label', t('portrait.label', { name: clientName, pose: t(`pose.${clientPose}`) }));
   label();
 
   const place = (): void => {

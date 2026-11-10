@@ -1,12 +1,12 @@
 # Story 008: Menus and buttons in Vietnamese
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: Ready
+> **Status**: Complete (awaiting owner review)
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: S
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-11-10
 
 ## Context
 
@@ -28,10 +28,10 @@
 
 *From `design/game-brief.md`, scoped to this story:*
 
-- [ ] Every menu, button, label, error message and results-screen heading is available in Vietnamese, switched by the same language setting story 010 adds, and remembered.
-- [ ] Vietnamese text (including all diacritics) displays correctly on every screen at phone sizes, with no clipped or overflowing labels.
-- [ ] Client and bestie conversation stays as story 010 defines it (English, with Vietnamese help); this story translates only the game's own interface text.
-- [ ] No hard-coded UI strings remain outside the string tables.
+- [x] Every menu, button, label, error message and results-screen heading is available in Vietnamese, switched by the same language setting story 010 adds, and remembered.
+- [x] Vietnamese text (including all diacritics) displays correctly on every screen at phone sizes, with no clipped or overflowing labels.
+- [x] Client and bestie conversation stays as story 010 defines it (English, with Vietnamese help); this story translates only the game's own interface text.
+- [x] No hard-coded UI strings remain outside the string tables.
 
 ---
 
@@ -57,6 +57,15 @@
 - `src/game/i18n/index.ts`
 - `src/game/ui/settings-screen.ts`
 
+## Completion Notes (2026-11-10)
+
+- The interface language follows full Vietnamese mode (story 010's setting): on = Vietnamese menus, off = English. Remembered on the device with that setting; switching it in Settings redraws Settings in the new language at once.
+- Stays bilingual on purpose: the level-picker cards (story 010 asks for both) and the full-Vietnamese-mode switch label, so a player can always find the way back.
+- Level names and picker lines moved from `config/english-levels.json` into the string tables. The client prompt now names the level by its id (`beginner`), not the English card name.
+- `src/game/ui/strings.ts` is gone. Tables are checked at startup and in tests: same keys, same `{placeholders}`, no empty text.
+- **Owner check**: the Vietnamese in `src/game/i18n/vi.json` was written by Claude and still needs a Vietnamese speaker's review (the story asks for it).
+- **Owner question**: with full Vietnamese mode off (the default), the menus are English only. In story 010 they showed both languages. Fine for an English-learning game, or should Vietnamese be the default?
+
 ---
 
 ## QA Test Cases
@@ -70,7 +79,7 @@
 **Story Type**: UI
 **Required evidence**: a retained screenshot of each screen touched, in both languages, in `production/qa/evidence/`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] `production/qa/evidence/story-008-menus-in-vietnamese/` (16 screenshots + README); tests in `src/tests/i18n.test.ts`
 
 ---
 

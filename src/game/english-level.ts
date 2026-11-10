@@ -4,22 +4,13 @@ import type { ClientTurn, EnglishLevel, HelpLanguage } from './types';
 
 /**
  * Pure English-level logic: stored-value parsing, the mood override, Help me say it matching, word tiles.
- * Story: story-010 (design/game-brief.md, MVP features 2 and 3). Every number and text comes from config/english-levels.json.
+ * Story: story-010 (design/game-brief.md, MVP features 2 and 3). Every number comes from config/english-levels.json; level names and picker lines are interface text in i18n/ (story 008).
  */
-
-/** A text in both languages. Vietnamese is shown first. */
-export interface BilingualText {
-  vi: string;
-  en: string;
-}
 
 /** How Help me say it asks the player to produce the English line. */
 export type HelpMode = 'tiles' | 'retype';
 
 export interface LevelRules {
-  name: BilingualText;
-  /** One short line for the level picker. */
-  pickerLine: BilingualText;
   /** Goes into the client's system prompt. */
   speakingRules: string;
   /** English mistakes never lower the client's mood at this level (the game enforces it, see `moodDeltaAfterEnglishRule`). */
@@ -60,10 +51,6 @@ export function parseEnglishLevelsConfig(raw: unknown): EnglishLevelsConfig {
     typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max
       ? value
       : fail(`"${path}" must be a number from ${min} to ${max}`);
-  const bilingual = (value: unknown, path: string): BilingualText => {
-    const pair = object(value, path);
-    return { vi: text(pair.vi, `${path}.vi`), en: text(pair.en, `${path}.en`) };
-  };
 
   const root = object(raw, 'root');
   const levels = object(root.levels, 'levels');
@@ -75,8 +62,6 @@ export function parseEnglishLevelsConfig(raw: unknown): EnglishLevelsConfig {
       if (typeof englishNeverLowersMood !== 'boolean') fail(`"${path}.englishNeverLowersMood" must be true or false`);
       if (helpMode !== 'tiles' && helpMode !== 'retype') fail(`"${path}.helpMode" must be "tiles" or "retype"`);
       const rules: LevelRules = {
-        name: bilingual(entry.name, `${path}.name`),
-        pickerLine: bilingual(entry.pickerLine, `${path}.pickerLine`),
         speakingRules: text(entry.speakingRules, `${path}.speakingRules`),
         englishNeverLowersMood: englishNeverLowersMood as boolean,
         helpMode: helpMode as HelpMode,

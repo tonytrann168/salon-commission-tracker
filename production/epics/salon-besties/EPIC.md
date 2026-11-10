@@ -19,7 +19,7 @@ Listed in build order.
 | 009 | Character portraits & mood expressions | Visual/Feel | In Progress | N/A |
 | 002 | Scoring & results (+ English score) | Logic | Complete | N/A |
 | 010 | English in the chair | Integration | Ready | N/A |
-| 008 | Menus and buttons in Vietnamese | UI | Ready | N/A |
+| 008 | Menus and buttons in Vietnamese | UI | Complete (review) | N/A |
 | 003 | Signature bestie | Integration | Ready | N/A |
 | 011 | Learning loop | Integration | Ready | N/A |
 | 004 | Voice in and out (+ pronunciation practice) | Integration | Ready | N/A |

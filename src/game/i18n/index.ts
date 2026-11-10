@@ -1,0 +1,71 @@
+import { getHelpLanguage } from '../settings';
+import en from './en.json';
+import vi from './vi.json';
+
+/**
+ * The game's own interface text in English and Vietnamese (string tables `en.json` and `vi.json`). Client and bestie
+ * conversation is not here: that stays English with Vietnamese help (story 010). Story: story-008 (design/game-brief.md,
+ * MVP feature 3). Translations are written once and reviewed by a Vietnamese speaker, never generated at run time.
+ *
+ * The interface language follows story 010's language setting: full Vietnamese mode gives Vietnamese menus.
+ */
+
+export type Language = 'en' | 'vi';
+export type StringKey = keyof typeof en;
+export type StringParams = Record<string, string | number>;
+export type StringTable = Record<StringKey, string>;
+
+const PLACEHOLDER = /\{(\w+)\}/g;
+
+/** The `{name}` placeholders in a template, sorted, for comparing the two tables. */
+export function placeholdersOf(template: string): string[] {
+  return [...template.matchAll(PLACEHOLDER)].map((match) => match[1] as string).sort();
+}
+
+/**
+ * Check that both tables have exactly the same keys, every value is non-empty text, and each key uses the same
+ * placeholders in both languages. Throws a clear `i18n: ...` error otherwise, so a bad table fails at startup.
+ */
+export function parseStringTables(rawEn: unknown, rawVi: unknown): Record<Language, StringTable> {
+  const asTable = (raw: unknown, name: string): Record<string, string> => {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new Error(`i18n: ${name}.json must be an object`);
+    for (const [key, value] of Object.entries(raw)) {
+      if (typeof value !== 'string' || value.trim() === '') throw new Error(`i18n: ${name}.json "${key}" must be non-empty text`);
+    }
+    return raw as Record<string, string>;
+  };
+  const tables = { en: asTable(rawEn, 'en'), vi: asTable(rawVi, 'vi') };
+  for (const [from, to] of [['en', 'vi'], ['vi', 'en']] as const) {
+    for (const key of Object.keys(tables[from])) {
+      if (!(key in tables[to])) throw new Error(`i18n: "${key}" is in ${from}.json but missing from ${to}.json`);
+    }
+  }
+  for (const key of Object.keys(tables.en)) {
+    const wanted = placeholdersOf(tables.en[key] as string).join(',');
+    const got = placeholdersOf(tables.vi[key] as string).join(',');
+    if (wanted !== got) throw new Error(`i18n: "${key}" placeholders differ: en {${wanted}} vs vi {${got}}`);
+  }
+  return tables as Record<Language, StringTable>;
+}
+
+/** Fill `{name}` placeholders. A placeholder with no value is left as written, so a missing value is easy to spot. */
+export function fillTemplate(template: string, params: StringParams = {}): string {
+  return template.replace(PLACEHOLDER, (whole, name: string) => (name in params ? String(params[name]) : whole));
+}
+
+const TABLES = parseStringTables(en, vi);
+
+/** The interface language from the saved setting: full Vietnamese mode gives Vietnamese. */
+export function getLanguage(): Language {
+  return getHelpLanguage() === 'full' ? 'vi' : 'en';
+}
+
+/** Interface text for `key` in `language` (the saved language by default). */
+export function t(key: StringKey, params?: StringParams, language: Language = getLanguage()): string {
+  return fillTemplate(TABLES[language][key], params);
+}
+
+/** Keep `<html lang>` in step with the interface language, so screen readers and fonts use the right voice and shaping. */
+export function applyDocumentLanguage(language: Language = getLanguage()): void {
+  document.documentElement.lang = language;
+}

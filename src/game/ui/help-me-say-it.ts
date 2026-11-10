@@ -1,7 +1,7 @@
 import { ENGLISH_LEVELS_CONFIG, buildWordTiles, matchesTarget, shuffledWordTiles } from '../english-level';
 import type { EnglishLevel, Translate } from '../types';
-import { bilingual, el } from './dom';
-import { STRINGS } from './strings';
+import { t } from '../i18n';
+import { el } from './dom';
 import './help-me-say-it.css';
 
 /**
@@ -37,26 +37,24 @@ export function createHelpMeSayIt(options: HelpMeSayItOptions): { element: HTMLE
   const header = el('div', 'help-header');
   const title = el('h2');
   title.id = 'help-title';
-  title.append(bilingual(STRINGS.helpButton));
-  const close = el('button', 'chat-button secondary');
+  title.textContent = t('help.button');
+  const close = el('button', 'chat-button secondary', t('common.close'));
   close.type = 'button';
-  close.append(bilingual(STRINGS.helpClose));
   header.append(title, close);
 
   const viLabel = el('label', 'help-label');
   viLabel.htmlFor = 'help-vi';
-  viLabel.append(bilingual(STRINGS.helpViLabel));
+  viLabel.textContent = t('help.viLabel');
   const viInput = el('textarea', 'help-input');
   viInput.id = 'help-vi';
   viInput.lang = 'vi';
   viInput.rows = 3;
-  viInput.placeholder = STRINGS.helpViPlaceholder;
+  viInput.placeholder = t('help.viPlaceholder', undefined, 'vi');
   viInput.autocapitalize = 'sentences';
   viInput.spellcheck = false;
 
-  const translateButton = el('button', 'chat-button');
+  const translateButton = el('button', 'chat-button', t('help.translate'));
   translateButton.type = 'button';
-  translateButton.append(bilingual(STRINGS.helpTranslate));
   const status = el('p', 'help-status');
   status.setAttribute('aria-live', 'polite');
 
@@ -64,7 +62,7 @@ export function createHelpMeSayIt(options: HelpMeSayItOptions): { element: HTMLE
   const sendButton = el('button', 'chat-button');
   sendButton.type = 'button';
   sendButton.disabled = true;
-  sendButton.append(bilingual(STRINGS.helpSend));
+  sendButton.textContent = t('common.send');
 
   dialog.append(header, viLabel, viInput, translateButton, status, stage, sendButton);
   overlay.appendChild(dialog);
@@ -87,7 +85,7 @@ export function createHelpMeSayIt(options: HelpMeSayItOptions): { element: HTMLE
   const showRetype = (target: string): void => {
     const label = el('label', 'help-label');
     label.htmlFor = 'help-en';
-    label.append(bilingual(STRINGS.helpRetypeLabel));
+    label.textContent = t('help.retypeLabel');
     const targetLine = el('p', 'help-target', target);
     targetLine.lang = 'en';
     const input = el('input', 'help-input');
@@ -114,9 +112,9 @@ export function createHelpMeSayIt(options: HelpMeSayItOptions): { element: HTMLE
     let placed: Tile[] = [];
 
     const label = el('p', 'help-label');
-    label.append(bilingual(STRINGS.helpTilesLabel));
+    label.textContent = t('help.tilesLabel');
     const lineLabel = el('p', 'help-label');
-    lineLabel.append(bilingual(STRINGS.helpYourLine));
+    lineLabel.textContent = t('help.yourLine');
     const line = el('div', 'help-tiles help-line');
     line.lang = 'en';
     line.setAttribute('role', 'group');
@@ -160,7 +158,7 @@ export function createHelpMeSayIt(options: HelpMeSayItOptions): { element: HTMLE
             available = [...available, ...placed.slice(index)];
             placed = placed.slice(0, index);
             draw();
-          }, STRINGS.helpRemoveWord(tile.text)),
+          }, t('help.removeWord', { word: tile.text })),
         ),
       );
       fullLine.hidden = placed.length !== correct.length;
@@ -176,7 +174,7 @@ export function createHelpMeSayIt(options: HelpMeSayItOptions): { element: HTMLE
     if (text === '') return;
     const mine = ++requestId;
     resetStage();
-    status.replaceChildren(bilingual(STRINGS.helpWorking));
+    status.textContent = t('help.working');
     translateButton.disabled = true;
     let english: string | null = null;
     try {
@@ -187,7 +185,7 @@ export function createHelpMeSayIt(options: HelpMeSayItOptions): { element: HTMLE
     if (mine !== requestId) return;
     translateButton.disabled = false;
     if (english === null) {
-      status.replaceChildren(bilingual(STRINGS.helpFailed));
+      status.textContent = t('help.failed');
       return;
     }
     status.replaceChildren();

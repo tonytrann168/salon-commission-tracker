@@ -7,12 +7,12 @@ import type { Expression } from '../portraits/portrait';
 import { PHASES, TurnError } from '../types';
 import type { AppointmentResult, ClientPersona, EnglishLevel, HelpLanguage, Translate } from '../types';
 import type { TranslationCache } from '../translation-cache';
-import { bilingual, el } from './dom';
+import { t } from '../i18n';
+import { el } from './dom';
 import { createHelpMeSayIt } from './help-me-say-it';
 import { createPortraitZone } from './portrait-zone';
 import { startTextReveal } from './text-reveal';
 import type { TextReveal } from './text-reveal';
-import { STRINGS } from './strings';
 import './chat-panel.css';
 
 /**
@@ -58,17 +58,17 @@ export function createChatPanel(
 
   const header = el('div', 'chat-header');
   const phases = el('ol', 'chat-phases');
-  const phaseItems = VISIBLE_PHASES.map((phase) => phases.appendChild(el('li', '', STRINGS.phaseLabels[phase])));
+  const phaseItems = VISIBLE_PHASES.map((phase) => phases.appendChild(el('li', '', t(`chat.phase.${phase}`))));
   const mood = el('div', 'mood');
   const track = el('div', 'mood-track');
   const fill = el('div', 'mood-fill');
   const value = el('span', 'mood-value');
   track.appendChild(fill);
   track.setAttribute('role', 'meter');
-  track.setAttribute('aria-label', STRINGS.moodLabel);
+  track.setAttribute('aria-label', t('chat.mood'));
   track.setAttribute('aria-valuemin', '0');
   track.setAttribute('aria-valuemax', String(MOOD_MAX));
-  mood.append(el('span', '', STRINGS.moodLabel), track, value);
+  mood.append(el('span', '', t('chat.mood')), track, value);
   header.append(phases, mood);
 
   const initial = appointment.getSnapshot();
@@ -78,7 +78,7 @@ export function createChatPanel(
   const errorBox = el('div', 'chat-error');
   const errorText = el('p');
   errorText.style.margin = '0';
-  const retryButton = el('button', 'chat-button', STRINGS.retry);
+  const retryButton = el('button', 'chat-button', t('common.tryAgain'));
   retryButton.type = 'button';
   errorBox.append(errorText, retryButton);
 
@@ -88,13 +88,13 @@ export function createChatPanel(
   const form = el('form', 'chat-form');
   const helpButton = el('button', 'chat-button help-button');
   helpButton.type = 'button';
-  helpButton.append(bilingual(STRINGS.helpButton));
+  helpButton.textContent = t('help.button');
   const input = el('input', 'chat-input');
   input.type = 'text';
-  input.placeholder = STRINGS.inputPlaceholder;
+  input.placeholder = t('chat.placeholder');
   input.autocomplete = 'off';
   input.enterKeyHint = 'send';
-  const sendButton = el('button', 'chat-button', STRINGS.send);
+  const sendButton = el('button', 'chat-button', t('common.send'));
   sendButton.type = 'submit';
   form.append(helpButton, input, sendButton);
 
@@ -124,7 +124,7 @@ export function createChatPanel(
     const visible = fullMode || shownTranslations.has(index);
     node.bubble.setAttribute('aria-expanded', String(visible));
     if (!visible) {
-      const hint = bilingual(STRINGS.translateHint, 'bilingual inline chat-hint');
+      const hint = el('span', 'chat-hint', t('chat.translateHint'));
       hint.setAttribute('aria-hidden', 'true');
       node.box.replaceChildren(hint);
       return;
@@ -137,17 +137,16 @@ export function createChatPanel(
       return;
     }
     if (translationStatus.get(index) === 'failed') {
-      const retry = el('button', 'chat-button secondary');
+      const retry = el('button', 'chat-button secondary', t('common.tryAgain'));
       retry.type = 'button';
-      retry.append(bilingual(STRINGS.tryAgain));
       retry.addEventListener('click', () => {
         translationStatus.delete(index);
         refreshTranslation(index);
       });
-      node.box.replaceChildren(bilingual(STRINGS.translateFailed, 'bilingual inline'), retry);
+      node.box.replaceChildren(el('span', '', t('chat.translateFailed')), retry);
       return;
     }
-    node.box.replaceChildren(bilingual(STRINGS.translating, 'bilingual inline chat-hint'));
+    node.box.replaceChildren(el('span', 'chat-hint', t('chat.translating')));
     if (translationStatus.get(index) === 'loading') return;
     translationStatus.set(index, 'loading');
     translations.get(text).then(
@@ -189,7 +188,7 @@ export function createChatPanel(
     const node = document.createTextNode('');
     shown.appendChild(node);
     line.appendChild(shown);
-    announcer.textContent = STRINGS.clientSaid(clientName, text);
+    announcer.textContent = t('chat.clientSaid', { name: clientName, text });
     if (reducedMotion.matches) {
       node.data = text;
       settle();
@@ -270,7 +269,7 @@ export function createChatPanel(
     if (snapshot.status === 'waiting') {
       const typing = el('div', 'chat-typing');
       typing.setAttribute('aria-live', 'polite');
-      typing.append(el('span', '', STRINGS.typing), el('span', 'dots'));
+      typing.append(el('span', '', t('chat.typing', { name: clientName })), el('span', 'dots'));
       typing.lastElementChild?.append(...['.', '.', '.'].map((dot) => el('span', '', dot)));
       bubbles.push(typing);
     }
@@ -286,8 +285,8 @@ export function createChatPanel(
     if (failed) {
       errorText.textContent =
         snapshot.error instanceof TurnError && snapshot.error.code === 'missing_api_key'
-          ? STRINGS.aiUnavailable
-          : STRINGS.aiTrouble;
+          ? t('chat.aiUnavailable')
+          : t('chat.aiTrouble');
     }
 
     // The results wait until the final line has finished revealing (settle shows them).
