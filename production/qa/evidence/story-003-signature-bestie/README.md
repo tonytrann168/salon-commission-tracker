@@ -22,3 +22,5 @@ Checked in the same run (script log):
 - Fixed in this run: on 320×568 the title menu ran 15 px off-screen once the greeting was added; short screens now get a tighter menu.
 
 Still needs the real API: how Mai actually sounds (kind, short, in Vietnamese with English example lines), and that her memory notes stay useful over several sessions.
+
+**Mock translations (re-shot 2026-11-10):** the browser test now gives every client line its own Vietnamese, and the script checks that each bubble shows its own translation (it found no mismatches). An earlier capture showed one fixed mock string under every line; that was the test mock, not the game.

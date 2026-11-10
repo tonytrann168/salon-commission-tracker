@@ -20,3 +20,5 @@ Checked in the same run (script log):
 - Fixed from the first run: the Vietnamese chat placeholder "Câu trả lời của bạn…" was cut off; now "Trả lời…".
 
 **The blank portrait block in the first capture was not a game bug.** Chromium's default headless GPU path drops the WebGL canvas from full-viewport screenshots (story 002's evidence noted the same). A clip of just the portrait zone showed Dana and the bestie, and with `--use-angle=swiftshader` the full captures show them too. Future evidence captures should use that flag.
+
+**Mock translations (re-shot 2026-11-10):** the browser test now gives every client line its own Vietnamese, and the script checks that each bubble shows its own translation (it found no mismatches). An earlier capture showed one fixed mock string under every line; that was the test mock, not the game.

@@ -25,3 +25,5 @@ Checked in the same run (script log):
 - Fixed in this run: a correction was taller than the whisper area at 320 px (now compact); in full Vietnamese mode a late-arriving translation pushed the newest line below the fold (the chat now stays scrolled to the end).
 
 Still needs the real API: that corrections are kind, level-fair and not too frequent in real play, and that the recap reads naturally.
+
+**Mock translations (re-shot 2026-11-10):** the browser test now gives every client line its own Vietnamese, and the script checks that each bubble shows its own translation (it found no mismatches). An earlier capture showed one fixed mock string under every line; that was the test mock, not the game.
