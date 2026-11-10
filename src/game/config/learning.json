@@ -1,0 +1,14 @@
+{
+  "whispers": {
+    "maxPerAppointment": 3,
+    "minPlayerWords": 2
+  },
+  "review": {
+    "maxLines": 4,
+    "tryLines": 3,
+    "maxUsedWell": 3
+  },
+  "phrasebook": {
+    "maxEntries": 300
+  }
+}

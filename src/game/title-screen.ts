@@ -37,7 +37,7 @@ export function createTitleScreen(width: number, height: number): Container {
 }
 
 /** DOM menu over the title scene: Start and Settings (story 008: in the interface language). Returns the element so the caller can remove it. */
-export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void): HTMLElement {
+export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void, onPhrasebook: () => void): HTMLElement {
   const menu = document.createElement('div');
   menu.className = 'title-menu';
   const start = document.createElement('button');
@@ -50,7 +50,16 @@ export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettin
   settings.className = 'chat-button secondary';
   settings.textContent = t('title.settings');
   settings.addEventListener('click', onSettings);
-  menu.append(createBestieGreeting(), start, settings);
+  const phrasebook = document.createElement('button');
+  phrasebook.type = 'button';
+  phrasebook.className = 'chat-button secondary';
+  phrasebook.textContent = t('title.phrasebook');
+  phrasebook.addEventListener('click', onPhrasebook);
+  // Settings and Phrasebook share a row so the menu still fits small phones (story 011).
+  const row = document.createElement('div');
+  row.className = 'title-menu-row';
+  row.append(settings, phrasebook);
+  menu.append(createBestieGreeting(), start, row);
   host.appendChild(menu);
   return menu;
 }

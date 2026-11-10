@@ -1,6 +1,6 @@
 // npm run smoke:api — calls each server function once against the real Claude API and prints pass/fail.
 // Reads ANTHROPIC_API_KEY from the environment or src/.env.local (never printed). Skips cleanly when there is no key.
-// Each run spends a little API credit (seven short calls).
+// Each run spends a little API credit (nine short calls).
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer, loadEnv } from 'vite';
@@ -18,6 +18,7 @@ const { handleTranslate } = await vite.ssrLoadModule('/api/translate.ts');
 const { handleGradeAppointment } = await vite.ssrLoadModule('/api/grade-appointment.ts');
 const { DEFAULT_CLIENT } = await vite.ssrLoadModule('/game/clients/default-client.ts');
 const { handleBestie } = await vite.ssrLoadModule('/api/bestie.ts');
+const { handleCorrections } = await vite.ssrLoadModule('/api/corrections.ts');
 
 const transcript = [
   { role: 'client', content: DEFAULT_CLIENT.openingLine },
@@ -48,6 +49,14 @@ const checks = [
   ['bestie answer (some, en)', () => handleBestie({ kind: 'answer', level: 'some', language: 'en', memory: '',
       question: 'What would you do if a client says her polish chipped after one day?', answer: 'I say sorry and fix it free.' }, env, fetch),
     (b) => typeof b.reply === 'string' && typeof b.memory === 'string', (b) => `"${b.reply}" memory "${b.memory}"`],
+  ['corrections line check (beginner, vi)', () => handleCorrections({ kind: 'line', level: 'beginner', language: 'vi', phase: 'consultation',
+      line: 'What color you like today?', clientLine: DEFAULT_CLIENT.openingLine }, env, fetch),
+    (b) => typeof b.needsCorrection === 'boolean' && (!b.needsCorrection || (b.better && typeof b.reason === 'string')),
+    (b) => b.needsCorrection ? `praise "${b.praise}" better "${b.better.en}" / "${b.better.vi}" (${b.better.topic}) reason "${b.reason}"` : 'no correction needed'],
+  ['corrections review + recap (some, en)', () => handleCorrections({ kind: 'review', level: 'some', language: 'en', outcome: 'completed',
+      transcript: [...transcript, { role: 'client', content: 'Pink, please.' }, { role: 'player', content: 'Okay. You want come back in 3 week?' }, { role: 'client', content: 'Sure, book me in.' }] }, env, fetch),
+    (b) => Array.isArray(b.lines) && typeof b.recap === 'string' && Array.isArray(b.tryLines) && b.tryLines.length > 0,
+    (b) => `${b.lines.length} lines to improve ${JSON.stringify(b.lines.map((l) => `${l.said} -> ${l.better.en}`))} recap "${b.recap}" try ${JSON.stringify(b.tryLines.map((p) => p.en))} usedWell ${JSON.stringify(b.usedWell.map((p) => p.en))}`],
 ];
 
 let failed = 0;

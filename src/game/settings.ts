@@ -41,3 +41,15 @@ export function getHintsEnabled(): boolean {
 export function setHintsEnabled(enabled: boolean): void {
   writeStored(HINTS_KEY, enabled ? 'on' : 'off');
 }
+
+const CORRECTIONS_KEY = 'salon.bestieCorrections';
+
+/** Whether the bestie whispers corrections after a player line (story 011). On unless the player turned it off. */
+export function getCorrectionsEnabled(): boolean {
+  return readStored(CORRECTIONS_KEY) !== 'off';
+}
+
+/** Turn whispered corrections on or off. */
+export function setCorrectionsEnabled(enabled: boolean): void {
+  writeStored(CORRECTIONS_KEY, enabled ? 'on' : 'off');
+}

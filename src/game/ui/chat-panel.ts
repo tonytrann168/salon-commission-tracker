@@ -11,6 +11,8 @@ import { t } from '../i18n';
 import { el } from './dom';
 import { createHintBar } from './bestie-panel';
 import type { BestieLanguage, BestieTransport } from '../bestie';
+import { LEARNING_CONFIG, shouldCheckLine } from '../learning/corrections';
+import type { CorrectionsTransport, Phrase } from '../learning/corrections';
 import { createHelpMeSayIt } from './help-me-say-it';
 import { createPortraitZone } from './portrait-zone';
 import { startTextReveal } from './text-reveal';
@@ -49,8 +51,14 @@ export function createChatPanel(
     translations: TranslationCache;
     /** Transport for Help me say it (Vietnamese to English). */
     translate: Translate;
-    /** The bestie's Hint button (story 003). Omitted when the player turned hints off. */
-    bestie?: { transport: BestieTransport; language: BestieLanguage };
+    /** The bestie's whisper channel: the Hint button (story 003, `hints`) and whispered corrections (story 011, `corrections`). */
+    bestie?: {
+      transport: BestieTransport;
+      language: BestieLanguage;
+      hints: boolean;
+      /** Omitted when the player turned corrections off. `onPhrase` saves a shown correction's better line to the phrasebook. */
+      corrections?: { transport: CorrectionsTransport; onPhrase: (phrase: Phrase) => void };
+    };
   },
 ): { destroy: () => void; setBestieExpression: (expression: Expression) => void } {
   const root = el('div', 'chat-panel');
@@ -102,11 +110,13 @@ export function createChatPanel(
   sendButton.type = 'submit';
   form.append(helpButton, input, sendButton);
 
-  const hintBar = portraits.bestie
+  const bestie = portraits.bestie;
+  const hintBar = bestie && (bestie.hints || bestie.corrections)
     ? createHintBar({
-        transport: portraits.bestie.transport,
+        hints: bestie.hints,
+        transport: bestie.transport,
         level: portraits.level,
-        language: portraits.bestie.language,
+        language: bestie.language,
         current: () => ({ phase: latest.phase, mood: latest.mood, transcript: latest.transcript }),
         onWhispering: (whispering) => zone.setBestieExpression(whispering ? 'pleased' : 'neutral'),
       })
@@ -149,9 +159,12 @@ export function createChatPanel(
     }
     const cached = translations.peek(text);
     if (cached !== undefined) {
+      // A translation that lands under the newest line would push it below the fold: keep the chat scrolled to the end.
+      const atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 8;
       const translated = el('span', 'chat-translation-text', cached);
       translated.lang = 'vi';
       node.box.replaceChildren(translated);
+      if (atEnd || index === latest.transcript.length - 1) log.scrollTop = log.scrollHeight;
       return;
     }
     if (translationStatus.get(index) === 'failed') {
@@ -321,6 +334,27 @@ export function createChatPanel(
     hintBar?.element.classList.toggle('hidden', snapshot.status === 'finished');
   };
 
+  /** Whispered corrections shown this appointment (capped in config/learning.json). */
+  let whispersShown = 0;
+  /** After the player sends a line: check it in the background and, if it needs it, whisper a correction. Never blocks the chat. */
+  const checkLine = (line: string, helped: boolean, before: AppointmentSnapshot): void => {
+    const corrections = bestie?.corrections;
+    if (!corrections || !hintBar || !shouldCheckLine(line, helped, whispersShown)) return;
+    const clientLine = [...before.transcript].reverse().find((message) => message.role === 'client')?.content ?? '';
+    corrections.transport
+      .checkLine({ level: portraits.level, language: bestie.language, phase: before.phase, line: line.trim(), clientLine })
+      .then((result) => {
+        if (!result.needsCorrection || !result.better || latest.status === 'finished') return;
+        // Checks run side by side, so the cap is checked again when each answer lands.
+        if (whispersShown >= LEARNING_CONFIG.whispers.maxPerAppointment) return;
+        const shown = hintBar.whisperCorrection({ praise: result.praise, said: line.trim(), better: result.better.en, reason: result.reason, language: bestie.language });
+        if (!shown) return;
+        whispersShown++;
+        corrections.onPhrase(result.better);
+      })
+      .catch(() => undefined);
+  };
+
   const unsubscribe = appointment.subscribe(render);
   render(appointment.getSnapshot());
 
@@ -330,6 +364,7 @@ export function createChatPanel(
     if (text.trim() === '') return;
     reveal?.finish();
     input.value = '';
+    checkLine(text, false, latest);
     void appointment.send(text).then(() => {
       if (appointment.getSnapshot().status === 'awaiting_player') input.focus();
     });
@@ -351,6 +386,7 @@ export function createChatPanel(
       onSend: (text) => {
         closeHelp();
         reveal?.finish();
+        checkLine(text, true, latest);
         void appointment.send(text, { helped: true }).then(() => {
           if (appointment.getSnapshot().status === 'awaiting_player') input.focus();
         });

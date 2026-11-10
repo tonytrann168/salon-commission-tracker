@@ -1,12 +1,13 @@
 import { applyDocumentLanguage, t } from '../i18n';
 import { BESTIE_CONFIG } from '../bestie';
-import { getEnglishLevel, getHelpLanguage, getHintsEnabled, setEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
+import { LEARNING_CONFIG } from '../learning/corrections';
+import { getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, setEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
 import { bilingual, el } from './dom';
 import { createLevelPicker } from './level-picker';
 import './level-picker.css';
 
 /**
- * Settings: change the English level, turn full Vietnamese mode on or off, and turn bestie hints on or off (story 003). All save at once.
+ * Settings: change the English level, turn full Vietnamese mode on or off, turn bestie hints (story 003) and whispered corrections (story 011) on or off. All save at once.
  * Full Vietnamese mode is also the interface language: turning it on or off redraws this screen in the new language
  * at once. Its own label is always shown in both languages, so a player can always find the way back. Story: story-010, story-008.
  */
@@ -44,11 +45,23 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void): HTM
     hintsText.append(el('strong', '', t('settings.hints')), el('span', 'setting-note', t('settings.hintsNote', { name: BESTIE_CONFIG.name })));
     hintsRow.append(hintsText, hintsToggle);
 
+    const correctionsRow = el('label', 'setting-row');
+    const correctionsToggle = el('input');
+    correctionsToggle.type = 'checkbox';
+    correctionsToggle.checked = getCorrectionsEnabled();
+    correctionsToggle.addEventListener('change', () => setCorrectionsEnabled(correctionsToggle.checked));
+    const correctionsText = el('span', 'setting-text');
+    correctionsText.append(
+      el('strong', '', t('settings.corrections')),
+      el('span', 'setting-note', t('settings.correctionsNote', { name: BESTIE_CONFIG.name, count: LEARNING_CONFIG.whispers.maxPerAppointment })),
+    );
+    correctionsRow.append(correctionsText, correctionsToggle);
+
     const back = el('button', 'chat-button secondary', t('common.back'));
     back.type = 'button';
     back.addEventListener('click', onBack);
 
-    screen.replaceChildren(title, levelTitle, picker, row, hintsRow, back);
+    screen.replaceChildren(title, levelTitle, picker, row, hintsRow, correctionsRow, back);
   };
 
   render();

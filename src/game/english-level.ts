@@ -28,8 +28,19 @@ export interface MatchTolerance {
   maxAllowedEdits: number;
 }
 
+/** Level auto-adjust after a few appointments (story 011). */
+export interface AutoAdjustRules {
+  /** How many appointments at one level before the game decides. */
+  window: number;
+  /** Average English score over the window at or above which the level goes up (automatic). */
+  upAtAverage: number;
+  /** Average English score over the window below which the game suggests going down (never automatic). */
+  downBelowAverage: number;
+}
+
 export interface EnglishLevelsConfig {
   levels: Record<EnglishLevel, LevelRules>;
+  autoAdjust: AutoAdjustRules;
   match: MatchTolerance;
   /** Base seed for the word-tile shuffle. */
   tileShuffleSeed: number;
@@ -81,7 +92,16 @@ export function parseEnglishLevelsConfig(raw: unknown): EnglishLevelsConfig {
   const seed = number(root.tileShuffleSeed, 'tileShuffleSeed', 0, 0xffffffff);
   if (!Number.isInteger(seed)) fail('"tileShuffleSeed" must be a whole number');
 
-  return { levels: parsedLevels, match: parsedMatch, tileShuffleSeed: seed };
+  const adjust = object(root.autoAdjust, 'autoAdjust');
+  const downBelowAverage = number(adjust.downBelowAverage, 'autoAdjust.downBelowAverage', 0, 100);
+  const autoAdjust: AutoAdjustRules = {
+    window: number(adjust.window, 'autoAdjust.window', 1, 20),
+    upAtAverage: number(adjust.upAtAverage, 'autoAdjust.upAtAverage', downBelowAverage + 1, 100),
+    downBelowAverage,
+  };
+  if (!Number.isInteger(autoAdjust.window)) fail('"autoAdjust.window" must be a whole number');
+
+  return { levels: parsedLevels, autoAdjust, match: parsedMatch, tileShuffleSeed: seed };
 }
 
 /** Validated once at load: a bad file fails at startup, not mid-appointment. */

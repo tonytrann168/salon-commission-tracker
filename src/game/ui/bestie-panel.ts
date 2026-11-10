@@ -41,16 +41,31 @@ export interface HintBarOptions {
   current: () => { phase: Phase; mood: number; transcript: readonly Message[] };
   /** Show the bestie's face while she whispers. */
   onWhispering: (whispering: boolean) => void;
+  /** Show the Hint button (the bar still carries whispered corrections when hints are off, story 011). */
+  hints: boolean;
+}
+
+/** A whispered correction (story 011): praise first, then "You said… → Better: …" and one reason. */
+export interface CorrectionWhisper {
+  praise: string;
+  said: string;
+  better: string;
+  reason: string;
+  language: BestieLanguage;
 }
 
 /** The Hint button and the whispered hint under the portraits. The client never sees any of it. */
-export function createHintBar(options: HintBarOptions): { element: HTMLElement; setEnabled: (enabled: boolean) => void } {
+export function createHintBar(options: HintBarOptions): {
+  element: HTMLElement;
+  setEnabled: (enabled: boolean) => void;
+  whisperCorrection: (correction: CorrectionWhisper) => boolean;
+} {
   const bar = el('div', 'bestie-bar');
   const hintButton = button(`💡 ${t('bestie.hintButton')}`, 'chat-button secondary bestie-hint-button');
   hintButton.setAttribute('aria-label', t('bestie.hintButtonLabel', { name: NAME }));
   const whisper = el('div', 'bestie-bubble bestie-whisper hidden');
   whisper.setAttribute('aria-live', 'polite');
-  bar.append(whisper, hintButton);
+  bar.append(whisper, ...(options.hints ? [hintButton] : []));
 
   let requestId = 0;
   const close = (): void => {
@@ -60,9 +75,14 @@ export function createHintBar(options: HintBarOptions): { element: HTMLElement; 
     hintButton.disabled = false;
     options.onWhispering(false);
   };
+  /** Fill the whisper. "Got it" sits in the header row so it is never scrolled out of sight on small phones. */
   const show = (...nodes: Node[]): void => {
-    whisper.replaceChildren(el('span', 'bestie-label', t('bestie.whispers', { name: NAME })), ...nodes);
-    whisper.classList.remove('hidden');
+    const header = el('div', 'bestie-whisper-header');
+    const done = button(t('bestie.gotIt'), 'chat-button secondary bestie-got-it');
+    done.addEventListener('click', close);
+    header.append(el('span', 'bestie-label', t('bestie.whispers', { name: NAME })), done);
+    whisper.replaceChildren(header, ...nodes);
+    whisper.classList.remove('hidden', 'correction');
   };
 
   hintButton.addEventListener('click', () => {
@@ -78,15 +98,11 @@ export function createHintBar(options: HintBarOptions): { element: HTMLElement; 
           if (mine !== requestId) return;
           const text = el('p', 'bestie-text', hint);
           text.lang = options.language;
-          const done = button(t('bestie.gotIt'), 'chat-button secondary');
-          done.addEventListener('click', close);
-          show(text, done);
+          show(text);
         },
         (error: unknown) => {
           if (mine !== requestId) return;
-          const done = button(t('bestie.gotIt'), 'chat-button secondary');
-          done.addEventListener('click', close);
-          show(el('p', 'bestie-text', unavailable(error) ? t('bestie.unavailable', { name: NAME }) : t('bestie.hintFailed', { name: NAME })), done);
+          show(el('p', 'bestie-text', unavailable(error) ? t('bestie.unavailable', { name: NAME }) : t('bestie.hintFailed', { name: NAME })));
         },
       )
       .finally(() => {
@@ -96,6 +112,28 @@ export function createHintBar(options: HintBarOptions): { element: HTMLElement; 
 
   return {
     element: bar,
+    /** Show a correction unless a whisper is already open. Returns whether it was shown. */
+    whisperCorrection(correction) {
+      if (!whisper.classList.contains('hidden')) return false;
+      requestId++;
+      options.onWhispering(true);
+      // Compact so the whole correction fits the whisper area on small phones: labels sit inline with the text.
+      const praise = el('p', 'bestie-text', correction.praise);
+      praise.lang = correction.language;
+      const said = el('p', 'bestie-text bestie-said');
+      const saidText = el('span', '', correction.said);
+      saidText.lang = 'en';
+      said.append(el('span', 'bestie-label', `${t('learning.youSaid')}: `), saidText);
+      const better = el('p', 'bestie-text bestie-better');
+      const betterText = el('strong', '', correction.better);
+      betterText.lang = 'en';
+      better.append(el('span', 'bestie-label', `→ ${t('learning.better')}: `), betterText);
+      const reason = el('p', 'bestie-text bestie-reason', correction.reason);
+      reason.lang = correction.language;
+      show(praise, said, better, reason);
+      whisper.classList.add('correction');
+      return true;
+    },
     /** Off while the client is answering or the appointment is over; closes any open whisper. */
     setEnabled(enabled) {
       if (!enabled && !whisper.classList.contains('hidden')) close();

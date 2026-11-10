@@ -26,5 +26,10 @@
     "minAllowedEdits": 1,
     "maxAllowedEdits": 3
   },
-  "tileShuffleSeed": 20261109
+  "tileShuffleSeed": 20261109,
+  "autoAdjust": {
+    "window": 3,
+    "upAtAverage": 80,
+    "downBelowAverage": 45
+  }
 }

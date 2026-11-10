@@ -1,12 +1,12 @@
 # Story 011: Learning loop
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: Ready
+> **Status**: Complete (awaiting owner review)
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: L
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-11-10
 
 ## Context
 
@@ -28,14 +28,14 @@
 
 *From `design/game-brief.md`, scoped to this story:*
 
-- [ ] **Whispered corrections (optional):** right after a player line with a mistake, the bestie whispers "You said… → Better: …"; the client never sees it. A setting turns whispers on or off, and there is at most one whisper per player line and a cap per appointment (in config), so it never feels like nagging.
-- [ ] **Debrief English review:** after each appointment, the bestie's debrief lists the player's lines worth improving — what they said, a better version, and a one-line reason — with the reason in Vietnamese when Vietnamese mode is on.
-- [ ] **Vietnamese recap:** after each appointment, a short recap in Vietnamese of how it went and three better English lines to try next time.
-- [ ] **Phrasebook:** salon phrases the player used well, or was shown in corrections and the recap, are saved with their Vietnamese meaning and a topic (greeting, consultation, price, booking, problems). The player can browse it any time; no duplicates; saved on the device.
-- [ ] **Level auto-adjust:** after a set number of appointments (config, e.g. 3), recent English scores decide. **Up** is automatic, with a small celebration and a line in Vietnamese and English saying why; the player can switch back in settings. **Down** is never automatic: the game suggests it, kindly, and the player accepts or declines.
-- [ ] Corrections are kind and specific: they praise what worked before correcting, never mock, and never comment on the player's accent or background.
-- [ ] Mistakes affect learning, not the appointment: at Beginner and Some, corrections are the only place grammar is addressed (story 010's mood rules stay in force).
-- [ ] All AI calls go through server functions; phrasebook and progress are saved locally and survive closing the app.
+- [x] **Whispered corrections (optional):** right after a player line with a mistake, the bestie whispers "You said… → Better: …"; the client never sees it. A setting turns whispers on or off, and there is at most one whisper per player line and a cap per appointment (in config), so it never feels like nagging.
+- [x] **Debrief English review:** after each appointment, the bestie's debrief lists the player's lines worth improving — what they said, a better version, and a one-line reason — with the reason in Vietnamese when Vietnamese mode is on.
+- [x] **Vietnamese recap:** after each appointment, a short recap in Vietnamese of how it went and three better English lines to try next time.
+- [x] **Phrasebook:** salon phrases the player used well, or was shown in corrections and the recap, are saved with their Vietnamese meaning and a topic (greeting, consultation, price, booking, problems). The player can browse it any time; no duplicates; saved on the device.
+- [x] **Level auto-adjust:** after a set number of appointments (config, e.g. 3), recent English scores decide. **Up** is automatic, with a small celebration and a line in Vietnamese and English saying why; the player can switch back in settings. **Down** is never automatic: the game suggests it, kindly, and the player accepts or declines.
+- [x] Corrections are kind and specific: they praise what worked before correcting, never mock, and never comment on the player's accent or background.
+- [x] Mistakes affect learning, not the appointment: at Beginner and Some, corrections are the only place grammar is addressed (story 010's mood rules stay in force).
+- [x] All AI calls go through server functions; phrasebook and progress are saved locally and survive closing the app.
 
 ---
 
@@ -65,6 +65,16 @@
 - `src/game/ui/phrasebook-screen.ts`
 - `src/game/config/english-levels.json`
 - `src/tests/learning-loop.test.ts`
+- also: `src/game/learning/corrections.ts`, `src/game/config/learning.json`, `src/game/ui/recap-screen.css`, wiring in `main.ts`, `chat-panel.ts`, `bestie-panel.ts`, `results-screen.ts`, `title-screen.ts`, `settings-screen.ts`, `settings.ts`, i18n tables, `scripts/smoke-api.mjs`
+
+## Completion Notes (2026-11-10)
+
+- **Whispers**: after each player line (not Help me say it lines, not one-word lines), `api/corrections.ts` (`kind: line`, Haiku 5.5) decides whether a correction is worth it at the player's level (Beginner: only meaning or politeness). A correction rides on Mai's whisper channel from story 003: praise first, "You said… → Better: …", one reason. At most one per line and 3 per appointment (`config/learning.json`); the check runs in the background and never blocks the chat. Settings switch, on by default.
+- **Review + recap**: one extra call after the appointment (`kind: review`) returns the lines worth improving (reason in Vietnamese in Vietnamese mode), a recap always in Vietnamese, 3 lines to try and the phrases used well. *Deviation from the implementation note:* this is a separate call, not folded into story 002's grading, so the grading call that already passes the real-API checks stays untouched.
+- **Phrasebook**: `salon.phrasebook.v1`. Entries come from shown whisper corrections, review better lines, lines to try and phrases used well, each with Vietnamese and a topic (greeting / consultation / price / booking / problems). Deduplicated ignoring case and punctuation, capped at 300 (oldest drop off). Opened from the title menu.
+- **Level auto-adjust**: `autoAdjust` in `english-levels.json` (window 3, up at an average of 80 or more, suggest down below 45). Up is automatic, with 🎉, the reason in Vietnamese and English, and "switch back in Settings". Down is only a suggestion with Accept / Decline; either answer starts a fresh window. Never up from Fluent, never down from Beginner.
+- **Mood rules unchanged**: corrections never touch the client call or the mood.
+- **Owner questions**: (1) should whispers default on? (2) are the thresholds (3 clients, 80 / 45) and the cap of 3 whispers per client right? (3) a line check costs one small AI call per player line.
 
 ---
 
@@ -79,7 +89,7 @@
 **Story Type**: Integration
 **Required evidence**: `src/tests/learning-loop.test.ts` (waived as advisory at `qa.level: minimal`) plus retained screenshots of a whisper, the debrief review, the Vietnamese recap, the phrasebook and a level change in `production/qa/evidence/`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] `src/tests/learning-loop.test.ts` (22 tests) + `production/qa/evidence/story-011-learning-loop/` (32 screenshots + README)
 
 ---
 

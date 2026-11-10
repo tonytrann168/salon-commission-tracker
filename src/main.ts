@@ -9,7 +9,12 @@ import { createTitleMenu, createTitleScreen } from './game/title-screen';
 import { createBestieTransport } from './game/bestie';
 import { createTranslateTransport } from './game/translate-transport';
 import { createTranslationCache } from './game/translation-cache';
-import { getEnglishLevel, getHelpLanguage, getHintsEnabled, setEnglishLevel } from './game/settings';
+import { getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setEnglishLevel } from './game/settings';
+import { loadMemory } from './game/bestie-memory';
+import { createCorrectionsTransport } from './game/learning/corrections';
+import { addPhrases, loadPhrasebook, savePhrasebook } from './game/learning/phrasebook';
+import { createPhrasebookScreen } from './game/ui/phrasebook-screen';
+import { createLearningPanel, createLevelChangePanel } from './game/ui/recap-screen';
 import { createChatPanel } from './game/ui/chat-panel';
 import { applyDocumentLanguage, getLanguage, t } from './game/i18n';
 import { createDebriefPanel } from './game/ui/bestie-panel';
@@ -46,13 +51,19 @@ async function boot(): Promise<void> {
     teardownDom();
     buildScene = createTitleScreen;
     draw();
-    const menu = createTitleMenu(host, startAppointment, showSettings);
+    const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook);
     teardownDom = () => menu.remove();
   };
 
   const showSettings = () => {
     teardownDom();
     const screen = createSettingsScreen(host, showTitle);
+    teardownDom = () => screen.remove();
+  };
+
+  const showPhrasebook = () => {
+    teardownDom();
+    const screen = createPhrasebookScreen(host, showTitle);
     teardownDom = () => screen.remove();
   };
 
@@ -81,6 +92,7 @@ async function boot(): Promise<void> {
 
   const gradeAppointment = createGradeTransport();
   const bestie = createBestieTransport();
+  const corrections = createCorrectionsTransport();
   const translateTransport = createTranslateTransport();
   // The default client's opening line is fixed text, so its translation is also kept on the device.
   const translations = createTranslationCache(translateTransport, [DEFAULT_CLIENT.openingLine]);
@@ -109,7 +121,23 @@ async function boot(): Promise<void> {
       helpLanguage: getHelpLanguage(),
       translations,
       translate: translateTransport,
-      ...(getHintsEnabled() ? { bestie: { transport: bestie, language: getLanguage() } } : {}),
+      bestie: {
+        transport: bestie,
+        language: getLanguage(),
+        hints: getHintsEnabled(),
+        ...(getCorrectionsEnabled()
+          ? {
+              corrections: {
+                transport: corrections,
+                // A whispered correction's better line goes straight into the phrasebook.
+                onPhrase: (phrase) => {
+                  const { book } = addPhrases(loadPhrasebook(), [{ ...phrase, source: 'correction', session: loadMemory().sessions + 1 }]);
+                  savePhrasebook(book);
+                },
+              },
+            }
+          : {}),
+      },
       onEnded: (container, result) =>
         createResultsScreen(container, {
           clientName: DEFAULT_CLIENT.name,
@@ -121,8 +149,11 @@ async function boot(): Promise<void> {
           onBackToMenu: showTitle,
           translations,
           helpLanguage: getHelpLanguage(),
-          debrief: (grading, score) =>
+          extras: (grading, score) => [
             createDebriefPanel({ transport: bestie, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, grading, score }),
+            createLearningPanel({ transport: corrections, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript }),
+            ...[createLevelChangePanel(level, score.englishScore)].filter((panel): panel is HTMLElement => panel !== null),
+          ],
         }).destroy,
     });
     teardownDom = panel.destroy;

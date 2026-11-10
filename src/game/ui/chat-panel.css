@@ -44,6 +44,8 @@
 .hidden { display: none !important; }
 .title-menu { position: fixed; left: 0; right: 0; top: calc(52% + 90px); display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 16px; }
 .title-menu .chat-button { min-height: 56px; min-width: 220px; padding: 0 32px; font-size: 18px; }
+.title-menu-row { display: flex; gap: 8px; width: 100%; max-width: 340px; }
+.title-menu .title-menu-row .chat-button { flex: 1 1 0; min-width: 0; padding: 0 12px; font-size: 16px; }
 /* Short phones (iPhone SE): the bestie's greeting plus both buttons must fit under the tagline. */
 @media (max-height: 640px) {
   .title-menu { top: calc(52% + 58px); gap: 8px; }
