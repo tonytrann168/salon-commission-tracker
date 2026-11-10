@@ -80,6 +80,8 @@ export interface ImageSkinConfig {
   images: Partial<Record<MascotMood, MoodImage>>;
   anchors: Partial<Record<AnchorName, [number, number]>> & Record<'head' | 'face' | 'neck' | 'handRight', [number, number]>;
   nailTips?: Partial<Record<MascotMood, TipRegion[]>>;
+  /** Optional: where head, face and neck accessories sit on the drawn bust images, so a hat shows in the bubble too. */
+  bustAnchors?: Record<'head' | 'face' | 'neck', [number, number]>;
   accessoryImages?: Record<string, string>;
 }
 
@@ -162,8 +164,18 @@ export function parseMascotConfig(raw: unknown): MascotConfig {
         });
       }
     }
+    let bustAnchors: ImageSkinConfig['bustAnchors'];
+    if (item.bustAnchors !== undefined) {
+      const raw = isRecord(item.bustAnchors) ? item.bustAnchors : fail(`"${path}.bustAnchors" must be an object`);
+      for (const key of Object.keys(raw)) if (!['head', 'face', 'neck'].includes(key)) fail(`"${path}.bustAnchors.${key}" is not a bust anchor (head, face, neck)`);
+      const point = (key: 'head' | 'face' | 'neck'): [number, number] => {
+        const value = raw[key];
+        return Array.isArray(value) && value.length === 2 && value.every((n) => typeof n === 'number' && n >= 0 && n <= 100) ? [value[0] as number, value[1] as number] : fail(`"${path}.bustAnchors.${key}" must be [x, y] in 0-100`);
+      };
+      bustAnchors = { head: point('head'), face: point('face'), neck: point('neck') };
+    }
     const accessoryImages = isRecord(item.accessoryImages) ? Object.fromEntries(Object.entries(item.accessoryImages).map(([id, value]) => [id, file(value, `${path}.accessoryImages.${id}`)])) : undefined;
-    return { id: item.id, images, anchors: anchors as ImageSkinConfig['anchors'], ...(nailTips ? { nailTips } : {}), ...(accessoryImages ? { accessoryImages } : {}) };
+    return { id: item.id, images, anchors: anchors as ImageSkinConfig['anchors'], ...(nailTips ? { nailTips } : {}), ...(bustAnchors ? { bustAnchors } : {}), ...(accessoryImages ? { accessoryImages } : {}) };
   });
   return { name: root.name as string, skin: root.skin as string, accessories, equipped, imageSkins };
 }

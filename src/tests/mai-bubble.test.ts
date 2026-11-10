@@ -110,3 +110,26 @@ describe('image skin drawing', async () => {
     expect(imageMarkup(config, 'sleepy', {})).toContain('/m/idle.svg');
   });
 });
+
+describe('accessories on a drawn bust (bustAnchors)', async () => {
+  const { imageMarkup } = await import('../game/mascot/image-skins');
+  const skin = (extra: Record<string, unknown>) =>
+    parseMascotConfig({
+      ...structuredClone(MASCOT_CONFIG),
+      imageSkins: [{ id: 'mai-final', images: { idle: { full: '/m/idle.svg', bust: '/m/idle-bust.svg' } }, anchors: { head: [50, 8], face: [50, 22], neck: [50, 32], hand: [80, 55] }, accessoryImages: { 'bow-pink': '/m/acc/bow.svg' }, ...extra }],
+    }).imageSkins[0]!;
+
+  it('places head, face and neck accessories on the bust when bustAnchors exist (a bought hat shows in the bubble)', () => {
+    const withAnchors = skin({ bustAnchors: { head: [50, 12], face: [50, 50], neck: [50, 88] } });
+    const markup = imageMarkup(withAnchors, 'idle', { head: 'bow-pink', held: 'brush-gold' }, 'bust');
+    expect(markup).toContain('/m/idle-bust.svg');
+    expect(markup).toContain('<image href="/m/acc/bow.svg" x="35" y="-3"');
+    expect(markup).not.toContain('#e0b44a'); // the held gold brush stays on the full body
+  });
+
+  it('keeps the bust bare without bustAnchors, and refuses bad bust anchors', () => {
+    expect(imageMarkup(skin({}), 'idle', { head: 'bow-pink' }, 'bust')).not.toContain('/m/acc/bow.svg');
+    expect(() => skin({ bustAnchors: { head: [50, 12], face: [50, 50], neck: [50, 88], hand: [1, 1] } })).toThrow(/bustAnchors\.hand" is not a bust anchor/);
+    expect(() => skin({ bustAnchors: { head: [50, 12], face: [50, 50] } })).toThrow(/bustAnchors\.neck/);
+  });
+});

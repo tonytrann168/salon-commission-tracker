@@ -12,13 +12,10 @@ const escapeAttr = (value: string): string => value.replace(/[&"<>]/g, (c) => `&
 /** Automatic bust crop: show the top 55% of the full image, centred, filling the box. */
 const AUTO_BUST = 'translate(-41 0) scale(1.82)';
 
-export function imageMarkup(config: ImageSkinConfig, mood: MascotMood, equipped: Equipped, crop: 'bust' | 'full' = 'full'): string {
-  const art = config.images[mood] ?? config.images.idle;
-  if (!art) return '';
-  // A drawn bust has its own framing, so accessories (placed for the full body) are left off it.
-  if (crop === 'bust' && art.bust) return `<image href="${escapeAttr(art.bust)}" x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid meet"/>`;
-  const anchors = { head: config.anchors.head, face: config.anchors.face, neck: config.anchors.neck, hand: config.anchors.handRight };
-  const base = `<image href="${escapeAttr(art.full)}" x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid meet"/>`;
+type Anchors = { head: [number, number]; face: [number, number]; neck: [number, number]; hand: [number, number] };
+
+/** Accessories at the given anchors: the skin's own accessory images, else the built-in drawings. */
+function placeAccessories(config: ImageSkinConfig, equipped: Equipped, anchors: Anchors): string {
   const custom = Object.entries(equipped)
     .map(([slot, id]) => {
       const file = id ? config.accessoryImages?.[id] : undefined;
@@ -28,7 +25,23 @@ export function imageMarkup(config: ImageSkinConfig, mood: MascotMood, equipped:
     })
     .join('');
   const builtIn = Object.fromEntries(Object.entries(equipped).filter(([, id]) => id && !config.accessoryImages?.[id])) as Equipped;
-  const everything = base + accessories(builtIn, anchors) + custom;
+  return accessories(builtIn, anchors) + custom;
+}
+
+export function imageMarkup(config: ImageSkinConfig, mood: MascotMood, equipped: Equipped, crop: 'bust' | 'full' = 'full'): string {
+  const art = config.images[mood] ?? config.images.idle;
+  if (!art) return '';
+  if (crop === 'bust' && art.bust) {
+    const bust = `<image href="${escapeAttr(art.bust)}" x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid meet"/>`;
+    // A drawn bust has its own framing: head, face and neck accessories go on it only when the skin says where
+    // (bustAnchors); held items, outfit and nails belong to the full body.
+    if (!config.bustAnchors) return bust;
+    const onBust = Object.fromEntries(Object.entries(equipped).filter(([slot]) => slot === 'head' || slot === 'face' || slot === 'neck')) as Equipped;
+    return bust + placeAccessories(config, onBust, { ...config.bustAnchors, hand: config.bustAnchors.neck });
+  }
+  const anchors = { head: config.anchors.head, face: config.anchors.face, neck: config.anchors.neck, hand: config.anchors.handRight };
+  const base = `<image href="${escapeAttr(art.full)}" x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid meet"/>`;
+  const everything = base + placeAccessories(config, equipped, anchors);
   return crop === 'bust' ? `<g transform="${AUTO_BUST}">${everything}</g>` : everything;
 }
 
