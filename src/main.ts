@@ -17,6 +17,9 @@ import { createPhrasebookScreen } from './game/ui/phrasebook-screen';
 import { askForInvite, hasSession } from './game/ui/invite-screen';
 import { openPracticeSheet } from './game/ui/practice-sheet';
 import { createBrowserVoice, withSpeakingSignal } from './game/voice';
+import { describeDesign } from './game/nail-art/match';
+import type { MatchResult } from './game/nail-art/match';
+import type { NailDesign } from './game/nail-art/design';
 import { createAudioEngine } from './game/audio';
 import { emitSound } from './game/sound-events';
 import type { SpeechHost } from './game/voice';
@@ -135,9 +138,11 @@ async function boot(): Promise<void> {
     teardownDom();
     buildScene = createSalonScene;
     draw();
+    // Story 005: what the client hears about her nails, and the finished result for the review and the stars.
+    const nails: { note: string | undefined; finished: { description: string; match: number } | undefined } = { note: undefined, finished: undefined };
     const appointment = createAppointment({
       client: DEFAULT_CLIENT,
-      takeTurn: createFetchTransport(() => level),
+      takeTurn: createFetchTransport(() => level, () => nails.note),
       level,
       // Grading starts from the chat panel's onEnded, once the final line has finished revealing (story 002).
       onFinished: () => undefined,
@@ -149,6 +154,19 @@ async function boot(): Promise<void> {
       helpLanguage: getHelpLanguage(),
       translations,
       translate: translateTransport,
+      ...(DEFAULT_CLIENT.nailRequest
+        ? {
+            nailArt: {
+              request: DEFAULT_CLIENT.nailRequest,
+              onNote: (note: string | undefined) => {
+                nails.note = note;
+              },
+              onDone: (design: NailDesign, result: MatchResult) => {
+                nails.finished = { description: describeDesign(design), match: result.score };
+              },
+            },
+          }
+        : {}),
       voice: { io: voice, clientId: DEFAULT_CLIENT.id, speakReplies: getClientVoiceEnabled(), onSpeakerChange: setClientVoiceEnabled },
       bestie: {
         transport: bestie,
@@ -179,6 +197,7 @@ async function boot(): Promise<void> {
           onBackToMenu: showTitle,
           translations,
           helpLanguage: getHelpLanguage(),
+          ...(nails.finished ? { nails: nails.finished } : {}),
           extras: (grading, score) => [
             createDebriefPanel({ transport: bestie, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, grading, score }),
             createLearningPanel({ transport: corrections, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, ...(practice ? { onPractice: practice } : {}) }),

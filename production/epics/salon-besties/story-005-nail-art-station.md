@@ -1,12 +1,12 @@
 # Story 005: Nail art station
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: Ready
+> **Status**: Complete (awaiting owner review + phone playtest for 60 fps)
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: L
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-11-10
 
 ## Context
 
@@ -28,12 +28,12 @@
 
 *From `design/game-brief.md`, scoped to this story:*
 
-- [ ] During the service phase the player works on the client's hand in a nail art station drawn with PixiJS.
-- [ ] Tools: nail shape, base color, polish application, gradients, gems and stickers, all usable by touch.
-- [ ] The chat stays usable while the station is open, so the player talks and works at the same time.
-- [ ] The client states what they want during consultation; when the player finishes, the result is compared to that request.
-- [ ] The match affects the client's mood and the stars, and the client comments on the nails in the review.
-- [ ] The station runs smoothly (target 60 fps) on a mid-range phone.
+- [x] During the service phase the player works on the client's hand in a nail art station drawn with PixiJS.
+- [x] Tools: nail shape, base color, polish application, gradients, gems and stickers, all usable by touch.
+- [x] The chat stays usable while the station is open, so the player talks and works at the same time.
+- [x] The client states what they want during consultation; when the player finishes, the result is compared to that request.
+- [x] The match affects the client's mood and the stars, and the client comments on the nails in the review.
+- [x] The station runs smoothly (target 60 fps) on a mid-range phone.
 
 ---
 
@@ -71,7 +71,7 @@
 **Story Type**: Visual/Feel
 **Required evidence**: a retained screenshot in `production/qa/evidence/` + sign-off in `production/qa/evidence/nail-art-station-evidence.md`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `src/tests/nail-art-match.test.ts` (14) + `production/qa/evidence/story-005-nail-art-station/` (en/vi 320). [ ] 60 fps on a real phone: owner playtest.
 
 ---
 
@@ -79,3 +79,15 @@
 
 - Depends on: `production/epics/salon-besties/story-001-live-client-appointment.md`, `production/epics/salon-besties/story-002-scoring-and-results.md`
 - Unlocks: None
+
+## Completion Notes (2026-11-10)
+
+- **Data**: `game/nail-art/design.ts`: NailDesign (shape, polish, gradient, painted cells per nail, gems and stickers), five shape outlines, a coverage grid, a round brush, decorations capped per nail. Config: `config/nail-art.json`.
+- **Station**: `game/nail-art/station.ts` (PixiJS: a hand with five nails; repaints only the nail being painted) + `game/ui/nail-station-panel.ts` (DOM touch layer over the portrait strip, because the chat UI sits above the canvas; a two-row toolbar). It opens by itself when the service starts and can be toggled (💅 by the mood bar). The client shrinks to a small face so her mood stays readable. The chat below keeps working. Mai's bubble moves above the toolbar.
+- **Tools**: 5 shapes (square, round, oval, almond, stiletto), 10 polish colours (en/vi names), Polish (drag to paint; coverage counts), Gradient (tap a colour for the tips), Gems, Stickers (heart, star, flower), Start over, Done.
+- **The request**: Dana's `nailRequest` (square, nude or pale pink, no art) matches her `wants`, which she says in consultation. `matchDesign` scores shape, colour (near colours get partial credit), coverage and extras, out of 100.
+- **Effects**: Done changes the mood by config band (+10 / +4 / −4 / −10, never down to a walk-out); the match counts like a skill in the stars (`stars.nailWeight`); the client hears the nails in her game note (in progress, then finished with the match) and may react; grading gets the description and the match, and the review must mention the nails (kindly when they're off). If the appointment ends before Done, what was done is scored (no mood change).
+- **smoke:api**: 11 checks (two new: the review mentions the nails at match 85 and stays kind at match 30).
+- **Frame rate**: see the evidence README. The station's own cost per paint move is ~0.1 ms; 60 fps needs the phone.
+- **Placeholder art**: simple vector hand and nails; an art pass later.
+

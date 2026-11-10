@@ -1,6 +1,6 @@
 // npm run smoke:api — calls each server function once against the real Claude API and prints pass/fail.
 // Reads ANTHROPIC_API_KEY from the environment or src/.env.local (never printed). Skips cleanly when there is no key.
-// Each run spends a little API credit (nine short calls).
+// Each run spends a little API credit (eleven short calls).
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer, loadEnv } from 'vite';
@@ -57,6 +57,17 @@ const checks = [
       transcript: [...transcript, { role: 'client', content: 'Pink, please.' }, { role: 'player', content: 'Okay. You want come back in 3 week?' }, { role: 'client', content: 'Sure, book me in.' }] }, env, fetch),
     (b) => Array.isArray(b.lines) && typeof b.recap === 'string' && Array.isArray(b.tryLines) && b.tryLines.length > 0,
     (b) => `${b.lines.length} lines to improve ${JSON.stringify(b.lines.map((l) => `${l.said} -> ${l.better.en}`))} recap "${b.recap}" try ${JSON.stringify(b.tryLines.map((p) => p.en))} usedWell ${JSON.stringify(b.usedWell.map((p) => p.en))}`],
+  // Story 005: the review mentions the finished nails (overseer's request). Harsh words fail the low-match case.
+  ['grade-appointment with nails, match 85', () => handleGradeAppointment({
+      transcript: [...transcript, { role: 'client', content: 'Pale pink, short and square, please.' }, { role: 'player', content: 'Okay! All done. Do you like them?' }, { role: 'client', content: 'Yes, lovely.' }],
+      outcome: 'completed', finalMood: 75, level: 'some', nails: { description: 'square shape, pale pink, no gems or stickers; 96% painted', match: 85 } }, env, fetch),
+    (b) => typeof b.review === 'string' && /nail|polish|manicure|pink|colou?r|shape/i.test(b.review),
+    (b) => `review "${b.review}"`],
+  ['grade-appointment with nails, match 30 (gentle)', () => handleGradeAppointment({
+      transcript: [...transcript, { role: 'client', content: 'Pale pink, short and square, please.' }, { role: 'player', content: 'Okay! All done.' }, { role: 'client', content: 'Hmm, okay.' }],
+      outcome: 'completed', finalMood: 50, level: 'some', nails: { description: 'stiletto shape, navy, 3 gems; 60% painted', match: 30 } }, env, fetch),
+    (b) => typeof b.review === 'string' && /nail|polish|manicure|colou?r|shape|stiletto|navy|gem/i.test(b.review) && !/terrible|awful|horrible|worst|disgusting|hate|ugly|stupid|useless/i.test(b.review),
+    (b) => `review "${b.review}"`],
 ];
 
 let failed = 0;

@@ -27,6 +27,8 @@ export interface ResultsScreenOptions {
   translations: TranslationCache;
   /** `full` shows the review's Vietnamese automatically; `tap` shows it when the review is tapped. */
   helpLanguage: HelpLanguage;
+  /** Story 005: the finished nails and their match (0-100), for the review and the stars. */
+  nails?: { description: string; match: number };
   /** Sections built once the scorecard is ready: the bestie's debrief (story 003), the English review, recap and level change (story 011). */
   extras?: (grading: Grading, score: ScoreResult) => HTMLElement[];
 }
@@ -195,7 +197,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     const finalMood = result.moodHistory[result.moodHistory.length - 1] ?? 0;
     let grading: Grading;
     try {
-      grading = await grade({ transcript: result.transcript, outcome: result.outcome, finalMood, level });
+      grading = await grade({ transcript: result.transcript, outcome: result.outcome, finalMood, level, ...(options.nails ? { nails: options.nails } : {}) });
     } catch (error) {
       showError(error);
       return;
@@ -211,6 +213,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
           level,
           rebooked: grading.rebooked,
           redoDemanded: grading.redoDemanded,
+          ...(options.nails ? { nailMatch: options.nails.match } : {}),
         },
         config,
       ),

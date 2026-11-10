@@ -10,6 +10,9 @@ import type { TranslationCache } from '../translation-cache';
 import { t } from '../i18n';
 import { el } from './dom';
 import { createMaiBubble } from './mai-bubble';
+import { createNailStation, nailsNote } from './nail-station-panel';
+import type { NailDesign, NailRequest } from '../nail-art/design';
+import type { MatchResult } from '../nail-art/match';
 import type { BestieLanguage, BestieTransport } from '../bestie';
 import { LEARNING_CONFIG, shouldCheckLine } from '../learning/corrections';
 import type { CorrectionsTransport, Phrase } from '../learning/corrections';
@@ -64,6 +67,14 @@ export function createChatPanel(
       hints: boolean;
       /** Omitted when the player turned corrections off. `onPhrase` saves a shown correction's better line to the phrasebook. */
       corrections?: { transport: CorrectionsTransport; onPhrase: (phrase: Phrase) => void };
+    };
+    /** Story 005: the nail art station during the service phase (omitted when the client has no nail request). */
+    nailArt?: {
+      request: NailRequest;
+      /** The client's game note about the nails (undefined before any work). */
+      onNote: (note: string | undefined) => void;
+      /** Finished (Done, or the appointment ended): the design and its match. */
+      onDone: (design: NailDesign, result: MatchResult) => void;
     };
     /** Voice in and out (story 004): the mic button, the client speaking aloud, and practising the last line. */
     voice?: { io: VoiceIO; clientId: string; speakReplies: boolean; onSpeakerChange: (on: boolean) => void };
@@ -154,8 +165,56 @@ export function createChatPanel(
       })
     : null;
 
+  // Story 005: the nail station draws over the portrait zone in the service phase; the chat below stays usable.
+  const nailArt = portraits.nailArt;
+  const station = nailArt
+    ? createNailStation({
+        rect: () => zone.rect(),
+        zone: zone.element,
+        layer: portraits.layer,
+        request: nailArt.request,
+        maiSide: () => (mai ? ((mai.element.dataset.side as 'left' | 'right' | undefined) ?? 'right') : null),
+        onChange: (design) => nailArt.onNote(nailsNote(design, null)),
+        onDone: (design, result) => {
+          appointment.adjustMood(result.moodDelta);
+          nailArt.onNote(nailsNote(design, result));
+          nailArt.onDone(design, result);
+          window.setTimeout(() => setStationOpen(false), 1800);
+        },
+      })
+    : null;
+  const stationToggle = el('button', 'station-toggle hidden', t('station.toggle'));
+  stationToggle.type = 'button';
+  stationToggle.setAttribute('aria-label', t('station.toggleLabel'));
+  let stationOpen = false;
+  let stationOpened = false;
+  function setStationOpen(next: boolean): void {
+    if (!station) return;
+    stationOpen = next;
+    station.setOpen(next);
+    root.classList.toggle('station-open', next);
+    zone.setCompactClient(next);
+    stationToggle.setAttribute('aria-pressed', String(next));
+    requestAnimationFrame(() => {
+      station.relayout();
+      liftMai();
+    });
+  }
+  /** While the station is open, Mai's bubble sits above its toolbar (in the station's corner), never over the tools. */
+  function liftMai(): void {
+    if (!station || !mai) return;
+    mai.element.style.setProperty('--mai-bottom', stationOpen ? `${station.toolbar.offsetHeight + 8}px` : '8px');
+  }
+  stationToggle.addEventListener('click', () => setStationOpen(!stationOpen));
+  if (station) {
+    zone.element.append(station.touch);
+    mood.insertBefore(stationToggle, mood.querySelector('.speaker-button'));
+    new ResizeObserver(() => station.relayout()).observe(zone.element);
+    new ResizeObserver(liftMai).observe(station.toolbar);
+  }
+
   const top = el('div', 'chat-top');
-  top.append(header, zone.element, ...(mai ? [mai.element] : []));
+  top.append(header, zone.element, ...(station ? [station.toolbar] : []), ...(mai ? [mai.element] : []));
 
   // Voice messages (listening, mic blocked, fall back to typing) sit just above the reply box.
   const voiceStatus = el('p', 'voice-status');
@@ -322,6 +381,21 @@ export function createChatPanel(
     // While the final line is spoken the client keeps her mood face; the walk-out pose comes after (settle).
     zone.setClientPose(poseFor(snapshot.mood, speaking ? null : (snapshot.result?.outcome ?? null)));
 
+    // Story 005: the station opens by itself the first time the service starts, and can be toggled after.
+    if (station && nailArt) {
+      const working = snapshot.phase !== 'consultation' && snapshot.status !== 'finished';
+      stationToggle.classList.toggle('hidden', !working);
+      if (working && !stationOpened) {
+        stationOpened = true;
+        setStationOpen(true);
+      }
+      if (snapshot.status === 'finished') {
+        if (stationOpen) setStationOpen(false);
+        // Ended before Done: score what was done (no mood change: the appointment is over).
+        if (stationOpened && !station.done) nailArt.onDone(station.design(), station.finish());
+      }
+    }
+
     fill.style.width = `${snapshot.mood}%`;
     fill.style.backgroundColor = moodColor(snapshot.mood);
     value.textContent = String(snapshot.mood);
@@ -470,6 +544,7 @@ export function createChatPanel(
   return {
     setBestieExpression: zone.setBestieExpression,
     destroy() {
+      station?.destroy();
       mai?.destroy();
       follower.destroy();
       unfit();

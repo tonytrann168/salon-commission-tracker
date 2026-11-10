@@ -1,0 +1,16 @@
+/* Story 005: the nail station toolbar and touch layer (over the portrait zone while open). */
+.chat-panel.station-open .portrait-zone { flex-basis: clamp(140px, 27vh, 230px); }
+.station-touch { position: absolute; left: 0; right: 0; z-index: 1; touch-action: none; }
+.station-tools { display: flex; flex-direction: column; gap: 4px; padding: 4px 8px 6px; background: rgba(255, 244, 248, 0.96); }
+.station-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.station-row::-webkit-scrollbar { display: none; }
+.station-button { flex: none; min-width: 40px; min-height: 40px; padding: 0 10px; border: 2px solid transparent; border-radius: 20px; background: #fff; color: #3b2a33; font: 600 14px system-ui, sans-serif; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; }
+.station-button[aria-pressed='true'] { border-color: #ff5c9a; background: #ffe8f1; }
+.station-button:disabled { opacity: 0.5; }
+.station-shape { width: 40px; padding: 0; }
+.station-done { background: #ff5c9a; color: #fff; }
+.station-swatch { width: 36px; min-width: 36px; min-height: 36px; padding: 0; border: 2px solid #fff; box-shadow: 0 0 0 1px #d9b8c6; }
+.station-swatch[aria-pressed='true'] { border-color: #3b2a33; box-shadow: 0 0 0 2px #ff5c9a; }
+.station-status { margin: 0; font-size: 13px; color: #8a6575; min-height: 1.2em; }
+.station-toggle { flex: none; width: 40px; min-height: 40px; padding: 0; font-size: 18px; border: 0; border-radius: 20px; background: #f3e8ff; color: #5b2d91; font: 700 14px system-ui, sans-serif; }
+.station-toggle[aria-pressed='true'] { background: #ff5c9a; color: #fff; }

@@ -13,6 +13,8 @@ const CLIENT_PADDING = 6;
 const BESTIE_CORNER_FRACTION = 0.42;
 const BESTIE_CORNER_MARGIN = 10;
 const BESTIE_ID = 'bestie';
+/** The client's face size while the nail station is open (story 005). */
+const COMPACT_CLIENT_PX = 58;
 
 export interface PortraitZone {
   element: HTMLElement;
@@ -22,6 +24,10 @@ export interface PortraitZone {
   setClientTalking(talking: boolean): void;
   /** Show the bestie's expression (story 003 drives this later). */
   setBestieExpression(expression: Expression): void;
+  /** Story 005: while the nail station is open the client shrinks to a small face in the top-left corner. */
+  setCompactClient(compact: boolean): void;
+  /** The zone's rectangle relative to the host (where the station draws). */
+  rect(): { left: number; top: number; width: number; height: number };
   destroy(): void;
 }
 
@@ -43,14 +49,24 @@ export function createPortraitZone(host: HTMLElement, layer: Container, client: 
     element.setAttribute('aria-label', t('portrait.label', { name: clientName, pose: t(`pose.${clientPose}`) }));
   label();
 
-  const place = (): void => {
+  let compact = false;
+  const rect = (): { left: number; top: number; width: number; height: number } => {
     const zone = element.getBoundingClientRect();
     const origin = host.getBoundingClientRect();
-    const left = zone.left - origin.left;
-    const top = zone.top - origin.top;
-    const clientSize = Math.max(1, zone.height - CLIENT_PADDING * 2);
-    clientPortrait.setSize(clientSize);
-    clientPortrait.view.position.set(left + (zone.width - clientSize) / 2, top + CLIENT_PADDING);
+    return { left: zone.left - origin.left, top: zone.top - origin.top, width: zone.width, height: zone.height };
+  };
+  const place = (): void => {
+    const zone = rect();
+    const { left, top } = zone;
+    if (compact) {
+      const small = Math.min(COMPACT_CLIENT_PX, Math.max(1, zone.height * 0.4));
+      clientPortrait.setSize(small);
+      clientPortrait.view.position.set(left + 8, top + 6);
+    } else {
+      const clientSize = Math.max(1, zone.height - CLIENT_PADDING * 2);
+      clientPortrait.setSize(clientSize);
+      clientPortrait.view.position.set(left + (zone.width - clientSize) / 2, top + CLIENT_PADDING);
+    }
     const bestieSize = Math.max(1, zone.height * BESTIE_CORNER_FRACTION);
     bestiePortrait.setSize(bestieSize);
     bestiePortrait.view.position.set(
@@ -74,6 +90,11 @@ export function createPortraitZone(host: HTMLElement, layer: Container, client: 
     setClientTalking(talking) {
       clientPortrait.setTalking(talking);
     },
+    setCompactClient(next) {
+      compact = next;
+      place();
+    },
+    rect,
     setBestieExpression(expression) {
       bestiePortrait.setPose(expression);
     },

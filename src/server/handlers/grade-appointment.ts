@@ -196,7 +196,7 @@ const failure = (status: number, code: TurnErrorCode, message: string): GradeHan
 function toUserMessage(client: ClientPersona, { transcript, outcome, finalMood, nails }: GradingRequest): string {
   const lines = transcript.map((message) => `${message.role === 'player' ? 'Stylist (player)' : client.name}: ${message.content}`);
   // Story 005: the finished nails, so the review can mention them.
-  const nailLine = nails ? `\nNails: ${nails.description}. Match with what ${client.name} asked for: ${nails.match}/100. The review must mention the nails.` : '';
+  const nailLine = nails ? `\nNails: ${nails.description}. Match with what ${client.name} asked for: ${nails.match}/100. The review must mention the nails: warmly when they match, honestly but kindly when they don't (never harsh).` : '';
   return `Outcome: ${outcome === 'walked_out' ? `${client.name} walked out` : 'checked out normally'}. Final mood: ${finalMood}/100.${nailLine}\n\n<transcript>\n${lines.join('\n')}\n</transcript>`;
 }
 
