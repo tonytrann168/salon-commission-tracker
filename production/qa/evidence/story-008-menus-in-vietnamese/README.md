@@ -31,3 +31,5 @@ Checked in the same run (script log):
 | `beginner-02-switch-to-beginner-settings-redrawn.png` | Settings after switching Some → Beginner: full Vietnamese mode switched on and Settings redrawn in Vietnamese |
 
 Browser log (saved settings): fresh `level null, help null` → first pick Beginner `full, <html lang=vi>` → turned off in Settings and re-picked Beginner `tap` (stays off) → relaunch `tap` (stays off) → Some then Beginner `full`. No page errors.
+
+**Re-shot 2026-11-10 (story 012):** settings cards no longer shrink (long Vietnamese text stayed inside its card). Because picking Beginner now turns full Vietnamese mode on (owner rule), the `en-*` run picks **Some** at the level picker so it stays in English, so `en-05-help-me-say-it` shows the re-type step instead of word tiles. The `vi-*` run still picks Beginner (tiles).

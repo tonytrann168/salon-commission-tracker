@@ -15,7 +15,9 @@ import { createCorrectionsTransport } from './game/learning/corrections';
 import { addPhrases, loadPhrasebook, savePhrasebook } from './game/learning/phrasebook';
 import { createPhrasebookScreen } from './game/ui/phrasebook-screen';
 import { openPracticeSheet } from './game/ui/practice-sheet';
-import { createBrowserVoice } from './game/voice';
+import { createBrowserVoice, withSpeakingSignal } from './game/voice';
+import { createAudioEngine } from './game/audio';
+import { emitSound } from './game/sound-events';
 import type { SpeechHost } from './game/voice';
 import { createLearningPanel, createLevelChangePanel } from './game/ui/recap-screen';
 import { createChatPanel } from './game/ui/chat-panel';
@@ -97,7 +99,19 @@ async function boot(): Promise<void> {
   const bestie = createBestieTransport();
   const corrections = createCorrectionsTransport();
   // Voice: the phone's own speech recognition and synthesis (story 004). No key, nothing on the server.
-  const voice = createBrowserVoice(window as unknown as SpeechHost);
+  // Music and sound (story 012): silent until the first tap; music ducks while anything is spoken.
+  const audio = createAudioEngine({
+    createContext: () => {
+      const Context = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      return Context ? new Context() : null;
+    },
+    setInterval: (handler, ms) => window.setInterval(handler, ms),
+    clearInterval: (id) => window.clearInterval(id),
+    addEventListener: (type, listener, options) => window.addEventListener(type, listener, options),
+    removeEventListener: (type, listener, options) => window.removeEventListener(type, listener, options),
+    isHidden: () => document.visibilityState === 'hidden',
+  });
+  const voice = withSpeakingSignal(createBrowserVoice(window as unknown as SpeechHost), (speaking) => audio.duck(speaking));
   /** Pronunciation practice, where the phone can listen. Uses the saved level (Beginner if none yet). */
   const practice = voice.canListen
     ? (line: string) => openPracticeSheet(host, { voice, line, level: getEnglishLevel() ?? 'beginner' })
@@ -143,8 +157,9 @@ async function boot(): Promise<void> {
                 transport: corrections,
                 // A whispered correction's better line goes straight into the phrasebook.
                 onPhrase: (phrase) => {
-                  const { book } = addPhrases(loadPhrasebook(), [{ ...phrase, source: 'correction', session: loadMemory().sessions + 1 }]);
+                  const { book, added } = addPhrases(loadPhrasebook(), [{ ...phrase, source: 'correction', session: loadMemory().sessions + 1 }]);
                   savePhrasebook(book);
+                  if (added > 0) emitSound('phraseSaved');
                 },
               },
             }

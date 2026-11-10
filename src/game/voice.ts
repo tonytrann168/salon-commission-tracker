@@ -284,3 +284,31 @@ export function createBrowserVoice(host: SpeechHost, config: VoiceConfig = VOICE
     },
   };
 }
+
+/**
+ * Wrap a VoiceIO so `onSpeaking(true)` fires while anything is being spoken and `onSpeaking(false)` once all speech
+ * has ended (story 012: the music ducks under the client). Counts overlapping lines, so a line cut off by the next
+ * one never brings the music back mid-sentence.
+ */
+export function withSpeakingSignal(io: VoiceIO, onSpeaking: (speaking: boolean) => void): VoiceIO {
+  let active = 0;
+  return {
+    get canListen() {
+      return io.canListen;
+    },
+    get canSpeak() {
+      return io.canSpeak;
+    },
+    listen: (onPartial) => io.listen(onPartial),
+    speak(text, options) {
+      active++;
+      onSpeaking(true);
+      return io.speak(text, options).finally(() => {
+        active = Math.max(0, active - 1);
+        if (active === 0) onSpeaking(false);
+      });
+    },
+    cancelSpeech: () => io.cancelSpeech(),
+    unlock: () => io.unlock(),
+  };
+}

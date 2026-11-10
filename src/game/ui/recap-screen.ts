@@ -10,6 +10,7 @@ import { applyDocumentLanguage } from '../i18n';
 import { chooseEnglishLevel, setEnglishLevel } from '../settings';
 import { TurnError } from '../types';
 import type { EnglishLevel, Message, Outcome } from '../types';
+import { emitSound } from '../sound-events';
 import { el } from './dom';
 import { practiceButton } from './practice-sheet';
 import './recap-screen.css';
@@ -96,6 +97,7 @@ export function createLearningPanel(options: LearningPanelOptions): HTMLElement 
         recapSection.append(el('h2', '', t('learning.recapTitle')), recap, el('h3', '', t('learning.tryTitle')), ...review.tryLines.map((phrase) => phraseLine(phrase, options.onPractice)));
 
         const added = savePhrasesFrom(review, session);
+        if (added > 0) emitSound('phraseSaved');
         const note = el('p', added > 0 ? 'results-note good' : 'results-note', added > 0 ? t('learning.phrasesAdded', { count: added }) : t('learning.phrasesNone'));
         box.replaceChildren(reviewSection, recapSection, note);
       },
@@ -140,6 +142,7 @@ export function createLevelChangePanel(level: EnglishLevel, englishScore: number
   if (decision.kind === 'up') {
     setEnglishLevel(decision.to);
     saveHistory(freshHistory(decision.to));
+    emitSound('levelUp');
     section.append(el('p', 'level-change-burst', '🎉'), el('h2', '', t('level.upTitle')), both('level.upLine', decision.to), el('p', 'learning-reason', t('level.switchBack')));
     return section;
   }

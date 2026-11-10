@@ -1,4 +1,6 @@
 .screen { position: fixed; inset: 0; z-index: 10; box-sizing: border-box; overflow-y: auto; padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom)); background: #fff4f8; color: #3b2a33; display: flex; flex-direction: column; gap: 16px; }
+/* A scrolling column: cards keep their natural height instead of shrinking to fit (long Vietnamese text). */
+.screen > * { flex-shrink: 0; }
 .screen h1 { margin: 0; font-size: 22px; line-height: 1.25; }
 .screen h2 { margin: 0; font-size: 18px; }
 .bilingual { display: flex; flex-direction: column; gap: 2px; }
@@ -18,3 +20,9 @@
 .setting-row input[type='checkbox'] { width: 28px; height: 28px; flex: none; accent-color: #ff5c9a; }
 .setting-text { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 .setting-note { font-size: 14px; color: #8a6575; }
+.sound-row { flex-wrap: wrap; row-gap: 6px; }
+.sound-row .sound-name { flex: 1 1 100%; }
+.sound-row input[type='range'] { flex: 1 1 auto; min-width: 0; accent-color: #ff5c9a; }
+.sound-mute { display: flex; align-items: center; gap: 6px; font-size: 14px; flex: none; }
+.sound-mute input { width: 24px; height: 24px; accent-color: #ff5c9a; }
+.sound-note { margin: -8px 4px 0; }

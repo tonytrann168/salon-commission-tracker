@@ -1,4 +1,6 @@
 import { applyDocumentLanguage, t } from '../i18n';
+import { loadAudioSettings, saveAudioSettings } from '../audio';
+import type { AudioSettings } from '../audio';
 import { BESTIE_CONFIG } from '../bestie';
 import { LEARNING_CONFIG } from '../learning/corrections';
 import { getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, chooseEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
@@ -75,11 +77,35 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void): HTM
     voiceText.append(el('strong', '', t('settings.clientVoice')), el('span', 'setting-note', t('settings.clientVoiceNote')));
     voiceRow.append(voiceText, voiceToggle);
 
+    // Music and sound effects (story 012): a volume slider and a mute each, saved and applied at once.
+    const soundRow = (key: 'music' | 'sfx'): HTMLElement => {
+      const row = el('div', 'setting-row sound-row');
+      const name = t(key === 'music' ? 'settings.music' : 'settings.sfx');
+      const slider = el('input');
+      slider.type = 'range';
+      slider.min = '0';
+      slider.max = '100';
+      slider.step = '5';
+      slider.value = String(Math.round(loadAudioSettings()[key] * 100));
+      slider.setAttribute('aria-label', t('settings.volumeLabel', { name }));
+      const muteLabel = el('label', 'sound-mute');
+      const mute = el('input');
+      mute.type = 'checkbox';
+      const muteKey: keyof AudioSettings = key === 'music' ? 'musicMuted' : 'sfxMuted';
+      mute.checked = loadAudioSettings()[muteKey] as boolean;
+      muteLabel.append(mute, el('span', '', t('settings.mute')));
+      slider.addEventListener('input', () => saveAudioSettings({ ...loadAudioSettings(), [key]: Number(slider.value) / 100 }));
+      mute.addEventListener('change', () => saveAudioSettings({ ...loadAudioSettings(), [muteKey]: mute.checked }));
+      row.append(el('strong', 'sound-name', name), slider, muteLabel);
+      return row;
+    };
+    const soundNote = el('p', 'setting-note sound-note', t('settings.soundNote'));
+
     const back = el('button', 'chat-button secondary', t('common.back'));
     back.type = 'button';
     back.addEventListener('click', onBack);
 
-    screen.replaceChildren(title, levelTitle, picker, row, voiceRow, hintsRow, correctionsRow, back);
+    screen.replaceChildren(title, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, back);
   };
 
   render();

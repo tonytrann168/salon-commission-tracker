@@ -18,6 +18,7 @@ import { createMicButton } from './mic-button';
 import { openPracticeSheet, practiceButton } from './practice-sheet';
 import type { VoiceIO } from '../voice';
 import { createPortraitZone } from './portrait-zone';
+import { emitSound } from '../sound-events';
 import { startTextReveal } from './text-reveal';
 import type { TextReveal } from './text-reveal';
 import './chat-panel.css';
@@ -294,6 +295,9 @@ export function createChatPanel(
   };
 
   const render = (snapshot: AppointmentSnapshot): void => {
+    // Story 012: a soft sound when the client's mood moves (never a buzzer for a mistake).
+    if (snapshot.mood > latest.mood) emitSound('moodUp');
+    else if (snapshot.mood < latest.mood) emitSound('moodDown');
     latest = snapshot;
     reveal?.cancel();
     reveal = null;
@@ -419,6 +423,7 @@ export function createChatPanel(
   /** Send a typed or spoken line. */
   function sendLine(text: string, helped: boolean): void {
     if (text.trim() === '') return;
+    emitSound('send');
     reveal?.finish();
     voice?.io.cancelSpeech();
     checkLine(text, helped, latest);

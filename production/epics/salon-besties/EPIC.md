@@ -23,7 +23,7 @@ Listed in build order.
 | 003 | Signature bestie | Integration | Complete (review) | N/A |
 | 011 | Learning loop | Integration | Complete (review) | N/A |
 | 004 | Voice in and out (+ pronunciation practice) | Integration | Complete (review + phone playtest) | N/A |
-| 012 | Music and sound | Visual/Feel | Ready | N/A |
+| 012 | Music and sound | Visual/Feel | Complete (review + phone listen) | N/A |
 | 005 | Nail art station | Visual/Feel | Ready | N/A |
 | 006 | Client roster & difficulty | Config/Data | Ready | N/A |
 | 007 | Progression & daily hooks | Logic | Ready | N/A |

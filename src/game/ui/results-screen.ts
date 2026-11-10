@@ -4,6 +4,7 @@ import { ENGLISH_KEYS, SKILL_KEYS, TurnError } from '../types';
 import type { TranslationCache } from '../translation-cache';
 import type { AppointmentResult, EnglishLevel, GradeAppointment, Grading, HelpLanguage } from '../types';
 import { t } from '../i18n';
+import { emitSound } from '../sound-events';
 import './results-screen.css';
 
 /**
@@ -154,6 +155,8 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
   };
 
   const showResults = (grading: Grading, score: ScoreResult): void => {
+    emitSound('stars');
+    if (score.tip > 0) emitSound('tip');
     const stars = el('div', 'results-stars', '★'.repeat(score.stars) + '☆'.repeat(5 - score.stars));
     stars.setAttribute('role', 'img');
     stars.setAttribute('aria-label', t(score.stars === 1 ? 'results.starsOne' : 'results.starsMany', { count: score.stars }));

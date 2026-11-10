@@ -152,5 +152,10 @@
   "practice.heardNone": "I couldn't make out those words. Try again a little slower.",
   "practice.heard": "heard",
   "practice.notHeard": "not heard yet",
-  "practice.note": "This checks which words were recognised, not every sound."
+  "practice.note": "This checks which words were recognised, not every sound.",
+  "settings.music": "Music",
+  "settings.sfx": "Sound effects",
+  "settings.mute": "Mute",
+  "settings.volumeLabel": "{name} volume",
+  "settings.soundNote": "Sound starts after your first tap. Music goes quiet while the client speaks."
 }

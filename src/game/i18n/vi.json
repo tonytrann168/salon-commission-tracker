@@ -152,5 +152,10 @@
   "practice.heardNone": "Chị chưa nghe rõ. Em thử lại chậm hơn một chút nha.",
   "practice.heard": "nghe rõ",
   "practice.notHeard": "chưa nghe rõ",
-  "practice.note": "Phần này kiểm tra từ nào nghe được, chưa chấm từng âm."
+  "practice.note": "Phần này kiểm tra từ nào nghe được, chưa chấm từng âm.",
+  "settings.music": "Nhạc nền",
+  "settings.sfx": "Hiệu ứng âm thanh",
+  "settings.mute": "Tắt tiếng",
+  "settings.volumeLabel": "Âm lượng {name}",
+  "settings.soundNote": "Âm thanh bắt đầu sau lần chạm đầu tiên. Nhạc nhỏ lại khi khách nói."
 }

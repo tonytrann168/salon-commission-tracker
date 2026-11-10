@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import type { ScoreResult } from '../scoring';
 import { TurnError } from '../types';
 import type { EnglishLevel, Grading, Message, Outcome, Phase } from '../types';
+import { emitSound } from '../sound-events';
 import { el } from './dom';
 import './bestie-panel.css';
 
@@ -99,6 +100,7 @@ export function createHintBar(options: HintBarOptions): {
           const text = el('p', 'bestie-text', hint);
           text.lang = options.language;
           show(text);
+          emitSound('whisper');
         },
         (error: unknown) => {
           if (mine !== requestId) return;
@@ -131,6 +133,7 @@ export function createHintBar(options: HintBarOptions): {
       const reason = el('p', 'bestie-text bestie-reason', correction.reason);
       reason.lang = correction.language;
       show(praise, said, better, reason);
+      emitSound('whisper');
       whisper.classList.add('correction');
       return true;
     },
@@ -182,6 +185,7 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
   const showLevel = (before: number, after: BestieMemory): void => {
     const now = bestieLevel(after.xp);
     levelTag.textContent = t('bestie.level', { level: now });
+    if (now > before) emitSound('levelUp');
     if (now > before) body.append(el('p', 'results-note good bestie-level-up', t('bestie.levelUp', { name: NAME, level: now })));
   };
 
