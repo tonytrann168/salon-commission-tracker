@@ -1,13 +1,95 @@
 {
   "name": "Mai",
   "skin": "placeholder",
-  "slots": ["head", "face", "neck", "held", "outfit"],
+  "slots": [
+    "head",
+    "face",
+    "neck",
+    "held",
+    "outfit",
+    "nails"
+  ],
   "accessories": [
-    { "id": "bow-pink", "slot": "head", "name": { "en": "Pink bow", "vi": "Nơ hồng" }, "free": true, "unlock": "start" },
-    { "id": "glasses-round", "slot": "face", "name": { "en": "Round glasses", "vi": "Kính tròn" }, "free": true, "unlock": "bestie-level-2" },
-    { "id": "scarf-mint", "slot": "neck", "name": { "en": "Mint scarf", "vi": "Khăn quàng bạc hà" }, "free": true, "unlock": "first-five-stars" },
-    { "id": "brush-gold", "slot": "held", "name": { "en": "Gold brush", "vi": "Cọ vàng" }, "free": true, "unlock": "phrasebook-20" },
-    { "id": "color-lavender", "slot": "outfit", "name": { "en": "Lavender colour", "vi": "Màu oải hương" }, "free": true, "unlock": "streak-3" }
+    {
+      "id": "bow-pink",
+      "slot": "head",
+      "name": {
+        "en": "Pink bow",
+        "vi": "Nơ hồng"
+      },
+      "free": true,
+      "unlock": "start"
+    },
+    {
+      "id": "glasses-round",
+      "slot": "face",
+      "name": {
+        "en": "Round glasses",
+        "vi": "Kính tròn"
+      },
+      "free": true,
+      "unlock": "bestie-level-2"
+    },
+    {
+      "id": "scarf-mint",
+      "slot": "neck",
+      "name": {
+        "en": "Mint scarf",
+        "vi": "Khăn quàng bạc hà"
+      },
+      "free": true,
+      "unlock": "first-five-stars"
+    },
+    {
+      "id": "brush-gold",
+      "slot": "held",
+      "name": {
+        "en": "Gold brush",
+        "vi": "Cọ vàng"
+      },
+      "free": true,
+      "unlock": "phrasebook-20"
+    },
+    {
+      "id": "color-lavender",
+      "slot": "outfit",
+      "name": {
+        "en": "Lavender colour",
+        "vi": "Màu oải hương"
+      },
+      "free": true,
+      "unlock": "streak-3"
+    },
+    {
+      "id": "nails-pink",
+      "slot": "nails",
+      "name": {
+        "en": "Classic pink nails",
+        "vi": "Móng hồng cổ điển"
+      },
+      "free": true,
+      "unlock": "start"
+    },
+    {
+      "id": "nails-mint",
+      "slot": "nails",
+      "name": {
+        "en": "Mint nails",
+        "vi": "Móng xanh bạc hà"
+      },
+      "free": true,
+      "unlock": "phrasebook-10"
+    },
+    {
+      "id": "nails-gold-glitter",
+      "slot": "nails",
+      "name": {
+        "en": "Gold glitter nails",
+        "vi": "Móng nhũ vàng"
+      },
+      "free": true,
+      "unlock": "first-five-stars"
+    }
   ],
   "equipped": {}
 }

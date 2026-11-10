@@ -72,3 +72,21 @@ export function accessories(equipped: Equipped, anchors: Anchors): string {
   }
   return out;
 }
+
+/** Mai's nail polish from the `nails` slot: colour and glitter. `fallback` is the skin's own colour. */
+export function nailPolish(equipped: Equipped, fallback: string): { color: string; glitter: boolean } {
+  switch (equipped.nails) {
+    case 'nails-pink':
+      return { color: '#ff5c9a', glitter: false };
+    case 'nails-mint':
+      return { color: '#2ec4a6', glitter: false };
+    case 'nails-gold-glitter':
+      return { color: '#e0b44a', glitter: true };
+    default:
+      return { color: fallback, glitter: false };
+  }
+}
+
+/** Tiny white sparkle dots for glitter polish at (x, y). */
+export const glitterDots = (x: number, y: number): string =>
+  `<circle cx="${x - 0.8}" cy="${y - 0.6}" r="0.55" fill="#fff"/><circle cx="${x + 0.7}" cy="${y + 0.5}" r="0.45" fill="#fff"/>`;

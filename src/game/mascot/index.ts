@@ -3,5 +3,6 @@ import './placeholder';
 import './polish-bottle';
 import './hoa-mai';
 import './salon-kitty';
+import './concepts-round-2';
 
 export * from './mascot';

@@ -4,15 +4,29 @@ import { getSkin } from './mascot';
 import '../ui/mai-bubble.css';
 
 /**
- * DEV-ONLY concept page (http://localhost:5173/mascot-concepts.html): the three Mai mascot concepts side by side, for
+ * DEV-ONLY concept page (http://localhost:5173/mascot-concepts.html, round 2: ?round=2): the three Mai mascot concepts side by side, for
  * the owner to pick A, B or C. Not part of the production build (only index.html is built).
  */
 
-const CONCEPTS: { id: string; sample: Equipped; sampleName: string }[] = [
+type Concept = { id: string; sample: Equipped; sampleName: string; score?: string };
+const ROUND_1: Concept[] = [
   { id: 'polish-bottle', sample: { face: 'glasses-round' }, sampleName: 'round glasses (face slot)' },
   { id: 'hoa-mai', sample: { neck: 'scarf-mint' }, sampleName: 'mint scarf (neck slot)' },
   { id: 'salon-kitty', sample: { head: 'bow-pink' }, sampleName: 'pink bow (head slot)' },
 ];
+/** Round 2 (owner leaning C): four kitty variants with more contrast at 56 px, plus two non-cat ideas. */
+const ROUND_2: Concept[] = [
+  { id: 'f-polish-kitty', sample: { neck: 'scarf-mint' }, sampleName: 'mint scarf (neck slot)', score: 'Cute at 56 px 5/5 · Ownable 5/5 (nobody else has a polish-bottle cat) · Dress-up 4/5 (cap = hat spot; bottle colour = outfit; paws hold items) · Salon identity 5/5. Recommended.' },
+  { id: 'g-mochi-cat-bunny', sample: { head: 'bow-pink' }, sampleName: 'pink bow (head slot)', score: 'Cute at 56 px 5/5 · Ownable 4/5 (an original species) · Dress-up 5/5 (clear head, apron/outfit area, paws) · Salon identity 4/5 (painted tips, apron). Strong second.' },
+  { id: 'c2-lavender-kitty', sample: { face: 'glasses-round' }, sampleName: 'round glasses (face slot)', score: 'Cute 4/5 · Ownable 2/5 (a cat) · Dress-up 4/5 · Salon identity 4/5 (mood-coloured claw tips).' },
+  { id: 'c4-chibi-kitty', sample: { neck: 'scarf-mint' }, sampleName: 'mint scarf (neck slot)', score: 'Cute 5/5 · Ownable 2/5 (a cat) · Dress-up 3/5 (tiny body, little outfit room) · Salon identity 4/5 (hugs a bottle).' },
+  { id: 'c1-peach-kitty', sample: { head: 'bow-pink' }, sampleName: 'pink bow (head slot)', score: 'Cute 4/5 · Ownable 2/5 (a cat) · Dress-up 4/5 (apron = outfit) · Salon identity 3/5.' },
+  { id: 'c3-calico-kitty', sample: { held: 'brush-gold' }, sampleName: 'gold brush (held slot)', score: 'Cute 4/5 · Ownable 3/5 (calico + nail file) · Dress-up 4/5 · Salon identity 3/5.' },
+  { id: 'd-bunny', sample: { head: 'bow-pink' }, sampleName: 'pink bow (head slot)', score: 'Cute 4/5 · Ownable 2/5 · Dress-up 4/5 (ears fight with hats) · Salon identity 2/5.' },
+  { id: 'e-mochi', sample: { face: 'glasses-round' }, sampleName: 'round glasses (face slot)', score: 'Cute at 56 px 5/5 · Ownable 3/5 · Dress-up 3/5 (no paws to hold items) · Salon identity 3/5 (polish-cap hat).' },
+];
+const ROUND = new URLSearchParams(location.search).get('round') === '2' ? 2 : 1;
+const CONCEPTS = ROUND === 2 ? ROUND_2 : ROUND_1;
 
 const LABELS: Record<MascotExpression, string> = {
   idle: 'idle',
@@ -32,6 +46,7 @@ h1 { font-size: 22px; margin: 0 0 4px; } .lede { margin: 0 0 16px; color: #8a657
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
 .cell { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 13px; color: #5b4a53; text-align: center; }
 .cell .mascot { background: #fff4f8; border-radius: 16px; }
+.score { margin: 14px 0 0; padding: 10px 12px; background: #f3e8ff; border-radius: 12px; font-weight: 600; color: #5b2d91; }
 .row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px; margin-top: 16px; }
 .fake-bubble { position: relative; width: 60px; height: 60px; padding: 2px; border-radius: 50%; background: #fff; box-shadow: 0 2px 10px rgba(59,42,51,.25); }
 .fake-bubble .mascot { display: block; border-radius: 50%; overflow: hidden; background: #fff4f8; }
@@ -43,10 +58,10 @@ document.head.append(style);
 
 const root = document.getElementById('concepts') as HTMLElement;
 const title = document.createElement('h1');
-title.textContent = 'Mai mascot concepts';
+title.textContent = ROUND === 2 ? 'Mai mascot concepts, round 2' : 'Mai mascot concepts';
 const lede = document.createElement('p');
 lede.className = 'lede';
-lede.textContent = 'Owner: pick A, B or C (or a mix). Each is a swappable skin; the bubble in the game uses whichever is picked.';
+lede.textContent = ROUND === 2 ? 'Owner: cute, personal, easy to customize, not just a cat. Hybrids F and G first, then kitty variants C1-C4 (more contrast at 56 px) and non-cat ideas D, E. Each scored on: cute at 56 px · ownable · dress-up friendly · nail-salon identity. "Do Mai\'s nails": the nails row shows three polish colours (her own ear and claw tips). Round 1: ?round=1.' : 'Owner: pick A, B or C (or a mix). Each is a swappable skin; the bubble in the game uses whichever is picked. Round 2: ?round=2.';
 root.append(title, lede);
 
 const cell = (node: HTMLElement, label: string): HTMLElement => {
@@ -71,7 +86,8 @@ const bubble = (skinId: string, expression: MascotExpression, badge: number): HT
   return wrap;
 };
 
-for (const { id, sample, sampleName } of CONCEPTS) {
+for (const concept of CONCEPTS) {
+  const { id, sample, sampleName } = concept;
   const section = document.createElement('section');
   section.className = 'concept';
   section.id = id;
@@ -95,8 +111,22 @@ for (const { id, sample, sampleName } of CONCEPTS) {
     cell(strip, 'in the chat strip (320 px)'),
     cell(renderMascot('talking', 160, { skinId: id }), 'panel size, 160 px'),
     cell(renderMascot('happy', 120, { skinId: id, equipped: sample }), `sample accessory: ${sampleName}`),
-    cell(renderMascot('happy', 120, { skinId: id, equipped: { head: 'bow-pink', face: 'glasses-round', neck: 'scarf-mint', held: 'brush-gold', outfit: 'color-lavender' } }), 'all 5 slots (dress-up test)'),
+    cell(renderMascot('happy', 120, { skinId: id, equipped: { head: 'bow-pink', face: 'glasses-round', neck: 'scarf-mint', held: 'brush-gold', outfit: 'color-lavender', nails: 'nails-mint' } }), 'all 6 slots (dress-up test)'),
   );
-  section.append(h2, p, grid, row);
+  const extras: HTMLElement[] = [];
+  if (ROUND === 2) {
+    const nails = document.createElement('div');
+    nails.className = 'row';
+    nails.append(
+      ...(['nails-pink', 'nails-mint', 'nails-gold-glitter'] as const).map((nailsId) =>
+        cell(renderMascot('happy', 100, { skinId: id, equipped: { nails: nailsId } }), `do Mai's nails: ${nailsId.replace('nails-', '').replace('-', ' ')}`),
+      ),
+    );
+    extras.push(nails);
+  }
+  const score = document.createElement('p');
+  score.className = 'score';
+  if (concept.score) score.textContent = concept.score;
+  section.append(h2, p, grid, row, ...extras, ...(concept.score ? [score] : []));
   root.append(section);
 }

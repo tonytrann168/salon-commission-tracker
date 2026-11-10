@@ -10,7 +10,8 @@ import mascotJson from '../config/mascot.json';
 export const MASCOT_EXPRESSIONS = ['idle', 'talking', 'happy', 'thinking', 'tipWaiting', 'celebrating'] as const;
 export type MascotExpression = (typeof MASCOT_EXPRESSIONS)[number];
 
-export const ACCESSORY_SLOTS = ['head', 'face', 'neck', 'held', 'outfit'] as const;
+/** `nails`: Mai's own painted ear and claw tips ("do Mai's nails", the most on-theme customization). */
+export const ACCESSORY_SLOTS = ['head', 'face', 'neck', 'held', 'outfit', 'nails'] as const;
 export type AccessorySlot = (typeof ACCESSORY_SLOTS)[number];
 
 export interface Accessory {
