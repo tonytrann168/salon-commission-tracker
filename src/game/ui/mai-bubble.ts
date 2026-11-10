@@ -97,7 +97,8 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
     better.append(el('span', 'bestie-label', `→ ${t('learning.better')}: `), betterText);
     const reason = el('p', 'bestie-reason', tip.reason);
     reason.lang = tip.language;
-    item.append(praise, said, better, reason);
+    // Praise first (kind before correcting), then the Better line, so the key part is never the part cut off.
+    item.append(praise, better, said, reason);
     return item;
   };
 

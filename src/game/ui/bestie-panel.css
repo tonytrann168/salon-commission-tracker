@@ -16,6 +16,6 @@
   .bestie-greeting { padding: 8px 12px; font-size: 14px; line-height: 1.3; }
 }
 @media (max-height: 640px), (max-width: 360px) {
-  .mai-panel { inset: 4px 8px; padding: 8px 12px; font-size: 14px; }
+  .mai-panel { top: 4px; left: 8px; right: 8px; padding: 8px 12px; font-size: 14px; }
   .bestie-reason { font-size: 13px; }
 }
