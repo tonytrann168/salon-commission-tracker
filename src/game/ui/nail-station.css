@@ -2,7 +2,8 @@
 .chat-panel.station-open .portrait-zone { flex-basis: clamp(112px, 21vh, 184px); }
 .station-touch { position: absolute; left: 0; right: 0; z-index: 1; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 /* The hint/status: small, inside the hand area, never blocking touch. */
-.station-status { position: absolute; left: 70px; right: 74px; bottom: 4px; margin: 0; padding: 3px 8px; border-radius: 10px; background: rgba(255, 255, 255, 0.88); font-size: 12px; line-height: 1.2; color: #5b4a53; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+/* Bottom-right, under the ring and pinky fingers (no nails there; the thumb is bottom-left, Mai top-right). */
+.station-status { position: absolute; left: 96px; right: 6px; bottom: 3px; margin: 0; padding: 3px 8px; border-radius: 10px; background: rgba(255, 255, 255, 0.88); font-size: 12px; line-height: 1.2; color: #5b4a53; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
 .station-status.show { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .station-status { transition: none; } }
 /* One row: tabs | options (scroll, faded edges) | Done. */

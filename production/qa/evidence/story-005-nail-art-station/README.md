@@ -45,3 +45,5 @@ Checked in the same run (script log, en and vi, "problems: none"):
 - **Fixed on the way:** a mouse or trackpad stroke was cancelled part-way by the browser (it was starting a text selection), and fast strokes skipped points because the browser merges moves into one per frame. Now pointer-down prevents selection, the panel reads every merged point, and the station fills the gaps between points in half-brush steps.
 
 Frame rate: same as above (software WebGL here, ~15 fps even idle); the 60 fps feel check is still the owner's phone.
+
+**Re-shot after the overseer's review of 6192d72:** the thumb is more upright (−52°) and shorter, so its whole length, including the base joint, sits inside the hand area. The palm is drawn under the fingers, so every nail sits on a visible rounded fingertip. There is a 7 px top margin (nail tips 11 px below the edge), and the hand scales to fit (~13% smaller). The hint sits bottom-right, under the ring and pinky fingers. The script checks each run: hint over no nail, tips ≥ 4 px from the top, thumb base inside the zone; all passed in en and vi. Chat area still 213 px.

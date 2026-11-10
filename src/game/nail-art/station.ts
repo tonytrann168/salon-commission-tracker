@@ -48,6 +48,8 @@ const mix = (a: number, b: number, t: number): number => {
   return (ch(16) << 16) | (ch(8) << 8) | ch(0);
 };
 const rad = (deg: number): number => (deg * Math.PI) / 180;
+/** Pixels kept clear above the hand box. */
+const TOP_MARGIN = 7;
 
 export function createStationView(initial: NailDesign = emptyDesign()): StationView {
   const container = new Container();
@@ -55,7 +57,8 @@ export function createStationView(initial: NailDesign = emptyDesign()): StationV
   const fingersLayer = new Container();
   const palm = new Graphics();
   const nailsLayer = new Container();
-  container.addChild(fingersLayer, palm, nailsLayer);
+  // The palm goes under the fingers, so the thumb lies over it and every nail sits on a visible fingertip.
+  container.addChild(palm, fingersLayer, nailsLayer);
   const hand = NAIL_ART_CONFIG.hand;
   let design = initial;
   let views: NailView[] = [];
@@ -186,7 +189,8 @@ export function createStationView(initial: NailDesign = emptyDesign()): StationV
     const { w, h } = finger.nail;
     const fw = w * finger.width;
     const left = (w - fw) / 2;
-    const top = h * 0.18;
+    // The rounded fingertip shows just past the free edge (long shapes reach beyond it).
+    const top = -h * 0.04;
     const length = h - top + finger.length;
     const g = new Graphics()
       .roundRect(left, top, fw, length, fw * 0.5)
@@ -210,11 +214,12 @@ export function createStationView(initial: NailDesign = emptyDesign()): StationV
       for (const old of views) old.root.destroy({ children: true });
       fingersLayer.removeChildren().forEach((child) => child.destroy());
       views = [];
-      // Fit the hand box into the free width, keeping its proportions (the hand never pushes the layout).
+      // Fit the hand box into the free width and the height less a small top margin (so pointed tips show), keeping
+      // its proportions: the hand never pushes the layout.
       const free = Math.max(80, w - reserveLeft - reserveRight);
-      scale = Math.min(free / hand.box.w, h / hand.box.h);
+      scale = Math.min(free / hand.box.w, (h - TOP_MARGIN) / hand.box.h);
       offsetX = reserveLeft + (free - hand.box.w * scale) / 2;
-      offsetY = Math.max(0, (h - hand.box.h * scale) * 0.3);
+      offsetY = TOP_MARGIN;
       for (const layer of [fingersLayer, palm, nailsLayer]) {
         layer.position.set(offsetX, offsetY);
         layer.scale.set(scale);

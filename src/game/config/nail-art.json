@@ -16,9 +16,9 @@
   "grid": { "cols": 6, "rows": 10 },
   "hand": {
     "_note": "One hand, palm down, fingers up, in hand units (box w x h). Per finger: nail centre (x, y), angle in degrees (0 = straight up, + leans right), nail size, finger length below the nail and width (x nail width). Two hands later = a second list.",
-    "box": { "w": 100, "h": 52 },
+    "box": { "w": 100, "h": 56 },
     "fingers": [
-      { "id": "thumb", "x": 12, "y": 41, "angle": -38, "nail": { "w": 15, "h": 13 }, "length": 26, "width": 1.3 },
+      { "id": "thumb", "x": 13, "y": 38, "angle": -52, "nail": { "w": 15, "h": 13 }, "length": 20, "width": 1.3 },
       { "id": "index", "x": 32.5, "y": 16, "angle": -7, "nail": { "w": 12.5, "h": 16 }, "length": 44, "width": 1.32 },
       { "id": "middle", "x": 50, "y": 11, "angle": 0, "nail": { "w": 13.5, "h": 18 }, "length": 50, "width": 1.3 },
       { "id": "ring", "x": 66.5, "y": 15, "angle": 6, "nail": { "w": 12, "h": 16 }, "length": 46, "width": 1.32 },
