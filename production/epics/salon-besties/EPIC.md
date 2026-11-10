@@ -7,7 +7,7 @@
 
 **Scope**: the brief's 7 MVP features — live client appointment, English in the chair, Vietnamese help, signature bestie & learning loop, scoring with an English score, nail art station, clients & progression.
 
-**Order** (the brief's Build order): 001 and 009 are built; then 002 → 010 → 008 → 003 → 011 → 004 (with pronunciation practice) → 012 (music and sound, added 2026-11-10) → 005 → 006 → 007.
+**Order** (the brief's Build order): 001 and 009 are built; then 002 → 010 → 008 → 003 → 011 → 004 (with pronunciation practice) → 012 (music and sound, added 2026-11-10) → Mai bubble, mascot skin and concepts (owner, 2026-11-10; folded into 003/011) → 005 → 013 (Mai companion and dress-up; needs the owner's mascot pick) → 006 → 007.
 
 ## Stories
 
@@ -25,6 +25,7 @@ Listed in build order.
 | 004 | Voice in and out (+ pronunciation practice) | Integration | Complete (review + phone playtest) | N/A |
 | 012 | Music and sound | Visual/Feel | Complete (review + phone listen) | N/A |
 | 005 | Nail art station | Visual/Feel | Ready | N/A |
+| 013 | Mai companion and dress-up | Feature | Ready (needs mascot pick) | N/A |
 | 006 | Client roster & difficulty | Config/Data | Ready | N/A |
 | 007 | Progression & daily hooks | Logic | Ready | N/A |
 

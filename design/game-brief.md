@@ -2,6 +2,9 @@
 
 **One-sentence pitch:** An educational phone game where Vietnamese nail techs build real-world English by working the chair: talk (typed or out loud) with AI clients who speak at your level, get Vietnamese help the moment you need it, and your AI best friend corrects you gently, remembers what you've learned, and grows with you from Junior Tech to Master Tech.
 
+## Pillar: Mai, the soul of the game *(owner, 2026-11-10)*
+Mai, the player's mascot best friend, is the main reason to play and to come back. She is a supportive companion and coach, not a fixer: she is there when the player wants her (an on-demand bubble), remembers them, greets them by name, notices their progress and streaks, cheers their wins and is gentle after a bad appointment, never shaming. Her look is a cute salon mascot (concepts A/B/C, owner to pick), built as a swappable skin with accessory slots so she can be dressed up, and later re-skinned for the hair salon.
+
 ## Core loop
 - Pick a client (easy / medium / hard) or a shift of several; clients speak English pitched to your English level (Beginner / Some / Comfortable / Fluent).
 - Run the appointment in English: consultation → service in the nail art station while keeping the conversation going → checkout and rebooking. Stuck? Tap a client line to translate it, or type in Vietnamese with "Help me say it" and re-type the English to send.
@@ -25,7 +28,7 @@
 ## Keep — what must survive every change
 - Expressive faces: moods readable at a glance.
 - 5–20 minute sessions that fit between real clients.
-- A kind bestie.
+- A kind bestie: Mai is supportive, on demand, and the reason players return.
 - Real-salon situations.
 
 ## Avoid — what this game must never do
@@ -40,7 +43,7 @@
 - Mirror role swap (player as the client; tech copies the player, or a different tech)
 - Story campaign chapters (beauty school → salon owner)
 - Leaderboards and sharing
-- Bestie customization shop and any payments (business model decided later)
+- Payments of any kind. **Monetization note (owner, 2026-11-10):** v1 is free, with no purchases. Later, a cosmetic shop sells accessories and outfits for Mai (free ones are earned by playing). Never pay-to-win, and never put English help, translations or corrections behind a payment.
 - Native App Store / Google Play apps (v1 is an installable web app)
 - PolishPay integration
 
