@@ -1,3 +1,4 @@
+import basicSsl from '@vitejs/plugin-basic-ssl';
 import { defineConfig, loadEnv } from 'vite';
 import type { Plugin } from 'vite';
 import { handleClientTurn } from './api/client-turn';
@@ -53,6 +54,14 @@ function devApi(env: Record<string, string>): Plugin {
   };
 }
 
+/**
+ * Phones reach the dev server on a LAN address (`npm run dev` = `vite --host`). Plain HTTP there is not a secure
+ * context, so phones block the mic and speech recognition (story 004). With `--host`, serve HTTPS with a
+ * self-signed certificate (accept the warning once on the phone). Without it (`npm run dev:local`), plain
+ * http://localhost as before.
+ */
+const servedOnLan = process.argv.includes('--host') || process.argv.some((arg) => arg.startsWith('--host='));
+
 export default defineConfig(({ mode }) => ({
-  plugins: [devApi(loadEnv(mode, process.cwd(), ''))],
+  plugins: [devApi(loadEnv(mode, process.cwd(), '')), ...(servedOnLan ? [basicSsl()] : [])],
 }));

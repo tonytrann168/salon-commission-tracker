@@ -152,6 +152,12 @@ export interface VoiceIO {
   speak(text: string, options: { clientId?: string; level: EnglishLevel }): Promise<void>;
   /** Stop speaking at once. */
   cancelSpeech(): void;
+  /**
+   * Call inside the player's first tap (Start appointment, the mic). iPhone Safari only lets speech start from a user
+   * gesture; one silent, empty line there lets the client's later lines play. Safe to call again: it runs once.
+   * (The iPhone's silent switch still mutes the client's voice.)
+   */
+  unlock(): void;
 }
 
 /** The parts of the browser this needs, so tests can pass fakes. */
@@ -185,6 +191,7 @@ interface BrowserUtterance {
   lang: string;
   rate: number;
   pitch: number;
+  volume: number;
   voice: unknown;
   onend: (() => void) | null;
   onerror: (() => void) | null;
@@ -195,6 +202,7 @@ export function createBrowserVoice(host: SpeechHost, config: VoiceConfig = VOICE
   const Recognition = host.SpeechRecognition ?? host.webkitSpeechRecognition;
   const synth = host.speechSynthesis;
   const Utterance = host.SpeechSynthesisUtterance;
+  let unlocked = false;
 
   return {
     canListen: Recognition !== undefined,
@@ -265,6 +273,14 @@ export function createBrowserVoice(host: SpeechHost, config: VoiceConfig = VOICE
 
     cancelSpeech() {
       synth?.cancel();
+    },
+
+    unlock() {
+      if (unlocked || !synth || !Utterance) return;
+      unlocked = true;
+      const silent = new Utterance('');
+      silent.volume = 0;
+      synth.speak(silent);
     },
   };
 }

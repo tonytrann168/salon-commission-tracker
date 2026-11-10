@@ -24,8 +24,9 @@ Checked in the same run (script log):
 ## Real-phone playtest checklist (owner, tonight)
 
 The fake proves the wiring, not the phone. Please try on the real phone (Safari on iPhone and/or Chrome on Android):
+0. **Open the game over HTTPS**: run `npm run dev` (it serves HTTPS on the LAN now) and open **https://<LAN-IP>:5173** on the phone (for example https://192.168.68.53:5173). Accept the certificate warning once (it is the dev server's own self-signed certificate), then allow the mic when asked. Plain `http://<LAN-IP>` cannot work: phones block the mic outside a secure context. On the computer, `npm run dev:local` still gives plain http://localhost:5173.
 1. First tap on 🎤: the phone asks for mic permission; allow it. Say a line; tap 🎤 again. Does the line appear and send?
-2. Does Dana speak her lines aloud, and does she sound OK (which voice did the phone pick)? Slower at Beginner?
+2. Does Dana speak her lines aloud, and does she sound OK (which voice did the phone pick)? Slower at Beginner? On iPhone, flip the silent switch off: it mutes the client's voice.
 3. Time from finishing your line to Dana starting to speak: about 2 s or more? (The AI reply time dominates; the voice itself starts at once.)
 4. Deny the mic permission (or turn it off in settings) and tap 🎤: is the message clear, and can you still type?
 5. Practise: open a phrasebook line or "Practise my last line", say it, and check which words turn green.

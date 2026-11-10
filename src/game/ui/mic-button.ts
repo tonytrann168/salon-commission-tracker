@@ -48,6 +48,7 @@ export function createMicButton(options: MicButtonOptions): { element: HTMLButto
       options.onStatus(failureMessage('unsupported'));
       return;
     }
+    options.voice.unlock();
     options.onStart?.();
     const session = options.voice.listen(options.onPartial);
     active = session;

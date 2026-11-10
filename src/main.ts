@@ -107,6 +107,8 @@ async function boot(): Promise<void> {
   const translations = createTranslationCache(translateTransport, [DEFAULT_CLIENT.openingLine]);
 
   const startAppointment = () => {
+    // Inside the Start tap: lets the client's voice play on iPhone (story 004).
+    voice.unlock();
     const level = getEnglishLevel();
     if (level === null) showLevelPicker();
     else beginAppointment(level);

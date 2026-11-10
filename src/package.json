@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+    "dev:local": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
     "test": "vitest run",
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "@vitejs/plugin-basic-ssl": "2.3.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.6",
     "vitest": "^5.1.0"

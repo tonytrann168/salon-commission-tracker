@@ -159,6 +159,15 @@ describe('browser voice adapter', () => {
     expect(cancelledCount()).toBe(2);
   });
 
+  it('unlocks speech once, with a silent empty line (for iPhone, inside the first tap)', () => {
+    const { host, spoken } = fakeHost();
+    const voice = createBrowserVoice(host);
+    voice.unlock();
+    voice.unlock();
+    expect(spoken).toHaveLength(1);
+    expect(spoken[0]?.text).toBe('');
+  });
+
   it('does nothing (and never fails) when the phone cannot speak', async () => {
     const voice = createBrowserVoice(fakeHost({ synthesis: false }).host);
     expect(voice.canSpeak).toBe(false);
