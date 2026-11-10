@@ -1,11 +1,12 @@
 import { applyDocumentLanguage, t } from '../i18n';
-import { getEnglishLevel, getHelpLanguage, setEnglishLevel, setHelpLanguage } from '../settings';
+import { BESTIE_CONFIG } from '../bestie';
+import { getEnglishLevel, getHelpLanguage, getHintsEnabled, setEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
 import { bilingual, el } from './dom';
 import { createLevelPicker } from './level-picker';
 import './level-picker.css';
 
 /**
- * Settings: change the English level and turn full Vietnamese mode on or off. Both save at once.
+ * Settings: change the English level, turn full Vietnamese mode on or off, and turn bestie hints on or off (story 003). All save at once.
  * Full Vietnamese mode is also the interface language: turning it on or off redraws this screen in the new language
  * at once. Its own label is always shown in both languages, so a player can always find the way back. Story: story-010, story-008.
  */
@@ -34,11 +35,20 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void): HTM
     note.append(bilingual('settings.fullVietnamese'), el('span', 'setting-note', t('settings.fullVietnameseNote')));
     row.append(note, toggle);
 
+    const hintsRow = el('label', 'setting-row');
+    const hintsToggle = el('input');
+    hintsToggle.type = 'checkbox';
+    hintsToggle.checked = getHintsEnabled();
+    hintsToggle.addEventListener('change', () => setHintsEnabled(hintsToggle.checked));
+    const hintsText = el('span', 'setting-text');
+    hintsText.append(el('strong', '', t('settings.hints')), el('span', 'setting-note', t('settings.hintsNote', { name: BESTIE_CONFIG.name })));
+    hintsRow.append(hintsText, hintsToggle);
+
     const back = el('button', 'chat-button secondary', t('common.back'));
     back.type = 'button';
     back.addEventListener('click', onBack);
 
-    screen.replaceChildren(title, levelTitle, picker, row, back);
+    screen.replaceChildren(title, levelTitle, picker, row, hintsRow, back);
   };
 
   render();

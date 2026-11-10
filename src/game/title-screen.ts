@@ -1,6 +1,7 @@
 import { Container, Graphics, Text } from 'pixi.js';
 import { createPortrait } from './portraits/definitions';
 import { t } from './i18n';
+import { createBestieGreeting } from './ui/bestie-panel';
 import './ui/chat-panel.css';
 import './ui/level-picker.css';
 
@@ -49,7 +50,7 @@ export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettin
   settings.className = 'chat-button secondary';
   settings.textContent = t('title.settings');
   settings.addEventListener('click', onSettings);
-  menu.append(start, settings);
+  menu.append(createBestieGreeting(), start, settings);
   host.appendChild(menu);
   return menu;
 }

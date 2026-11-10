@@ -3,16 +3,13 @@
   "common.tryAgain": "Try again",
   "common.send": "Send",
   "common.close": "Close",
-
   "title.tagline": "Work the chair for real.",
   "title.start": "Start appointment",
   "title.settings": "Settings",
-
   "settings.title": "Settings",
   "settings.levelSection": "English level",
   "settings.fullVietnamese": "Full Vietnamese mode",
   "settings.fullVietnameseNote": "Menus in Vietnamese, and Vietnamese under every client line.",
-
   "level.pickerTitle": "How is your English?",
   "level.beginner.name": "Beginner",
   "level.beginner.line": "I know very little English. Clients speak slowly and simply.",
@@ -22,7 +19,6 @@
   "level.comfortable.line": "I can have a conversation. Clients speak naturally.",
   "level.fluent.name": "Fluent",
   "level.fluent.line": "I speak English well. Clients talk fast and use slang.",
-
   "chat.phase.consultation": "Consultation",
   "chat.phase.service": "Service",
   "chat.phase.checkout": "Checkout",
@@ -35,7 +31,6 @@
   "chat.translateHint": "Tap to translate",
   "chat.translating": "Translating…",
   "chat.translateFailed": "Could not translate this.",
-
   "help.button": "Help me say it",
   "help.viLabel": "Type what you want to say in Vietnamese",
   "help.viPlaceholder": "What do you want to say?",
@@ -46,7 +41,6 @@
   "help.tilesLabel": "Tap the words in order",
   "help.yourLine": "Your line",
   "help.removeWord": "Remove word: {word}",
-
   "portrait.label": "{name}, {pose}",
   "pose.furious": "furious",
   "pose.annoyed": "annoyed",
@@ -54,7 +48,6 @@
   "pose.pleased": "pleased",
   "pose.delighted": "delighted",
   "pose.walkout": "walking out",
-
   "results.writingReview": "{name} is writing her review…",
   "results.reviewUnavailable": "The review is not ready yet. The AI helper is not set up. Please try again in a bit.",
   "results.reviewTrouble": "{name} could not finish her review. Your appointment is safe. Try again?",
@@ -82,5 +75,28 @@
   "results.fail.low_stars": "Not her best visit. Try again!",
   "results.fail.redo_demanded": "She asked for a redo.",
   "results.nextClient": "Next client",
-  "results.backToMenu": "Back to menu"
+  "results.backToMenu": "Back to menu",
+  "settings.hints": "Bestie hints",
+  "settings.hintsNote": "Tap Hint in an appointment and {name} whispers a tip. The client never sees it.",
+  "bestie.greetingFirst": "Hi! I'm {name}, your bestie at the salon. Let's practice English together!",
+  "bestie.greetingBack": "Welcome back! Ready for client number {count}? I'm right here.",
+  "bestie.hintButton": "Hint",
+  "bestie.hintButtonLabel": "Ask {name} for a hint (the client won't see it)",
+  "bestie.whispers": "{name} whispers",
+  "bestie.thinking": "{name} is thinking…",
+  "bestie.hintFailed": "{name} couldn't think of a hint just now.",
+  "bestie.unavailable": "{name} isn't here yet. The AI helper is not set up.",
+  "bestie.gotIt": "Got it",
+  "bestie.debriefTitle": "{name}'s debrief",
+  "bestie.level": "Bestie level {level}",
+  "bestie.levelUp": "{name} reached level {level}! You two make a great team.",
+  "bestie.praise": "You did well",
+  "bestie.tryNext": "Try next time",
+  "bestie.debriefLoading": "{name} is thinking about your appointment…",
+  "bestie.debriefFailed": "{name} couldn't finish her debrief. Your results are safe.",
+  "bestie.asks": "{name} asks",
+  "bestie.answerLabel": "Your answer",
+  "bestie.answerPlaceholder": "What would you do?",
+  "bestie.answerSend": "Answer",
+  "bestie.answerFailed": "{name} didn't catch that. Your answer is safe."
 }

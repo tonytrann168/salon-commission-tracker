@@ -6,11 +6,13 @@ import { DEFAULT_CLIENT } from './game/clients/default-client';
 import { SCORING_CONFIG } from './game/scoring';
 import { createSalonScene } from './game/salon-scene';
 import { createTitleMenu, createTitleScreen } from './game/title-screen';
+import { createBestieTransport } from './game/bestie';
 import { createTranslateTransport } from './game/translate-transport';
 import { createTranslationCache } from './game/translation-cache';
-import { getEnglishLevel, getHelpLanguage, setEnglishLevel } from './game/settings';
+import { getEnglishLevel, getHelpLanguage, getHintsEnabled, setEnglishLevel } from './game/settings';
 import { createChatPanel } from './game/ui/chat-panel';
-import { applyDocumentLanguage, t } from './game/i18n';
+import { applyDocumentLanguage, getLanguage, t } from './game/i18n';
+import { createDebriefPanel } from './game/ui/bestie-panel';
 import { el } from './game/ui/dom';
 import { createLevelPicker } from './game/ui/level-picker';
 import { createResultsScreen } from './game/ui/results-screen';
@@ -78,6 +80,7 @@ async function boot(): Promise<void> {
   };
 
   const gradeAppointment = createGradeTransport();
+  const bestie = createBestieTransport();
   const translateTransport = createTranslateTransport();
   // The default client's opening line is fixed text, so its translation is also kept on the device.
   const translations = createTranslationCache(translateTransport, [DEFAULT_CLIENT.openingLine]);
@@ -106,6 +109,7 @@ async function boot(): Promise<void> {
       helpLanguage: getHelpLanguage(),
       translations,
       translate: translateTransport,
+      ...(getHintsEnabled() ? { bestie: { transport: bestie, language: getLanguage() } } : {}),
       onEnded: (container, result) =>
         createResultsScreen(container, {
           clientName: DEFAULT_CLIENT.name,
@@ -117,6 +121,8 @@ async function boot(): Promise<void> {
           onBackToMenu: showTitle,
           translations,
           helpLanguage: getHelpLanguage(),
+          debrief: (grading, score) =>
+            createDebriefPanel({ transport: bestie, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, grading, score }),
         }).destroy,
     });
     teardownDom = panel.destroy;

@@ -1,6 +1,6 @@
 // npm run smoke:api — calls each server function once against the real Claude API and prints pass/fail.
 // Reads ANTHROPIC_API_KEY from the environment or src/.env.local (never printed). Skips cleanly when there is no key.
-// Each run spends a little API credit (four short calls).
+// Each run spends a little API credit (seven short calls).
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer, loadEnv } from 'vite';
@@ -17,6 +17,7 @@ const { handleClientTurn } = await vite.ssrLoadModule('/api/client-turn.ts');
 const { handleTranslate } = await vite.ssrLoadModule('/api/translate.ts');
 const { handleGradeAppointment } = await vite.ssrLoadModule('/api/grade-appointment.ts');
 const { DEFAULT_CLIENT } = await vite.ssrLoadModule('/game/clients/default-client.ts');
+const { handleBestie } = await vite.ssrLoadModule('/api/bestie.ts');
 
 const transcript = [
   { role: 'client', content: DEFAULT_CLIENT.openingLine },
@@ -35,6 +36,18 @@ const checks = [
       outcome: 'completed', finalMood: 70, level: 'some' }, env, fetch),
     (b) => b.skills && b.english && typeof b.review === 'string',
     (b) => `skills ${JSON.stringify(b.skills)} english ${JSON.stringify(b.english)} review "${b.review}"`],
+  ['bestie hint (beginner, en)', () => handleBestie({ kind: 'hint', level: 'beginner', language: 'en', memory: '', phase: 'consultation', mood: 50, transcript }, env, fetch),
+    (b) => typeof b.hint === 'string', (b) => b.hint],
+  ['bestie debrief (some, vi, with question)', () => handleBestie({
+      kind: 'debrief', level: 'some', language: 'vi', outcome: 'completed', stars: 4, tip: 11, englishScore: 72,
+      skills: { greeting: 90, consultation: 80, upsell: 40, rebooking: 85, problemHandling: 70 },
+      english: { clarity: 70, politeness: 90, grammarVocabulary: 60 }, review: 'Friendly and quick. Nails look great!',
+      transcript, memory: 'Last time: forgot to offer extras.', sessionNumber: 3, askQuestion: true }, env, fetch),
+    (b) => typeof b.praise === 'string' && typeof b.tryNext === 'string' && typeof b.question === 'string' && typeof b.memory === 'string',
+    (b) => `praise "${b.praise}" tryNext "${b.tryNext}" question "${b.question}" memory "${b.memory}"`],
+  ['bestie answer (some, en)', () => handleBestie({ kind: 'answer', level: 'some', language: 'en', memory: '',
+      question: 'What would you do if a client says her polish chipped after one day?', answer: 'I say sorry and fix it free.' }, env, fetch),
+    (b) => typeof b.reply === 'string' && typeof b.memory === 'string', (b) => `"${b.reply}" memory "${b.memory}"`],
 ];
 
 let failed = 0;

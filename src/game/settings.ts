@@ -29,3 +29,15 @@ export function getHelpLanguage(): HelpLanguage {
 export function setHelpLanguage(language: HelpLanguage): void {
   writeStored(HELP_LANGUAGE_KEY, language);
 }
+
+const HINTS_KEY = 'salon.bestieHints';
+
+/** Whether the bestie's Hint button shows during appointments (story 003). On unless the player turned it off. */
+export function getHintsEnabled(): boolean {
+  return readStored(HINTS_KEY) !== 'off';
+}
+
+/** Turn bestie hints on or off. */
+export function setHintsEnabled(enabled: boolean): void {
+  writeStored(HINTS_KEY, enabled ? 'on' : 'off');
+}

@@ -20,7 +20,7 @@ Listed in build order.
 | 002 | Scoring & results (+ English score) | Logic | Complete | N/A |
 | 010 | English in the chair | Integration | Ready | N/A |
 | 008 | Menus and buttons in Vietnamese | UI | Complete (review) | N/A |
-| 003 | Signature bestie | Integration | Ready | N/A |
+| 003 | Signature bestie | Integration | Complete (review) | N/A |
 | 011 | Learning loop | Integration | Ready | N/A |
 | 004 | Voice in and out (+ pronunciation practice) | Integration | Ready | N/A |
 | 005 | Nail art station | Visual/Feel | Ready | N/A |

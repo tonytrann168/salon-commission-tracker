@@ -3,16 +3,13 @@
   "common.tryAgain": "Thử lại",
   "common.send": "Gửi",
   "common.close": "Đóng",
-
   "title.tagline": "Làm tiệm nail như thật.",
   "title.start": "Bắt đầu đón khách",
   "title.settings": "Cài đặt",
-
   "settings.title": "Cài đặt",
   "settings.levelSection": "Trình độ tiếng Anh",
   "settings.fullVietnamese": "Chế độ tiếng Việt đầy đủ",
   "settings.fullVietnameseNote": "Menu bằng tiếng Việt, và bản dịch tiếng Việt dưới mọi câu của khách.",
-
   "level.pickerTitle": "Tiếng Anh của bạn ở mức nào?",
   "level.beginner.name": "Mới bắt đầu",
   "level.beginner.line": "Tôi biết rất ít tiếng Anh. Khách nói chậm và dễ hiểu.",
@@ -22,7 +19,6 @@
   "level.comfortable.line": "Tôi trò chuyện được. Khách nói tự nhiên.",
   "level.fluent.name": "Thành thạo",
   "level.fluent.line": "Tôi nói tiếng Anh tốt. Khách nói nhanh, dùng tiếng lóng.",
-
   "chat.phase.consultation": "Tư vấn",
   "chat.phase.service": "Làm móng",
   "chat.phase.checkout": "Thanh toán",
@@ -35,7 +31,6 @@
   "chat.translateHint": "Chạm để dịch",
   "chat.translating": "Đang dịch…",
   "chat.translateFailed": "Chưa dịch được.",
-
   "help.button": "Giúp tôi nói",
   "help.viLabel": "Gõ điều bạn muốn nói bằng tiếng Việt",
   "help.viPlaceholder": "Bạn muốn nói gì?",
@@ -46,7 +41,6 @@
   "help.tilesLabel": "Chạm từng từ theo đúng thứ tự",
   "help.yourLine": "Câu của bạn",
   "help.removeWord": "Bỏ từ: {word}",
-
   "portrait.label": "{name}, {pose}",
   "pose.furious": "rất giận",
   "pose.annoyed": "khó chịu",
@@ -54,7 +48,6 @@
   "pose.pleased": "hài lòng",
   "pose.delighted": "rất vui",
   "pose.walkout": "bỏ đi",
-
   "results.writingReview": "{name} đang viết nhận xét…",
   "results.reviewUnavailable": "Nhận xét chưa có. Trợ lý AI chưa được cài đặt. Vui lòng thử lại sau một chút.",
   "results.reviewTrouble": "{name} chưa viết xong nhận xét. Buổi hẹn của bạn vẫn được lưu. Thử lại nhé?",
@@ -82,5 +75,28 @@
   "results.fail.low_stars": "Lần này khách chưa hài lòng lắm. Thử lại nhé!",
   "results.fail.redo_demanded": "Khách yêu cầu làm lại.",
   "results.nextClient": "Khách tiếp theo",
-  "results.backToMenu": "Về menu chính"
+  "results.backToMenu": "Về menu chính",
+  "settings.hints": "Gợi ý của bạn thân",
+  "settings.hintsNote": "Trong buổi hẹn, chạm Gợi ý để {name} nói nhỏ một mẹo. Khách không thấy.",
+  "bestie.greetingFirst": "Chào em! Chị là {name}, bạn thân của em ở tiệm. Mình cùng tập tiếng Anh nha!",
+  "bestie.greetingBack": "Em quay lại rồi! Sẵn sàng đón khách thứ {count} chưa? Có chị đây.",
+  "bestie.hintButton": "Gợi ý",
+  "bestie.hintButtonLabel": "Hỏi {name} gợi ý (khách không thấy)",
+  "bestie.whispers": "{name} nói nhỏ",
+  "bestie.thinking": "{name} đang nghĩ…",
+  "bestie.hintFailed": "{name} chưa nghĩ ra gợi ý.",
+  "bestie.unavailable": "{name} chưa có mặt. Trợ lý AI chưa được cài đặt.",
+  "bestie.gotIt": "Hiểu rồi",
+  "bestie.debriefTitle": "{name} nhận xét",
+  "bestie.level": "Cấp bạn thân {level}",
+  "bestie.levelUp": "{name} lên cấp {level}! Hai chị em mình hợp ghê.",
+  "bestie.praise": "Em làm tốt",
+  "bestie.tryNext": "Lần sau thử",
+  "bestie.debriefLoading": "{name} đang nghĩ về buổi hẹn của em…",
+  "bestie.debriefFailed": "{name} chưa nhận xét xong. Kết quả của em vẫn được lưu.",
+  "bestie.asks": "{name} hỏi",
+  "bestie.answerLabel": "Câu trả lời của em",
+  "bestie.answerPlaceholder": "Em sẽ làm gì?",
+  "bestie.answerSend": "Trả lời",
+  "bestie.answerFailed": "{name} chưa nghe rõ. Câu trả lời của em vẫn còn đó."
 }

@@ -1,0 +1,20 @@
+.bestie-bubble { margin: 0; padding: 10px 14px; background: #f3e8ff; color: #3b2a33; border-radius: 16px; line-height: 1.4; text-align: left; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
+.bestie-label { font-size: 13px; font-weight: 700; color: #8a4fd0; }
+.bestie-greeting { max-width: 340px; font-size: 15px; }
+.bestie-bar { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; padding: 4px 16px 0; }
+.bestie-hint-button { min-height: 40px; padding: 0 16px; font-size: 15px; background: #f3e8ff; color: #5b2d91; }
+.bestie-whisper { align-self: stretch; max-height: 32vh; overflow-y: auto; }
+.bestie-whisper .chat-button { align-self: flex-end; min-height: 40px; }
+.bestie-text { margin: 0; }
+.bestie-level { font-size: 13px; font-weight: 700; color: #8a4fd0; }
+.bestie-debrief { border: 2px solid #e4d0fb; }
+.bestie-debrief-body { display: flex; flex-direction: column; gap: 8px; }
+.bestie-line { margin: 0; line-height: 1.4; }
+.bestie-question { display: flex; flex-direction: column; gap: 8px; }
+.bestie-answer { margin: 0; align-self: flex-end; padding: 8px 12px; background: #ff5c9a; color: #fff; border-radius: 16px; overflow-wrap: anywhere; }
+.bestie-greeting { position: relative; }
+.bestie-greeting::before { content: ''; position: absolute; top: -8px; left: 50%; margin-left: -8px; border: 8px solid transparent; border-top: 0; border-bottom-color: #f3e8ff; }
+/* Short phones (iPhone SE): see the matching .title-menu rule in chat-panel.css. */
+@media (max-height: 640px) {
+  .bestie-greeting { padding: 8px 12px; font-size: 14px; line-height: 1.3; }
+}

@@ -25,6 +25,8 @@ export interface ResultsScreenOptions {
   translations: TranslationCache;
   /** `full` shows the review's Vietnamese automatically; `tap` shows it when the review is tapped. */
   helpLanguage: HelpLanguage;
+  /** The bestie's debrief section, built once the scorecard is ready (story 003). */
+  debrief?: (grading: Grading, score: ScoreResult) => HTMLElement;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -125,7 +127,7 @@ function translatableReview(text: string, translations: TranslationCache, full: 
 
 /** Mount the results screen into `container` and start grading. `destroy` ignores a grading that is still running. */
 export function createResultsScreen(container: HTMLElement, options: ResultsScreenOptions): { destroy: () => void } {
-  const { clientName, result, level, config, grade, onNextClient, onBackToMenu, translations, helpLanguage } = options;
+  const { clientName, result, level, config, grade, onNextClient, onBackToMenu, translations, helpLanguage, debrief } = options;
   let destroyed = false;
 
   const show = (...nodes: HTMLElement[]): void => {
@@ -170,6 +172,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
       stars,
       tip,
       ...notes,
+      ...(debrief ? [debrief(grading, score)] : []),
       section(t('results.reviewTitle', { name: clientName }), translatableReview(grading.review, translations, helpLanguage === 'full')),
       section(t('results.skillsTitle'), ...SKILL_KEYS.map((key) => scoreRow(t(`results.skill.${key}`), grading.skills[key]))),
       section(

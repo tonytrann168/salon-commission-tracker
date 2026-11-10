@@ -1,0 +1,18 @@
+{
+  "name": "Mai",
+  "persona": "Mai is the player's best friend at the salon: a warm, funny senior nail tech who came to the US from Vietnam years ago and learned English on the job, one client at a time. She is proud of the player, teases gently, celebrates small wins, and never lectures. She remembers what the player is working on.",
+  "levelXp": [0, 30, 80, 150, 250, 400],
+  "xp": {
+    "completed": 10,
+    "walkedOut": 5,
+    "questionAnswered": 5
+  },
+  "question": {
+    "chance": 0.4,
+    "firstAfterSessions": 1,
+    "minSessionsBetween": 2
+  },
+  "memory": {
+    "maxSummaryChars": 800
+  }
+}

@@ -9,6 +9,8 @@ import type { AppointmentResult, ClientPersona, EnglishLevel, HelpLanguage, Tran
 import type { TranslationCache } from '../translation-cache';
 import { t } from '../i18n';
 import { el } from './dom';
+import { createHintBar } from './bestie-panel';
+import type { BestieLanguage, BestieTransport } from '../bestie';
 import { createHelpMeSayIt } from './help-me-say-it';
 import { createPortraitZone } from './portrait-zone';
 import { startTextReveal } from './text-reveal';
@@ -47,6 +49,8 @@ export function createChatPanel(
     translations: TranslationCache;
     /** Transport for Help me say it (Vietnamese to English). */
     translate: Translate;
+    /** The bestie's Hint button (story 003). Omitted when the player turned hints off. */
+    bestie?: { transport: BestieTransport; language: BestieLanguage };
   },
 ): { destroy: () => void; setBestieExpression: (expression: Expression) => void } {
   const root = el('div', 'chat-panel');
@@ -98,7 +102,17 @@ export function createChatPanel(
   sendButton.type = 'submit';
   form.append(helpButton, input, sendButton);
 
-  root.append(header, zone.element, log, errorBox, resultsBox, form, announcer);
+  const hintBar = portraits.bestie
+    ? createHintBar({
+        transport: portraits.bestie.transport,
+        level: portraits.level,
+        language: portraits.bestie.language,
+        current: () => ({ phase: latest.phase, mood: latest.mood, transcript: latest.transcript }),
+        onWhispering: (whispering) => zone.setBestieExpression(whispering ? 'pleased' : 'neutral'),
+      })
+    : null;
+
+  root.append(header, zone.element, ...(hintBar ? [hintBar.element] : []), log, errorBox, resultsBox, form, announcer);
   host.appendChild(root);
 
   let latest = initial;
@@ -299,6 +313,8 @@ export function createChatPanel(
     input.disabled = !canType;
     sendButton.disabled = !canType;
     helpButton.disabled = !canType;
+    hintBar?.setEnabled(canType);
+    hintBar?.element.classList.toggle('hidden', snapshot.status === 'finished');
   };
 
   const unsubscribe = appointment.subscribe(render);

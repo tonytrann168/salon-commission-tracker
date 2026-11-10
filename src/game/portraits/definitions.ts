@@ -1,3 +1,4 @@
+import { BESTIE_CONFIG } from '../bestie';
 import { createPlaceholderFace } from './placeholder-faces';
 import type { Portrait, PortraitKind, PortraitPalette, Pose } from './portrait';
 
@@ -19,7 +20,7 @@ const RENDERERS: Record<PortraitKind, PortraitFactory> = {
 
 export const PORTRAIT_DEFINITIONS: Readonly<Record<string, PortraitDefinition>> = {
   dana: { id: 'dana', name: 'Dana', kind: 'placeholder-face', palette: { skin: 0xe8b596, hair: 0x5b3a29, accent: 0xff8fb1 } },
-  bestie: { id: 'bestie', name: 'Bestie', kind: 'placeholder-face', palette: { skin: 0xffd9c2, hair: 0xb98cf0, accent: 0xff5c9a } },
+  bestie: { id: 'bestie', name: BESTIE_CONFIG.name, kind: 'placeholder-face', palette: { skin: 0xffd9c2, hair: 0xb98cf0, accent: 0xff5c9a } },
 };
 
 /** Look up a definition by id. Throws when the id is unknown (a bad reference in character data). */

@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite';
 import type { Plugin } from 'vite';
 import { handleClientTurn } from './api/client-turn';
 import { handleGradeAppointment } from './api/grade-appointment';
+import { handleBestie } from './api/bestie';
 import { handleTranslate } from './api/translate';
 
 type ApiHandler = (
@@ -14,6 +15,7 @@ const API_ROUTES: Record<string, ApiHandler> = {
   '/api/client-turn': handleClientTurn,
   '/api/grade-appointment': handleGradeAppointment,
   '/api/translate': handleTranslate,
+  '/api/bestie': handleBestie,
 };
 
 /** Dev-only: serve the POST /api routes with the same handlers Vercel runs in production. */
