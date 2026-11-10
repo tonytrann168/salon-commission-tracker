@@ -22,3 +22,6 @@
 .results-actions { display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px; }
 .chat-button.secondary { color: #3b2a33; background: #ffc4da; }
 .results-actions .chat-button, .results-message .chat-button { min-height: 56px; }
+.results-review-wrap { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.results-review[role='button'] { cursor: pointer; }
+.results-translation { padding: 0; }

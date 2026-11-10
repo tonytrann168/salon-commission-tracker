@@ -115,6 +115,8 @@ async function boot(): Promise<void> {
           grade: gradeAppointment,
           onNextClient: startAppointment,
           onBackToMenu: showTitle,
+          translations,
+          helpLanguage: getHelpLanguage(),
         }).destroy,
     });
     teardownDom = panel.destroy;

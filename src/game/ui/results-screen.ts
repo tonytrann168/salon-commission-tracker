@@ -1,13 +1,16 @@
 import { scoreAppointment } from '../scoring';
 import type { ScoreResult, ScoringConfig } from '../scoring';
 import { ENGLISH_KEYS, SKILL_KEYS, TurnError } from '../types';
-import type { AppointmentResult, EnglishLevel, GradeAppointment, Grading } from '../types';
+import type { TranslationCache } from '../translation-cache';
+import type { AppointmentResult, EnglishLevel, GradeAppointment, Grading, HelpLanguage } from '../types';
 import { t } from '../i18n';
 import './results-screen.css';
 
 /**
  * Results screen: loading, then stars, tip, review, five-skill scorecard and the English score; or a friendly error with retry.
  * Story: story-002 (design/game-brief.md, MVP feature 5). Shows only what grading and scoring.ts returned, never made-up numbers.
+ * The client's review is a client line, so it gets the same Vietnamese help as the chat: tap to translate, or shown
+ * automatically in full Vietnamese mode (story 010, owner review of story 008).
  */
 
 export interface ResultsScreenOptions {
@@ -18,6 +21,10 @@ export interface ResultsScreenOptions {
   grade: GradeAppointment;
   onNextClient: () => void;
   onBackToMenu: () => void;
+  /** English-to-Vietnamese translations of client lines (shared with the chat, so a line is never translated twice). */
+  translations: TranslationCache;
+  /** `full` shows the review's Vietnamese automatically; `tap` shows it when the review is tapped. */
+  helpLanguage: HelpLanguage;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -53,9 +60,72 @@ function section(title: string, ...children: HTMLElement[]): HTMLElement {
   return box;
 }
 
+/** The client's review with its Vietnamese under it (automatic in full mode, otherwise on tap). */
+function translatableReview(text: string, translations: TranslationCache, full: boolean): HTMLElement {
+  const wrap = el('div', 'results-review-wrap');
+  const quote = el('blockquote', 'results-review', text);
+  quote.lang = 'en';
+  const box = el('div', 'chat-translation results-translation');
+  box.setAttribute('aria-live', 'polite');
+  let shown = full;
+  let failed = false;
+
+  const refresh = (): void => {
+    if (!full) quote.setAttribute('aria-expanded', String(shown));
+    if (!shown) {
+      const hint = el('span', 'chat-hint', t('chat.translateHint'));
+      hint.setAttribute('aria-hidden', 'true');
+      box.replaceChildren(hint);
+      return;
+    }
+    const cached = translations.peek(text);
+    if (cached !== undefined) {
+      const translated = el('span', 'chat-translation-text', cached);
+      translated.lang = 'vi';
+      box.replaceChildren(translated);
+      return;
+    }
+    if (failed) {
+      const retry = el('button', 'chat-button secondary', t('common.tryAgain'));
+      retry.type = 'button';
+      retry.addEventListener('click', () => {
+        failed = false;
+        refresh();
+      });
+      box.replaceChildren(el('span', '', t('chat.translateFailed')), retry);
+      return;
+    }
+    box.replaceChildren(el('span', 'chat-hint', t('chat.translating')));
+    translations.get(text).then(
+      () => undefined,
+      () => {
+        failed = true;
+      },
+    ).finally(refresh);
+  };
+
+  if (!full) {
+    const toggle = (): void => {
+      shown = !shown;
+      refresh();
+    };
+    quote.tabIndex = 0;
+    quote.setAttribute('role', 'button');
+    quote.addEventListener('click', toggle);
+    quote.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      toggle();
+    });
+  }
+  wrap.append(quote, box);
+  refresh();
+  return wrap;
+}
+
 /** Mount the results screen into `container` and start grading. `destroy` ignores a grading that is still running. */
 export function createResultsScreen(container: HTMLElement, options: ResultsScreenOptions): { destroy: () => void } {
-  const { clientName, result, level, config, grade, onNextClient, onBackToMenu } = options;
+  const { clientName, result, level, config, grade, onNextClient, onBackToMenu, translations, helpLanguage } = options;
   let destroyed = false;
 
   const show = (...nodes: HTMLElement[]): void => {
@@ -100,7 +170,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
       stars,
       tip,
       ...notes,
-      section(t('results.reviewTitle', { name: clientName }), el('blockquote', 'results-review', grading.review)),
+      section(t('results.reviewTitle', { name: clientName }), translatableReview(grading.review, translations, helpLanguage === 'full')),
       section(t('results.skillsTitle'), ...SKILL_KEYS.map((key) => scoreRow(t(`results.skill.${key}`), grading.skills[key]))),
       section(
         t('results.englishTitle'),
