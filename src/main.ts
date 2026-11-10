@@ -9,7 +9,7 @@ import { createTitleMenu, createTitleScreen } from './game/title-screen';
 import { createBestieTransport } from './game/bestie';
 import { createTranslateTransport } from './game/translate-transport';
 import { createTranslationCache } from './game/translation-cache';
-import { getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setEnglishLevel } from './game/settings';
+import { getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, chooseEnglishLevel } from './game/settings';
 import { loadMemory } from './game/bestie-memory';
 import { createCorrectionsTransport } from './game/learning/corrections';
 import { addPhrases, loadPhrasebook, savePhrasebook } from './game/learning/phrasebook';
@@ -83,7 +83,7 @@ async function boot(): Promise<void> {
       createLevelPicker({
         current: null,
         onPick: (level) => {
-          setEnglishLevel(level);
+          if (chooseEnglishLevel(level)) applyDocumentLanguage();
           beginAppointment(level);
         },
       }),

@@ -64,8 +64,8 @@
 - Level names and picker lines moved from `config/english-levels.json` into the string tables. The client prompt now names the level by its id (`beginner`), not the English card name.
 - `src/game/ui/strings.ts` is gone. Tables are checked at startup and in tests: same keys, same `{placeholders}`, no empty text.
 - Follow-up from the overseer's review: the client's review on the results screen gets the same Vietnamese help as chat lines (shown automatically in full Vietnamese mode, tap to translate otherwise). The blank portrait area in the first evidence was a screenshot artifact, not a game bug (see the evidence README).
-- **Owner check**: the Vietnamese in `src/game/i18n/vi.json` was written by Claude and still needs a Vietnamese speaker's review (the story asks for it).
-- **Owner question**: with full Vietnamese mode off (the default), the menus are English only. In story 010 they showed both languages. Fine for an English-learning game, or should Vietnamese be the default?
+- **Owner check**: done. The Vietnamese is approved (see Owner Decisions).
+- **Owner question**: answered. Picking Beginner turns full Vietnamese mode on (see Owner Decisions).
 
 ---
 
@@ -88,3 +88,9 @@
 
 - Depends on: `production/epics/salon-besties/story-010-english-in-the-chair.md`
 - Unlocks: None
+
+## Owner Decisions (2026-11-10, relayed by the overseer)
+
+- The Vietnamese wording in `src/game/i18n/vi.json` is **approved**.
+- **Picking Beginner turns full Vietnamese mode on** (and so Vietnamese menus): on the first level pick and whenever the player switches to Beginner from another level (in Settings, or by accepting a suggested move down). It is never re-applied on launch or when Beginner is picked again, so a manual off sticks. Code: `helpLanguageAfterLevelChoice` (`src/game/english-level.ts`) and `chooseEnglishLevel` (`src/game/settings.ts`). Tests: `src/tests/beginner-vietnamese.test.ts`. Browser check: `production/qa/evidence/story-008-menus-in-vietnamese/beginner-*.png`.
+- Status stays open until the owner's phone playtest.

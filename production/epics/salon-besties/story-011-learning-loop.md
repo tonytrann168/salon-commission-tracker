@@ -97,3 +97,11 @@
 
 - Depends on: `production/epics/salon-besties/story-002-scoring-and-results.md`, `production/epics/salon-besties/story-010-english-in-the-chair.md`, `production/epics/salon-besties/story-003-signature-bestie.md`
 - Unlocks: `production/epics/salon-besties/story-004-voice-in-and-out.md`
+
+## Owner Decisions (2026-11-10, relayed by the overseer)
+
+- Whispered corrections stay **on by default**.
+- Keep the auto-adjust thresholds: **3 clients, up at 80 or more, suggest down below 45** (`english-levels.json`).
+- Keep the cap of **3 whispers per client** (`learning.json`).
+- Cost: one Haiku line check per player line, a few hundredths of a cent each (overseer's estimate). Accepted.
+- Vietnamese wording approved. Status stays open until the owner's phone playtest.

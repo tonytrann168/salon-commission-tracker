@@ -22,3 +22,12 @@ Checked in the same run (script log):
 **The blank portrait block in the first capture was not a game bug.** Chromium's default headless GPU path drops the WebGL canvas from full-viewport screenshots (story 002's evidence noted the same). A clip of just the portrait zone showed Dana and the bestie, and with `--use-angle=swiftshader` the full captures show them too. Future evidence captures should use that flag.
 
 **Mock translations (re-shot 2026-11-10):** the browser test now gives every client line its own Vietnamese, and the script checks that each bubble shows its own translation (it found no mismatches). An earlier capture showed one fixed mock string under every line; that was the test mock, not the game.
+
+## Beginner turns on full Vietnamese mode (owner decision 2026-11-10)
+
+| File | Shows |
+|------|-------|
+| `beginner-01-first-pick-turns-on-vietnamese.png` | Fresh device, first pick = Beginner: the appointment opens in Vietnamese |
+| `beginner-02-switch-to-beginner-settings-redrawn.png` | Settings after switching Some → Beginner: full Vietnamese mode switched on and Settings redrawn in Vietnamese |
+
+Browser log (saved settings): fresh `level null, help null` → first pick Beginner `full, <html lang=vi>` → turned off in Settings and re-picked Beginner `tap` (stays off) → relaunch `tap` (stays off) → Some then Beginner `full`. No page errors.

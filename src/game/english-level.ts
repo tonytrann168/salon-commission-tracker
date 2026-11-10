@@ -112,6 +112,15 @@ export function parseStoredLevel(raw: unknown): EnglishLevel | null {
   return ENGLISH_LEVELS.find((level) => level === raw) ?? null;
 }
 
+/**
+ * Owner decision 2026-11-10: choosing Beginner turns full Vietnamese mode on, on the first level pick and whenever the
+ * player switches to Beginner from another level. Re-choosing Beginner while already at Beginner (or launching the game)
+ * changes nothing, so a player who turned full Vietnamese mode off keeps it off.
+ */
+export function helpLanguageAfterLevelChoice(previous: EnglishLevel | null, next: EnglishLevel, current: HelpLanguage): HelpLanguage {
+  return next === 'beginner' && previous !== 'beginner' ? 'full' : current;
+}
+
 /** Read a saved help-language setting. Missing or unknown values fall back to `tap`. */
 export function parseStoredHelpLanguage(raw: unknown): HelpLanguage {
   return HELP_LANGUAGES.find((language) => language === raw) ?? 'tap';

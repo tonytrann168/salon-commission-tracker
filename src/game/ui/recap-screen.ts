@@ -6,7 +6,8 @@ import type { CorrectionsTransport, Phrase, ReviewResult } from '../learning/cor
 import { decideLevel, freshHistory, loadHistory, recordScore, saveHistory } from '../learning/level-adjust';
 import { addPhrases, loadPhrasebook, savePhrasebook } from '../learning/phrasebook';
 import type { PhrasebookEntry } from '../learning/phrasebook';
-import { setEnglishLevel } from '../settings';
+import { applyDocumentLanguage } from '../i18n';
+import { chooseEnglishLevel, setEnglishLevel } from '../settings';
 import { TurnError } from '../types';
 import type { EnglishLevel, Message, Outcome } from '../types';
 import { el } from './dom';
@@ -150,7 +151,8 @@ export function createLevelChangePanel(level: EnglishLevel, englishScore: number
   const decline = button(t('level.downDecline'), true);
   const answer = (accepted: boolean): void => {
     if (accepted) {
-      setEnglishLevel(decision.to);
+      // The player's own choice: moving down to Beginner also turns on full Vietnamese mode (owner decision 2026-11-10).
+      if (chooseEnglishLevel(decision.to)) applyDocumentLanguage();
       saveHistory(freshHistory(decision.to));
     }
     actions.replaceChildren(el('p', 'results-note', accepted ? t('level.downAccepted', { level: toName }) : t('level.downDeclined')));

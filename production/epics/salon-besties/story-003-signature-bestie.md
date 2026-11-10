@@ -96,3 +96,10 @@
 
 - Depends on: `production/epics/salon-besties/story-001-live-client-appointment.md`, `production/epics/salon-besties/story-002-scoring-and-results.md`
 - Unlocks: `production/epics/salon-besties/story-011-learning-loop.md`
+
+## Owner Decisions (2026-11-10, relayed by the overseer)
+
+- Keep the name **Mai** and her persona (`src/game/config/bestie.json`).
+- Hints stay **on by default**.
+- Vietnamese wording approved.
+- Status stays open until the owner's phone playtest.

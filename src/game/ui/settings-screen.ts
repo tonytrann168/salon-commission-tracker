@@ -1,7 +1,7 @@
 import { applyDocumentLanguage, t } from '../i18n';
 import { BESTIE_CONFIG } from '../bestie';
 import { LEARNING_CONFIG } from '../learning/corrections';
-import { getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, setEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
+import { getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, chooseEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
 import { bilingual, el } from './dom';
 import { createLevelPicker } from './level-picker';
 import './level-picker.css';
@@ -20,7 +20,16 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void): HTM
     title.id = 'settings-title';
 
     const levelTitle = el('h2', '', t('settings.levelSection'));
-    const picker = createLevelPicker({ current: getEnglishLevel(), onPick: setEnglishLevel });
+    const picker = createLevelPicker({
+      current: getEnglishLevel(),
+      onPick: (level) => {
+        // Switching to Beginner turns full Vietnamese mode on: redraw so the switch and the menus show it at once.
+        if (!chooseEnglishLevel(level)) return;
+        applyDocumentLanguage();
+        render();
+        screen.querySelector<HTMLButtonElement>('.level-card[aria-pressed="true"]')?.focus();
+      },
+    });
 
     const row = el('label', 'setting-row');
     const toggle = el('input');

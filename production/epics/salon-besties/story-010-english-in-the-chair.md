@@ -109,3 +109,7 @@
 
 - Depends on: `production/epics/salon-besties/story-001-live-client-appointment.md`, `production/epics/salon-besties/story-002-scoring-and-results.md`
 - Unlocks: `production/epics/salon-besties/story-008-english-and-vietnamese.md`, `production/epics/salon-besties/story-003-signature-bestie.md`, `production/epics/salon-besties/story-011-learning-loop.md`
+
+## Owner Decisions (2026-11-10, relayed by the overseer)
+
+- Choosing Beginner (first pick, Settings, or an accepted suggestion to move down) turns full Vietnamese mode on. Never re-applied on launch, so a player's manual off sticks. Built with story 008's follow-up: `chooseEnglishLevel` in `src/game/settings.ts`, tested in `src/tests/beginner-vietnamese.test.ts`.

@@ -1,4 +1,4 @@
-import { parseStoredHelpLanguage, parseStoredLevel } from './english-level';
+import { helpLanguageAfterLevelChoice, parseStoredHelpLanguage, parseStoredLevel } from './english-level';
 import { readStored, writeStored } from './safe-storage';
 import type { EnglishLevel, HelpLanguage } from './types';
 
@@ -64,4 +64,17 @@ export function getClientVoiceEnabled(): boolean {
 /** Turn the client's voice on or off (Settings, or the speaker button in an appointment). */
 export function setClientVoiceEnabled(enabled: boolean): void {
   writeStored(CLIENT_VOICE_KEY, enabled ? 'on' : 'off');
+}
+
+/**
+ * The player chose a level (first pick, Settings, or accepting a suggested move down). Saves it and applies the
+ * Beginner rule (`helpLanguageAfterLevelChoice`). Returns true when full Vietnamese mode was switched on, so the
+ * caller can redraw in Vietnamese. Automatic level-ups use `setEnglishLevel` (they never reach Beginner).
+ */
+export function chooseEnglishLevel(level: EnglishLevel): boolean {
+  const before = getHelpLanguage();
+  const after = helpLanguageAfterLevelChoice(getEnglishLevel(), level, before);
+  setEnglishLevel(level);
+  if (after !== before) setHelpLanguage(after);
+  return after !== before;
 }
