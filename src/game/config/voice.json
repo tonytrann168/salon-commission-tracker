@@ -1,0 +1,10 @@
+{
+  "lang": "en-US",
+  "rateByLevel": { "beginner": 0.8, "some": 0.9, "comfortable": 1.0, "fluent": 1.1 },
+  "clients": {
+    "dana": { "pitch": 1.05, "preferredVoices": ["Samantha", "Google US English", "Microsoft Aria", "Microsoft Jenny", "Karen", "Moira"] }
+  },
+  "defaultClient": { "pitch": 1.0, "preferredVoices": [] },
+  "listenTimeoutMs": 12000,
+  "pronunciation": { "longWordLetters": 6, "longWordTypos": 1 }
+}

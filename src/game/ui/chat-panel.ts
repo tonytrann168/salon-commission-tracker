@@ -14,6 +14,9 @@ import type { BestieLanguage, BestieTransport } from '../bestie';
 import { LEARNING_CONFIG, shouldCheckLine } from '../learning/corrections';
 import type { CorrectionsTransport, Phrase } from '../learning/corrections';
 import { createHelpMeSayIt } from './help-me-say-it';
+import { createMicButton } from './mic-button';
+import { openPracticeSheet, practiceButton } from './practice-sheet';
+import type { VoiceIO } from '../voice';
 import { createPortraitZone } from './portrait-zone';
 import { startTextReveal } from './text-reveal';
 import type { TextReveal } from './text-reveal';
@@ -59,6 +62,8 @@ export function createChatPanel(
       /** Omitted when the player turned corrections off. `onPhrase` saves a shown correction's better line to the phrasebook. */
       corrections?: { transport: CorrectionsTransport; onPhrase: (phrase: Phrase) => void };
     };
+    /** Voice in and out (story 004): the mic button, the client speaking aloud, and practising the last line. */
+    voice?: { io: VoiceIO; clientId: string; speakReplies: boolean; onSpeakerChange: (on: boolean) => void };
   },
 ): { destroy: () => void; setBestieExpression: (expression: Expression) => void } {
   const root = el('div', 'chat-panel');
@@ -81,6 +86,26 @@ export function createChatPanel(
   track.setAttribute('aria-valuemin', '0');
   track.setAttribute('aria-valuemax', String(MOOD_MAX));
   mood.append(el('span', '', t('chat.mood')), track, value);
+  const voice = portraits.voice;
+  let speakerOn = voice?.speakReplies ?? false;
+  if (voice?.io.canSpeak) {
+    // The speaker button switches the client's voice on and off at any point in the appointment (story 004).
+    const speaker = el('button', 'speaker-button');
+    speaker.type = 'button';
+    const showSpeaker = (): void => {
+      speaker.textContent = speakerOn ? '🔊' : '🔇';
+      speaker.setAttribute('aria-label', t(speakerOn ? 'voice.speakerOnLabel' : 'voice.speakerOffLabel'));
+      speaker.setAttribute('aria-pressed', String(speakerOn));
+    };
+    showSpeaker();
+    speaker.addEventListener('click', () => {
+      speakerOn = !speakerOn;
+      if (!speakerOn) voice.io.cancelSpeech();
+      voice.onSpeakerChange(speakerOn);
+      showSpeaker();
+    });
+    mood.append(speaker);
+  }
   header.append(phases, mood);
 
   const initial = appointment.getSnapshot();
@@ -126,7 +151,31 @@ export function createChatPanel(
   const top = el('div', 'chat-top');
   top.append(header, zone.element, ...(hintBar ? [hintBar.element] : []));
 
-  root.append(top, log, errorBox, resultsBox, form, announcer);
+  // Voice messages (listening, mic blocked, fall back to typing) sit just above the reply box.
+  const voiceStatus = el('p', 'voice-status');
+  voiceStatus.setAttribute('aria-live', 'polite');
+  const mic = voice
+    ? createMicButton({
+        voice: voice.io,
+        onStart: () => {
+          voice.io.cancelSpeech();
+          reveal?.finish();
+        },
+        onPartial: (text) => {
+          input.value = text;
+        },
+        onText: (text) => {
+          input.value = '';
+          sendLine(text, false);
+        },
+        onStatus: (message) => {
+          voiceStatus.textContent = message;
+        },
+      })
+    : null;
+  if (mic) form.insertBefore(mic.element, sendButton);
+
+  root.append(top, log, errorBox, resultsBox, voiceStatus, form, announcer);
   host.appendChild(root);
 
   let latest = initial;
@@ -220,6 +269,7 @@ export function createChatPanel(
     shown.appendChild(node);
     line.appendChild(shown);
     announcer.textContent = t('chat.clientSaid', { name: clientName, text });
+    if (voice && speakerOn) void voice.io.speak(text, { clientId: voice.clientId, level: portraits.level });
     if (reducedMotion.matches) {
       node.data = text;
       settle();
@@ -273,7 +323,14 @@ export function createChatPanel(
       const bubble = el('div', `chat-bubble ${message.role}`);
       if (message.role === 'player') {
         bubble.textContent = message.content;
-        return bubble;
+        // The player's newest line can be practised aloud (story 004).
+        const isLastPlayerLine = !snapshot.transcript.slice(index + 1).some((later) => later.role === 'player');
+        if (!voice?.io.canListen || !isLastPlayerLine || snapshot.status === 'finished') return bubble;
+        const entry = el('div', 'chat-entry player');
+        const practice = practiceButton(message.content, (line) => openPracticeSheet(root, { voice: voice.io, line, level: portraits.level }));
+        practice.textContent = `🎤 ${t('practice.lastLine')}`;
+        entry.append(bubble, practice);
+        return entry;
       }
       const line = el('span');
       if (index !== speakingIndex) line.textContent = message.content;
@@ -330,6 +387,7 @@ export function createChatPanel(
     input.disabled = !canType;
     sendButton.disabled = !canType;
     helpButton.disabled = !canType;
+    if (mic) mic.element.disabled = !canType;
     hintBar?.setEnabled(canType);
     hintBar?.element.classList.toggle('hidden', snapshot.status === 'finished');
   };
@@ -358,16 +416,24 @@ export function createChatPanel(
   const unsubscribe = appointment.subscribe(render);
   render(appointment.getSnapshot());
 
+  /** Send a typed or spoken line. */
+  function sendLine(text: string, helped: boolean): void {
+    if (text.trim() === '') return;
+    reveal?.finish();
+    voice?.io.cancelSpeech();
+    checkLine(text, helped, latest);
+    void appointment.send(text, helped ? { helped: true } : undefined).then(() => {
+      if (appointment.getSnapshot().status === 'awaiting_player') input.focus();
+    });
+  }
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const text = input.value;
     if (text.trim() === '') return;
-    reveal?.finish();
     input.value = '';
-    checkLine(text, false, latest);
-    void appointment.send(text).then(() => {
-      if (appointment.getSnapshot().status === 'awaiting_player') input.focus();
-    });
+    voiceStatus.textContent = '';
+    sendLine(text, false);
   });
   retryButton.addEventListener('click', () => void appointment.retry());
 
@@ -385,11 +451,7 @@ export function createChatPanel(
       onClose: closeHelp,
       onSend: (text) => {
         closeHelp();
-        reveal?.finish();
-        checkLine(text, true, latest);
-        void appointment.send(text, { helped: true }).then(() => {
-          if (appointment.getSnapshot().status === 'awaiting_player') input.focus();
-        });
+        sendLine(text, true);
       },
     });
     helpSheet = sheet.element;
@@ -400,6 +462,8 @@ export function createChatPanel(
   return {
     setBestieExpression: zone.setBestieExpression,
     destroy() {
+      mic?.stop();
+      voice?.io.cancelSpeech();
       unsubscribe();
       destroyResults?.();
       reveal?.cancel();

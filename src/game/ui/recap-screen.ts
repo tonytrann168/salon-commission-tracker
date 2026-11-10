@@ -10,6 +10,7 @@ import { setEnglishLevel } from '../settings';
 import { TurnError } from '../types';
 import type { EnglishLevel, Message, Outcome } from '../types';
 import { el } from './dom';
+import { practiceButton } from './practice-sheet';
 import './recap-screen.css';
 
 /**
@@ -26,14 +27,15 @@ function button(label: string, secondary = false): HTMLButtonElement {
   return node;
 }
 
-/** One English line with its Vietnamese meaning under it. */
-function phraseLine(phrase: Phrase): HTMLElement {
+/** One English line with its Vietnamese meaning under it, and a Practise button when voice practice is available (story 004). */
+function phraseLine(phrase: Phrase, onPractice?: (line: string) => void): HTMLElement {
   const box = el('div', 'learning-phrase');
   const en = el('span', 'learning-en', phrase.en);
   en.lang = 'en';
   const vi = el('span', 'learning-vi', phrase.vi);
   vi.lang = 'vi';
   box.append(en, vi);
+  if (onPractice) box.append(practiceButton(phrase.en, onPractice));
   return box;
 }
 
@@ -55,6 +57,8 @@ export interface LearningPanelOptions {
   language: BestieLanguage;
   outcome: Outcome;
   transcript: readonly Message[];
+  /** Open pronunciation practice for a line (story 004). Omitted when the phone cannot listen. */
+  onPractice?: (line: string) => void;
 }
 
 /** The English review and the Vietnamese recap. Starts the review call at once; a failure never blocks the results. */
@@ -81,14 +85,14 @@ export function createLearningPanel(options: LearningPanelOptions): HTMLElement 
           said.append(el('span', 'bestie-label', t('learning.youSaid')), saidText);
           const reason = el('p', 'learning-reason', line.reason);
           reason.lang = options.language;
-          item.append(said, el('span', 'bestie-label', `→ ${t('learning.better')}`), phraseLine(line.better), reason);
+          item.append(said, el('span', 'bestie-label', `→ ${t('learning.better')}`), phraseLine(line.better, options.onPractice), reason);
           reviewSection.append(item);
         }
 
         const recapSection = el('section', 'results-section learning-recap');
         const recap = el('p', 'learning-recap-text', review.recap);
         recap.lang = 'vi';
-        recapSection.append(el('h2', '', t('learning.recapTitle')), recap, el('h3', '', t('learning.tryTitle')), ...review.tryLines.map(phraseLine));
+        recapSection.append(el('h2', '', t('learning.recapTitle')), recap, el('h3', '', t('learning.tryTitle')), ...review.tryLines.map((phrase) => phraseLine(phrase, options.onPractice)));
 
         const added = savePhrasesFrom(review, session);
         const note = el('p', added > 0 ? 'results-note good' : 'results-note', added > 0 ? t('learning.phrasesAdded', { count: added }) : t('learning.phrasesNone'));

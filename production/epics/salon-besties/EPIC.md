@@ -22,7 +22,7 @@ Listed in build order.
 | 008 | Menus and buttons in Vietnamese | UI | Complete (review) | N/A |
 | 003 | Signature bestie | Integration | Complete (review) | N/A |
 | 011 | Learning loop | Integration | Complete (review) | N/A |
-| 004 | Voice in and out (+ pronunciation practice) | Integration | Ready | N/A |
+| 004 | Voice in and out (+ pronunciation practice) | Integration | Complete (review + phone playtest) | N/A |
 | 005 | Nail art station | Visual/Feel | Ready | N/A |
 | 006 | Client roster & difficulty | Config/Data | Ready | N/A |
 | 007 | Progression & daily hooks | Logic | Ready | N/A |

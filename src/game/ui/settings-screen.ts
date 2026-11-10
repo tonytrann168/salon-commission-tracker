@@ -1,7 +1,7 @@
 import { applyDocumentLanguage, t } from '../i18n';
 import { BESTIE_CONFIG } from '../bestie';
 import { LEARNING_CONFIG } from '../learning/corrections';
-import { getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, setEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
+import { getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, setEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
 import { bilingual, el } from './dom';
 import { createLevelPicker } from './level-picker';
 import './level-picker.css';
@@ -57,11 +57,20 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void): HTM
     );
     correctionsRow.append(correctionsText, correctionsToggle);
 
+    const voiceRow = el('label', 'setting-row');
+    const voiceToggle = el('input');
+    voiceToggle.type = 'checkbox';
+    voiceToggle.checked = getClientVoiceEnabled();
+    voiceToggle.addEventListener('change', () => setClientVoiceEnabled(voiceToggle.checked));
+    const voiceText = el('span', 'setting-text');
+    voiceText.append(el('strong', '', t('settings.clientVoice')), el('span', 'setting-note', t('settings.clientVoiceNote')));
+    voiceRow.append(voiceText, voiceToggle);
+
     const back = el('button', 'chat-button secondary', t('common.back'));
     back.type = 'button';
     back.addEventListener('click', onBack);
 
-    screen.replaceChildren(title, levelTitle, picker, row, hintsRow, correctionsRow, back);
+    screen.replaceChildren(title, levelTitle, picker, row, voiceRow, hintsRow, correctionsRow, back);
   };
 
   render();

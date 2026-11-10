@@ -9,11 +9,14 @@ import { createTitleMenu, createTitleScreen } from './game/title-screen';
 import { createBestieTransport } from './game/bestie';
 import { createTranslateTransport } from './game/translate-transport';
 import { createTranslationCache } from './game/translation-cache';
-import { getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setEnglishLevel } from './game/settings';
+import { getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setEnglishLevel } from './game/settings';
 import { loadMemory } from './game/bestie-memory';
 import { createCorrectionsTransport } from './game/learning/corrections';
 import { addPhrases, loadPhrasebook, savePhrasebook } from './game/learning/phrasebook';
 import { createPhrasebookScreen } from './game/ui/phrasebook-screen';
+import { openPracticeSheet } from './game/ui/practice-sheet';
+import { createBrowserVoice } from './game/voice';
+import type { SpeechHost } from './game/voice';
 import { createLearningPanel, createLevelChangePanel } from './game/ui/recap-screen';
 import { createChatPanel } from './game/ui/chat-panel';
 import { applyDocumentLanguage, getLanguage, t } from './game/i18n';
@@ -63,7 +66,7 @@ async function boot(): Promise<void> {
 
   const showPhrasebook = () => {
     teardownDom();
-    const screen = createPhrasebookScreen(host, showTitle);
+    const screen = createPhrasebookScreen(host, showTitle, practice);
     teardownDom = () => screen.remove();
   };
 
@@ -93,6 +96,12 @@ async function boot(): Promise<void> {
   const gradeAppointment = createGradeTransport();
   const bestie = createBestieTransport();
   const corrections = createCorrectionsTransport();
+  // Voice: the phone's own speech recognition and synthesis (story 004). No key, nothing on the server.
+  const voice = createBrowserVoice(window as unknown as SpeechHost);
+  /** Pronunciation practice, where the phone can listen. Uses the saved level (Beginner if none yet). */
+  const practice = voice.canListen
+    ? (line: string) => openPracticeSheet(host, { voice, line, level: getEnglishLevel() ?? 'beginner' })
+    : undefined;
   const translateTransport = createTranslateTransport();
   // The default client's opening line is fixed text, so its translation is also kept on the device.
   const translations = createTranslationCache(translateTransport, [DEFAULT_CLIENT.openingLine]);
@@ -121,6 +130,7 @@ async function boot(): Promise<void> {
       helpLanguage: getHelpLanguage(),
       translations,
       translate: translateTransport,
+      voice: { io: voice, clientId: DEFAULT_CLIENT.id, speakReplies: getClientVoiceEnabled(), onSpeakerChange: setClientVoiceEnabled },
       bestie: {
         transport: bestie,
         language: getLanguage(),
@@ -151,7 +161,7 @@ async function boot(): Promise<void> {
           helpLanguage: getHelpLanguage(),
           extras: (grading, score) => [
             createDebriefPanel({ transport: bestie, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, grading, score }),
-            createLearningPanel({ transport: corrections, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript }),
+            createLearningPanel({ transport: corrections, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, ...(practice ? { onPractice: practice } : {}) }),
             ...[createLevelChangePanel(level, score.englishScore)].filter((panel): panel is HTMLElement => panel !== null),
           ],
         }).destroy,

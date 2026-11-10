@@ -1,0 +1,23 @@
+.mic-button { flex: none; width: 48px; padding: 0; font-size: 20px; background: #f3e8ff; color: #5b2d91; }
+.mic-button.listening, .practice-actions .listening { background: #ff5c9a; color: #fff; animation: mic-pulse 1.2s ease-in-out infinite; }
+@keyframes mic-pulse { 50% { box-shadow: 0 0 0 6px rgba(255, 92, 154, 0.25); } }
+@media (prefers-reduced-motion: reduce) { .mic-button.listening, .practice-actions .listening { animation: none; } }
+.voice-status { margin: 0; padding: 6px 16px 0; font-size: 14px; color: #8a6575; background: #fff4f8; }
+.voice-status:empty { display: none; }
+.speaker-button { flex: none; min-width: 40px; min-height: 40px; padding: 0; border: 0; border-radius: 20px; background: #f3e8ff; font-size: 18px; }
+.practice-line { margin: 0; font-size: 22px; line-height: 1.4; font-weight: 700; overflow-wrap: anywhere; }
+.practice-word.heard { color: #1f8a4c; }
+.practice-word.missed { color: #8a6575; text-decoration: underline wavy #ff8fb1; text-underline-offset: 4px; }
+.practice-actions { display: flex; gap: 8px; }
+.practice-actions .chat-button { flex: 1 1 0; }
+.practice-heard { margin: 0; font-style: italic; color: #5b4a53; min-height: 1.4em; }
+.practice-note { margin: 0; font-size: 13px; color: #8a6575; }
+.practice-button { align-self: flex-start; min-height: 36px; padding: 0 12px; border: 0; border-radius: 18px; background: #f3e8ff; color: #5b2d91; font-size: 14px; font-weight: 700; font-family: inherit; }
+.chat-entry.player { align-self: flex-end; align-items: flex-end; }
+.chat-entry.player .practice-button { align-self: flex-end; }
+.chat-form .chat-button.mic-button { flex: none; width: 48px; padding: 0; }
+/* Narrow phones: the mic sits beside the reply box (row 1); Help me say it and Send share row 2. */
+@media (max-width: 480px) {
+  .chat-form:has(.mic-button) .chat-input { flex: 1 1 calc(100% - 56px); }
+  .chat-form .chat-button.mic-button { order: -1; }
+}

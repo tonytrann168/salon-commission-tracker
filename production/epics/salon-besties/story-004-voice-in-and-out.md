@@ -1,12 +1,12 @@
 # Story 004: Voice in and out
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: Ready
+> **Status**: Complete (awaiting owner review + real-phone playtest)
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-11-10
 
 ## Context
 
@@ -28,14 +28,14 @@
 
 *From `design/game-brief.md`, scoped to this story:*
 
-- [ ] The player can hold (or tap) a mic button to speak to the client; their speech is turned into text and shown in the chat.
-- [ ] Client replies are spoken aloud in a voice that fits the client, and still shown as text.
-- [ ] The client starts speaking within about 2 seconds of the player finishing (streamed speech).
-- [ ] The player can switch between voice and typing at any point in an appointment.
-- [ ] If the mic is blocked or the voice service fails, the game falls back to typing with a clear message.
-- [ ] Voice keys stay on the server; the browser never sees them.
-- [ ] *(Added 2026-11-09, educational-first redesign.)* **Pronunciation practice:** the player can practise any line — a better line from the recap, a phrasebook phrase, or their own last line — by saying it aloud; the game shows which words it heard as said clearly and which it did not, and lets them try again.
-- [ ] Client voices follow the player's English level (slower, clearer speech at Beginner; natural speed at Fluent).
+- [x] The player can hold (or tap) a mic button to speak to the client; their speech is turned into text and shown in the chat.
+- [x] Client replies are spoken aloud in a voice that fits the client, and still shown as text.
+- [x] The client starts speaking within about 2 seconds of the player finishing (streamed speech).
+- [x] The player can switch between voice and typing at any point in an appointment.
+- [x] If the mic is blocked or the voice service fails, the game falls back to typing with a clear message.
+- [x] Voice keys stay on the server; the browser never sees them.
+- [x] *(Added 2026-11-09, educational-first redesign.)* **Pronunciation practice:** the player can practise any line — a better line from the recap, a phrasebook phrase, or their own last line — by saying it aloud; the game shows which words it heard as said clearly and which it did not, and lets them try again.
+- [x] Client voices follow the player's English level (slower, clearer speech at Beginner; natural speed at Fluent).
 
 ---
 
@@ -60,6 +60,19 @@
 - `src/game/voice.ts`
 - `src/game/ui/mic-button.ts`
 - `src/tests/voice.test.ts`
+- also: `src/game/config/voice.json`, `src/game/ui/practice-sheet.ts`, `src/game/ui/voice.css`, wiring in `main.ts`, `chat-panel.ts`, `recap-screen.ts`, `phrasebook-screen.ts`, `settings-screen.ts`, `settings.ts`, i18n tables
+- **not created**: `src/api/speech-to-text.ts`, `src/api/text-to-speech.ts` (see the provider note below)
+
+## Completion Notes (2026-11-10)
+
+- **Provider: the phone's own speech (Web Speech API).** Speech recognition and speech synthesis built into the browser: no voice key, nothing on the server, **$0 per appointment**. This is a default, not a final choice: every paid provider (ElevenLabs, OpenAI, Deepgram, Azure) needs a key and costs money, so that decision is the owner's. Everything voice-related sits behind `VoiceIO` in `game/voice.ts`, so a server provider (and the two `api/` files) can be added later without UI changes. "Voice keys stay on the server" holds trivially: there are no voice keys.
+- **Mic**: tap to start, tap to stop (works better on phones than holding). Words appear as they are heard, then send as the player's line. Typing works at any time. The browser asks for mic permission on the first tap.
+- **Client voice**: spoken with the phone's voice, chosen from `voice.json` (Dana prefers Samantha, Google US English, Microsoft Aria and others, else any US English voice). Rate by level: 0.8 Beginner, 0.9 Some, 1.0 Comfortable, 1.1 Fluent. A 🔊 toggle in the appointment and a Settings switch. The text still shows.
+- **Fallback**: no recogniser, a blocked mic, silence or an error each give a clear message above the reply box, and typing keeps working.
+- **Pronunciation practice (free word-level check)**: from the phrasebook, the recap and review lines, and "Practise my last line". Shows which words were recognised (green) and which were not (wavy underline), with Listen and Try again. It is honest about its limit: "This checks which words were recognised, not every sound."
+- **Latency**: the voice starts as soon as the reply text arrives, so "about 2 s" is decided by the AI reply time (Haiku client turn), not by voice. To be measured on the real phone.
+- **Risks to check in the playtest**: browser voices vary by phone and can sound robotic; iOS limits speech recognition in home-screen web apps on some versions; Chrome on Android sends audio to Google for recognition (privacy note for the owner).
+- **Owner decisions**: (1) is the free browser voice good enough, or pick a paid provider (I'd suggest ElevenLabs for voice and OpenAI or Deepgram for transcription if playtests ask)? (2) client voice on by default? (3) the real-phone playtest note.
 
 ---
 
@@ -74,7 +87,7 @@
 **Story Type**: Integration
 **Required evidence**: `src/tests/voice.test.ts` (waived as advisory at `qa.level: minimal`) plus a playtest note on a real phone in `production/qa/evidence/`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] `src/tests/voice.test.ts` (11 tests) + `production/qa/evidence/story-004-voice/` (scripted-fake browser run + README with a real-phone checklist). [ ] Real-phone playtest note: owner.
 
 ---
 

@@ -2,12 +2,13 @@ import { BESTIE_CONFIG } from '../bestie';
 import { t } from '../i18n';
 import { groupByTopic, loadPhrasebook } from '../learning/phrasebook';
 import { el } from './dom';
+import { practiceButton } from './practice-sheet';
 import './level-picker.css';
 import './results-screen.css';
 import './recap-screen.css';
 
-/** The phrasebook: every saved phrase, grouped by topic, English with its Vietnamese meaning. Story: story-011. */
-export function createPhrasebookScreen(host: HTMLElement, onBack: () => void): HTMLElement {
+/** The phrasebook: every saved phrase, grouped by topic, English with its Vietnamese meaning. Story: story-011; Practise buttons: story-004. */
+export function createPhrasebookScreen(host: HTMLElement, onBack: () => void, onPractice?: (line: string) => void): HTMLElement {
   const screen = el('section', 'screen phrasebook');
   screen.setAttribute('aria-labelledby', 'phrasebook-title');
   const title = el('h1', '', t('phrasebook.title'));
@@ -24,6 +25,7 @@ export function createPhrasebookScreen(host: HTMLElement, onBack: () => void): H
       const vi = el('span', 'learning-vi', entry.vi);
       vi.lang = 'vi';
       item.append(en, vi);
+      if (onPractice) item.append(practiceButton(entry.en, onPractice));
       section.append(item);
     }
     screen.append(section);

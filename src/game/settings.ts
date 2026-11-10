@@ -53,3 +53,15 @@ export function getCorrectionsEnabled(): boolean {
 export function setCorrectionsEnabled(enabled: boolean): void {
   writeStored(CORRECTIONS_KEY, enabled ? 'on' : 'off');
 }
+
+const CLIENT_VOICE_KEY = 'salon.clientVoice';
+
+/** Whether clients speak their lines aloud (story 004). On unless the player turned it off. */
+export function getClientVoiceEnabled(): boolean {
+  return readStored(CLIENT_VOICE_KEY) !== 'off';
+}
+
+/** Turn the client's voice on or off (Settings, or the speaker button in an appointment). */
+export function setClientVoiceEnabled(enabled: boolean): void {
+  writeStored(CLIENT_VOICE_KEY, enabled ? 'on' : 'off');
+}
