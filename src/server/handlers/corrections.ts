@@ -171,13 +171,20 @@ const PHRASE_SCHEMA = {
     topic: { type: 'string', enum: [...TOPICS] },
   },
   required: ['en', 'vi', 'topic'],
+  additionalProperties: false,
 } as const;
 
+/**
+ * Strict tool schemas (overseer, 2026-11-10: a malformed needsCorrection cost a whisper). `strict: true` makes the
+ * model's input match the schema exactly; strict schemas need every object closed (additionalProperties: false) and
+ * support no length or number limits, so those stay in parseCorrectionsOutput.
+ */
 function tool(kind: 'line' | 'review') {
   if (kind === 'line') {
     return {
       name: TOOL_NAMES.line,
-      description: 'Decide whether to whisper a correction for this line.',
+      description: 'Decide whether to whisper a correction for this line. When no correction is needed, set needsCorrection to false and leave praise, reason and the better phrase empty.',
+      strict: true,
       input_schema: {
         type: 'object',
         properties: {
@@ -186,28 +193,34 @@ function tool(kind: 'line' | 'review') {
           better: PHRASE_SCHEMA,
           reason: { type: 'string', description: 'Why the better line is better. Empty when no correction.' },
         },
-        required: ['needsCorrection'],
+        required: ['needsCorrection', 'praise', 'better', 'reason'],
+        additionalProperties: false,
       },
     };
   }
   return {
     name: TOOL_NAMES.review,
     description: "Give the English review and the Vietnamese recap.",
+    strict: true,
     input_schema: {
       type: 'object',
       properties: {
         lines: {
           type: 'array',
-          items: { type: 'object', properties: { said: { type: 'string' }, better: PHRASE_SCHEMA, reason: { type: 'string' } }, required: ['said', 'better', 'reason'] },
+          items: { type: 'object', properties: { said: { type: 'string' }, better: PHRASE_SCHEMA, reason: { type: 'string' } }, required: ['said', 'better', 'reason'], additionalProperties: false },
         },
         recap: { type: 'string', description: 'In Vietnamese.' },
         tryLines: { type: 'array', items: PHRASE_SCHEMA },
         usedWell: { type: 'array', items: PHRASE_SCHEMA },
       },
       required: ['lines', 'recap', 'tryLines', 'usedWell'],
+      additionalProperties: false,
     },
   };
 }
+
+/** Tries per request: the first, plus one retry when the model's output is invalid. */
+const ATTEMPTS = 2;
 
 const failure = (status: number, code: TurnErrorCode, message: string): CorrectionsHandlerResponse => ({ status, body: { error: { code, message } } });
 
@@ -220,34 +233,44 @@ export async function handleCorrections(body: unknown, env: Record<string, strin
   if (!apiKey) return failure(503, 'missing_api_key', 'Corrections are not configured on the server.');
 
   const toolSpec = tool(request.kind);
-  let upstream: Response;
-  try {
-    upstream = await fetchImpl(ANTHROPIC_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': ANTHROPIC_VERSION },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: MAX_TOKENS[request.kind],
-        system: [{ type: 'text', text: systemPrompt(request), cache_control: { type: 'ephemeral' } }],
-        tools: [toolSpec],
-        tool_choice: { type: 'tool', name: toolSpec.name },
-        messages: [{ role: 'user', content: userMessage(request) }],
-      }),
-      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-    });
-  } catch {
-    return failure(502, 'upstream_unreachable', 'Could not reach the AI service.');
+  let lastProblem = '';
+  for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+    let upstream: Response;
+    try {
+      upstream = await fetchImpl(ANTHROPIC_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': ANTHROPIC_VERSION },
+        body: JSON.stringify({
+          model: MODEL,
+          max_tokens: MAX_TOKENS[request.kind],
+          system: [{ type: 'text', text: systemPrompt(request), cache_control: { type: 'ephemeral' } }],
+          tools: [toolSpec],
+          tool_choice: { type: 'tool', name: toolSpec.name },
+          messages: [{ role: 'user', content: userMessage(request) }],
+        }),
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+      });
+    } catch {
+      return failure(502, 'upstream_unreachable', 'Could not reach the AI service.');
+    }
+    if (!upstream.ok) return failure(502, 'upstream_error', `The AI service returned status ${upstream.status}.`);
+    let upstreamBody: unknown;
+    try {
+      upstreamBody = await upstream.json();
+    } catch {
+      lastProblem = 'unreadable response';
+      continue;
+    }
+    const result = parseCorrectionsOutput(request, upstreamBody);
+    if (result.ok) return { status: 200, body: result.value };
+    // Invalid model output: try once more.
+    lastProblem = result.message;
   }
-  if (!upstream.ok) return failure(502, 'upstream_error', `The AI service returned status ${upstream.status}.`);
-  let upstreamBody: unknown;
-  try {
-    upstreamBody = await upstream.json();
-  } catch {
-    return failure(502, 'invalid_model_output', 'The AI service sent an unreadable response.');
-  }
-  const result = parseCorrectionsOutput(request, upstreamBody);
-  if (!result.ok) return failure(502, 'invalid_model_output', result.message);
-  return { status: 200, body: result.value };
+  // Still invalid. For a line check, a missed whisper is better than an error: no correction this time.
+  // Logged without the key or the player's text.
+  console.warn(`corrections: invalid model output after ${ATTEMPTS} tries (${request.kind}): ${lastProblem}`);
+  if (request.kind === 'line') return { status: 200, body: { needsCorrection: false, praise: '', better: null, reason: '' } };
+  return failure(502, 'invalid_model_output', lastProblem || 'The AI service sent an invalid answer.');
 }
 
 /** Vercel Web-standard adapter. */

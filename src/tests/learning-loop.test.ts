@@ -184,3 +184,55 @@ describe('corrections server: handler', () => {
     expect(sent.system[0].text).toContain('IN VIETNAMESE');
   });
 });
+
+describe('corrections: strict schema, one retry, and no lost whisper (overseer, 2026-11-10)', () => {
+  const line = { kind: 'line', level: 'beginner', language: 'vi', phase: 'consultation', line: 'What color you like?', clientLine: 'Hi there.' };
+  const reply = (input: unknown, name = 'check_line'): Response => new Response(JSON.stringify({ content: [{ type: 'tool_use', name, input }] }), { status: 200 });
+  const scripted = (replies: (() => Response)[]) => {
+    const bodies: { tools: { strict?: boolean; input_schema: { additionalProperties?: boolean; required: string[] } }[] }[] = [];
+    let i = 0;
+    const fetchImpl = (async (_url: string, init: RequestInit) => {
+      bodies.push(JSON.parse(String(init.body)));
+      return (replies[Math.min(i++, replies.length - 1)] as () => Response)();
+    }) as unknown as typeof fetch;
+    return { bodies, fetchImpl };
+  };
+  const good = { needsCorrection: true, praise: 'Nice!', better: { en: 'What color would you like?', vi: 'Chị muốn màu gì?', topic: 'consultation' }, reason: 'Add "would".' };
+
+  it('sends strict, closed tool schemas with every field required', async () => {
+    const { bodies, fetchImpl } = scripted([() => reply(good)]);
+    expect(await handleCorrections(line, { ANTHROPIC_API_KEY: 'k' }, fetchImpl)).toMatchObject({ status: 200, body: { needsCorrection: true } });
+    expect(bodies).toHaveLength(1);
+    const tool = bodies[0]?.tools[0];
+    expect(tool?.strict).toBe(true);
+    expect(tool?.input_schema.additionalProperties).toBe(false);
+    expect(tool?.input_schema.required).toEqual(['needsCorrection', 'praise', 'better', 'reason']);
+  });
+
+  it('retries once when the output is invalid, and uses the second answer', async () => {
+    const { bodies, fetchImpl } = scripted([() => reply({ praise: 'no flag' }), () => reply(good)]);
+    const result = await handleCorrections(line, { ANTHROPIC_API_KEY: 'k' }, fetchImpl);
+    expect(bodies).toHaveLength(2);
+    expect(result).toMatchObject({ status: 200, body: { needsCorrection: true, better: { en: 'What color would you like?' } } });
+  });
+
+  it('after two invalid answers a line check returns "no correction" (no error, no lost turn); a review still reports the error', async () => {
+    const warn = console.warn;
+    const warnings: string[] = [];
+    console.warn = (message: string) => warnings.push(message);
+    try {
+      const { bodies, fetchImpl } = scripted([() => reply({ needsCorrection: 'maybe' })]);
+      const result = await handleCorrections(line, { ANTHROPIC_API_KEY: 'k' }, fetchImpl);
+      expect(bodies).toHaveLength(2);
+      expect(result).toEqual({ status: 200, body: { needsCorrection: false, praise: '', better: null, reason: '' } });
+      expect(warnings.join(' ')).toMatch(/invalid model output after 2 tries \(line\)/);
+      expect(warnings.join(' ')).not.toMatch(/What color you like/);
+      const review = scripted([() => reply({ nope: true }, 'english_review')]);
+      const reviewResult = await handleCorrections({ kind: 'review', level: 'some', language: 'en', outcome: 'completed', transcript: [{ role: 'client', content: 'Hi' }, { role: 'player', content: 'Hello' }] }, { ANTHROPIC_API_KEY: 'k' }, review.fetchImpl);
+      expect(review.bodies).toHaveLength(2);
+      expect(reviewResult).toMatchObject({ status: 502, body: { error: { code: 'invalid_model_output' } } });
+    } finally {
+      console.warn = warn;
+    }
+  });
+});
