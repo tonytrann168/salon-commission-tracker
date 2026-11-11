@@ -1,0 +1,10 @@
+{
+  "_note": "Story 015: the first-appointment tour. Each step points at a control (CSS selector) and shows once that control is on screen and the step before it is done. Text: i18n tour.<id> and tour.<id>Simple (Beginner).",
+  "steps": [
+    { "id": "reply", "target": ".chat-form" },
+    { "id": "help", "target": ".help-button" },
+    { "id": "mood", "target": ".mood" },
+    { "id": "nails", "target": ".station-tools:not(.hidden)" },
+    { "id": "results", "target": ".results-stars" }
+  ]
+}

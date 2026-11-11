@@ -17,6 +17,7 @@ import { celebrate } from './game/ui/celebration';
 import { companionIdentity, loadCompanion } from './game/companion';
 import { createDressUpScreen, createMeetScreen } from './game/ui/companion-screens';
 import { gainFriendship } from './game/ui/friendship';
+import { startTour } from './game/ui/tour';
 import { SCORING_CONFIG } from './game/scoring';
 import { createSalonScene } from './game/salon-scene';
 import { createTitleMenu, createTitleScreen } from './game/title-screen';
@@ -339,6 +340,8 @@ async function boot(): Promise<void> {
         }).destroy,
     });
     teardownDom = panel.destroy;
+    // Story 015: the first appointment comes with the companion's tour (once; replayable from Settings).
+    startTour(appHost);
 
     let progress: HTMLElement | null = null;
     function progressPanel(grading: Grading, score: ScoreResult, outcome: Outcome): HTMLElement {

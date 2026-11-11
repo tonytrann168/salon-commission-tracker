@@ -1,0 +1,13 @@
+/* Story 015: coach marks. Only the card takes taps; the ring is a highlight. */
+.tour-ring { position: fixed; z-index: 40; border-radius: 16px; box-shadow: 0 0 0 3px #ff5c9a, 0 0 0 9999px rgba(59, 42, 51, 0.12); pointer-events: none; transition: all 0.2s; }
+.tour-card { position: fixed; z-index: 41; box-sizing: border-box; padding: 10px 12px; border-radius: 18px; background: #fff; box-shadow: 0 6px 24px rgba(59, 42, 51, 0.25); display: flex; flex-direction: column; gap: 8px; }
+.tour-head { display: flex; gap: 10px; align-items: flex-start; }
+.tour-head .mascot { flex: none; }
+.tour-words { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tour-words strong { font-size: 13px; color: #c0245f; }
+.tour-words p { margin: 0; font-size: 14px; line-height: 1.35; color: #3b2a33; }
+.tour-foot { display: flex; align-items: center; gap: 8px; }
+.tour-count { flex: 1; font-size: 12px; color: #7a6871; }
+.tour-skip { border: 0; background: none; padding: 8px 4px; color: #5b4a53; font: 600 13px system-ui, sans-serif; text-decoration: underline; }
+.tour-card .chat-button.tour-next { min-height: 40px; padding: 0 16px; font-size: 15px; }
+@media (prefers-reduced-motion: reduce) { .tour-ring { transition: none; } }

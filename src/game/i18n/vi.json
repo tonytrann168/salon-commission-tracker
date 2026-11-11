@@ -302,5 +302,22 @@
   "bestie.greetingWin": "{days} ngày liên tiếp rồi! Lần trước em làm tốt phần {skill} lắm. Sẵn sàng đón khách thứ {count} chưa?",
   "bestie.greetingWinNamed": "{days} ngày liên tiếp rồi, {player}! Lần trước em làm tốt phần {skill} lắm. Sẵn sàng đón khách thứ {count} chưa?",
   "celebrate.friendship": "Mình lên cấp thân thiết {level} rồi nè!",
-  "celebrate.friendshipLine": "Cảm ơn em đã tập cùng {selfLower}. Có thể có phụ kiện mới đó!"
+  "celebrate.friendshipLine": "Cảm ơn em đã tập cùng {selfLower}. Có thể có phụ kiện mới đó!",
+  "tour.reply": "Khách tới rồi nè! Đọc khách nói gì, rồi gõ câu trả lời ở đây và bấm Gửi, hoặc bấm 🎤 để nói.",
+  "tour.replySimple": "Đọc tin nhắn. Gõ ở đây. Bấm Gửi.",
+  "tour.help": "Bí quá? Bấm Giúp tôi nói rồi viết bằng tiếng Việt, em sẽ có câu tiếng Anh. Chạm vào tin nhắn của khách để đọc tiếng Việt.",
+  "tour.helpSimple": "Bí quá? Bấm Giúp tôi nói. Viết tiếng Việt. Chạm tin nhắn để dịch.",
+  "tour.mood": "Đây là tâm trạng của khách. Nói lịch sự, rõ ràng thì tâm trạng tăng. Xuống thấp quá là khách bỏ về đó.",
+  "tour.moodSimple": "Tâm trạng khách. Nói lịch sự, rõ ràng: tâm trạng tăng.",
+  "tour.nails": "Tới phần làm móng! Chọn màu, rồi dùng ngón tay sơn từng móng. Lem ra da thì bấm 🧽 để lau. Xong bấm ✓. Em vẫn trò chuyện được nha.",
+  "tour.nailsSimple": "Chọn màu. Sơn từng móng. 🧽 để lau da. Xong bấm ✓.",
+  "tour.results": "Kết quả nè: số sao, tiền tip và nhận xét của khách. Kéo xuống để xem {selfLower} góp ý và các câu nên tập.",
+  "tour.resultsSimple": "Số sao và tiền tip. Kéo xuống xem góp ý.",
+  "tour.next": "Tiếp",
+  "tour.gotIt": "Hiểu rồi!",
+  "tour.skip": "Bỏ qua",
+  "tour.count": "{n}/{total}",
+  "tour.label": "{name} chỉ em cách chơi",
+  "settings.replayTour": "Xem lại hướng dẫn",
+  "settings.replayTourDone": "Hướng dẫn sẽ hiện ở cuộc hẹn tới."
 }

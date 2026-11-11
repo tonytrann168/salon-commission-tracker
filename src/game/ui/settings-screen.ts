@@ -7,6 +7,7 @@ import { getPlayerName, setPlayerName, PLAYER_NAME_MAX, getClientVoiceEnabled, s
 import { bilingual, el } from './dom';
 import { createLevelPicker } from './level-picker';
 import { createCompanionSettings } from './companion-screens';
+import { replayTour } from '../onboarding';
 import './level-picker.css';
 
 /**
@@ -124,7 +125,18 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
 
     // Story 013: your bestie (female/male, name, dress-up).
     const companion = createCompanionSettings(onDressUp ?? (() => undefined), render);
-    screen.replaceChildren(title, nameRow, companion, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, back);
+    // Story 015: show the first-appointment tour again.
+    const tourRow = el('div', 'setting-row');
+    const replay = el('button', 'chat-button secondary', t('settings.replayTour'));
+    replay.type = 'button';
+    const tourNote = el('span', 'setting-note');
+    tourNote.setAttribute('aria-live', 'polite');
+    replay.addEventListener('click', () => {
+      replayTour();
+      tourNote.textContent = t('settings.replayTourDone');
+    });
+    tourRow.append(replay, tourNote);
+    screen.replaceChildren(title, nameRow, companion, tourRow, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, back);
   };
 
   render();

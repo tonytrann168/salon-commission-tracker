@@ -302,5 +302,22 @@
   "bestie.greetingWin": "{days} days in a row! Last time you nailed {skill}. Ready for client #{count}?",
   "bestie.greetingWinNamed": "{days} days in a row, {player}! Last time you nailed {skill}. Ready for client #{count}?",
   "celebrate.friendship": "We're friendship level {level} now!",
-  "celebrate.friendshipLine": "Thanks for practising with me. New accessories may be waiting!"
+  "celebrate.friendshipLine": "Thanks for practising with me. New accessories may be waiting!",
+  "tour.reply": "Your client is here! Read what they say. Type your answer here and tap Send, or tap 🎤 and say it.",
+  "tour.replySimple": "Read the message. Type here. Tap Send.",
+  "tour.help": "Stuck? Tap Help me say it and write in Vietnamese: you get the English. Tap a client's message to read it in Vietnamese.",
+  "tour.helpSimple": "Stuck? Tap Help me say it. Write in Vietnamese. Tap a message to translate.",
+  "tour.mood": "This is the client's mood. Kind, clear English makes it go up. If it gets too low, they walk out.",
+  "tour.moodSimple": "Client mood. Be kind and clear: it goes up.",
+  "tour.nails": "Nail time! Pick a colour, then paint each nail with your finger. Paint on the skin? Tap 🧽 to clean it. Tap ✓ when done. You can keep chatting.",
+  "tour.nailsSimple": "Pick a colour. Paint each nail. 🧽 cleans the skin. Tap ✓ when done.",
+  "tour.results": "Your results: stars, tip and what the client said. Scroll down for my notes and phrases to practise.",
+  "tour.resultsSimple": "Your stars and tip. Scroll down for my tips.",
+  "tour.next": "Next",
+  "tour.gotIt": "Got it!",
+  "tour.skip": "Skip tour",
+  "tour.count": "{n} of {total}",
+  "tour.label": "{name} shows you around",
+  "settings.replayTour": "Replay the tour",
+  "settings.replayTourDone": "The tour will show on your next appointment."
 }
