@@ -14,6 +14,7 @@ import { celebrate } from './game/ui/celebration';
 import { companionIdentity, loadCompanion } from './game/companion';
 import { createDressUpScreen, createMeetScreen } from './game/ui/companion-screens';
 import { gainFriendship } from './game/ui/friendship';
+import { createStaleBuildGuard, isChunkLoadError } from './game/stale-build';
 import { startTour } from './game/ui/tour';
 import { feedbackButton } from './game/ui/feedback-sheet';
 import { SCORING_CONFIG } from './game/scoring';
@@ -62,8 +63,47 @@ async function boot(): Promise<void> {
     unlockAll = (await getSession()).unlockAll;
   }
 
+  // A new deploy while the game is open: an old lazy chunk is gone → "New version!" and one reload (never a loop).
+  const staleBuild = createStaleBuildGuard({
+    storage: (() => {
+      try {
+        return window.sessionStorage;
+      } catch {
+        return null;
+      }
+    })(),
+    reload: () => window.location.reload(),
+    note: (kind) => showNote(t(kind === 'updating' ? 'app.updating' : navigator.onLine ? 'app.loadFailed' : 'title.needsConnection')),
+    now: () => Date.now(),
+    online: () => navigator.onLine,
+  });
+  window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault();
+    staleBuild.chunkFailed();
+  });
+  /** Load a lazy part of the game; a failure is handled as a stale build (or no connection) and rethrown. */
+  const lazy = async <T>(load: () => Promise<T>): Promise<T> => {
+    try {
+      return await load();
+    } catch (error) {
+      staleBuild.chunkFailed();
+      throw error;
+    }
+  };
+
   // Story 018: PixiJS and everything drawn with it load in the background; the HTML title menu shows at once.
-  const stageReady: Promise<Stage> = import('./game/stage').then((module) => module.createStage(appHost));
+  const stageReady: Promise<Stage> = lazy(() => import('./game/stage'))
+    .then((module) => module.createStage(appHost))
+    .then((stage) => {
+      // Only a stage that really started proves the build's files are all there.
+      staleBuild.loadedOk();
+      return stage;
+    })
+    .catch((error: unknown) => {
+      // PixiJS loads its own parts while starting: a stale one of those is the same "new version" case.
+      if (isChunkLoadError(error)) staleBuild.chunkFailed();
+      throw error;
+    });
   let scene: SceneName = 'title';
   const showScene = (next: SceneName): void => {
     scene = next;
@@ -88,14 +128,18 @@ async function boot(): Promise<void> {
 
   /** Story 007: the shop and the profile. */
   const showShop = async () => {
-    const { createShopScreen } = await import('./game/ui/shop-screen');
+    const module = await lazy(() => import('./game/ui/shop-screen')).catch(() => null);
+    if (!module) return;
+    const { createShopScreen } = module;
     teardownDom();
     const screen = createShopScreen(host, { load: loadSave, save: writeSave, onBack: showTitle });
     teardownDom = () => screen.remove();
   };
 
   const showProfile = async () => {
-    const { createProfileScreen } = await import('./game/ui/profile-screen');
+    const module = await lazy(() => import('./game/ui/profile-screen')).catch(() => null);
+    if (!module) return;
+    const { createProfileScreen } = module;
     teardownDom();
     const screen = createProfileScreen(host, { save: loadSave(), today: localDay(), onBack: showTitle, onDressUp: () => showDressUp(showProfile) });
     teardownDom = () => screen.remove();
@@ -243,7 +287,7 @@ async function boot(): Promise<void> {
     try {
       stage = await stageReady;
     } catch {
-      showNote(t('title.needsConnection'));
+      // The stale-build guard already showed "New version!" (and reloads) or the connection message.
       return;
     }
     // Story 007: owned upgrades (a comfier chair starts clients happier; finer brush; better clean-up pen).

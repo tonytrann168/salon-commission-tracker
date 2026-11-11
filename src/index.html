@@ -14,10 +14,12 @@
     <style>
       html, body { margin: 0; height: 100%; background: #fff4f8; overflow: hidden; }
       #app { position: fixed; inset: 0; }
+      /* Story 018: the title text until PixiJS draws the scene over it (the canvas covers it once drawn). */
+      .boot-title { position: absolute; left: 0; right: 0; top: 52%; z-index: -1; margin: 0; transform: translateY(-50%); text-align: center; font: 800 40px system-ui, sans-serif; color: #3b2a33; }
     </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app"><p class="boot-title" aria-hidden="true">Salon Besties</p></div>
     <script type="module" src="/main.ts"></script>
   </body>
 </html>

@@ -340,5 +340,7 @@
   "feedback.failed": "It didn't send. Please try again.",
   "station.handRight": "Right hand (1 of 2). Tap ✋ for the other hand.",
   "station.handLeft": "Left hand (2 of 2). Tap ✋ for the other hand.",
-  "title.needsConnection": "You need an internet connection to see clients. Check your Wi-Fi or data, then tap Start again."
+  "title.needsConnection": "You need an internet connection to see clients. Check your Wi-Fi or data, then tap Start again.",
+  "app.updating": "New version! Reloading…",
+  "app.loadFailed": "The game couldn't load. Please close it and open it again."
 }
