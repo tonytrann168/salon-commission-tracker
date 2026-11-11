@@ -32,7 +32,7 @@ describe('wallet and XP', () => {
     expect(update.rankUp?.id).toBe('nail-tech');
     expect(update.unlocked).toEqual(['medium']);
     expect(unlockedDifficulties(senior?.xp ?? 0)).toEqual(['easy', 'medium', 'hard']);
-    expect(rankFor(master?.xp ?? 0)).toMatchObject({ rank: { id: 'master', icon: '👑', name: { en: 'Nail Boss', vi: 'Trùm Nail Đỉnh Nóc' } }, next: null });
+    expect(rankFor(master?.xp ?? 0)).toMatchObject({ rank: { id: 'master', icon: '👑', name: { en: 'Nail Boss', vi: 'Trùm Nail Đỉnh Nóc Kịch Trần' } }, next: null });
     expect(applyAppointment(save({ xp: 5 }), outcome()).rankUp).toBeNull();
   });
 });

@@ -1,7 +1,8 @@
 import { BESTIE_CONFIG } from './bestie';
 import type { BestieConfig } from './bestie';
 import { readStored, writeStored } from './safe-storage';
-import type { Outcome } from './types';
+import { SKILL_KEYS } from './types';
+import type { Outcome, SkillKey, SkillScores } from './types';
 
 /**
  * What the bestie remembers on this device: a compact summary (refreshed by each debrief and answer, never whole
@@ -19,11 +20,14 @@ export interface BestieMemory {
   lastQuestionAt: number;
   /** The last appointment was a tough one (walk-out or 1-2 stars): Mai is gentle next time. */
   lastTough: boolean;
+  /** Story 013: the local day of the last daily hello ('' for never), and the skill the player did best last time. */
+  lastHelloDay: string;
+  lastWin: SkillKey | '';
 }
 
 const STORAGE_KEY = 'salon.bestie.v1';
 
-export const EMPTY_MEMORY: BestieMemory = { summary: '', sessions: 0, xp: 0, lastQuestionAt: -1, lastTough: false };
+export const EMPTY_MEMORY: BestieMemory = { summary: '', sessions: 0, xp: 0, lastQuestionAt: -1, lastTough: false, lastHelloDay: '', lastWin: '' };
 
 const whole = (value: unknown, min: number): number | null =>
   typeof value === 'number' && Number.isInteger(value) && value >= min ? value : null;
@@ -45,6 +49,8 @@ export function parseStoredMemory(raw: string | null, config: BestieConfig = BES
     xp: whole(record.xp, 0) ?? 0,
     lastQuestionAt: whole(record.lastQuestionAt, -1) ?? -1,
     lastTough: record.lastTough === true,
+    lastHelloDay: typeof record.lastHelloDay === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(record.lastHelloDay) ? record.lastHelloDay : '',
+    lastWin: SKILL_KEYS.find((key) => key === record.lastWin) ?? '',
   };
 }
 
@@ -95,17 +101,35 @@ export function greetingKind(memory: BestieMemory, streak: number): GreetingKind
 /** Memory after a debrief: one more session, XP for the outcome, the refreshed summary, and the question mark if one was asked. */
 export function afterDebrief(
   memory: BestieMemory,
-  update: { summary: string; outcome: Outcome; asked: boolean; today?: string; tough?: boolean },
+  update: { summary: string; outcome: Outcome; asked: boolean; today?: string; tough?: boolean; win?: SkillKey | '' },
   config: BestieConfig = BESTIE_CONFIG,
 ): BestieMemory {
   return {
     ...memory,
+    ...(update.win !== undefined ? { lastWin: update.win } : {}),
     lastTough: update.tough ?? update.outcome === 'walked_out',
     summary: clampSummary(update.summary, config),
     sessions: memory.sessions + 1,
     xp: memory.xp + (update.outcome === 'completed' ? config.xp.completed : config.xp.walkedOut),
     lastQuestionAt: update.asked ? memory.sessions : memory.lastQuestionAt,
   };
+}
+
+/** The skill the player did best, if it was good enough to mention (80+), else ''. */
+export function bestSkill(skills: SkillScores, min = 80): SkillKey | '' {
+  const [key, score] = SKILL_KEYS.map((k) => [k, skills[k]] as const).sort((a, b) => b[1] - a[1])[0] ?? ['greeting', 0];
+  return score >= min ? key : '';
+}
+
+/** The first open of a day: Mai says hello and the friendship gains a little. Returns null if she already did today. */
+export function afterHello(memory: BestieMemory, today: string, config: BestieConfig = BESTIE_CONFIG): BestieMemory | null {
+  if (memory.lastHelloDay === today) return null;
+  return { ...memory, lastHelloDay: today, xp: memory.xp + (memory.sessions > 0 ? config.xp.dailyHello : 0) };
+}
+
+/** A phrase practised out loud adds a little friendship. */
+export function afterPractice(memory: BestieMemory, config: BestieConfig = BESTIE_CONFIG): BestieMemory {
+  return { ...memory, xp: memory.xp + config.xp.phrasePractised };
 }
 
 /** Memory after the player answers a question: the refreshed summary and XP for answering. */

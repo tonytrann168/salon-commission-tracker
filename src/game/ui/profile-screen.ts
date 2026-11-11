@@ -1,3 +1,4 @@
+import { companionName } from '../companion';
 import { getLanguage, t } from '../i18n';
 import { PROGRESSION_CONFIG, liveStreak, rankFor } from '../progression';
 import type { ProgressSave } from '../progression';
@@ -24,7 +25,7 @@ export function rankBar(xp: number): HTMLElement {
 }
 
 /** The profile (story 007): rank and XP, tips, streak, appointments and every badge (earned ones in colour). */
-export function createProfileScreen(host: HTMLElement, options: { save: ProgressSave; today: string; onBack: () => void }): HTMLElement {
+export function createProfileScreen(host: HTMLElement, options: { save: ProgressSave; today: string; onBack: () => void; onDressUp?: () => void }): HTMLElement {
   const lang = getLanguage();
   const { save } = options;
   const screen = el('section', 'screen profile');
@@ -58,7 +59,14 @@ export function createProfileScreen(host: HTMLElement, options: { save: Progress
   const back = el('button', 'chat-button secondary', t('common.back'));
   back.type = 'button';
   back.addEventListener('click', options.onBack);
-  screen.append(title, rankBar(save.xp), stats, badges, back);
+  const extra: HTMLElement[] = [];
+  if (options.onDressUp) {
+    const dress = el('button', 'chat-button', t('companion.dressUp', { name: companionName() }));
+    dress.type = 'button';
+    dress.addEventListener('click', options.onDressUp);
+    extra.push(dress);
+  }
+  screen.append(title, rankBar(save.xp), stats, ...extra, badges, back);
   host.appendChild(screen);
   return screen;
 }

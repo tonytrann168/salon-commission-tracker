@@ -1,4 +1,4 @@
-import { BESTIE_CONFIG } from '../bestie';
+import { companionLook, companionName } from '../companion';
 import type { BestieLanguage, BestieTransport } from '../bestie';
 import { loadMemory } from '../bestie-memory';
 import { t } from '../i18n';
@@ -22,7 +22,6 @@ import './mai-bubble.css';
  * panel over the top strip with her waiting tips, "Give me a hint" and "Help me say it". Stories 003 and 011.
  */
 
-const NAME = BESTIE_CONFIG.name;
 const SIDE_KEY = 'salon.maiSide';
 const BUBBLE_PX = 56;
 const PANEL_FACE_PX = 40;
@@ -62,7 +61,7 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
   badge.setAttribute('aria-hidden', 'true');
   const panel = el('div', 'mai-panel hidden');
   panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-label', NAME);
+  panel.setAttribute('aria-label', companionName());
   layer.append(panel, bubble);
 
   let queue = EMPTY_TIPS;
@@ -73,11 +72,11 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
   let hintRequest = 0;
 
   const drawBubble = (): void => {
-    const face = renderMascot(queue.unseen > 0 ? 'tipWaiting' : expression, BUBBLE_PX, { crop: 'bust' });
+    const face = renderMascot(queue.unseen > 0 ? 'tipWaiting' : expression, BUBBLE_PX, { crop: 'bust', ...companionLook() });
     badge.textContent = String(queue.unseen);
     badge.classList.toggle('hidden', queue.unseen === 0);
     bubble.replaceChildren(face, badge);
-    bubble.setAttribute('aria-label', queue.unseen > 0 ? t('mai.openTips', { name: NAME, count: queue.unseen }) : t('mai.open', { name: NAME }));
+    bubble.setAttribute('aria-label', queue.unseen > 0 ? t('mai.openTips', { name: companionName(), count: queue.unseen }) : t('mai.open', { name: companionName() }));
     bubble.setAttribute('aria-expanded', String(open));
     layer.dataset.side = side;
   };
@@ -109,11 +108,11 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
     const close = el('button', 'chat-button secondary bestie-got-it', t('common.close'));
     close.type = 'button';
     close.addEventListener('click', () => setOpen(false));
-    header.append(renderMascot(expression, PANEL_FACE_PX), el('strong', 'mai-panel-name', NAME), close);
+    header.append(renderMascot(expression, PANEL_FACE_PX, { crop: 'full', ...companionLook() }), el('strong', 'mai-panel-name', companionName()), close);
 
     const tips = el('div', 'mai-tips');
     if (queue.tips.length > 0) {
-      tips.append(el('span', 'bestie-label', t('mai.tipsTitle', { name: NAME })), ...[...queue.tips].reverse().map(tipView));
+      tips.append(el('span', 'bestie-label', t('mai.tipsTitle', { name: companionName() })), ...[...queue.tips].reverse().map(tipView));
     }
 
     const actions = el('div', 'mai-actions');
@@ -141,7 +140,7 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
     expression = next;
     drawBubble();
     const face = panel.querySelector('.mai-panel-header .mascot');
-    if (face) face.replaceWith(renderMascot(expression, PANEL_FACE_PX));
+    if (face) face.replaceWith(renderMascot(expression, PANEL_FACE_PX, { crop: 'full', ...companionLook() }));
   };
 
   function setOpen(next: boolean): void {
@@ -164,7 +163,7 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
   function askHint(): void {
     const mine = ++hintRequest;
     setExpression('thinking');
-    hintBox.replaceChildren(el('p', 'chat-hint', t('bestie.thinking', { name: NAME })));
+    hintBox.replaceChildren(el('p', 'chat-hint', t('bestie.thinking', { name: companionName() })));
     const now = options.current();
     options.transport
       .hint({ level: options.level, language: options.language, phase: now.phase, mood: now.mood, transcript: now.transcript, memory: loadMemory().summary, playerName: getPlayerName() })
@@ -179,7 +178,7 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
         (error: unknown) => {
           if (mine !== hintRequest) return;
           const missing = error instanceof TurnError && error.code === 'missing_api_key';
-          hintBox.replaceChildren(el('p', 'bestie-text', guardMessage(error) ?? t(missing ? 'bestie.unavailable' : 'bestie.hintFailed', { name: NAME })));
+          hintBox.replaceChildren(el('p', 'bestie-text', guardMessage(error) ?? t(missing ? 'bestie.unavailable' : 'bestie.hintFailed', { name: companionName() })));
           setExpression('idle');
         },
       );

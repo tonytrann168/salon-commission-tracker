@@ -1,4 +1,4 @@
-import { BESTIE_CONFIG } from '../bestie';
+import { companionName } from '../companion';
 import type { BestieLanguage } from '../bestie';
 import { loadMemory } from '../bestie-memory';
 import { t } from '../i18n';
@@ -22,7 +22,6 @@ import './recap-screen.css';
  * suggestion the player accepts or declines).
  */
 
-const NAME = BESTIE_CONFIG.name;
 
 function button(label: string, secondary = false): HTMLButtonElement {
   const node = el('button', secondary ? 'chat-button secondary' : 'chat-button', label);
@@ -73,7 +72,7 @@ export function createLearningPanel(options: LearningPanelOptions): HTMLElement 
 
   const run = (): void => {
     const loading = el('div', 'results-message');
-    loading.append(el('p', '', t('learning.loading', { name: NAME })), el('span', 'results-spinner'));
+    loading.append(el('p', '', t('learning.loading', { name: companionName() })), el('span', 'results-spinner'));
     box.replaceChildren(loading);
     options.transport.review({ level: options.level, language: options.language, outcome: options.outcome, transcript: options.transcript }).then(
       (review) => {
@@ -107,7 +106,7 @@ export function createLearningPanel(options: LearningPanelOptions): HTMLElement 
         const retry = button(t('common.tryAgain'), true);
         retry.addEventListener('click', run);
         const failed = el('section', 'results-section');
-        failed.append(el('p', '', guardMessage(error) ?? (unavailable ? t('bestie.unavailable', { name: NAME }) : t('learning.failed', { name: NAME }))), ...(unavailable ? [] : [retry]));
+        failed.append(el('p', '', guardMessage(error) ?? (unavailable ? t('bestie.unavailable', { name: companionName() }) : t('learning.failed', { name: companionName() }))), ...(unavailable ? [] : [retry]));
         box.replaceChildren(failed);
       },
     );

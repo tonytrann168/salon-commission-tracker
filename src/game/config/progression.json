@@ -4,7 +4,7 @@
     { "id": "junior", "xp": 0, "icon": "🐣", "name": { "en": "Baby Chick", "vi": "Gà Mới Nở" }, "unlocks": ["easy"] },
     { "id": "nail-tech", "xp": 60, "icon": "✨", "name": { "en": "Glow-Up Tech", "vi": "Thợ Xịn Xò" }, "unlocks": ["medium"] },
     { "id": "senior", "xp": 250, "icon": "💅", "name": { "en": "Gel Warrior", "vi": "Chiến Thần Sơn Gel" }, "unlocks": ["hard"] },
-    { "id": "master", "xp": 600, "icon": "👑", "name": { "en": "Nail Boss", "vi": "Trùm Nail Đỉnh Nóc" }, "unlocks": [] }
+    { "id": "master", "xp": 600, "icon": "👑", "name": { "en": "Nail Boss", "vi": "Trùm Nail Đỉnh Nóc Kịch Trần" }, "unlocks": [] }
   ],
   "xp": {
     "byStars": [5, 10, 20, 35, 50],

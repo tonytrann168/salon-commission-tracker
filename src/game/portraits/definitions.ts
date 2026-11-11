@@ -27,7 +27,12 @@ export const PORTRAIT_DEFINITIONS: Readonly<Record<string, PortraitDefinition>> 
     ROSTER.map((client) => [client.portraitId, { id: client.portraitId, name: client.name, kind: 'placeholder-face' as const, palette: { skin: hex(client.look.skin), hair: hex(client.look.hair), accent: hex(client.look.accent), ...(client.look.hairStyle ? { hairStyle: client.look.hairStyle } : {}) } }]),
   ),
   bestie: { id: 'bestie', name: BESTIE_CONFIG.name, kind: 'placeholder-face', palette: { skin: 0xffd9c2, hair: 0xb98cf0, accent: 0xff5c9a } },
+  // Story 013: the male companion's placeholder portrait (short hair, no bow).
+  'bestie-male': { id: 'bestie-male', name: BESTIE_CONFIG.name, kind: 'placeholder-face', palette: { skin: 0xffd9c2, hair: 0x7d68c9, accent: 0xff5c9a, hairStyle: 'short' } },
 };
+
+/** The companion's portrait id for a gender (story 013). */
+export const companionPortraitId = (gender: 'female' | 'male'): string => (gender === 'male' ? 'bestie-male' : 'bestie');
 
 /** Look up a definition by id. Throws when the id is unknown (a bad reference in character data). */
 export function getPortraitDefinition(id: string): PortraitDefinition {

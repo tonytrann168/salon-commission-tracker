@@ -1,4 +1,4 @@
-import { BESTIE_CONFIG } from '../bestie';
+import { companionName } from '../companion';
 import { t } from '../i18n';
 import { groupByTopic, loadPhrasebook } from '../learning/phrasebook';
 import { el } from './dom';
@@ -14,7 +14,7 @@ export function createPhrasebookScreen(host: HTMLElement, onBack: () => void, on
   const title = el('h1', '', t('phrasebook.title'));
   title.id = 'phrasebook-title';
   const book = loadPhrasebook();
-  screen.append(title, el('p', 'learning-reason', book.length === 0 ? t('phrasebook.empty', { name: BESTIE_CONFIG.name }) : t('phrasebook.count', { count: book.length })));
+  screen.append(title, el('p', 'learning-reason', book.length === 0 ? t('phrasebook.empty', { name: companionName() }) : t('phrasebook.count', { count: book.length })));
   for (const group of groupByTopic(book)) {
     const section = el('section', 'results-section');
     section.append(el('h2', '', t(`phrasebook.topic.${group.topic}`)));

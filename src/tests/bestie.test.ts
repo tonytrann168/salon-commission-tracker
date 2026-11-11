@@ -11,7 +11,7 @@ import { cleanPlayerName } from '../game/settings';
 const config: BestieConfig = {
   ...BESTIE_CONFIG,
   levelXp: [0, 30, 80],
-  xp: { completed: 10, walkedOut: 5, questionAnswered: 5 },
+  xp: { completed: 10, walkedOut: 5, questionAnswered: 5, dailyHello: 3, phrasePractised: 2 },
   question: { chance: 0.4, firstAfterSessions: 1, minSessionsBetween: 2 },
   memory: { maxSummaryChars: 100 },
 };
@@ -68,7 +68,7 @@ describe('bestie memory', () => {
 
   it('counts a session and XP after a debrief, and marks a question', () => {
     const after = afterDebrief({ ...EMPTY_MEMORY, sessions: 2, xp: 20 }, { summary: '  New notes. ', outcome: 'completed', asked: true, today: '2026-11-10' }, config);
-    expect(after).toEqual({ summary: 'New notes.', sessions: 3, xp: 30, lastQuestionAt: 2, lastTough: false });
+    expect(after).toEqual({ summary: 'New notes.', sessions: 3, xp: 30, lastQuestionAt: 2, lastTough: false, lastHelloDay: '', lastWin: '' });
     const walked = afterDebrief(EMPTY_MEMORY, { summary: '', outcome: 'walked_out', asked: false }, config);
     expect(walked.xp).toBe(5);
     expect(walked.lastQuestionAt).toBe(-1);

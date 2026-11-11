@@ -1,3 +1,5 @@
+import { companionFrom, companionGrammar } from '../companion-core';
+import { readStored } from '../safe-storage';
 import { getHelpLanguage } from '../settings';
 import en from './en.json';
 import vi from './vi.json';
@@ -16,6 +18,26 @@ export type StringParams = Record<string, string | number>;
 export type StringTable = Record<StringKey, string>;
 
 const PLACEHOLDER = /\{(\w+)\}/g;
+
+/**
+ * Companion grammar (story 013), filled by `t` from the saved companion: {self}/{selfLower} (Vietnamese "Chị/chị" or
+ * "Anh/anh"), {maiShe}/{maiHer} (English she/her or he/his). Grammar exists in one language only, so these may appear
+ * in just one table. {mai}, the companion's name, is filled too but must appear in both, like any placeholder.
+ */
+export const GRAMMAR_PLACEHOLDERS: readonly string[] = ['self', 'selfLower', 'maiShe', 'maiHer'];
+
+/** The companion params for `t`, from the device's saved companion (Mai, female by default). */
+export function companionParams(): StringParams {
+  let raw: unknown = null;
+  try {
+    raw = JSON.parse(readStored('salon.companion.v1') ?? 'null');
+  } catch {
+    raw = null;
+  }
+  const companion = companionFrom(raw);
+  const g = companionGrammar(companion.gender);
+  return { mai: companion.name, self: g.self, selfLower: g.selfLower, maiShe: g.she, maiHer: g.her };
+}
 
 /** The `{name}` placeholders in a template, sorted, for comparing the two tables. */
 export function placeholdersOf(template: string): string[] {
@@ -41,8 +63,9 @@ export function parseStringTables(rawEn: unknown, rawVi: unknown): Record<Langua
     }
   }
   for (const key of Object.keys(tables.en)) {
-    const wanted = placeholdersOf(tables.en[key] as string).join(',');
-    const got = placeholdersOf(tables.vi[key] as string).join(',');
+    const shared = (template: string): string => placeholdersOf(template).filter((p) => !GRAMMAR_PLACEHOLDERS.includes(p)).join(',');
+    const wanted = shared(tables.en[key] as string);
+    const got = shared(tables.vi[key] as string);
     if (wanted !== got) throw new Error(`i18n: "${key}" placeholders differ: en {${wanted}} vs vi {${got}}`);
   }
   return tables as Record<Language, StringTable>;
@@ -62,7 +85,8 @@ export function getLanguage(): Language {
 
 /** Interface text for `key` in `language` (the saved language by default). */
 export function t(key: StringKey, params?: StringParams, language: Language = getLanguage()): string {
-  return fillTemplate(TABLES[language][key], params);
+  const template = TABLES[language][key];
+  return fillTemplate(template, /\{(mai|self|selfLower|maiShe|maiHer)\}/.test(template) ? { ...companionParams(), ...params } : params);
 }
 
 /** Keep `<html lang>` in step with the interface language, so screen readers and fonts use the right voice and shaping. */

@@ -1,0 +1,15 @@
+/* Story 013: meeting, settings and dress-up. */
+.companion-genders { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.companion-gender { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; border: 2px solid #f1dde6; border-radius: 18px; background: #fff; font: inherit; color: inherit; }
+.companion-gender[aria-checked='true'] { border-color: #ff5c9a; box-shadow: 0 0 0 3px #ffe1ee; }
+.companion-name { display: flex; flex-direction: column; gap: 6px; }
+.companion-name-problem { min-height: 1.2em; font-size: 13px; color: #b3261e; }
+.companion-settings { display: flex; flex-direction: column; gap: 12px; }
+.dress-stage { display: flex; justify-content: center; padding: 8px 0; border-radius: 24px; background: radial-gradient(circle at 50% 40%, #fff, #ffe8f1); }
+.dress-slots { display: flex; flex-direction: column; gap: 12px; }
+.dress-slot { display: flex; flex-direction: column; gap: 8px; }
+.dress-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border: 2px solid #f6d5e3; border-radius: 14px; background: #fff; font: inherit; color: inherit; text-align: left; }
+.dress-item[aria-pressed='true'] { border-color: #ff5c9a; background: #ffe8f1; }
+.dress-item.locked { background: #f7eef2; color: #7a6871; }
+.dress-item:disabled { opacity: 1; }
+.dress-how { font-size: 13px; color: #5b4a53; }

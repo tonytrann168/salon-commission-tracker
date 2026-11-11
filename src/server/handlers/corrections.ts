@@ -1,3 +1,5 @@
+import { companionFrom, companionGrammar, personaFor } from '../../game/companion-core';
+import type { CompanionIdentity } from '../../game/companion-core';
 import type { BestieLanguage } from '../../game/bestie';
 import { BESTIE_CONFIG } from '../../game/bestie';
 import { LEARNING_CONFIG, TOPICS } from '../../game/learning/corrections';
@@ -49,7 +51,7 @@ export function parseCorrectionsRequest(body: unknown): ParseResult<LineCheckReq
     if (!isText(body.line, MAX_MESSAGE_CHARS)) return { ok: false, message: 'line must be 1-1000 characters.' };
     const clientLine = body.clientLine;
     if (typeof clientLine !== 'string' || clientLine.length > MAX_MESSAGE_CHARS) return { ok: false, message: 'clientLine must be text up to 1000 characters.' };
-    return { ok: true, value: { kind, level, language, phase, line: body.line.trim(), clientLine } };
+    return { ok: true, value: { kind, level, language, phase, line: body.line.trim(), clientLine, companion: companionFrom(body.companion) } };
   }
   if (kind === 'review') {
     const { outcome, transcript } = body;
@@ -62,7 +64,7 @@ export function parseCorrectionsRequest(body: unknown): ParseResult<LineCheckReq
       }
       messages.push({ role: item.role, content: item.content, ...(item.helped === true ? { helped: true } : {}) });
     }
-    return { ok: true, value: { kind, level, language, outcome, transcript: messages } };
+    return { ok: true, value: { kind, level, language, outcome, transcript: messages, companion: companionFrom(body.companion) } };
   }
   return { ok: false, message: 'kind must be line or review.' };
 }
@@ -113,14 +115,14 @@ const LEVEL_FOCUS: Record<EnglishLevel, string> = {
   fluent: 'The player is fluent. Correct anything that sounds unnatural or less professional than a top salon. Better lines are natural and polished.',
 };
 
-const reasonLanguage = (language: BestieLanguage): string =>
+const reasonLanguage = (language: BestieLanguage, companion: CompanionIdentity): string =>
   language === 'vi'
-    ? 'Write praise and reasons in natural, warm Vietnamese (call yourself "chị" and the player "em"). The English lines stay in English.'
+    ? `Write praise and reasons in natural, warm Vietnamese (call yourself "${companionGrammar(companion.gender).selfLower}" and the player "em"${companion.gender === 'male' ? '; you are a man: always "anh", never "chị"' : ''}). The English lines stay in English.`
     : 'Write praise and reasons in simple, friendly English.';
 
-const SHARED_RULES = (level: EnglishLevel, language: BestieLanguage): string => `You are ${BESTIE_CONFIG.name}, the kind best friend of a Vietnamese nail technician learning English. ${BESTIE_CONFIG.persona}
+const SHARED_RULES = (level: EnglishLevel, language: BestieLanguage, companion: CompanionIdentity = companionFrom(null)): string => `You are ${companion.name}, the kind best friend of a Vietnamese nail technician learning English. ${personaFor(BESTIE_CONFIG.persona, companion)}
 - ${LEVEL_FOCUS[level]}
-- ${reasonLanguage(language)}
+- ${reasonLanguage(language, companion)}
 - Be kind and specific. Praise what worked before you correct. Never mock, and never comment on accent, pronunciation or background.
 - Every Vietnamese meaning ("vi") is natural salon Vietnamese: the tech is "em", the client is "chị" (or "anh"/"cô" when clear); never "tôi"/"bạn".
 - Every phrase has a topic: greeting, consultation, price, booking or problems.
@@ -128,7 +130,7 @@ const SHARED_RULES = (level: EnglishLevel, language: BestieLanguage): string => 
 
 function systemPrompt(request: LineCheckRequest | ReviewRequest): string {
   if (request.kind === 'line') {
-    return `${SHARED_RULES(request.level, request.language)}
+    return `${SHARED_RULES(request.level, request.language, request.companion)}
 
 TASK: the player just said one line to a client. Decide if it needs a gentle whispered correction.
 - needsCorrection: true only if the line has a mistake worth fixing at this level. If it is fine, false and leave the other fields empty.
@@ -137,7 +139,7 @@ TASK: the player just said one line to a client. Decide if it needs a gentle whi
 - reason: one short line on why it is better.
 - Answer by calling the ${TOOL_NAMES.line} tool.`;
   }
-  return `${SHARED_RULES(request.level, request.language)}
+  return `${SHARED_RULES(request.level, request.language, request.companion)}
 
 TASK: the appointment is over. Review the player's English.
 - lines: up to ${LEARNING_CONFIG.review.maxLines} of the player's own lines worth improving (never lines marked [helped]; those were written by the game). For each: said (their exact line), better (phrase with en, vi, topic), reason (one line). An empty list is fine when their English was good.

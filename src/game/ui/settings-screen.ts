@@ -1,11 +1,12 @@
+import { companionName } from '../companion';
 import { applyDocumentLanguage, t } from '../i18n';
 import { loadAudioSettings, saveAudioSettings } from '../audio';
 import type { AudioSettings } from '../audio';
-import { BESTIE_CONFIG } from '../bestie';
 import { LEARNING_CONFIG } from '../learning/corrections';
 import { getPlayerName, setPlayerName, PLAYER_NAME_MAX, getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, chooseEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
 import { bilingual, el } from './dom';
 import { createLevelPicker } from './level-picker';
+import { createCompanionSettings } from './companion-screens';
 import './level-picker.css';
 
 /**
@@ -13,7 +14,7 @@ import './level-picker.css';
  * Full Vietnamese mode is also the interface language: turning it on or off redraws this screen in the new language
  * at once. Its own label is always shown in both languages, so a player can always find the way back. Story: story-010, story-008.
  */
-export function createSettingsScreen(host: HTMLElement, onBack: () => void): HTMLElement {
+export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDressUp?: () => void): HTMLElement {
   const screen = el('section', 'screen');
   screen.setAttribute('aria-labelledby', 'settings-title');
 
@@ -69,7 +70,7 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void): HTM
     hintsToggle.checked = getHintsEnabled();
     hintsToggle.addEventListener('change', () => setHintsEnabled(hintsToggle.checked));
     const hintsText = el('span', 'setting-text');
-    hintsText.append(el('strong', '', t('settings.hints')), el('span', 'setting-note', t('settings.hintsNote', { name: BESTIE_CONFIG.name })));
+    hintsText.append(el('strong', '', t('settings.hints')), el('span', 'setting-note', t('settings.hintsNote', { name: companionName() })));
     hintsRow.append(hintsText, hintsToggle);
 
     const correctionsRow = el('label', 'setting-row');
@@ -80,7 +81,7 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void): HTM
     const correctionsText = el('span', 'setting-text');
     correctionsText.append(
       el('strong', '', t('settings.corrections')),
-      el('span', 'setting-note', t('settings.correctionsNote', { name: BESTIE_CONFIG.name, count: LEARNING_CONFIG.whispers.maxPerAppointment })),
+      el('span', 'setting-note', t('settings.correctionsNote', { name: companionName(), count: LEARNING_CONFIG.whispers.maxPerAppointment })),
     );
     correctionsRow.append(correctionsText, correctionsToggle);
 
@@ -121,7 +122,9 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void): HTM
     back.type = 'button';
     back.addEventListener('click', onBack);
 
-    screen.replaceChildren(title, nameRow, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, back);
+    // Story 013: your bestie (female/male, name, dress-up).
+    const companion = createCompanionSettings(onDressUp ?? (() => undefined), render);
+    screen.replaceChildren(title, nameRow, companion, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, back);
   };
 
   render();

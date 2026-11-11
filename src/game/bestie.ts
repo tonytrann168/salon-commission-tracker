@@ -1,3 +1,4 @@
+import type { CompanionIdentity } from './companion-core';
 import bestieJson from './config/bestie.json';
 import { TurnError } from './types';
 import type { EnglishLevel, EnglishScores, Message, Outcome, Phase, SkillScores, TurnErrorCode } from './types';
@@ -17,7 +18,8 @@ export interface BestieConfig {
   persona: string;
   /** XP needed for each bestie level, ascending, starting at 0 (level 1). */
   levelXp: number[];
-  xp: { completed: number; walkedOut: number; questionAnswered: number };
+  /** Friendship XP (story 013: one number with the bestie level): appointments, answers, the daily hello, practice. */
+  xp: { completed: number; walkedOut: number; questionAnswered: number; dailyHello: number; phrasePractised: number };
   question: {
     /** Chance of a question after an appointment, when one is allowed. */
     chance: number;
@@ -59,6 +61,8 @@ export function parseBestieConfig(raw: unknown): BestieConfig {
       completed: number(xp.completed, 'xp.completed', 0, 1000),
       walkedOut: number(xp.walkedOut, 'xp.walkedOut', 0, 1000),
       questionAnswered: number(xp.questionAnswered, 'xp.questionAnswered', 0, 1000),
+      dailyHello: number(xp.dailyHello, 'xp.dailyHello', 0, 1000),
+      phrasePractised: number(xp.phrasePractised, 'xp.phrasePractised', 0, 1000),
     },
     question: {
       chance: number(question.chance, 'question.chance', 0, 1),
@@ -84,6 +88,8 @@ export interface HintRequest {
   memory: string;
   /** The player's name, if they gave one in Settings ('' or missing otherwise). */
   playerName?: string;
+  /** Story 013: who the companion is (name and gender); the server falls back to Mai. */
+  companion?: CompanionIdentity;
 }
 
 /** The debrief after an appointment, built on the scorecard. */
@@ -105,6 +111,8 @@ export interface DebriefRequest {
   /** Ask the player a "how would you handle..." question this time. */
   askQuestion: boolean;
   playerName?: string;
+  /** Story 013: who the companion is (name and gender); the server falls back to Mai. */
+  companion?: CompanionIdentity;
 }
 
 /** The player's answer to the bestie's question. */
@@ -116,6 +124,8 @@ export interface AnswerRequest {
   answer: string;
   memory: string;
   playerName?: string;
+  /** Story 013: who the companion is (name and gender); the server falls back to Mai. */
+  companion?: CompanionIdentity;
 }
 
 export type BestieRequest = HintRequest | DebriefRequest | AnswerRequest;
@@ -151,7 +161,8 @@ const ENDPOINT = '/api/bestie';
 const TIMEOUT_MS = 30_000;
 
 /** Browser transport: posts to the bestie server function. The API key never reaches the browser. */
-export function createBestieTransport(): BestieTransport {
+/** `getCompanion` (story 013) adds the companion's name and gender to every request. */
+export function createBestieTransport(getCompanion?: () => CompanionIdentity): BestieTransport {
   const post = async <T>(request: BestieRequest): Promise<T> => {
     let response: Response;
     let body: unknown;
@@ -159,7 +170,7 @@ export function createBestieTransport(): BestieTransport {
       response = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(request),
+        body: JSON.stringify(getCompanion ? { ...request, companion: getCompanion() } : request),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       body = await response.json();

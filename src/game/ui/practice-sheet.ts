@@ -1,3 +1,5 @@
+import { afterPractice } from '../bestie-memory';
+import { gainFriendship } from './friendship';
 import { t } from '../i18n';
 import type { EnglishLevel } from '../types';
 import { checkPronunciation, VoiceError } from '../voice';
@@ -84,6 +86,8 @@ export function openPracticeSheet(host: HTMLElement, options: { voice: VoiceIO; 
         const checks = checkPronunciation(line, text);
         words(checks);
         const count = checks.filter((check) => check.heard).length;
+        // Story 013: practising out loud adds a little friendship.
+        if (count > 0) gainFriendship((memory) => afterPractice(memory));
         status.textContent = t(count === checks.length ? 'practice.heardAll' : count === 0 ? 'practice.heardNone' : 'practice.heardSome');
       },
       (error: unknown) => {

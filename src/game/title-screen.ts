@@ -1,5 +1,6 @@
 import { Container, Graphics, Text } from 'pixi.js';
-import { createPortrait } from './portraits/definitions';
+import { companionPortraitId, createPortrait } from './portraits/definitions';
+import { loadCompanion } from './companion';
 import { t } from './i18n';
 import { createBestieGreeting } from './ui/bestie-panel';
 import './ui/chat-panel.css';
@@ -15,7 +16,7 @@ export function createTitleScreen(width: number, height: number): Container {
   const bg = new Graphics().rect(0, 0, width, height).fill(0xfff4f8);
   // Bestie above the title: sized to the space over the title text so nothing overlaps on small phones.
   const bestieSize = Math.min(width * 0.6, height * 0.3);
-  const bestie = createPortrait('bestie', bestieSize, 'delighted');
+  const bestie = createPortrait(companionPortraitId(loadCompanion().gender), bestieSize, 'delighted');
   bestie.view.position.set((width - bestieSize) / 2, height * 0.27 - bestieSize / 2);
 
   const title = new Text({

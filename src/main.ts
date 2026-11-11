@@ -9,11 +9,14 @@ import { createClientPicker } from './game/ui/client-picker';
 import { NAIL_ART_CONFIG } from './game/nail-art/design';
 import { applyAppointment, dailyChallenge, dailyDoneToday, liveStreak, rankUnlocking, stationPalette, unlockedDifficulties, upgradeEffects } from './game/progression';
 import { loadSave, writeSave } from './game/save';
-import { localDay } from './game/bestie-memory';
+import { afterHello, localDay } from './game/bestie-memory';
 import { createShopScreen } from './game/ui/shop-screen';
 import { createProfileScreen } from './game/ui/profile-screen';
 import { celebrationsFor, createProgressPanel } from './game/ui/progress-panel';
 import { celebrate } from './game/ui/celebration';
+import { companionIdentity, loadCompanion } from './game/companion';
+import { createDressUpScreen, createMeetScreen } from './game/ui/companion-screens';
+import { gainFriendship } from './game/ui/friendship';
 import { SCORING_CONFIG } from './game/scoring';
 import { createSalonScene } from './game/salon-scene';
 import { createTitleMenu, createTitleScreen } from './game/title-screen';
@@ -79,6 +82,8 @@ async function boot(): Promise<void> {
 
   const showTitle = () => {
     teardownDom();
+    // Story 013: the first open of the day is Mai's daily hello (a little friendship; a new level gets her card).
+    gainFriendship((memory) => afterHello(memory, localDay()));
     buildScene = createTitleScreen;
     draw();
     const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook, showShop, showProfile);
@@ -87,7 +92,7 @@ async function boot(): Promise<void> {
 
   const showSettings = () => {
     teardownDom();
-    const screen = createSettingsScreen(host, showTitle);
+    const screen = createSettingsScreen(host, showTitle, () => showDressUp(showSettings));
     teardownDom = () => screen.remove();
   };
 
@@ -100,7 +105,7 @@ async function boot(): Promise<void> {
 
   const showProfile = () => {
     teardownDom();
-    const screen = createProfileScreen(host, { save: loadSave(), today: localDay(), onBack: showTitle });
+    const screen = createProfileScreen(host, { save: loadSave(), today: localDay(), onBack: showTitle, onDressUp: () => showDressUp(showProfile) });
     teardownDom = () => screen.remove();
   };
 
@@ -134,8 +139,9 @@ async function boot(): Promise<void> {
   };
 
   const gradeAppointment = createGradeTransport();
-  const bestie = createBestieTransport();
-  const corrections = createCorrectionsTransport();
+  // Story 013: every bestie and corrections request carries the companion's name and gender.
+  const bestie = createBestieTransport(companionIdentity);
+  const corrections = createCorrectionsTransport(companionIdentity);
   // Voice: the phone's own speech recognition and synthesis (story 004). No key, nothing on the server.
   // Music and sound (story 012): silent until the first tap; music ducks while anything is spoken.
   const audio = createAudioEngine({
@@ -167,8 +173,26 @@ async function boot(): Promise<void> {
   const startAppointment = () => {
     // Inside the Start tap: lets the client's voice play on iPhone (story 004).
     voice.unlock();
+    // Story 013: the first time, meet your bestie (female or male, and a name) before anything else.
+    if (!loadCompanion().chosen) return showMeet();
     if (getEnglishLevel() === null) showLevelPicker();
     else showClientPicker();
+  };
+
+  const showMeet = () => {
+    teardownDom();
+    const screen = createMeetScreen(host, () => {
+      applyDocumentLanguage();
+      if (getEnglishLevel() === null) showLevelPicker();
+      else showClientPicker();
+    });
+    teardownDom = () => screen.remove();
+  };
+
+  const showDressUp = (back: () => void) => {
+    teardownDom();
+    const screen = createDressUpScreen(host, back);
+    teardownDom = () => screen.remove();
   };
 
   /** The client picker's faces: each client's placeholder portrait (neutral), drawn once and kept as an image. */

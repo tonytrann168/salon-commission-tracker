@@ -1,3 +1,4 @@
+import type { CompanionIdentity } from '../companion-core';
 import learningJson from '../config/learning.json';
 import type { BestieLanguage } from '../bestie';
 import { TurnError } from '../types';
@@ -65,6 +66,8 @@ export interface Phrase {
 /** Check one player line right after it is sent. */
 export interface LineCheckRequest {
   kind: 'line';
+  /** Story 013: the companion giving the correction. */
+  companion?: CompanionIdentity;
   level: EnglishLevel;
   language: BestieLanguage;
   phase: Phase;
@@ -88,6 +91,7 @@ export interface LineCheckResult {
 /** The English review and Vietnamese recap after an appointment. */
 export interface ReviewRequest {
   kind: 'review';
+  companion?: CompanionIdentity;
   level: EnglishLevel;
   language: BestieLanguage;
   outcome: Outcome;
@@ -122,7 +126,8 @@ const ENDPOINT = '/api/corrections';
 const TIMEOUT_MS = 30_000;
 
 /** Browser transport: posts to the corrections server function. The API key never reaches the browser. */
-export function createCorrectionsTransport(): CorrectionsTransport {
+/** `getCompanion` (story 013) adds the companion's name and gender to every request. */
+export function createCorrectionsTransport(getCompanion?: () => CompanionIdentity): CorrectionsTransport {
   const post = async <T>(request: LineCheckRequest | ReviewRequest): Promise<T> => {
     let response: Response;
     let body: unknown;
@@ -130,7 +135,7 @@ export function createCorrectionsTransport(): CorrectionsTransport {
       response = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(request),
+        body: JSON.stringify(getCompanion ? { ...request, companion: getCompanion() } : request),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       body = await response.json();

@@ -1,5 +1,6 @@
 import type { Container } from 'pixi.js';
-import { createPortrait, getPortraitDefinition } from '../portraits/definitions';
+import { companionPortraitId, createPortrait, getPortraitDefinition } from '../portraits/definitions';
+import { loadCompanion } from '../companion';
 import type { Expression, Portrait, Pose } from '../portraits/portrait';
 import type { ClientPersona } from '../types';
 import { t } from '../i18n';
@@ -12,7 +13,6 @@ import { t } from '../i18n';
 const CLIENT_PADDING = 6;
 const BESTIE_CORNER_FRACTION = 0.42;
 const BESTIE_CORNER_MARGIN = 10;
-const BESTIE_ID = 'bestie';
 /** The client's face size while the nail station is open (story 005). */
 const COMPACT_CLIENT_PX = 58;
 
@@ -39,7 +39,7 @@ export function createPortraitZone(host: HTMLElement, layer: Container, client: 
 
   const clientName = getPortraitDefinition(client.portraitId).name;
   const clientPortrait = createPortrait(client.portraitId, 1, initialPose);
-  const bestiePortrait: Portrait = createPortrait(BESTIE_ID, 1, 'neutral');
+  const bestiePortrait: Portrait = createPortrait(companionPortraitId(loadCompanion().gender), 1, 'neutral');
   // With the Mai bubble on screen (owner, 2026-11-10) the corner portrait would be a second Mai: hide it.
   bestiePortrait.view.visible = showBestie;
   layer.addChild(clientPortrait.view, bestiePortrait.view);

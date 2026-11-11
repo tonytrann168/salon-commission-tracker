@@ -49,6 +49,11 @@ const checks = [
   ['bestie answer (some, en)', () => handleBestie({ kind: 'answer', level: 'some', language: 'en', memory: '',
       question: 'What would you do if a client says her polish chipped after one day?', answer: 'I say sorry and fix it free.' }, env, fetch),
     (b) => typeof b.reply === 'string' && typeof b.memory === 'string', (b) => `"${b.reply}" memory "${b.memory}"`],
+  // Story 013: a male companion in Vietnamese calls himself "anh", never "chị" (no client in this exchange, so any "chị" would be him).
+  ['male companion answer (some, vi): says "anh", never "chị"', () => handleBestie({ kind: 'answer', level: 'some', language: 'vi', memory: '',
+      question: 'Em thích màu sơn nào nhất?', answer: 'Em thích màu hồng nhạt.', companion: { name: 'Minh', gender: 'male' } }, env, fetch),
+    (b) => typeof b.reply === 'string' && /(^|[^\p{L}])anh([^\p{L}]|$)/iu.test(b.reply) && !/(^|[^\p{L}])chị([^\p{L}]|$)/iu.test(b.reply),
+    (b) => `"${b.reply}"`],
   ['corrections line check (beginner, vi)', () => handleCorrections({ kind: 'line', level: 'beginner', language: 'vi', phase: 'consultation',
       line: 'What color you like today?', clientLine: DEFAULT_CLIENT.openingLine }, env, fetch),
     (b) => typeof b.needsCorrection === 'boolean' && (!b.needsCorrection || (b.better && typeof b.reason === 'string')),

@@ -1,6 +1,7 @@
-import { BESTIE_CONFIG } from '../bestie';
+import { companionLook, companionName } from '../companion';
 import type { BestieLanguage, BestieTransport } from '../bestie';
-import { afterAnswer, afterDebrief, bestieLevel, greetingKind, loadMemory, localDay, saveMemory, shouldAskQuestion } from '../bestie-memory';
+import { afterAnswer, afterDebrief, bestSkill, bestieLevel, greetingKind, loadMemory, localDay, saveMemory, shouldAskQuestion } from '../bestie-memory';
+import { celebrateFriendship } from './friendship';
 import { liveStreak } from '../progression';
 import { loadSave } from '../save';
 import { getPlayerName } from '../settings';
@@ -9,7 +10,6 @@ import { t } from '../i18n';
 import type { ScoreResult } from '../scoring';
 import { TurnError } from '../types';
 import type { EnglishLevel, Grading, Message, Outcome, Phase } from '../types';
-import { emitSound } from '../sound-events';
 import { renderMascot } from '../mascot';
 import { el } from './dom';
 import { guardMessage } from './guard-message';
@@ -22,7 +22,6 @@ import './bestie-panel.css';
  * Story: story-003 (design/game-brief.md, MVP feature 4).
  */
 
-const NAME = BESTIE_CONFIG.name;
 
 const unavailable = (error: unknown): boolean => error instanceof TurnError && error.code === 'missing_api_key';
 
@@ -37,11 +36,14 @@ export function createBestieGreeting(memory: BestieMemory = loadMemory(), player
   // Warm and personal (owner, 2026-11-10): her name for the player, a streak when there is one (a missed day is never
   // mentioned), and a gentle welcome after a tough appointment.
   const kind = greetingKind(memory, streak);
-  const params = { name: NAME, player, count: memory.sessions + 1, days: streak };
+  // Story 013: with a streak, Mai also notes what went best last time ("Last time you nailed saying hello").
+  const skill = memory.lastWin ? t(`results.skill.${memory.lastWin}`) : '';
+  const params = { name: companionName(), player, count: memory.sessions + 1, days: streak, skill: skill.charAt(0).toLowerCase() + skill.slice(1) };
   const named = player !== '';
   const text =
     kind === 'first' ? t(named ? 'bestie.greetingFirstNamed' : 'bestie.greetingFirst', params)
     : kind === 'tough' ? t(named ? 'bestie.greetingToughNamed' : 'bestie.greetingTough', params)
+    : kind === 'streak' && skill ? t(named ? 'bestie.greetingWinNamed' : 'bestie.greetingWin', params)
     : kind === 'streak' ? t(named ? 'bestie.greetingStreakNamed' : 'bestie.greetingStreak', params)
     : t(named ? 'bestie.greetingBackNamed' : 'bestie.greetingBack', params);
   const bubble = el('p', 'bestie-bubble bestie-greeting', text);
@@ -69,7 +71,7 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
   const { transport, level, language, outcome, transcript, grading, score } = options;
   const section = el('section', 'results-section bestie-debrief');
   section.setAttribute('aria-live', 'polite');
-  const heading = el('h2', '', t('bestie.debriefTitle', { name: NAME }));
+  const heading = el('h2', '', t('bestie.debriefTitle', { name: companionName() }));
   const levelTag = el('span', 'bestie-level');
   const body = el('div', 'bestie-debrief-body');
   section.append(heading, levelTag, body);
@@ -89,8 +91,8 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
   const showLevel = (before: number, after: BestieMemory): void => {
     const now = bestieLevel(after.xp);
     levelTag.textContent = t('bestie.level', { level: now });
-    if (now > before) emitSound('levelUp');
-    if (now > before) body.append(el('p', 'results-note good bestie-level-up', t('bestie.levelUp', { name: NAME, level: now })));
+    if (now > before) body.append(el('p', 'results-note good bestie-level-up', t('bestie.levelUp', { name: companionName(), level: now })));
+    if (now > before) celebrateFriendship(now);
   };
 
   const showQuestion = (question: string): void => {
@@ -98,7 +100,7 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
     const asked = el('p', 'bestie-bubble');
     const words = el('span', '', question);
     words.lang = language;
-    asked.append(el('span', 'bestie-label', t('bestie.asks', { name: NAME })), words);
+    asked.append(el('span', 'bestie-label', t('bestie.asks', { name: companionName() })), words);
     const label = el('label', 'help-label', t('bestie.answerLabel'));
     label.htmlFor = 'bestie-answer';
     const input = el('textarea', 'help-input');
@@ -113,7 +115,7 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
       if (answer === '') return;
       send.disabled = true;
       input.disabled = true;
-      status.textContent = t('bestie.thinking', { name: NAME });
+      status.textContent = t('bestie.thinking', { name: companionName() });
       const memory = loadMemory();
       transport.answer({ level, language, question, answer, memory: memory.summary, playerName: getPlayerName() }).then(
         (reply) => {
@@ -123,12 +125,12 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
           const replyBubble = el('p', 'bestie-bubble');
           const replyWords = el('span', '', reply.reply);
           replyWords.lang = language;
-          replyBubble.append(el('span', 'bestie-label', NAME), replyWords);
+          replyBubble.append(el('span', 'bestie-label', companionName()), replyWords);
           box.replaceChildren(asked, el('p', 'bestie-answer', answer), replyBubble);
           showLevel(before, next);
         },
         () => {
-          status.textContent = t('bestie.answerFailed', { name: NAME });
+          status.textContent = t('bestie.answerFailed', { name: companionName() });
           send.disabled = false;
           input.disabled = false;
         },
@@ -140,7 +142,7 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
 
   const run = (): void => {
     const box = el('div', 'results-message');
-    box.append(el('p', '', t('bestie.debriefLoading', { name: NAME })), el('span', 'results-spinner'));
+    box.append(el('p', '', t('bestie.debriefLoading', { name: companionName() })), el('span', 'results-spinner'));
     body.replaceChildren(box);
     const memory = loadMemory();
     transport
@@ -151,7 +153,7 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
       })
       .then(
         (debrief) => {
-          const next = afterDebrief(memory, { summary: debrief.memory, outcome, asked: debrief.question !== null, tough: outcome === 'walked_out' || score.stars <= 2 });
+          const next = afterDebrief(memory, { summary: debrief.memory, outcome, asked: debrief.question !== null, tough: outcome === 'walked_out' || score.stars <= 2, win: outcome === 'walked_out' ? '' : bestSkill(grading.skills) });
           saveMemory(next);
           body.replaceChildren(line(t('bestie.praise'), debrief.praise), line(t('bestie.tryNext'), debrief.tryNext));
           showLevel(bestieLevel(memory.xp), next);
@@ -160,7 +162,7 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
         (error: unknown) => {
           const retry = button(t('common.tryAgain'), 'chat-button secondary');
           retry.addEventListener('click', run);
-          body.replaceChildren(el('p', '', guardMessage(error) ?? (unavailable(error) ? t('bestie.unavailable', { name: NAME }) : t('bestie.debriefFailed', { name: NAME }))), ...(unavailable(error) ? [] : [retry]));
+          body.replaceChildren(el('p', '', guardMessage(error) ?? (unavailable(error) ? t('bestie.unavailable', { name: companionName() }) : t('bestie.debriefFailed', { name: companionName() }))), ...(unavailable(error) ? [] : [retry]));
         },
       );
   };
@@ -173,8 +175,8 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
   card.type = 'button';
   card.setAttribute('aria-expanded', 'false');
   const words = el('span', '');
-  words.append(el('strong', '', t('mai.notesCard', { name: NAME })), el('span', 'mai-notes-tap', t('mai.notesTap')));
-  card.append(renderMascot('happy', 44), words);
+  words.append(el('strong', '', t('mai.notesCard', { name: companionName() })), el('span', 'mai-notes-tap', t('mai.notesTap')));
+  card.append(renderMascot('happy', 44, companionLook()), words);
   section.hidden = true;
   card.addEventListener('click', () => {
     section.hidden = !section.hidden;

@@ -1,4 +1,4 @@
-import { companionName } from '../companion';
+import { companionLook, companionName } from '../companion';
 import { t } from '../i18n';
 import { renderMascot } from '../mascot';
 import { emitSound } from '../sound-events';
@@ -59,7 +59,7 @@ function next(host: HTMLElement): void {
   });
   const many = [...new Intl.Segmenter().segment(item.icon)].length > 1;
   const figure = el('div', 'celebration-mai');
-  figure.append(renderMascot('celebrating', MAI_PX, { label: name }), el('span', many ? 'celebration-icon many' : 'celebration-icon', item.icon));
+  figure.append(renderMascot('celebrating', MAI_PX, { label: name, crop: 'full', ...companionLook() }), el('span', many ? 'celebration-icon many' : 'celebration-icon', item.icon));
   card.append(burst, figure, title, el('p', '', item.line), ok);
   overlay.append(card);
   host.append(overlay);
