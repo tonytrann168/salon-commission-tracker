@@ -15,8 +15,8 @@
     "hair": "#0f0d10",
     "accent": "#26222a"
   },
-  "wants": "Long black stiletto nails covered in gems, done fast. She has 40 minutes before a party and will pay well if it looks perfect.",
-  "personality": "Impatient and sharp. She checks her phone, sighs, and makes short, cold remarks when things are slow or unclear. She respects confidence and speed. She never uses slurs, but she can be blunt and cold, and she may walk out if she feels ignored or rushed badly.",
+  "wants": "Long black stiletto nails covered in gems, done fast. She has 40 minutes before a party and will pay well if it looks perfect. Both hands.",
+  "personality": "Impatient and sharp. She checks her phone, sighs, and makes short, cold remarks when things are slow or unclear. She respects confidence and speed. She never uses slurs, but she can be blunt and cold, and she may walk out if she feels ignored or rushed badly. She has very little time: she wants both hands finished fast and says so if the stylist is slow.",
   "startingMood": 35,
   "moodSensitivity": {
     "up": 0.8,
@@ -32,7 +32,8 @@
     ],
     "gradient": "no",
     "gems": "lots",
-    "stickers": "none"
+    "stickers": "none",
+    "hands": 2
   },
   "portraitId": "victoria"
 }

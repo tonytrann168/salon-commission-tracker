@@ -90,6 +90,8 @@ export interface NailRequest {
   gradient: 'no' | 'ok' | 'yes';
   gems: DecorationLevel;
   stickers: DecorationLevel;
+  /** Story 017: hard clients may want both hands (10 nails). Default one hand. */
+  hands?: 1 | 2;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -162,8 +164,16 @@ export const NAIL_ART_CONFIG: NailArtConfig = parseNailArtConfig(nailJson);
 /** One nail per finger of the configured hand. */
 export const NAIL_COUNT = NAIL_ART_CONFIG.hand.fingers.length;
 
-const empties = (): number[][] => Array.from({ length: NAIL_COUNT }, () => []);
-export const emptyDesign = (shape: NailShape = 'round'): NailDesign => ({ shape, base: null, gradient: null, painted: empties(), spill: empties(), decorations: [] });
+/** Nails a request needs: one hand, or both (story 017). Nails 0-4 are the right hand, 5-9 the left. */
+export const nailsFor = (request?: { hands?: 1 | 2 }): number => NAIL_COUNT * (request?.hands ?? 1);
+
+const empties = (count: number): number[][] => Array.from({ length: count }, () => []);
+export const emptyDesign = (shape: NailShape = 'round', nails: number = NAIL_COUNT): NailDesign => ({ shape, base: null, gradient: null, painted: empties(nails), spill: empties(nails), decorations: [] });
+
+/** The left hand: the configured hand mirrored (x across the box, lean reversed). The hand stays data. */
+export function mirroredFingers(hand: HandConfig = NAIL_ART_CONFIG.hand): FingerConfig[] {
+  return hand.fingers.map((finger) => ({ ...finger, id: `left-${finger.id}`, x: hand.box.w - finger.x, angle: -finger.angle }));
+}
 
 export const paletteColor = (id: string | null, config: NailArtConfig = NAIL_ART_CONFIG): PaletteColor | undefined => config.palette.find((color) => color.id === id);
 

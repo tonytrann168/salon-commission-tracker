@@ -1,5 +1,5 @@
 import { Container, Graphics } from 'pixi.js';
-import { NAIL_ART_CONFIG, addSpill, cleanUp, dab, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid, wipeCells } from './design';
+import { NAIL_ART_CONFIG, mirroredFingers, addSpill, cleanUp, dab, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid, wipeCells } from './design';
 import type { Decoration, FingerConfig, NailDesign, NailShape, StickerKind } from './design';
 
 /**
@@ -32,6 +32,8 @@ export interface StationView {
   setDesign(design: NailDesign): void;
   /** Pointer down/move at (x, y) in the station rectangle. Returns the new design (or the same one if nothing changed). */
   pointer(x: number, y: number, phase: 'down' | 'move', tool: StationTool, sticker: StickerKind): NailDesign;
+  /** Story 017: which hand is on the station (0 right, 1 left). The design's nails 0-4 are the right hand, 5-9 the left. */
+  setHand(hand: 0 | 1): void;
   destroy(): void;
 }
 
@@ -66,6 +68,10 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
   // The palm goes under the fingers, so the thumb lies over it and every nail sits on a visible fingertip.
   container.addChild(palm, fingersLayer, nailsLayer);
   const hand = NAIL_ART_CONFIG.hand;
+  /** The hand on the station, and its first nail in the design. */
+  let handIndex: 0 | 1 = 0;
+  const firstNail = (): number => handIndex * hand.fingers.length;
+  let lastLayout: [number, number, number, number, number, number] | null = null;
   let design = initial;
   let views: NailView[] = [];
   /** Hand units → pixels, and the hand box's offset in the station rectangle. */
@@ -93,7 +99,7 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
     const fade = paletteColor(design.gradient);
     view.paintLayer.clear();
     view.gloss.clear();
-    const cells = design.painted[index] ?? [];
+    const cells = design.painted[firstNail() + index] ?? [];
     if (!base || cells.length === 0) return;
     const cw = w / cols;
     const ch = h / rows;
@@ -115,7 +121,7 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
     const view = views[index];
     if (!view) return;
     view.spillLayer.clear();
-    const cells = design.spill[index] ?? [];
+    const cells = design.spill[firstNail() + index] ?? [];
     const base = paletteColor(design.base);
     if (!base || cells.length === 0) return;
     const grid = spillGrid();
@@ -135,7 +141,7 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
     g.clear();
     const { w, h } = view.finger.nail;
     const r = Math.min(w, 12) * 0.14;
-    for (const d of design.decorations.filter((item) => item.nail === index)) {
+    for (const d of design.decorations.filter((item) => item.nail === firstNail() + index)) {
       const x = d.x * w;
       const y = d.y * h;
       if (d.kind === 'gem') {
@@ -234,7 +240,8 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       const bottom = h / scale;
       palm.clear().ellipse(hand.box.w * 0.52, Math.max(hand.box.h * 1.02, bottom * 0.98), hand.box.w * 0.42, hand.box.h * 0.2).fill({ color: SKIN });
       palm.ellipse(hand.box.w * 0.3, Math.max(hand.box.h * 1.02, bottom * 0.98) - hand.box.h * 0.04, hand.box.w * 0.16, hand.box.h * 0.12).fill({ color: SKIN_SHADE, alpha: 0.35 });
-      for (const finger of hand.fingers) {
+      lastLayout = [x, y, w, h, reserveLeft, reserveRight];
+      for (const finger of handIndex === 1 ? mirroredFingers(hand) : hand.fingers) {
         fingersLayer.addChild(drawFinger(finger));
         const root = new Container();
         root.position.set(finger.x, finger.y);
@@ -263,8 +270,9 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       views.forEach((_, index) => {
         if (shapeChanged) drawNail(index);
         else {
-          if (colorChanged || next.painted[index] !== previous.painted[index]) drawPaint(index);
-          if (colorChanged || next.spill[index] !== previous.spill[index]) drawSpill(index);
+          const n = firstNail() + index;
+          if (colorChanged || next.painted[n] !== previous.painted[n]) drawPaint(index);
+          if (colorChanged || next.spill[n] !== previous.spill[n]) drawSpill(index);
           if (next.decorations !== previous.decorations) drawDecorations(index);
         }
       });
@@ -285,6 +293,12 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       }
       design = stored;
       return next;
+    },
+    setHand(next) {
+      if (next === handIndex) return;
+      handIndex = next;
+      strokeNail = -1;
+      if (lastLayout) view.layout(...lastLayout);
     },
     destroy() {
       container.destroy({ children: true });
@@ -308,7 +322,7 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       if (phase !== 'down' || onNail < 0) return design;
       const p = local[onNail] as { x: number; y: number };
       const v = views[onNail] as NailView;
-      const decoration: Decoration = { nail: onNail, x: p.x / v.finger.nail.w, y: p.y / v.finger.nail.h, kind: tool === 'gem' ? 'gem' : sticker };
+      const decoration: Decoration = { nail: firstNail() + onNail, x: p.x / v.finger.nail.w, y: p.y / v.finger.nail.h, kind: tool === 'gem' ? 'gem' : sticker };
       return decorate(design, decoration);
     }
     // A stroke stays on its nail while the brush is on it or the skin around it; it moves on to another nail it reaches.
@@ -318,10 +332,10 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
     if (strokeNail < 0) return design;
     const v = views[strokeNail] as NailView;
     const p = local[strokeNail] as { x: number; y: number };
-    if (tool === 'cleanup') return cleanUp(design, strokeNail, wipeCells(v.finger.nail, p.x, p.y, tools.cleanupRadius));
+    if (tool === 'cleanup') return cleanUp(design, firstNail() + strokeNail, wipeCells(v.finger.nail, p.x, p.y, tools.cleanupRadius));
     if (!design.base) return design;
     const hit = dab(design.shape, v.finger.nail, p.x, p.y, tools.brushRadius);
-    return addSpill(paint(design, strokeNail, hit.paint), strokeNail, hit.spill);
+    return addSpill(paint(design, firstNail() + strokeNail, hit.paint), firstNail() + strokeNail, hit.spill);
   }
   view.setDesign(initial);
   return view;

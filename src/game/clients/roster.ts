@@ -42,7 +42,8 @@ export function parseClient(raw: unknown, file: string): ClientPersona {
     const colors = (Array.isArray(n.colors) && n.colors.length > 0 ? n.colors : fail('"nailRequest.colors" must be a non-empty list')).map((color) => (NAIL_ART_CONFIG.palette.some((p) => p.id === color) ? color : fail(`"nailRequest.colors" has an unknown colour "${String(color)}"`)));
     const level = (value: unknown, key: string) => (['none', 'few', 'lots'].includes(value as string) ? (value as 'none' | 'few' | 'lots') : fail(`"nailRequest.${key}" must be none, few or lots`));
     const gradient = ['no', 'ok', 'yes'].includes(n.gradient as string) ? (n.gradient as 'no' | 'ok' | 'yes') : fail('"nailRequest.gradient" must be no, ok or yes');
-    nailRequest = { shapes, colors, gradient, gems: level(n.gems, 'gems'), stickers: level(n.stickers, 'stickers') };
+    const hands = n.hands === undefined || n.hands === 1 ? 1 : n.hands === 2 ? 2 : fail('"nailRequest.hands" must be 1 or 2');
+    nailRequest = { shapes, colors, gradient, gems: level(n.gems, 'gems'), stickers: level(n.stickers, 'stickers'), ...(hands === 2 ? { hands: 2 as const } : {}) };
   }
   const pronoun = CLIENT_PRONOUNS.find((p) => p === raw.pronoun) ?? fail('"pronoun" must be she, he or they');
   return {

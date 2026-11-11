@@ -81,3 +81,58 @@ describe('the hosted preview guards feedback separately from the AI budget', () 
     expect(guard.chargeAiCall(cookie, 'ip').ok).toBe(true);
   });
 });
+
+describe('durable feedback: the optional Discord webhook (FEEDBACK_WEBHOOK_URL)', () => {
+  const entryBody = { rating: 4, text: 'Fun! @everyone look', details: { clientId: 'tom', difficulty: 'hard', level: 'some', language: 'vi', stars: 3, appVersion: '0.1.0' }, includeChat: true, chat };
+  const fakeFetch = (status = 204, throws = false) => {
+    const calls: { url: string; body: { content: string; allowed_mentions: unknown } }[] = [];
+    const fetchImpl = (async (url: string, init: RequestInit) => {
+      calls.push({ url, body: JSON.parse(String(init.body)) });
+      if (throws) throw new Error('down');
+      return new Response(null, { status });
+    }) as unknown as typeof fetch;
+    return { calls, fetchImpl };
+  };
+  const quiet = { log: () => undefined };
+
+  it('posts one readable Discord message (stars, note, game details, chat only when ticked), with no mentions', async () => {
+    const { calls, fetchImpl } = fakeFetch();
+    const result = await handleFeedback(entryBody, { tester: 'abc123' }, quiet.log, { env: { FEEDBACK_WEBHOOK_URL: 'https://discord.com/api/webhooks/1/x' }, fetchImpl });
+    expect(result.status).toBe(200);
+    expect(calls).toHaveLength(1);
+    const content = calls[0]!.body.content;
+    expect(content.split('\n')[0]).toBe('⭐⭐⭐⭐☆ (4/5) · tester abc123');
+    expect(content).toContain('> Fun! @everyone look');
+    expect(content).toContain('Game: client tom (hard) · level some · vi · 3★ · v0.1.0');
+    expect(content).toContain('Client: Hi, I want pink nails.');
+    expect(calls[0]!.body.allowed_mentions).toEqual({ parse: [] });
+    const { calls: noChat, fetchImpl: f2 } = fakeFetch();
+    await handleFeedback({ ...entryBody, includeChat: false }, {}, quiet.log, { env: { FEEDBACK_WEBHOOK_URL: 'https://discord.com/api/webhooks/1/x' }, fetchImpl: f2 });
+    expect(noChat[0]!.body.content).not.toContain('pink nails');
+  });
+
+  it('keeps the message under 2000 characters', async () => {
+    const { calls, fetchImpl } = fakeFetch();
+    const long = Array.from({ length: 60 }, () => ({ role: 'client' as const, content: 'x'.repeat(900) }));
+    await handleFeedback({ rating: 2, includeChat: true, chat: long }, {}, quiet.log, { env: { FEEDBACK_WEBHOOK_URL: 'https://example.com/hook' }, fetchImpl });
+    expect(calls[0]!.body.content.length).toBeLessThanOrEqual(2000);
+  });
+
+  it('a failing or non-https webhook never fails the request, and the warning never shows the URL', async () => {
+    const warnings: string[] = [];
+    const warn = (line: string) => warnings.push(line);
+    const secret = 'https://discord.com/api/webhooks/123/SECRET';
+    for (const [status, throws] of [[500, false], [204, true]] as const) {
+      const { fetchImpl } = fakeFetch(status, throws);
+      expect(await handleFeedback({ rating: 3 }, {}, quiet.log, { env: { FEEDBACK_WEBHOOK_URL: secret }, fetchImpl, warn })).toEqual({ status: 200, body: { ok: true } });
+    }
+    const { calls, fetchImpl } = fakeFetch();
+    expect(await handleFeedback({ rating: 3 }, {}, quiet.log, { env: { FEEDBACK_WEBHOOK_URL: 'http://insecure.example/hook' }, fetchImpl, warn })).toMatchObject({ status: 200 });
+    expect(calls).toHaveLength(0);
+    expect(warnings).toHaveLength(3);
+    expect(warnings.join(' ')).not.toMatch(/SECRET|discord\.com|insecure/);
+    const { calls: none, fetchImpl: f3 } = fakeFetch();
+    await handleFeedback({ rating: 3 }, {}, quiet.log, { env: {}, fetchImpl: f3, warn });
+    expect(none).toHaveLength(0);
+  });
+});

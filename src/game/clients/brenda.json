@@ -15,7 +15,7 @@
     "hair": "#8d5a3a",
     "accent": "#ff4f8b"
   },
-  "wants": "Her hot pink round nails from last week chipped after two days. She wants them redone properly, ideally free, and an apology.",
+  "wants": "Her hot pink round nails from last week chipped after two days. She wants them redone properly, ideally free, and an apology. This time she wants both hands, hot pink fading at the tips with a couple of heart stickers.",
   "personality": "Upset and suspicious at first. She expects the stylist to argue. She calms down when the stylist listens, apologizes and offers a fair fix. If she feels blamed, she demands a refund or a redo.",
   "startingMood": 30,
   "moodSensitivity": {
@@ -30,9 +30,10 @@
     "colors": [
       "hot-pink"
     ],
-    "gradient": "no",
+    "gradient": "yes",
     "gems": "none",
-    "stickers": "none"
+    "stickers": "few",
+    "hands": 2
   },
   "portraitId": "brenda"
 }

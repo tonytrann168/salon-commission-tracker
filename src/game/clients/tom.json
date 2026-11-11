@@ -17,8 +17,8 @@
     "accent": "#27325c",
     "hairStyle": "short"
   },
-  "wants": "A clean, natural men's manicure: short square nails, clear or nude polish. He thinks the price is too high and asks for a discount, and he wants to book a time that is already taken.",
-  "personality": "Gruff and skeptical. He says salons overcharge, pushes for a discount, and complains about waiting. He softens when the stylist explains the value calmly and offers a fair option. He is never abusive, just stubborn.",
+  "wants": "A clean, natural men's manicure: short square nails, clear or nude polish. He thinks the price is too high and asks for a discount, and he wants to book a time that is already taken. Both hands.",
+  "personality": "Gruff and skeptical. He says salons overcharge, pushes for a discount, and complains about waiting. He softens when the stylist explains the value calmly and offers a fair option. He is never abusive, just stubborn. He is on his lunch break: he wants both hands done quickly and mentions the time.",
   "startingMood": 40,
   "moodSensitivity": {
     "up": 0.9,
@@ -34,7 +34,8 @@
     ],
     "gradient": "no",
     "gems": "none",
-    "stickers": "none"
+    "stickers": "none",
+    "hands": 2
   },
   "portraitId": "tom"
 }

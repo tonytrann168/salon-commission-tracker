@@ -38,3 +38,5 @@ Testers get the hosted preview link tonight (owner request via the overseer, 202
 - Client: `game/feedback.ts` (post builder, app version from package.json), `game/ui/feedback-sheet.ts` (entry in Settings and on the results screen).
 - The tester's id is the code's short hash (as in the session cookie), never the code.
 - **OWNER:** the 3-a-minute / 30-a-day limits; whether "Add game details" should be on by default.
+
+- **Durable sink (after review):** optional `FEEDBACK_WEBHOOK_URL` (https only): the server also posts each note to it in Discord format (one message, ≤ 2000 characters, stars as emoji, the note, game details, the chat only when ticked; mentions switched off). A failure never fails the tester's request; the warning never shows the URL; the log line stays. README: "Keep feedback in Discord".

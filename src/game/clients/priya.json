@@ -15,7 +15,7 @@
     "hair": "#1d1412",
     "accent": "#ff7f61"
   },
-  "wants": "She first asks for navy, then changes her mind to coral almond nails with a couple of gems. Budget about $45.",
+  "wants": "She first asks for navy, then changes her mind to coral almond nails with a couple of gems. Budget about $45. She would like the coral to fade lighter at the tips.",
   "personality": "Indecisive and picky. She changes her mind once during the consultation (navy, then coral) and wants the stylist to confirm the final choice before starting. She is happy when the stylist checks with her patiently.",
   "startingMood": 50,
   "moodSensitivity": {
@@ -30,7 +30,7 @@
     "colors": [
       "coral"
     ],
-    "gradient": "no",
+    "gradient": "yes",
     "gems": "few",
     "stickers": "none"
   },

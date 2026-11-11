@@ -10,7 +10,7 @@ import type { DecorationLevel, NailArtConfig, NailDesign, NailRequest } from './
 export interface MatchResult {
   score: number;
   parts: { shape: number; color: number; coverage: number; extras: number; neatness: number };
-  /** Average polish coverage across the five nails, 0-1. */
+  /** Average polish coverage across all the nails (5, or 10 for both hands), 0-1. */
   covered: number;
   moodDelta: number;
 }
@@ -72,12 +72,13 @@ export function describeDesign(design: NailDesign, config: NailArtConfig = NAIL_
   const extras = [...counts].map(([kind, n]) => `${n} ${kind}${n === 1 ? '' : 's'}`).join(', ');
   const messy = design.spill.filter((cells) => cells.length > 0).length;
   const edges = messy === 0 ? 'clean edges' : `polish on the skin around ${messy} nail${messy === 1 ? '' : 's'}`;
-  return `${design.shape} shape, ${base}${fade}${extras ? `, ${extras}` : ', no gems or stickers'}; ${covered}% painted, ${edges}`;
+  const hands = design.painted.length > NAIL_ART_CONFIG.hand.fingers.length ? 'both hands: ' : '';
+  return `${hands}${design.shape} shape, ${base}${fade}${extras ? `, ${extras}` : ', no gems or stickers'}; ${covered}% painted, ${edges}`;
 }
 
 /** The request in plain English, for the client's prompt. */
 export function describeRequest(request: NailRequest, config: NailArtConfig = NAIL_ART_CONFIG): string {
   const colors = request.colors.map((id) => paletteColor(id, config)?.name.en.toLowerCase() ?? id).join(' or ');
   const art = [request.gems !== 'none' ? `${request.gems} gems` : 'no gems', request.stickers !== 'none' ? `${request.stickers} stickers` : 'no stickers', request.gradient === 'yes' ? 'a gradient' : request.gradient === 'no' ? 'no gradient' : 'a gradient is fine'].join(', ');
-  return `${request.shapes.join(' or ')} shape, ${colors}, ${art}`;
+  return `${request.hands === 2 ? 'both hands: ' : ''}${request.shapes.join(' or ')} shape, ${colors}, ${art}`;
 }

@@ -17,7 +17,7 @@ export const AI_ROUTES: Record<string, ApiHandler> = {
 };
 
 /** Routes that are not AI calls (no AI budget). The hosted preview guards them separately; `tester` is the code id. */
-export type PlainHandler = (body: unknown, meta: { tester?: string | null }) => Promise<{ status: number; body: unknown }>;
+export type PlainHandler = (body: unknown, meta: { tester?: string | null }, env: Record<string, string | undefined>, fetchImpl: typeof fetch) => Promise<{ status: number; body: unknown }>;
 export const PLAIN_ROUTES: Record<string, PlainHandler> = {
-  feedback: (body, meta) => handleFeedback(body, meta),
+  feedback: (body, meta, env, fetchImpl) => handleFeedback(body, meta, undefined, { env, fetchImpl }),
 };

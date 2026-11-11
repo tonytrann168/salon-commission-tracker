@@ -2,7 +2,7 @@ import { clientGrammar } from '../types';
 import type { ClientPronoun } from '../types';
 import type { Container } from 'pixi.js';
 import { getLanguage, t } from '../i18n';
-import { NAIL_ART_CONFIG, emptyDesign } from '../nail-art/design';
+import { NAIL_ART_CONFIG, emptyDesign, nailsFor } from '../nail-art/design';
 import type { NailDesign, NailRequest, NailShape, PaletteColor, StickerKind } from '../nail-art/design';
 import { describeDesign, matchDesign } from '../nail-art/match';
 import type { MatchResult } from '../nail-art/match';
@@ -67,11 +67,13 @@ function shapeIcon(shape: NailShape): string {
 const HINT_MS = 3000;
 
 export function createNailStation(options: NailStationOptions): NailStation {
-  const view = createStationView(emptyDesign(SHAPES[1] ?? 'round'), options.tools);
+  // Story 017: both hands (10 nails) when the client asks for it.
+  const nails = nailsFor(options.request);
+  const view = createStationView(emptyDesign(SHAPES[1] ?? 'round', nails), options.tools);
   const palette = options.palette ?? NAIL_ART_CONFIG.palette.filter((colour) => !colour.shop);
   options.layer.addChild(view.container);
   view.container.visible = false;
-  let design = emptyDesign(SHAPES[1] ?? 'round');
+  let design = emptyDesign(SHAPES[1] ?? 'round', nails);
   let tool: StationTool = 'polish';
   let sticker: StickerKind = NAIL_ART_CONFIG.stickers[0] ?? 'heart';
   let open = false;
@@ -130,7 +132,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     options.onDone(design, result);
   });
   doneButton.setAttribute('aria-label', t('station.doneLabel'));
-  const resetButton = button(t('station.reset'), 'station-reset', () => setDesign(emptyDesign(design.shape)), t('station.resetLabel'));
+  const resetButton = button(t('station.reset'), 'station-reset', () => setDesign(emptyDesign(design.shape, nails)), t('station.resetLabel'));
 
   const toolButtons: Record<StationTool, HTMLButtonElement> = {
     polish: button(t('station.polish'), 'station-tool', () => selectTool('polish')),
@@ -167,7 +169,17 @@ export function createNailStation(options: NailStationOptions): NailStation {
   };
   Object.values(tabButtons).forEach((node) => node.setAttribute('role', 'tab'));
   tabs.append(...Object.values(tabButtons));
-  toolbar.append(tabs, optionsRow, doneButton);
+  // Story 017: the hand switch, only for two-hand clients (one hand on the station at a time keeps the chat space).
+  let hand: 0 | 1 = 0;
+  const handButton = button('✋1', 'station-hand', () => {
+    hand = hand === 0 ? 1 : 0;
+    view.setHand(hand);
+    view.setDesign(design);
+    handButton.innerHTML = hand === 0 ? '✋1' : '✋2';
+    handButton.setAttribute('aria-label', t(hand === 0 ? 'station.handRight' : 'station.handLeft'));
+    say(t(hand === 0 ? 'station.handRight' : 'station.handLeft'));
+  }, t('station.handRight'));
+  toolbar.append(tabs, optionsRow, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []), doneButton);
 
   function selectTab(next: Tab): void {
     tab = next;

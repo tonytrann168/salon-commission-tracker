@@ -86,7 +86,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       send(res, allowed.status, error(allowed.code, allowed.code === 'unauthorized' ? 'Enter your invite code.' : 'Thanks! Please wait a little before sending more.'));
       return;
     }
-    const result = await plain(body, { tester: allowed.value });
+    const result = await plain(body, { tester: allowed.value }, process.env, fetch);
     send(res, result.status, result.body);
     return;
   }

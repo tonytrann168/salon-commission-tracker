@@ -180,3 +180,45 @@ describe('a realistic hand: finger sizes, spill and clean-up (owner, 2026-11-10)
     expect(() => parseNailArtConfig(bad)).toThrow(/hand\.fingers\[0\]\.nail\.w/);
   });
 });
+
+describe('harder nail requests (story 017)', async () => {
+  const { ROSTER, getClient, parseClient } = await import('../game/clients/roster');
+  const { mirroredFingers, nailsFor } = await import('../game/nail-art/design');
+
+  it('medium and hard clients ask for the art tools; hard ones can want both hands', () => {
+    const usesArt = (id: string) => {
+      const r = getClient(id)!.nailRequest!;
+      return r.gradient === 'yes' || r.gems !== 'none' || r.stickers !== 'none';
+    };
+    for (const client of ROSTER.filter((c) => c.difficulty !== 'easy' && c.id !== 'dana' && c.id !== 'tom')) expect(usesArt(client.id), client.id).toBe(true);
+    expect(ROSTER.filter((c) => c.nailRequest?.hands === 2).map((c) => c.id).sort()).toEqual(['brenda', 'tom', 'victoria']);
+    expect(ROSTER.filter((c) => c.nailRequest?.hands === 2).every((c) => c.difficulty === 'hard')).toBe(true);
+    expect(getClient('victoria')!.personality).toMatch(/fast/);
+    expect(getClient('tom')!.personality).toMatch(/quickly/);
+    const raw = { ...structuredClone(ROSTER[0]) } as Record<string, unknown>;
+    expect(() => parseClient({ ...raw, nailRequest: { ...(raw.nailRequest as object), hands: 3 } }, 'x.json')).toThrow(/hands/);
+  });
+
+  it('both hands means 10 nails; the left hand mirrors the right', () => {
+    expect(nailsFor({ hands: 2 })).toBe(10);
+    expect(nailsFor(undefined)).toBe(5);
+    expect(emptyDesign('square', 10).painted).toHaveLength(10);
+    const right = NAIL_ART_CONFIG.hand.fingers;
+    const left = mirroredFingers();
+    expect(left.map((f) => f.x)).toEqual(right.map((f) => NAIL_ART_CONFIG.hand.box.w - f.x));
+    expect(left[0]!.angle).toBe(-right[0]!.angle);
+  });
+
+  it('a two-hand request needs both hands painted: one hand done scores lower', () => {
+    const twoHands: NailRequest = { ...DANA, hands: 2 };
+    let oneHand: NailDesign = { ...emptyDesign('square', 10), base: 'pale-pink' };
+    for (let nail = 0; nail < 5; nail++) oneHand = paint(oneHand, nail, paintableCells('square'));
+    let both = oneHand;
+    for (let nail = 5; nail < 10; nail++) both = paint(both, nail, paintableCells('square'));
+    expect(matchDesign(oneHand, twoHands).covered).toBeCloseTo(0.5);
+    expect(matchDesign(both, twoHands).score).toBe(100);
+    expect(matchDesign(oneHand, twoHands).score).toBeLessThan(matchDesign(both, twoHands).score);
+    expect(describeDesign(both)).toMatch(/^both hands: square shape, pale pink/);
+    expect(describeRequest(twoHands)).toMatch(/^both hands: square shape/);
+  });
+});

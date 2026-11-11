@@ -30,3 +30,4 @@
   .station-tab .tab-icon { margin-right: 0; }
   .station-tab { width: 36px; padding: 0; }
 }
+.station-hand { flex: none; width: 40px; min-height: 40px; padding: 0; font-size: 15px; background: #f3e8ff; color: #5b2d91; }

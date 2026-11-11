@@ -31,7 +31,7 @@ Listed in build order.
 | 014 | Companion contests & social visits (v2, not scheduled) | Design only | Not scheduled | N/A |
 | 015 | First-time onboarding with Mai | UI | Complete (review) | N/A |
 | 016 | Tester feedback button | Integration | Complete (review) | N/A |
-| 017 | Harder nail requests (art tools, both hands) | Feature | Ready | N/A |
+| 017 | Harder nail requests (art tools, both hands) | Feature | Complete (review) | N/A |
 
 ## Backlog
 

@@ -74,6 +74,21 @@ added only if the tester ticks "Include my conversation". Nothing is stored in a
 4. Vercel keeps runtime logs only for a limited time (how long depends on your plan), so copy the lines you want to
    keep soon after testers send them. A tester can send up to 3 notes a minute and 30 a day.
 
+### Keep feedback in Discord (recommended)
+Vercel keeps runtime logs only briefly (on the free Hobby plan, about an hour), so feedback sent at night can be gone
+by morning. A free Discord webhook keeps every note as a message:
+
+1. In Discord: your server → **Server Settings → Integrations → Webhooks → New Webhook**. Pick a channel (for
+   example `#feedback`), then **Copy Webhook URL**.
+2. In Vercel: **Settings → Environment Variables → Add** `FEEDBACK_WEBHOOK_URL` = the copied URL (it must start with
+   `https://`). Treat it like a password: anyone with it can post to that channel.
+3. **Deployments → Redeploy** the latest deployment.
+
+Each note then arrives as one message, for example `⭐⭐⭐⭐☆ (4/5) · tester 1a2b…`, the note, and `Game: client tom
+(hard) · level some · vi · 3★ · v0.1.0` (and the chat only when the tester ticked it). Mentions are switched off, so
+a note can't ping anyone. If Discord is down, the tester still sees "Thank you", and the `FEEDBACK` log line is still
+written.
+
 ### Change the limits
 `DAILY_AI_CALL_CAP` is an environment variable (edit, then redeploy). The per-code and per-minute limits are in
 `src/server/guard-config.json` (ask Claude to change them).
