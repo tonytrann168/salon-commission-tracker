@@ -175,6 +175,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
     hand = hand === 0 ? 1 : 0;
     view.setHand(hand);
     view.setDesign(design);
+    const r = options.rect();
+    placeHint(r.width, r.height);
     handButton.innerHTML = hand === 0 ? '✋1' : '✋2';
     handButton.setAttribute('aria-label', t(hand === 0 ? 'station.handRight' : 'station.handLeft'));
     say(t(hand === 0 ? 'station.handRight' : 'station.handLeft'));
@@ -254,7 +256,33 @@ export function createNailStation(options: NailStationOptions): NailStation {
     const right = side === 'right' ? 70 : 8;
     view.layout(r.left, r.top, r.width, r.height, left, right);
     view.setDesign(design);
+    placeHint(r.width, r.height);
   };
+
+  /**
+   * Put the hint along the bottom of the hand area in the widest gap that no nail reaches (overseer, 2026-11-10: on
+   * the mirrored left hand a fixed spot covered the thumb). Computed from the nails' boxes, so it works for both hands.
+   */
+  function placeHint(width: number, height: number): void {
+    const margin = 6;
+    const hintHeight = Math.max(30, status.offsetHeight || 34);
+    const top = height - 3 - hintHeight;
+    const blocked = view
+      .nailBoxes()
+      .filter((box) => box.bottom > top - 2)
+      .map((box) => [box.left - 4, box.right + 4] as const)
+      .sort((a, b) => a[0] - b[0]);
+    let best: [number, number] = [margin, margin];
+    let x = margin;
+    for (const [from, to] of [...blocked, [width - margin, width - margin] as const]) {
+      if (from - x > best[1] - best[0]) best = [x, Math.max(x, from)];
+      x = Math.max(x, to);
+    }
+    // Keep a sensible width; if the gap is too narrow the hint spans the bottom (it only shows for a few seconds).
+    if (best[1] - best[0] < 140) best = [margin, width - margin];
+    status.style.left = `${best[0]}px`;
+    status.style.right = `${width - best[1]}px`;
+  }
 
   function finish(): MatchResult {
     done = true;

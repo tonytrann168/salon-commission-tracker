@@ -34,6 +34,8 @@ export interface StationView {
   pointer(x: number, y: number, phase: 'down' | 'move', tool: StationTool, sticker: StickerKind): NailDesign;
   /** Story 017: which hand is on the station (0 right, 1 left). The design's nails 0-4 are the right hand, 5-9 the left. */
   setHand(hand: 0 | 1): void;
+  /** Each nail's bounding box on screen, relative to the station rectangle (for placing the hint clear of them). */
+  nailBoxes(): { left: number; right: number; top: number; bottom: number }[];
   destroy(): void;
 }
 
@@ -293,6 +295,19 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       }
       design = stored;
       return next;
+    },
+    nailBoxes() {
+      return views.map((v) => {
+        const { w, h } = v.finger.nail;
+        const a = rad(v.finger.angle);
+        const corners = [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]].map(([u, q]) => [
+          offsetX + (v.finger.x + Math.cos(a) * (u as number) - Math.sin(a) * (q as number)) * scale,
+          offsetY + (v.finger.y + Math.sin(a) * (u as number) + Math.cos(a) * (q as number)) * scale,
+        ]);
+        const xs = corners.map((c) => c[0] as number);
+        const ys = corners.map((c) => c[1] as number);
+        return { left: Math.min(...xs), right: Math.max(...xs), top: Math.min(...ys), bottom: Math.max(...ys) };
+      });
     },
     setHand(next) {
       if (next === handIndex) return;
