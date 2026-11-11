@@ -1,10 +1,10 @@
 {
   "_note": "Story 007. All tuning for ranks, XP, badges, the shop and the daily challenge. Tips are earned in play only (never bought).",
   "ranks": [
-    { "id": "junior", "xp": 0, "name": { "en": "Junior Tech", "vi": "Thợ mới" }, "unlocks": ["easy"] },
-    { "id": "nail-tech", "xp": 60, "name": { "en": "Nail Tech", "vi": "Thợ nail" }, "unlocks": ["medium"] },
-    { "id": "senior", "xp": 250, "name": { "en": "Senior Tech", "vi": "Thợ lành nghề" }, "unlocks": ["hard"] },
-    { "id": "master", "xp": 600, "name": { "en": "Master Tech", "vi": "Thợ bậc thầy" }, "unlocks": [] }
+    { "id": "junior", "xp": 0, "icon": "🐣", "name": { "en": "Baby Chick", "vi": "Gà Mới Nở" }, "unlocks": ["easy"] },
+    { "id": "nail-tech", "xp": 60, "icon": "✨", "name": { "en": "Glow-Up Tech", "vi": "Thợ Xịn Xò" }, "unlocks": ["medium"] },
+    { "id": "senior", "xp": 250, "icon": "💅", "name": { "en": "Gel Warrior", "vi": "Chiến Thần Sơn Gel" }, "unlocks": ["hard"] },
+    { "id": "master", "xp": 600, "icon": "👑", "name": { "en": "Nail Boss", "vi": "Trùm Nail Đỉnh Nóc" }, "unlocks": [] }
   ],
   "xp": {
     "byStars": [5, 10, 20, 35, 50],

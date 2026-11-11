@@ -18,3 +18,10 @@ Checked in the same run (script log, en and vi, "problems: none"):
 - The roster shift script (story 006) still passes with a high-rank save; a celebration never covers the next appointment (it only shows while the results are on screen).
 
 Logic tests: `src/tests/progression.test.ts` (12): wallet and XP by stars, goal, difficulty and daily bonus; rank-ups and unlocks; badges once each, the hard-client rule, nothing for a walk-out; the daily client fixed for the day (and after a rank-up) and varying across days; streak +1, reset after a missed day, milestones, no credit for walk-outs or twice in a day; shop buy/owned/funds; bought polishes in the station; upgrade effects; no client requests a shop colour; bad config refused; damaged or future-version saves read safely.
+
+## Fixes after the overseer's review of 3e0f485 (re-shot)
+
+- **Mai brings the news:** each celebration card shows Mai in her celebrating mood, speaking ("Mai: “You're a Glow-Up Tech now! ✨”", vi "Mai: “Lên level Thợ Xịn Xò rồi nè! ✨”"), with the rank or badge icon as a sticker by her.
+- **New rank names (owner):** 🐣 Baby Chick / Gà Mới Nở → ✨ Glow-Up Tech / Thợ Xịn Xò → 💅 Gel Warrior / Chiến Thần Sơn Gel → 👑 Nail Boss / Trùm Nail Đỉnh Nóc (gender-neutral; ids and XP unchanged).
+- **One streak:** days in a row with a finished daily client. Mai's hello reads the same counter; her memory no longer keeps its own.
+- This run starts with 30 XP so the first daily visit still ranks up (the browser's UTC date picked Rosa, whose nails the script doesn't paint, so 4 stars and +55 XP). Result: rank-up card, then one card for 4 badges; progress 85 / 250 XP to Gel Warrior.

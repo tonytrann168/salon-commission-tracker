@@ -258,12 +258,13 @@
   "progress.title": "Tiến bộ của bạn",
   "progress.gains": "+{xp} XP · +${dollars} tiền tip (còn ${wallet})",
   "celebrate.ok": "Tuyệt!",
-  "celebrate.rankUp": "Bạn đã là {rank}!",
+  "celebrate.rankUp": "Lên level {rank} rồi nè! {icon}",
   "celebrate.unlocked": "Mở khóa khách mới: {what}.",
   "celebrate.rankLine": "Bạn đã lên bậc cao nhất. Giỏi quá!",
-  "celebrate.badge": "Huy hiệu mới: {name}",
-  "celebrate.streak": "{days} ngày liền!",
+  "celebrate.badge": "Em được huy hiệu: {name}!",
+  "celebrate.streak": "{days} ngày liền! Tự hào về em quá!",
   "celebrate.streakLine": "Chuỗi khách mỗi ngày của bạn đang dài thêm.",
-  "celebrate.badges": "{count} huy hiệu mới!",
-  "picker.lockedTab": "{name} (đang khóa)"
+  "celebrate.badges": "Em được {count} huy hiệu mới!",
+  "picker.lockedTab": "{name} (đang khóa)",
+  "celebrate.says": "{name}: “{text}”"
 }

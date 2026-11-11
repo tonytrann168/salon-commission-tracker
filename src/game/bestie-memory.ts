@@ -17,17 +17,13 @@ export interface BestieMemory {
   xp: number;
   /** `sessions` value when the last question was asked, or -1 for never. */
   lastQuestionAt: number;
-  /** Local date (YYYY-MM-DD) of the last finished appointment, or '' for never. */
-  lastDay: string;
-  /** Days in a row with at least one finished appointment, up to `lastDay`. */
-  streak: number;
   /** The last appointment was a tough one (walk-out or 1-2 stars): Mai is gentle next time. */
   lastTough: boolean;
 }
 
 const STORAGE_KEY = 'salon.bestie.v1';
 
-export const EMPTY_MEMORY: BestieMemory = { summary: '', sessions: 0, xp: 0, lastQuestionAt: -1, lastDay: '', streak: 0, lastTough: false };
+export const EMPTY_MEMORY: BestieMemory = { summary: '', sessions: 0, xp: 0, lastQuestionAt: -1, lastTough: false };
 
 const whole = (value: unknown, min: number): number | null =>
   typeof value === 'number' && Number.isInteger(value) && value >= min ? value : null;
@@ -48,8 +44,6 @@ export function parseStoredMemory(raw: string | null, config: BestieConfig = BES
     sessions: whole(record.sessions, 0) ?? 0,
     xp: whole(record.xp, 0) ?? 0,
     lastQuestionAt: whole(record.lastQuestionAt, -1) ?? -1,
-    lastDay: typeof record.lastDay === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(record.lastDay) ? record.lastDay : '',
-    streak: whole(record.streak, 0) ?? 0,
     lastTough: record.lastTough === true,
   };
 }
@@ -84,30 +78,17 @@ const clampSummary = (summary: string, config: BestieConfig): string => summary.
 export const localDay = (date: Date = new Date()): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-/** The day before a YYYY-MM-DD date. */
-function dayBefore(day: string): string {
-  const [y, m, d] = day.split('-').map(Number) as [number, number, number];
-  return localDay(new Date(y, m - 1, d - 1));
-}
-
-/** Days in a row after playing on `today`: same day keeps it, the next day adds one, a gap starts again at 1. */
-export function nextStreak(lastDay: string, streak: number, today: string): number {
-  if (lastDay === today) return Math.max(1, streak);
-  return lastDay !== '' && dayBefore(today) === lastDay ? streak + 1 : 1;
-}
-
-/** The streak still alive today (played today or yesterday), else 0. A missed day is never mentioned. */
-export function currentStreak(memory: BestieMemory, today: string): number {
-  return memory.lastDay === today || (memory.lastDay !== '' && dayBefore(today) === memory.lastDay) ? memory.streak : 0;
-}
-
 /** Which hello Mai gives on the title screen (owner, 2026-11-10: warm, personal, gentle after a bad visit). */
 export type GreetingKind = 'first' | 'tough' | 'streak' | 'back';
 
-export function greetingKind(memory: BestieMemory, today: string): GreetingKind {
+/**
+ * `streak` is THE streak (story 007, unified 2026-11-10): days in a row with a finished daily client, from the progress
+ * save (`liveStreak`, already 0 after a missed day, which Mai never mentions). Mai keeps no counter of her own.
+ */
+export function greetingKind(memory: BestieMemory, streak: number): GreetingKind {
   if (memory.sessions === 0) return 'first';
   if (memory.lastTough) return 'tough';
-  if (currentStreak(memory, today) >= 2) return 'streak';
+  if (streak >= 2) return 'streak';
   return 'back';
 }
 
@@ -117,11 +98,8 @@ export function afterDebrief(
   update: { summary: string; outcome: Outcome; asked: boolean; today?: string; tough?: boolean },
   config: BestieConfig = BESTIE_CONFIG,
 ): BestieMemory {
-  const today = update.today ?? localDay();
   return {
     ...memory,
-    lastDay: today,
-    streak: nextStreak(memory.lastDay, memory.streak, today),
     lastTough: update.tough ?? update.outcome === 'walked_out',
     summary: clampSummary(update.summary, config),
     sessions: memory.sessions + 1,

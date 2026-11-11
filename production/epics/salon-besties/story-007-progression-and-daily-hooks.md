@@ -87,7 +87,8 @@
 - **Daily challenge**: picked from the date among the clients the player can take, then kept in the save for the day. Finishing it (not a walk-out) extends the streak; a missed day resets it. The card sits on top of the client picker.
 - **Celebrations**: rank-up (with what it unlocks), new badges (one card for several), streak milestones. Each has the level-up sound and confetti (none with reduced motion), and shows only while the results are on screen.
 - **Screens**: Shop and Profile from the title menu; the progress panel on the results screen.
-- **Owner to check**: rank names (vi: Thợ mới / Thợ nail / Thợ lành nghề / Thợ bậc thầy), XP thresholds, prices, badge list. A new player now starts with only easy clients.
+- **After review (2026-11-10):** Mai brings each celebration (celebrating mood, speech line). Rank names from the owner: Baby Chick / Gà Mới Nở, Glow-Up Tech / Thợ Xịn Xò, Gel Warrior / Chiến Thần Sơn Gel, Nail Boss / Trùm Nail Đỉnh Nóc, each with an icon. **One streak**: days in a row with a finished daily client; Mai's hello reads it (her memory's own counter is gone). **Tester unlock**: invite codes listed in the server env var `UNLOCK_ALL_CODES` see every difficulty (`/api/session` answers `unlockAll`); everyone else keeps the rank locks. The brief's monetization note now says the tips-shop upgrades are never sold for real money.
+- **Owner to check**: XP thresholds, prices, badge list.
 
 ## Dependencies
 

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { handleBestie, parseBestieOutput, parseBestieRequest } from '../server/handlers/bestie';
 import { BESTIE_CONFIG, parseBestieConfig } from '../game/bestie';
 import type { BestieConfig, DebriefRequest } from '../game/bestie';
-import { EMPTY_MEMORY, afterAnswer, afterDebrief, bestieLevel, currentStreak, greetingKind, nextStreak, parseStoredMemory, shouldAskQuestion } from '../game/bestie-memory';
+import { EMPTY_MEMORY, afterAnswer, afterDebrief, bestieLevel, greetingKind, parseStoredMemory, shouldAskQuestion } from '../game/bestie-memory';
+import { NEW_SAVE, applyAppointment, liveStreak } from '../game/progression';
 import { cleanPlayerName } from '../game/settings';
 
 /** Story 003: bestie config, memory, level, the question rule and the server function. No network, time or randomness. */
@@ -67,7 +68,7 @@ describe('bestie memory', () => {
 
   it('counts a session and XP after a debrief, and marks a question', () => {
     const after = afterDebrief({ ...EMPTY_MEMORY, sessions: 2, xp: 20 }, { summary: '  New notes. ', outcome: 'completed', asked: true, today: '2026-11-10' }, config);
-    expect(after).toEqual({ summary: 'New notes.', sessions: 3, xp: 30, lastQuestionAt: 2, lastDay: '2026-11-10', streak: 1, lastTough: false });
+    expect(after).toEqual({ summary: 'New notes.', sessions: 3, xp: 30, lastQuestionAt: 2, lastTough: false });
     const walked = afterDebrief(EMPTY_MEMORY, { summary: '', outcome: 'walked_out', asked: false }, config);
     expect(walked.xp).toBe(5);
     expect(walked.lastQuestionAt).toBe(-1);
@@ -164,27 +165,26 @@ describe('bestie server: handler', () => {
 });
 
 describe('Mai is warm and personal (owner, 2026-11-10)', () => {
-  it('counts days in a row: same day keeps it, the next day adds one, a gap starts again', () => {
-    expect(nextStreak('', 0, '2026-11-10')).toBe(1);
-    expect(nextStreak('2026-11-10', 1, '2026-11-10')).toBe(1);
-    expect(nextStreak('2026-11-09', 2, '2026-11-10')).toBe(3);
-    expect(nextStreak('2026-10-31', 4, '2026-11-01')).toBe(5);
-    expect(nextStreak('2026-11-07', 5, '2026-11-10')).toBe(1);
-  });
-
-  it('only mentions a streak that is still alive (never a missed day)', () => {
-    const memory = { ...EMPTY_MEMORY, sessions: 4, lastDay: '2026-11-09', streak: 3 };
-    expect(currentStreak(memory, '2026-11-10')).toBe(3);
-    expect(currentStreak(memory, '2026-11-12')).toBe(0);
-    expect(greetingKind(memory, '2026-11-10')).toBe('streak');
-    expect(greetingKind(memory, '2026-11-12')).toBe('back');
+  it("Mai's hello reads the one streak: days in a row with a finished daily client (never a missed day)", () => {
+    // Arrange: daily clients finished on the 8th and 9th of November.
+    let save = NEW_SAVE;
+    for (const today of ['2026-11-08', '2026-11-09']) {
+      save = applyAppointment(save, { stars: 3, tip: 5, goalMet: false, walkedOut: false, skills: { greeting: 60, consultation: 60, upsell: 60, rebooking: 60, problemHandling: 60 }, englishScore: 60, difficulty: 'easy', daily: true, today }).save;
+    }
+    const memory = { ...EMPTY_MEMORY, sessions: 4 };
+    // Act + assert: the next day she mentions the 2-day streak; after a missed day she just says welcome back.
+    expect(liveStreak(save, '2026-11-10')).toBe(2);
+    expect(greetingKind(memory, liveStreak(save, '2026-11-10'))).toBe('streak');
+    expect(greetingKind(memory, liveStreak(save, '2026-11-12'))).toBe('back');
+    // Mai keeps no counter of her own: a debrief doesn't touch the streak.
+    expect(Object.keys(afterDebrief(memory, { summary: '', outcome: 'completed', asked: false }))).not.toContain('streak');
   });
 
   it('greets a new friend first, and is gentle after a tough appointment', () => {
-    expect(greetingKind(EMPTY_MEMORY, '2026-11-10')).toBe('first');
+    expect(greetingKind(EMPTY_MEMORY, 0)).toBe('first');
     const tough = afterDebrief({ ...EMPTY_MEMORY, sessions: 1 }, { summary: '', outcome: 'completed', asked: false, today: '2026-11-10', tough: true });
     expect(tough.lastTough).toBe(true);
-    expect(greetingKind(tough, '2026-11-10')).toBe('tough');
+    expect(greetingKind(tough, 5)).toBe('tough');
     expect(afterDebrief(EMPTY_MEMORY, { summary: '', outcome: 'walked_out', asked: false, today: '2026-11-10' }).lastTough).toBe(true);
   });
 

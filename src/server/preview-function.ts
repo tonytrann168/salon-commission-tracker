@@ -59,7 +59,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   if (route === 'session' && req.method === 'GET') {
     const result = guard.session(req.headers.cookie);
-    send(res, result.ok ? 200 : result.status, result.ok ? { ok: true } : error(result.code, 'Not signed in.'));
+    send(res, result.ok ? 200 : result.status, result.ok ? { ok: true, unlockAll: guard.unlocksAll(result.value) } : error(result.code, 'Not signed in.'));
     return;
   }
   if (req.method !== 'POST') {

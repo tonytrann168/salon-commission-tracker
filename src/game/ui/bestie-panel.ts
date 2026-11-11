@@ -1,6 +1,8 @@
 import { BESTIE_CONFIG } from '../bestie';
 import type { BestieLanguage, BestieTransport } from '../bestie';
-import { afterAnswer, afterDebrief, bestieLevel, currentStreak, greetingKind, loadMemory, localDay, saveMemory, shouldAskQuestion } from '../bestie-memory';
+import { afterAnswer, afterDebrief, bestieLevel, greetingKind, loadMemory, localDay, saveMemory, shouldAskQuestion } from '../bestie-memory';
+import { liveStreak } from '../progression';
+import { loadSave } from '../save';
 import { getPlayerName } from '../settings';
 import type { BestieMemory } from '../bestie-memory';
 import { t } from '../i18n';
@@ -31,12 +33,11 @@ function button(label: string, className = 'chat-button'): HTMLButtonElement {
 }
 
 /** The bestie's greeting bubble for the title screen: a first hello, or welcome back with the client count. */
-export function createBestieGreeting(memory: BestieMemory = loadMemory(), player: string = getPlayerName()): HTMLElement {
+export function createBestieGreeting(memory: BestieMemory = loadMemory(), player: string = getPlayerName(), streak: number = liveStreak(loadSave(), localDay())): HTMLElement {
   // Warm and personal (owner, 2026-11-10): her name for the player, a streak when there is one (a missed day is never
   // mentioned), and a gentle welcome after a tough appointment.
-  const today = localDay();
-  const kind = greetingKind(memory, today);
-  const params = { name: NAME, player, count: memory.sessions + 1, days: currentStreak(memory, today) };
+  const kind = greetingKind(memory, streak);
+  const params = { name: NAME, player, count: memory.sessions + 1, days: streak };
   const named = player !== '';
   const text =
     kind === 'first' ? t(named ? 'bestie.greetingFirstNamed' : 'bestie.greetingFirst', params)

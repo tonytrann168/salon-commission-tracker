@@ -21,7 +21,7 @@ export function celebrationsFor(update: ProgressUpdate): Celebration[] {
   const items: Celebration[] = [];
   if (update.rankUp) {
     const unlocked = update.unlocked.map((d) => t(`picker.${d}`)).join(', ');
-    items.push({ icon: '🎉', title: t('celebrate.rankUp', { rank: update.rankUp.name[lang] }), line: unlocked ? t('celebrate.unlocked', { what: unlocked }) : t('celebrate.rankLine') });
+    items.push({ icon: update.rankUp.icon, title: t('celebrate.rankUp', { rank: update.rankUp.name[lang], icon: update.rankUp.icon }), line: unlocked ? t('celebrate.unlocked', { what: unlocked }) : t('celebrate.rankLine') });
   }
   // One card for the badges, however many: a first great visit can earn several at once.
   const [only] = update.badges;

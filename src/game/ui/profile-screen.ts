@@ -10,7 +10,7 @@ export function rankBar(xp: number): HTMLElement {
   const lang = getLanguage();
   const { rank, next } = rankFor(xp);
   const box = el('div', 'rank-box');
-  box.append(el('strong', 'rank-name', rank.name[lang]));
+  box.append(el('strong', 'rank-name', `${rank.icon} ${rank.name[lang]}`));
   const bar = el('div', 'rank-bar');
   const fill = el('div', 'rank-fill');
   const share = next ? (xp - rank.xp) / (next.xp - rank.xp) : 1;

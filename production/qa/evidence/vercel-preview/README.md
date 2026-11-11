@@ -36,6 +36,9 @@ You need: a Vercel account (free Hobby is fine) connected to your GitHub, and yo
      - `COOKIE_SECRET`: a long random password, at least 16 characters (32+ is better). Make one with any password
        generator. Never share it. Changing it signs everyone out.
      - `DAILY_AI_CALL_CAP`: the most AI calls per day for everyone together, for example `1500`.
+     - `UNLOCK_ALL_CODES` (optional): codes that open **every** client difficulty straight away, for you and testers
+       who need to try hard clients, for example `OWNER-7Q2,TEST1-5RT`. These codes also work as invite codes. Anyone
+       else starts with easy clients and unlocks harder ones by ranking up.
    - Click **Deploy**.
 3. **Deploy from this branch.** The game is on the branch `claude/code-game-studios-myzjer` for now. In the project,
    open **Settings → Git**, set **Production Branch** to `claude/code-game-studios-myzjer`, save, then go to
@@ -54,6 +57,10 @@ You need: a Vercel account (free Hobby is fine) connected to your GitHub, and yo
 In the Vercel project: **Settings → Environment Variables → TESTER_CODES → Edit**. Add a code (comma-separated), or
 delete one to revoke it, save, then **Deployments → Redeploy** the latest deployment. A removed code stops working
 straight away after the redeploy, even for someone already signed in.
+
+### Let a tester try every client
+Add their code to `UNLOCK_ALL_CODES` (comma-separated) and redeploy. They see the Medium and Hard tabs open on their
+next visit. Remove the code to put them back on the normal rank locks.
 
 ### Change the limits
 `DAILY_AI_CALL_CAP` is an environment variable (edit, then redeploy). The per-code and per-minute limits are in

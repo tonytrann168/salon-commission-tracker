@@ -80,3 +80,20 @@ describe('preview routing', () => {
     expect(routeOf('/api/session')).toBe('session');
   });
 });
+
+describe('tester unlock (UNLOCK_ALL_CODES)', () => {
+  it('lets unlock codes sign in and says yes only for them; others keep the rank locks', () => {
+    const guard = createGuard({ TESTER_CODES: 'LAN-01', UNLOCK_ALL_CODES: 'owner-1, test-2', COOKIE_SECRET: 'x'.repeat(32) });
+    const unlockOf = (code: string) => {
+      const login = guard.login(code, 'ip');
+      if (!login.ok) throw new Error(`login failed for ${code}`);
+      const session = guard.session(login.value.split(';')[0]);
+      if (!session.ok) throw new Error('no session');
+      return guard.unlocksAll(session.value);
+    };
+    expect(unlockOf('OWNER-1')).toBe(true);
+    expect(unlockOf(' test-2 ')).toBe(true);
+    expect(unlockOf('LAN-01')).toBe(false);
+    expect(createGuard({ TESTER_CODES: 'LAN-01', COOKIE_SECRET: 'x'.repeat(32) }).unlocksAll('anything')).toBe(false);
+  });
+});

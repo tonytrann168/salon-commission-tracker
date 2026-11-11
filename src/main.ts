@@ -25,7 +25,7 @@ import { loadMemory } from './game/bestie-memory';
 import { createCorrectionsTransport } from './game/learning/corrections';
 import { addPhrases, loadPhrasebook, savePhrasebook } from './game/learning/phrasebook';
 import { createPhrasebookScreen } from './game/ui/phrasebook-screen';
-import { askForInvite, hasSession } from './game/ui/invite-screen';
+import { askForInvite, getSession } from './game/ui/invite-screen';
 import { openPracticeSheet } from './game/ui/practice-sheet';
 import { createBrowserVoice, withSpeakingSignal } from './game/voice';
 import { describeDesign } from './game/nail-art/match';
@@ -42,6 +42,7 @@ import { el } from './game/ui/dom';
 import { createLevelPicker } from './game/ui/level-picker';
 import { createResultsScreen } from './game/ui/results-screen';
 import { createSettingsScreen } from './game/ui/settings-screen';
+import { DIFFICULTIES } from './game/types';
 import type { ClientPersona, EnglishLevel, Grading, Outcome } from './game/types';
 import type { ScoreResult } from './game/scoring';
 import './game/ui/global.css';
@@ -52,7 +53,12 @@ async function boot(): Promise<void> {
   const appHost: HTMLElement = host;
   applyDocumentLanguage();
   // Hosted preview only (VITE_INVITE_GATE=1, set by scripts/build-preview.mjs): ask for an invite code first.
-  if (import.meta.env.VITE_INVITE_GATE === '1' && !(await hasSession())) await askForInvite(host);
+  // Tester codes the owner lists in UNLOCK_ALL_CODES open every client difficulty; the server decides, each load.
+  let unlockAll = false;
+  if (import.meta.env.VITE_INVITE_GATE === '1') {
+    if (!(await getSession()).signedIn) await askForInvite(host);
+    unlockAll = (await getSession()).unlockAll;
+  }
 
   const app = new Application();
   await app.init({ resizeTo: host, background: 0xfff4f8, antialias: true, autoDensity: true, resolution: window.devicePixelRatio || 1 });
@@ -199,8 +205,8 @@ async function boot(): Promise<void> {
     if (offered) writeSave(offered.save);
     const save = loadSave();
     const screen = createClientPicker(host, {
-      unlocked: unlockedDifficulties(save.xp),
-      lockedLine: (difficulty) => t('picker.locked', { rank: rankUnlocking(difficulty).name[getLanguage()] }),
+      unlocked: unlockAll ? DIFFICULTIES : unlockedDifficulties(save.xp),
+      lockedLine: (difficulty) => t('picker.locked', { rank: `${rankUnlocking(difficulty).name[getLanguage()]} ${rankUnlocking(difficulty).icon}` }),
       ...(offered ? { daily: { client: offered.client, done: dailyDoneToday(save, today), streak: liveStreak(save, today), onPick: () => begin(offered.client, true) } } : {}),
       shiftSize: SHIFT_SIZE,
       onPick: begin,

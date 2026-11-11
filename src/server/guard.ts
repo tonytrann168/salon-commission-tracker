@@ -5,7 +5,9 @@ import guardJson from './guard-config.json';
  * The hosted preview's door and spending guard (owner, 2026-11-10). Testers enter an invite code (env TESTER_CODES,
  * comma-separated, one per tester, so one can be revoked); a valid code sets a signed, httpOnly cookie, and every AI
  * call needs that cookie. AI calls are rate-limited per code and per IP, capped per code per day, and capped for
- * everyone per day (env DAILY_AI_CALL_CAP).
+ * everyone per day (env DAILY_AI_CALL_CAP). Codes in env UNLOCK_ALL_CODES (also valid invite codes) open every client
+ * difficulty for that tester (owner-controlled; normal players keep the rank locks). The page only learns a yes/no from
+ * /api/session, never the list.
  *
  * Counters live in memory: best effort. Each warm Vercel instance keeps its own counts, and a cold start resets them.
  * The Anthropic Console's monthly spend limit is the real backstop (see the owner setup README).
@@ -118,6 +120,7 @@ class DailyCounter {
 
 export interface GuardEnv {
   TESTER_CODES?: string;
+  UNLOCK_ALL_CODES?: string;
   COOKIE_SECRET?: string;
   DAILY_AI_CALL_CAP?: string;
 }
@@ -127,6 +130,8 @@ export interface Guard {
   login(code: unknown, ip: string): GuardResult<string>;
   /** Is this request signed in? Returns the code id. */
   session(cookieHeader: string | undefined): GuardResult<string>;
+  /** Does this signed-in code open every client difficulty (UNLOCK_ALL_CODES)? */
+  unlocksAll(id: string): boolean;
   /** Signed in AND within every limit; counts the AI call. */
   chargeAiCall(cookieHeader: string | undefined, ip: string): GuardResult<string>;
 }
@@ -135,8 +140,10 @@ export function createGuard(env: GuardEnv, clock: () => number = Date.now, confi
   const minute = new MinuteLimiter();
   const daily = new DailyCounter();
   const fail = <T>(status: number, code: GuardErrorCode): GuardResult<T> => ({ ok: false, status, code });
+  const unlockIds = (): Set<string> => new Set([...parseCodes(env.UNLOCK_ALL_CODES)].map(codeId));
   const configured = (): { codes: Set<string>; secret: string } | null => {
-    const codes = parseCodes(env.TESTER_CODES);
+    // Unlock-all codes are invite codes too.
+    const codes = new Set([...parseCodes(env.TESTER_CODES), ...parseCodes(env.UNLOCK_ALL_CODES)]);
     const secret = env.COOKIE_SECRET ?? '';
     // Fail closed: no codes or a short secret means nobody gets in.
     return codes.size > 0 && secret.length >= 16 ? { codes, secret } : null;
@@ -163,6 +170,7 @@ export function createGuard(env: GuardEnv, clock: () => number = Date.now, confi
       return { ok: true, value: sessionCookie(signSession(codeId(code), now, setup.secret), config) };
     },
     session,
+    unlocksAll: (id) => unlockIds().has(id),
     chargeAiCall(cookieHeader, ip) {
       const signedIn = session(cookieHeader);
       if (!signedIn.ok) return signedIn;

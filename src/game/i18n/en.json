@@ -258,12 +258,13 @@
   "progress.title": "Your progress",
   "progress.gains": "+{xp} XP · +${dollars} tips (wallet ${wallet})",
   "celebrate.ok": "Yay!",
-  "celebrate.rankUp": "You're now a {rank}!",
+  "celebrate.rankUp": "You're a {rank} now! {icon}",
   "celebrate.unlocked": "New clients unlocked: {what}.",
   "celebrate.rankLine": "You've reached the top. Amazing work!",
-  "celebrate.badge": "New badge: {name}",
-  "celebrate.streak": "{days} days in a row!",
+  "celebrate.badge": "You earned a badge: {name}!",
+  "celebrate.streak": "{days} days in a row! I'm so proud of you!",
   "celebrate.streakLine": "Your daily client streak keeps growing.",
-  "celebrate.badges": "{count} new badges!",
-  "picker.lockedTab": "{name} (locked)"
+  "celebrate.badges": "You earned {count} new badges!",
+  "picker.lockedTab": "{name} (locked)",
+  "celebrate.says": "{name}: “{text}”"
 }

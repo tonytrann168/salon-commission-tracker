@@ -18,6 +18,7 @@ export interface Text {
 export interface RankConfig {
   id: string;
   xp: number;
+  icon: string;
   name: Text;
   unlocks: Difficulty[];
 }
@@ -80,7 +81,8 @@ export function parseProgressionConfig(raw: unknown, nails: NailArtConfig = NAIL
 
   const ranks = list(raw.ranks, 'ranks').map((rank, i): RankConfig => {
     if (!isRecord(rank) || typeof rank.id !== 'string') return fail(`"ranks[${i}]" needs an id`);
-    return { id: rank.id, xp: num(rank.xp, `ranks[${i}].xp`, 0, 1e6), name: text(rank.name, `ranks[${i}].name`), unlocks: list(rank.unlocks, `ranks[${i}].unlocks`).map((d, j) => difficulty(d, `ranks[${i}].unlocks[${j}]`)) };
+    if (typeof rank.icon !== 'string' || rank.icon === '') fail(`"ranks[${i}].icon" must be an emoji`);
+    return { id: rank.id, xp: num(rank.xp, `ranks[${i}].xp`, 0, 1e6), icon: rank.icon as string, name: text(rank.name, `ranks[${i}].name`), unlocks: list(rank.unlocks, `ranks[${i}].unlocks`).map((d, j) => difficulty(d, `ranks[${i}].unlocks[${j}]`)) };
   });
   if (ranks.length === 0 || ranks[0]?.xp !== 0) fail('"ranks" must start with a rank at 0 XP');
   ranks.forEach((rank, i) => i > 0 && rank.xp <= (ranks[i - 1] as RankConfig).xp && fail(`"ranks[${i}].xp" must be higher than the rank before`));

@@ -8,13 +8,21 @@ import './level-picker.css';
  * (VITE_INVITE_GATE=1); local dev skips it.
  */
 
+/** The invite session: signed in, and whether the server says this tester's code opens every client difficulty. */
+export async function getSession(): Promise<{ signedIn: boolean; unlockAll: boolean }> {
+  try {
+    const response = await fetch('/api/session', { credentials: 'same-origin' });
+    if (!response.ok) return { signedIn: false, unlockAll: false };
+    const body = (await response.json().catch(() => ({}))) as { unlockAll?: unknown };
+    return { signedIn: true, unlockAll: body.unlockAll === true };
+  } catch {
+    return { signedIn: false, unlockAll: false };
+  }
+}
+
 /** True when the browser already holds a valid invite cookie. */
 export async function hasSession(): Promise<boolean> {
-  try {
-    return (await fetch('/api/session', { credentials: 'same-origin' })).ok;
-  } catch {
-    return false;
-  }
+  return (await getSession()).signedIn;
 }
 
 /** Show the invite screen until a code works, then remove it and resolve. */

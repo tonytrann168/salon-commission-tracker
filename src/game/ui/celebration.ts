@@ -1,11 +1,14 @@
+import { companionName } from '../companion';
 import { t } from '../i18n';
+import { renderMascot } from '../mascot';
 import { emitSound } from '../sound-events';
 import { el } from './dom';
 import './progression.css';
 
 /**
  * A celebration moment (story 007): rank-ups, new badges and streak milestones each get a card with a sound and a
- * burst of confetti (none with reduced motion). Several in a row show one after another.
+ * burst of confetti (none with reduced motion). Several in a row show one after another. Mai brings the news (overseer,
+ * 2026-11-10: she is the soul of the game): her celebrating mood, with the badge or rank icon as a sticker by her.
  */
 
 export interface Celebration {
@@ -15,6 +18,7 @@ export interface Celebration {
 }
 
 const CONFETTI = 14;
+const MAI_PX = 120;
 let queue: Celebration[] = [];
 let showing = false;
 
@@ -44,7 +48,8 @@ function next(host: HTMLElement): void {
     piece.style.setProperty('--hue', `${(i * 47) % 360}`);
     burst.append(piece);
   }
-  const title = el('h2', '', item.title);
+  const name = companionName();
+  const title = el('h2', '', t('celebrate.says', { name, text: item.title }));
   title.id = 'celebration-title';
   const ok = el('button', 'chat-button', t('celebrate.ok'));
   ok.type = 'button';
@@ -53,7 +58,9 @@ function next(host: HTMLElement): void {
     next(host);
   });
   const many = [...new Intl.Segmenter().segment(item.icon)].length > 1;
-  card.append(burst, el('div', many ? 'celebration-icon many' : 'celebration-icon', item.icon), title, el('p', '', item.line), ok);
+  const figure = el('div', 'celebration-mai');
+  figure.append(renderMascot('celebrating', MAI_PX, { label: name }), el('span', many ? 'celebration-icon many' : 'celebration-icon', item.icon));
+  card.append(burst, figure, title, el('p', '', item.line), ok);
   overlay.append(card);
   host.append(overlay);
   ok.focus();
