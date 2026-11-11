@@ -60,8 +60,10 @@ describe('gender and grammar', () => {
     const { systems, fetchImpl } = capture();
     await handleBestie({ kind: 'hint', level: 'some', language: 'vi', memory: '', phase: 'service', mood: 50, transcript: [{ role: 'client', content: 'Hi' }], companion }, { ANTHROPIC_API_KEY: 'k' }, fetchImpl);
     await handleCorrections({ kind: 'line', level: 'some', language: 'vi', phase: 'service', line: 'I fix you nail now', clientLine: 'Hi', companion }, { ANTHROPIC_API_KEY: 'k' }, fetchImpl);
-    expect(systems).toHaveLength(2);
-    for (const system of systems) {
+    // The corrections handler retries once on an empty answer, so its prompt can appear twice: check each distinct one.
+    const distinct = [...new Set(systems)];
+    expect(distinct).toHaveLength(2);
+    for (const system of distinct) {
       expect(system).toMatch(/You are Minh/);
       expect(system).toMatch(/call yourself "anh"/i);
       expect(system).toMatch(/refer to yourself as "anh" at least once/);
