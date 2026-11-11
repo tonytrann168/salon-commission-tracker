@@ -61,3 +61,10 @@ describe('no hard-coded UI strings', () => {
     }
   });
 });
+
+describe('Vietnamese speaks to the player as "em"', () => {
+  it('has no player-facing "bạn" (only "bạn thân", best friend)', () => {
+    const formal = Object.entries(vi).filter(([, text]) => /(^|[^\p{L}])bạn(?! thân)([^\p{L}]|$)/iu.test(text)).map(([key]) => key);
+    expect(formal).toEqual([]);
+  });
+});
