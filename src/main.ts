@@ -18,6 +18,7 @@ import { companionIdentity, loadCompanion } from './game/companion';
 import { createDressUpScreen, createMeetScreen } from './game/ui/companion-screens';
 import { gainFriendship } from './game/ui/friendship';
 import { startTour } from './game/ui/tour';
+import { feedbackButton } from './game/ui/feedback-sheet';
 import { SCORING_CONFIG } from './game/scoring';
 import { createSalonScene } from './game/salon-scene';
 import { createTitleMenu, createTitleScreen } from './game/title-screen';
@@ -333,6 +334,8 @@ async function boot(): Promise<void> {
           extras: (grading, score) => [
             // Story 007: tips into the wallet, XP and rank, badges and the daily streak, once per appointment.
             progressPanel(grading, score, result.outcome),
+            // Story 016: feedback with this visit's details; the chat only if the tester ticks the box.
+            feedbackButton(appHost, { details: { clientId: client.id, difficulty: client.difficulty, level, language: getLanguage(), stars: score.stars }, chat: result.transcript }),
             createDebriefPanel({ transport: bestie, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, grading, score }),
             createLearningPanel({ transport: corrections, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, ...(practice ? { onPractice: practice } : {}) }),
             ...[createLevelChangePanel(level, score.englishScore)].filter((panel): panel is HTMLElement => panel !== null),

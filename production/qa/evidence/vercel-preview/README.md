@@ -62,6 +62,18 @@ straight away after the redeploy, even for someone already signed in.
 Add their code to `UNLOCK_ALL_CODES` (comma-separated) and redeploy. They see the Medium and Hard tabs open on their
 next visit. Remove the code to put them back on the normal rank locks.
 
+### Read tester feedback
+Testers tap **💬 Góp ý / Feedback** (in Settings and on every results screen): a 1–5 smiley, an optional note, and
+game details (client, level, language, stars, app version; on by default, never any chat text). The conversation is
+added only if the tester ticks "Include my conversation". Nothing is stored in a database.
+
+1. In the Vercel project open **Logs** (or **Deployments → the latest → Logs**).
+2. Search for `FEEDBACK`. Each note is one line: `FEEDBACK {"v":1,"at":"…","tester":"<code id>","rating":4,"text":"…","details":{…},"chat":null}`.
+3. `tester` is a short id made from the invite code, not the code itself. To match it to a person, ask Claude to work
+   out the id for a code (it is the first 16 hex characters of the SHA-256 of the code in capitals).
+4. Vercel keeps runtime logs only for a limited time (how long depends on your plan), so copy the lines you want to
+   keep soon after testers send them. A tester can send up to 3 notes a minute and 30 a day.
+
 ### Change the limits
 `DAILY_AI_CALL_CAP` is an environment variable (edit, then redeploy). The per-code and per-minute limits are in
 `src/server/guard-config.json` (ask Claude to change them).

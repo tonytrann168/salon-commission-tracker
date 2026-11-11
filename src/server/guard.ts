@@ -22,6 +22,9 @@ export interface GuardConfig {
   perCodePerDay: number;
   defaultGlobalPerDay: number;
   maxBodyBytes: number;
+  /** Story 016: feedback posts, separate from the AI budget. */
+  feedbackPerCodePerMinute: number;
+  feedbackPerCodePerDay: number;
 }
 
 export const GUARD_CONFIG: GuardConfig = guardJson;
@@ -134,6 +137,8 @@ export interface Guard {
   unlocksAll(id: string): boolean;
   /** Signed in AND within every limit; counts the AI call. */
   chargeAiCall(cookieHeader: string | undefined, ip: string): GuardResult<string>;
+  /** Story 016: signed in and within the feedback limits (separate from the AI budget); counts the post. */
+  chargeFeedback(cookieHeader: string | undefined, ip: string): GuardResult<string>;
 }
 
 export function createGuard(env: GuardEnv, clock: () => number = Date.now, config: GuardConfig = GUARD_CONFIG): Guard {
@@ -180,6 +185,16 @@ export function createGuard(env: GuardEnv, clock: () => number = Date.now, confi
       if (!minute.hit(`code:${id}`, config.perCodePerMinute, now) || !minute.hit(`ip:${ip}`, config.perIpPerMinute, now)) return fail(429, 'rate_limited');
       daily.add('all', now);
       daily.add(`code:${id}`, now);
+      return { ok: true, value: id };
+    },
+    chargeFeedback(cookieHeader, ip) {
+      const signedIn = session(cookieHeader);
+      if (!signedIn.ok) return signedIn;
+      const id = signedIn.value;
+      const now = clock();
+      if (daily.count(`feedback:${id}`, now) >= config.feedbackPerCodePerDay) return fail(429, 'daily_cap');
+      if (!minute.hit(`feedback:${id}`, config.feedbackPerCodePerMinute, now) || !minute.hit(`ip:${ip}`, config.perIpPerMinute, now)) return fail(429, 'rate_limited');
+      daily.add(`feedback:${id}`, now);
       return { ok: true, value: id };
     },
   };

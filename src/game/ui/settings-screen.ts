@@ -1,5 +1,5 @@
 import { companionName } from '../companion';
-import { applyDocumentLanguage, t } from '../i18n';
+import { applyDocumentLanguage, getLanguage, t } from '../i18n';
 import { loadAudioSettings, saveAudioSettings } from '../audio';
 import type { AudioSettings } from '../audio';
 import { LEARNING_CONFIG } from '../learning/corrections';
@@ -8,6 +8,7 @@ import { bilingual, el } from './dom';
 import { createLevelPicker } from './level-picker';
 import { createCompanionSettings } from './companion-screens';
 import { replayTour } from '../onboarding';
+import { feedbackButton } from './feedback-sheet';
 import './level-picker.css';
 
 /**
@@ -136,7 +137,9 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
       tourNote.textContent = t('settings.replayTourDone');
     });
     tourRow.append(replay, tourNote);
-    screen.replaceChildren(title, nameRow, companion, tourRow, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, back);
+    // Story 016: tester feedback (game details on by default, never chat text from here).
+    const feedback = feedbackButton(host, { details: { language: getLanguage(), ...(getEnglishLevel() ? { level: getEnglishLevel() as string } : {}) } });
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, back);
   };
 
   render();

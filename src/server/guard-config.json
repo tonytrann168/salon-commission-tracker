@@ -6,5 +6,7 @@
   "loginTriesPerIpPerMinute": 10,
   "perCodePerDay": 300,
   "defaultGlobalPerDay": 2000,
-  "maxBodyBytes": 65536
+  "maxBodyBytes": 65536,
+  "feedbackPerCodePerMinute": 3,
+  "feedbackPerCodePerDay": 30
 }

@@ -3,6 +3,7 @@ import { handleClientTurn } from './handlers/client-turn';
 import { handleCorrections } from './handlers/corrections';
 import { handleGradeAppointment } from './handlers/grade-appointment';
 import { handleTranslate } from './handlers/translate';
+import { handleFeedback } from './handlers/feedback';
 
 /** The AI server functions by route name. Used by the Vite dev middleware and the hosted preview's one function. */
 export type ApiHandler = (body: unknown, env: Record<string, string | undefined>, fetchImpl: typeof fetch) => Promise<{ status: number; body: unknown }>;
@@ -13,4 +14,10 @@ export const AI_ROUTES: Record<string, ApiHandler> = {
   translate: handleTranslate,
   bestie: handleBestie,
   corrections: handleCorrections,
+};
+
+/** Routes that are not AI calls (no AI budget). The hosted preview guards them separately; `tester` is the code id. */
+export type PlainHandler = (body: unknown, meta: { tester?: string | null }) => Promise<{ status: number; body: unknown }>;
+export const PLAIN_ROUTES: Record<string, PlainHandler> = {
+  feedback: (body, meta) => handleFeedback(body, meta),
 };

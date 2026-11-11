@@ -23,8 +23,10 @@ function devApi(env: Record<string, string>): Plugin {
         req.on('data', (chunk: Buffer) => chunks.push(chunk));
         req.on('end', () => {
           void (async () => {
-            const { AI_ROUTES } = (await server.ssrLoadModule('/server/routes.ts')) as { AI_ROUTES: Record<string, ApiHandler> };
-            const handler = AI_ROUTES[route];
+            const routes = (await server.ssrLoadModule('/server/routes.ts')) as { AI_ROUTES: Record<string, ApiHandler>; PLAIN_ROUTES: Record<string, (body: unknown, meta: { tester?: string | null }) => Promise<{ status: number; body: unknown }>> };
+            // Story 016: plain routes (feedback) have no guard in local dev.
+            const plain = routes.PLAIN_ROUTES[route];
+            const handler: ApiHandler | undefined = plain ? (body) => plain(body, { tester: 'dev' }) : routes.AI_ROUTES[route];
             if (!handler) {
               res.statusCode = 404;
               res.end();

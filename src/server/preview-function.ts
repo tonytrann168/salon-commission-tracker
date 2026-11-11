@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { createGuard, GUARD_CONFIG } from './guard';
-import { AI_ROUTES } from './routes';
+import { AI_ROUTES, PLAIN_ROUTES } from './routes';
 
 /**
  * The hosted preview's ONE server function (Vercel Build Output API, Node runtime). Every /api/* request lands here:
@@ -76,6 +76,18 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const result = guard.login(code, ip);
     if (result.ok) send(res, 200, { ok: true }, { 'set-cookie': result.value });
     else send(res, result.status, error(result.code, 'That invite code did not work.'));
+    return;
+  }
+  const plain = PLAIN_ROUTES[route];
+  if (plain) {
+    // Story 016: feedback needs the invite cookie and has its own limits; it never spends the AI budget.
+    const allowed = guard.chargeFeedback(req.headers.cookie, ip);
+    if (!allowed.ok) {
+      send(res, allowed.status, error(allowed.code, allowed.code === 'unauthorized' ? 'Enter your invite code.' : 'Thanks! Please wait a little before sending more.'));
+      return;
+    }
+    const result = await plain(body, { tester: allowed.value });
+    send(res, result.status, result.body);
     return;
   }
   const run = AI_ROUTES[route];

@@ -1,0 +1,13 @@
+/* Story 016: the feedback sheet. */
+.feedback-overlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgba(59, 42, 51, 0.4); }
+.feedback-sheet { box-sizing: border-box; width: min(480px, 100%); max-height: 92vh; overflow-y: auto; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; background: #fff4f8; display: flex; flex-direction: column; gap: 10px; color: #3b2a33; }
+.feedback-sheet h2 { margin: 0; font-size: 20px; }
+.feedback-faces { display: flex; justify-content: space-between; gap: 4px; }
+.feedback-face { flex: 1 1 0; min-height: 52px; border: 2px solid #f1dde6; border-radius: 16px; background: #fff; font-size: 28px; }
+.feedback-face[aria-checked='true'] { border-color: #ff5c9a; background: #ffe8f1; }
+.feedback-count { align-self: flex-end; margin-top: -6px; }
+.feedback-check { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; }
+.feedback-check input { margin-top: 3px; width: 18px; height: 18px; }
+.feedback-actions { display: flex; gap: 8px; }
+.feedback-actions .chat-button { flex: 1 1 0; }
+.feedback-actions .chat-button:disabled { opacity: 0.5; }
