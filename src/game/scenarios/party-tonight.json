@@ -1,0 +1,11 @@
+{
+  "id": "party-tonight",
+  "name": { "en": "Party tonight", "vi": "Tối nay đi tiệc" },
+  "tag": { "en": "🎉 Party tonight: sparkle, and fast", "vi": "🎉 Tối nay đi tiệc: lấp lánh và nhanh" },
+  "difficulty": "medium",
+  "eligible": { "clients": ["mia", "priya", "kim", "victoria"] },
+  "occasion": "You are going to a party tonight (prom or a friend's birthday).",
+  "constraints": "You want sparkle: gems and a bright colour. You must leave in 45 minutes, so you check the time and ask how long it will take. You are happy when the stylist gives a clear time and suggests a design that fits it.",
+  "openingLine": "Hi! I have a party tonight and I need something sparkly. Can you finish in 45 minutes?",
+  "nailRequest": { "colors": ["hot-pink", "lavender", "red"], "gradient": "ok", "gems": "lots", "stickers": "none" }
+}

@@ -22,7 +22,7 @@ export interface ClientPickerOptions {
   unlocked?: readonly Difficulty[];
   lockedLine?: (difficulty: Difficulty) => string;
   /** Story 007: today's challenge client, whether it's done, and the live streak. */
-  daily?: { client: ClientPersona; done: boolean; streak: number; onPick: () => void };
+  daily?: { client: ClientPersona; done: boolean; streak: number; onPick: () => void; /** Story 019: the scenario's tag, when today's client comes with one. */ tag?: string };
 }
 
 const DIFFICULTY_KEY = 'salon.pickerDifficulty';
@@ -84,6 +84,7 @@ export function createClientPicker(host: HTMLElement, options: ClientPickerOptio
     words.append(
       el('span', 'picker-daily-label', done ? t('daily.doneLabel') : t('daily.label')),
       el('strong', '', client.name),
+      ...(options.daily.tag ? [el('span', 'picker-tag', options.daily.tag)] : []),
       el('span', 'picker-line', streak > 0 ? t('daily.streak', { days: streak }) : t('daily.start')),
     );
     daily.append(avatar(client, options.faceImage), words);

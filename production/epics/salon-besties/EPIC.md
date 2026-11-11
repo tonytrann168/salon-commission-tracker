@@ -33,6 +33,7 @@ Listed in build order.
 | 016 | Tester feedback button | Integration | Complete (review) | N/A |
 | 017 | Harder nail requests (art tools, both hands) | Feature | Complete (review) | N/A |
 | 018 | Installable app, offline title, fast first load | Integration | Complete (review + phone install check) | N/A |
+| 019 | Scenarios: same clients, new situations | Config/Data | Complete (review) | N/A |
 
 ## Backlog
 

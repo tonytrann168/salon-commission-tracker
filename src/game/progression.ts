@@ -160,13 +160,15 @@ export interface ProgressSave {
   owned: string[];
   badges: string[];
   /** Today's challenge, fixed once offered so it stays the same all day. */
-  daily: { day: string; clientId: string } | null;
+  daily: { day: string; clientId: string; scenarioId?: string } | null;
   /** The last day the daily challenge was finished, and the streak of days up to it. */
   dailyDoneDay: string;
   streak: number;
+  /** Story 019: past visits per client (for the "returning client" scenario). */
+  history: Record<string, { visits: number; lastStars: number; lastDay: string }>;
 }
 
-export const NEW_SAVE: ProgressSave = { version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0 };
+export const NEW_SAVE: ProgressSave = { version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0, history: {} };
 
 // ---- Ranks ----
 
@@ -215,14 +217,22 @@ export function hashDay(day: string): number {
  * Today's challenge client: kept if already chosen today, else picked from the date among the clients the player can
  * take (so it is the same all day, even after a rank-up).
  */
-export function dailyChallenge<T extends { id: string; difficulty: Difficulty }>(save: ProgressSave, today: string, roster: readonly T[], config: ProgressionConfig = PROGRESSION_CONFIG): { save: ProgressSave; client: T } | null {
+export function dailyChallenge<T extends { id: string; difficulty: Difficulty }>(
+  save: ProgressSave,
+  today: string,
+  roster: readonly T[],
+  config: ProgressionConfig = PROGRESSION_CONFIG,
+  /** Story 019: a scenario for the chosen client (decided once, kept all day), or null. */
+  scenarioFor: (client: T) => string | null = () => null,
+): { save: ProgressSave; client: T; scenarioId: string | null } | null {
   const kept = save.daily?.day === today ? roster.find((c) => c.id === save.daily?.clientId) : undefined;
-  if (kept) return { save, client: kept };
+  if (kept) return { save, client: kept, scenarioId: save.daily?.scenarioId ?? null };
   const open = unlockedDifficulties(save.xp, config);
   const pool = roster.filter((c) => open.includes(c.difficulty));
   const client = pool[hashDay(today) % Math.max(1, pool.length)];
   if (!client) return null;
-  return { save: { ...save, daily: { day: today, clientId: client.id } }, client };
+  const scenarioId = scenarioFor(client);
+  return { save: { ...save, daily: { day: today, clientId: client.id, ...(scenarioId ? { scenarioId } : {}) } }, client, scenarioId };
 }
 
 export const dailyDoneToday = (save: ProgressSave, today: string): boolean => save.dailyDoneDay === today;
@@ -240,6 +250,8 @@ export interface AppointmentOutcome {
   difficulty: Difficulty;
   /** This was today's daily challenge client. */
   daily: boolean;
+  /** Story 019: who it was, for the per-client history. */
+  clientId?: string;
   today: string;
 }
 
@@ -280,7 +292,10 @@ export function applyAppointment(before: ProgressSave, outcome: AppointmentOutco
   const base = (config.xp.byStars[stars - 1] ?? 0) + (outcome.goalMet ? config.xp.goalBonus : 0);
   const xpGained = Math.round(base * config.xp.difficulty[outcome.difficulty]) + (finishedDaily ? config.xp.dailyBonus : 0);
   const tipGained = Math.max(0, Math.round(outcome.tip));
-  let save: ProgressSave = { ...before, wallet: before.wallet + tipGained, tipsEarned: before.tipsEarned + tipGained, xp: before.xp + xpGained, appointments: before.appointments + 1 };
+  const history = outcome.clientId
+    ? { ...before.history, [outcome.clientId]: { visits: (before.history[outcome.clientId]?.visits ?? 0) + 1, lastStars: stars, lastDay: outcome.today } }
+    : before.history;
+  let save: ProgressSave = { ...before, history, wallet: before.wallet + tipGained, tipsEarned: before.tipsEarned + tipGained, xp: before.xp + xpGained, appointments: before.appointments + 1 };
 
   let streak: ProgressUpdate['streak'] = null;
   if (finishedDaily) {

@@ -1,0 +1,10 @@
+{
+  "id": "returning-client",
+  "name": { "en": "Returning client", "vi": "Khách quay lại" },
+  "tag": { "en": "🔁 Back again: last time it chipped", "vi": "🔁 Khách quay lại: lần trước bị tróc" },
+  "difficulty": "medium",
+  "eligible": { "difficulties": ["easy", "medium", "hard"], "returning": true },
+  "occasion": "You have been to this salon before.",
+  "constraints": "Last time your polish chipped after a few days. Mention it early and ask the stylist to make it last. You are friendly if they apologise and explain how they will prevent it (for example a base coat and a top coat).",
+  "openingLine": "Hi, it's me again! Last time my polish chipped after a few days. Can you make it last longer this time?"
+}

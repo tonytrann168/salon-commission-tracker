@@ -14,6 +14,21 @@ const whole = (value: unknown, fallback: number): number => (typeof value === 'n
 const day = (value: unknown): string => (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '');
 const ids = (value: unknown): string[] => (Array.isArray(value) ? [...new Set(value.filter((v): v is string => typeof v === 'string'))] : []);
 
+/** Story 019: past visits per client; bad entries are dropped one by one (older saves have none). */
+function parseHistory(value: unknown): ProgressSave['history'] {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return {};
+  const out: ProgressSave['history'] = {};
+  for (const [id, entry] of Object.entries(value as Record<string, unknown>)) {
+    if (!/^[a-z0-9-]{1,40}$/.test(id) || typeof entry !== 'object' || entry === null) continue;
+    const e = entry as Record<string, unknown>;
+    const visits = whole(e.visits, 0);
+    const stars = whole(e.lastStars, 0);
+    if (visits < 1 || stars < 1 || stars > 5) continue;
+    out[id] = { visits, lastStars: stars, lastDay: day(e.lastDay) };
+  }
+  return out;
+}
+
 /** Read a stored save. Unknown future versions are not guessed at: the player starts fresh rather than lose data silently. */
 export function parseSave(raw: string | null): ProgressSave {
   if (raw === null) return { ...NEW_SAVE };
@@ -35,9 +50,10 @@ export function parseSave(raw: string | null): ProgressSave {
     appointments: whole(d.appointments, 0),
     owned: ids(d.owned),
     badges: ids(d.badges),
-    daily: daily && day(daily.day) && typeof daily.clientId === 'string' ? { day: day(daily.day), clientId: daily.clientId } : null,
+    daily: daily && day(daily.day) && typeof daily.clientId === 'string' ? { day: day(daily.day), clientId: daily.clientId, ...(typeof daily.scenarioId === 'string' ? { scenarioId: daily.scenarioId } : {}) } : null,
     dailyDoneDay: day(d.dailyDoneDay),
     streak: whole(d.streak, 0),
+    history: parseHistory(d.history),
   };
 }
 

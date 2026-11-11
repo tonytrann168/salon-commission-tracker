@@ -1,3 +1,4 @@
+import { getScenario, parseScenarioFields, scenarioPrompt } from '../../game/scenarios';
 import { DEFAULT_CLIENT } from '../../game/clients/default-client';
 import { getClient } from '../../game/clients/roster';
 import { MOOD_MAX, MOOD_MIN } from '../../game/mood';
@@ -83,7 +84,9 @@ export function parseGradingRequest(body: unknown): ParseResult<GradingRequest> 
     rawNails && typeof rawNails.description === 'string' && typeof rawNails.match === 'number' && rawNails.match >= 0 && rawNails.match <= 100
       ? { description: rawNails.description.replace(/[^\p{L}\p{N} ,.;:%'()/-]/gu, '').slice(0, 300), match: Math.round(rawNails.match) }
       : undefined;
-  return { ok: true, value: { transcript: messages, outcome, finalMood, level, ...(nails ? { nails } : {}), ...(typeof body.clientId === 'string' ? { clientId: body.clientId } : {}) } };
+  const scenario = parseScenarioFields(body);
+  if (!scenario.ok) return scenario;
+  return { ok: true, value: { transcript: messages, outcome, finalMood, level, ...(nails ? { nails } : {}), ...(typeof body.clientId === 'string' ? { clientId: body.clientId } : {}), ...scenario.value } };
 }
 
 /** Strictly validate the model's response and extract the grading from the forced tool call. */
@@ -195,11 +198,14 @@ const failure = (status: number, code: TurnErrorCode, message: string): GradeHan
 });
 
 /** The grading input as one user message. The player's lines are labelled so English is graded from them only. */
-function toUserMessage(client: ClientPersona, { transcript, outcome, finalMood, nails }: GradingRequest): string {
+function toUserMessage(client: ClientPersona, { transcript, outcome, finalMood, nails, scenarioId, visits }: GradingRequest): string {
   const lines = transcript.map((message) => `${message.role === 'player' ? 'Stylist (player)' : client.name}: ${message.content}`);
   // Story 005: the finished nails, so the review can mention them.
   const nailLine = nails ? `\nNails: ${nails.description}. Match with what ${client.name} asked for: ${nails.match}/100. The review must mention the nails: warmly when they match, honestly but kindly when they don't (never harsh).` : '';
-  return `Outcome: ${outcome === 'walked_out' ? `${client.name} walked out` : 'checked out normally'}. Final mood: ${finalMood}/100.${nailLine}\n\n<transcript>\n${lines.join('\n')}\n</transcript>`;
+  // Story 019: the situation, so skills like problem handling are judged for it (e.g. a walk-in needs an apology and a wait time).
+  const scenario = getScenario(scenarioId);
+  const situationLine = scenario ? `\nSituation: ${scenarioPrompt(scenario, visits)} Judge the skills with this situation in mind, and let the review reflect it.` : '';
+  return `Outcome: ${outcome === 'walked_out' ? `${client.name} walked out` : 'checked out normally'}. Final mood: ${finalMood}/100.${nailLine}${situationLine}\n\n<transcript>\n${lines.join('\n')}\n</transcript>`;
 }
 
 /** Framework-neutral handler. Never logs or echoes the key or the transcript. */

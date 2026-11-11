@@ -28,3 +28,4 @@
 .picker-tab { white-space: nowrap; }
 .picker-tab.locked { color: #8a7680; }
 .picker-tab.locked::before { content: '🔒'; margin-right: 3px; font-size: 11px; }
+.picker-tag { align-self: flex-start; margin: 2px 0; padding: 2px 8px; border-radius: 10px; background: #fff; color: #7a2350; font-size: 13px; font-weight: 700; }

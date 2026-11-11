@@ -1,3 +1,5 @@
+import { applyScenario, getScenario, parseScenarioFields, scenarioPrompt } from '../../game/scenarios';
+import type { ClientVisits, Scenario } from '../../game/scenarios';
 import { DEFAULT_CLIENT } from '../../game/clients/default-client';
 import { getClient } from '../../game/clients/roster';
 import difficultyJson from '../../game/config/difficulty.json';
@@ -33,6 +35,9 @@ export interface ClientTurnRequest {
   nails?: string;
   /** Story 006: which roster client this is (Dana when missing, for older clients). */
   clientId?: string;
+  /** Story 019: the situation (optional), and the visit facts for a returning client. */
+  scenarioId?: string;
+  visits?: ClientVisits;
 }
 
 export interface HandlerResponse {
@@ -80,7 +85,9 @@ export function parseClientTurnRequest(body: unknown): ParseResult<ClientTurnReq
   if (messages[messages.length - 1]?.role !== 'player') {
     return { ok: false, message: 'The last message must be from the player.' };
   }
-  return { ok: true, value: { transcript: messages, phase, mood, level, ...(nails ? { nails } : {}), ...(typeof body.clientId === 'string' ? { clientId: body.clientId } : {}) } };
+  const scenario = parseScenarioFields(body);
+  if (!scenario.ok) return scenario;
+  return { ok: true, value: { transcript: messages, phase, mood, level, ...(nails ? { nails } : {}), ...(typeof body.clientId === 'string' ? { clientId: body.clientId } : {}), ...scenario.value } };
 }
 
 /** Strictly validate the model's response and extract the structured turn from the forced tool call. */
@@ -110,7 +117,9 @@ const MOOD_RULES_REALISTIC = `- This stylist is comfortable in English, so react
 - Never mock her accent, background or mistakes. Stay polite when you ask again.`;
 
 /** Build the system prompt for one English level: persona, speaking rules, phase rules and mood rules. One variant per level, so it caches. */
-export function buildSystemPrompt(client: ClientPersona, level: EnglishLevel): string {
+export function buildSystemPrompt(regular: ClientPersona, level: EnglishLevel, scenario?: Scenario, visits?: ClientVisits): string {
+  // Story 019: a scenario layers its situation and nail request over the client.
+  const client = applyScenario(regular, scenario);
   const rules = ENGLISH_LEVELS_CONFIG.levels[level];
   const moodRules = rules.englishNeverLowersMood ? MOOD_RULES_PROTECTED : MOOD_RULES_REALISTIC;
   return `You are roleplaying ${client.name}, a salon client getting a manicure from the player, who is the nail stylist, in a training game. Stay in character at all times.
@@ -118,7 +127,7 @@ export function buildSystemPrompt(client: ClientPersona, level: EnglishLevel): s
 PERSONA
 - What ${client.name} wants: ${client.wants}
 - Personality: ${client.personality}
-- How hard you are: ${(difficultyJson as Record<string, { pushback: string }>)[client.difficulty]?.pushback ?? ''}${client.nailRequest ? `\n- Your nails: you want ${describeRequest(client.nailRequest)}. Say what you want during the consultation when asked (or if the stylist forgets to ask, mention it).` : ''}
+- How hard you are: ${(difficultyJson as Record<string, { pushback: string }>)[client.difficulty]?.pushback ?? ''}${scenario ? `\n- Today's situation: ${scenarioPrompt(scenario, visits)} You opened with: "${scenario.openingLine}"` : ''}${client.nailRequest ? `\n- Your nails: you want ${describeRequest(client.nailRequest)}. Say what you want during the consultation when asked (or if the stylist forgets to ask, mention it).` : ''}
 
 STYLE
 - Reply as ${client.name} speaking aloud: 1-3 short, natural sentences. No stage directions, no narration, no emojis.
@@ -201,7 +210,7 @@ export async function handleClientTurn(
       body: JSON.stringify({
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        system: [{ type: 'text', text: buildSystemPrompt(getClient(parsed.value.clientId ?? '') ?? DEFAULT_CLIENT, parsed.value.level), cache_control: { type: 'ephemeral' } }],
+        system: [{ type: 'text', text: buildSystemPrompt(getClient(parsed.value.clientId ?? '') ?? DEFAULT_CLIENT, parsed.value.level, getScenario(parsed.value.scenarioId), parsed.value.visits), cache_control: { type: 'ephemeral' } }],
         tools: [TOOL],
         tool_choice: { type: 'tool', name: TOOL_NAME },
         messages: toApiMessages(parsed.value),

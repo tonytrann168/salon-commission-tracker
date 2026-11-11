@@ -6,7 +6,7 @@ import { DEFAULT_CLIENT } from './game/clients/default-client';
 import { ROSTER, clientsByDifficulty, pickShift } from './game/clients/roster';
 import { createClientPicker } from './game/ui/client-picker';
 import { NAIL_ART_CONFIG } from './game/nail-art/design';
-import { applyAppointment, dailyChallenge, dailyDoneToday, liveStreak, rankUnlocking, stationPalette, unlockedDifficulties, upgradeEffects } from './game/progression';
+import { applyAppointment, dailyChallenge, dailyDoneToday, liveStreak, rankUnlocking, stationPalette, unlockedDifficulties, upgradeEffects, hashDay } from './game/progression';
 import { loadSave, writeSave } from './game/save';
 import { afterHello, localDay } from './game/bestie-memory';
 import { celebrationsFor, createProgressPanel } from './game/ui/progress-panel';
@@ -15,6 +15,8 @@ import { companionIdentity, loadCompanion } from './game/companion';
 import { createDressUpScreen, createMeetScreen } from './game/ui/companion-screens';
 import { gainFriendship } from './game/ui/friendship';
 import { createStaleBuildGuard, isChunkLoadError } from './game/stale-build';
+import { SCENARIOS, SCENARIO_ODDS, applyScenario, eligibleScenarios, getScenario, pickScenario } from './game/scenarios';
+import type { Scenario } from './game/scenarios';
 import { startTour } from './game/ui/tour';
 import { feedbackButton } from './game/ui/feedback-sheet';
 import { SCORING_CONFIG } from './game/scoring';
@@ -198,7 +200,7 @@ async function boot(): Promise<void> {
     : undefined;
   const translateTransport = createTranslateTransport();
   // Every client's opening line is fixed text, so its translation is also kept on the device.
-  const translations = createTranslationCache(translateTransport, ROSTER.map((client) => client.openingLine));
+  const translations = createTranslationCache(translateTransport, [...ROSTER.map((client) => client.openingLine), ...SCENARIOS.map((scenario) => scenario.openingLine)]);
 
   /** Story 006: the clients still to come in a shift (empty outside a shift) and its size. */
   let shift: { queue: ClientPersona[]; total: number } = { queue: [], total: 0 };
@@ -249,19 +251,31 @@ async function boot(): Promise<void> {
   const showClientPicker = () => {
     teardownDom();
     shift = { queue: [], total: 0 };
-    const begin = (client: ClientPersona, daily = false) => beginAppointment(getEnglishLevel() ?? 'beginner', client, daily);
+    const begin = (client: ClientPersona, daily = false, scenario?: Scenario) => beginAppointment(getEnglishLevel() ?? 'beginner', client, daily, scenario);
     // Story 007: harder clients open with rank; today's challenge is fixed in the save once offered.
     const today = localDay();
-    const offered = dailyChallenge(loadSave(), today, ROSTER);
+    const openDifficulties = unlockAll ? [...DIFFICULTIES] : unlockedDifficulties(loadSave().xp);
+    /** Story 019: scenarios this client can have now (unlocked, fits, "returning" only after a real visit). */
+    const scenariosFor = (client: ClientPersona) => eligibleScenarios(client, SCENARIOS, { unlocked: openDifficulties, visits: loadSave().history[client.id] ?? null });
+    const offered = dailyChallenge(loadSave(), today, ROSTER, undefined, (client) => pickScenario(hashDay(`${today}:${client.id}`), scenariosFor(client), SCENARIO_ODDS.dailyChance)?.id ?? null);
     if (offered) writeSave(offered.save);
     const save = loadSave();
     const screen = createClientPicker(host, {
       unlocked: unlockAll ? DIFFICULTIES : unlockedDifficulties(save.xp),
       lockedLine: (difficulty) => t('picker.locked', { rank: `${rankUnlocking(difficulty).name[getLanguage()]} ${rankUnlocking(difficulty).icon}` }),
-      ...(offered ? { daily: { client: offered.client, done: dailyDoneToday(save, today), streak: liveStreak(save, today), onPick: () => begin(offered.client, true) } } : {}),
+      ...(offered
+        ? (() => {
+            const scenario = getScenario(offered.scenarioId);
+            return { daily: { client: offered.client, done: dailyDoneToday(save, today), streak: liveStreak(save, today), onPick: () => begin(offered.client, true, scenario), ...(scenario ? { tag: scenario.tag[getLanguage()] } : {}) } };
+          })()
+        : {}),
       shiftSize: SHIFT_SIZE,
       onPick: begin,
-      onRandom: (difficulty) => begin(pickShift(clientsByDifficulty(difficulty), 1)[0] ?? DEFAULT_CLIENT),
+      onRandom: (difficulty) => {
+        const client = pickShift(clientsByDifficulty(difficulty), 1)[0] ?? DEFAULT_CLIENT;
+        // Story 019: Random sometimes brings a situation too.
+        begin(client, false, pickScenario(Math.floor(Math.random() * 1e9), scenariosFor(client), SCENARIO_ODDS.randomChance) ?? undefined);
+      },
       onShift: (difficulty) => {
         const clients = pickShift(clientsByDifficulty(difficulty), SHIFT_SIZE);
         shift = { queue: clients.slice(1), total: clients.length };
@@ -281,7 +295,7 @@ async function boot(): Promise<void> {
     else showClientPicker();
   };
 
-  const beginAppointment = async (level: EnglishLevel, persona: ClientPersona, daily = false) => {
+  const beginAppointment = async (level: EnglishLevel, persona: ClientPersona, daily = false, scenario?: Scenario) => {
     // Story 018: the appointment needs the PixiJS stage (usually loaded by now) and a connection.
     let stage: Stage;
     try {
@@ -292,7 +306,10 @@ async function boot(): Promise<void> {
     }
     // Story 007: owned upgrades (a comfier chair starts clients happier; finer brush; better clean-up pen).
     const effects = upgradeEffects(loadSave());
-    const client: ClientPersona = { ...persona, startingMood: Math.min(90, persona.startingMood + effects.startMood) };
+    // Story 019: the scenario's opening line and nail request; the AI gets the situation (and past visits if returning).
+    const client: ClientPersona = applyScenario({ ...persona, startingMood: Math.min(90, persona.startingMood + effects.startMood) }, scenario);
+    const visits = loadSave().history[persona.id];
+    const scenarioFields = scenario ? { scenarioId: scenario.id, ...(scenario.eligible.returning && visits ? { visits } : {}) } : undefined;
     const shiftPosition = shift.total > 0 ? shift.total - shift.queue.length : 0;
     teardownDom();
     showScene('salon');
@@ -300,7 +317,7 @@ async function boot(): Promise<void> {
     const nails: { note: string | undefined; finished: { description: string; match: number } | undefined } = { note: undefined, finished: undefined };
     const appointment = createAppointment({
       client,
-      takeTurn: createFetchTransport(() => level, () => nails.note, client.id),
+      takeTurn: createFetchTransport(() => level, () => nails.note, client.id, scenarioFields),
       level,
       // Grading starts from the chat panel's onEnded, once the final line has finished revealing (story 002).
       onFinished: () => undefined,
@@ -351,6 +368,7 @@ async function boot(): Promise<void> {
           clientName: client.name,
           clientId: client.id,
           clientPronoun: client.pronoun,
+          ...(scenarioFields ? { scenario: scenarioFields } : {}),
           result,
           level,
           config: SCORING_CONFIG,
@@ -391,6 +409,7 @@ async function boot(): Promise<void> {
         ...(nails.finished ? { nailMatch: nails.finished.match } : {}),
         difficulty: persona.difficulty,
         daily,
+        clientId: persona.id,
         today: localDay(),
       });
       writeSave(update.save);

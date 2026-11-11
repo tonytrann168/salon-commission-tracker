@@ -1,0 +1,5 @@
+{
+  "_note": "Story 019: how often a scenario is added. dailyChance: the daily client; randomChance: the Random client button.",
+  "dailyChance": 0.6,
+  "randomChance": 0.5
+}

@@ -136,6 +136,9 @@ export interface GradingRequest {
   level: EnglishLevel;
   /** Story 005: the finished nails and their match with the request (0-100), so the review mentions them. */
   nails?: { description: string; match: number };
+  /** Story 019: the situation (optional), and the visit facts for a returning client. */
+  scenarioId?: string;
+  visits?: { visits: number; lastStars: number; lastDay: string };
   /** Story 006: which roster client (Dana when missing). */
   clientId?: string;
 }

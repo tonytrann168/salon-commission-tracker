@@ -1,0 +1,10 @@
+{
+  "id": "walk-in-rush",
+  "name": { "en": "Walk-in during a rush", "vi": "Khách vãng lai giờ đông" },
+  "tag": { "en": "🚶 Walk-in: no booking, the salon is busy", "vi": "🚶 Khách vãng lai: không hẹn trước, tiệm đang đông" },
+  "difficulty": "easy",
+  "eligible": { "difficulties": ["easy", "medium", "hard"] },
+  "occasion": "You walked in without a booking while the salon is busy.",
+  "constraints": "Ask if they can squeeze you in and how long the wait is. You get annoyed if nobody tells you the wait time; you calm down when the stylist apologises, gives a clear wait time, and offers you a seat or a quicker option.",
+  "openingLine": "Hi, I don't have an appointment. Can you squeeze me in? How long is the wait?"
+}

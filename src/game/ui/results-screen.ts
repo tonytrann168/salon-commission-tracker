@@ -31,6 +31,8 @@ export interface ResultsScreenOptions {
   helpLanguage: HelpLanguage;
   /** Story 006: which roster client (sent to grading). */
   clientId?: string;
+  /** Story 019: the situation, sent to grading. */
+  scenario?: { scenarioId: string; visits?: { visits: number; lastStars: number; lastDay: string } };
   /** The client's pronoun for English text ("She walked out" / "He walked out"); "they" when not given. */
   clientPronoun?: ClientPronoun;
   /** Story 006: the Next client button's label during a shift ("Next client (2/3)", "Shift done!"). */
@@ -206,7 +208,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     const finalMood = result.moodHistory[result.moodHistory.length - 1] ?? 0;
     let grading: Grading;
     try {
-      grading = await grade({ transcript: result.transcript, outcome: result.outcome, finalMood, level, ...(options.nails ? { nails: options.nails } : {}), ...(options.clientId ? { clientId: options.clientId } : {}) });
+      grading = await grade({ transcript: result.transcript, outcome: result.outcome, finalMood, level, ...(options.nails ? { nails: options.nails } : {}), ...(options.clientId ? { clientId: options.clientId } : {}), ...(options.scenario ?? {}) });
     } catch (error) {
       showError(error);
       return;

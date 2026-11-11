@@ -73,6 +73,9 @@ const checks = [
       outcome: 'completed', finalMood: 50, level: 'some', nails: { description: 'stiletto shape, navy, 3 gems; 60% painted, polish on the skin around 3 nails', match: 30 } }, env, fetch),
     (b) => typeof b.review === 'string' && /nail|polish|manicure|colou?r|shape|stiletto|navy|gem/i.test(b.review) && !/terrible|awful|horrible|worst|disgusting|hate|ugly|stupid|useless/i.test(b.review),
     (b) => `review "${b.review}"`],
+  // Story 019: a scenario (walk-in during a rush). Greeted but not told the wait, the client asks about waiting.
+  ['client-turn scenario (walk-in, grace, some)', () => handleClientTurn({ transcript: [{ role: 'client', content: "Hi, I don't have an appointment. Can you squeeze me in? How long is the wait?" }, { role: 'player', content: 'Hello! Welcome to our salon.' }], phase: 'consultation', mood: 50, level: 'some', clientId: 'grace', scenarioId: 'walk-in-rush' }, env, fetch),
+    (b) => typeof b.reply === 'string' && /wait|how long|minutes|squeeze|time/i.test(b.reply), (b) => `"${b.reply}"`],
   // Story 006: a hard roster client (Victoria: rude/impatient) stays in character and clean.
   ['client-turn hard client (victoria, some)', () => handleClientTurn({ transcript: [{ role: 'client', content: "I'm in a hurry. Black stilettos, lots of sparkle. Can you do it in forty minutes or not?" }, { role: 'player', content: 'Yes, I can. Please sit here. Black with gems, right?' }], phase: 'consultation', mood: 35, level: 'some', clientId: 'victoria' }, env, fetch),
     (b) => typeof b.reply === 'string' && !/\b(fuck|shit|bitch|slut|retard)/i.test(b.reply),

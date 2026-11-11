@@ -1,0 +1,10 @@
+{
+  "id": "gift-card",
+  "name": { "en": "Gift card questions", "vi": "Hỏi về thẻ quà tặng" },
+  "tag": { "en": "🎁 Gift card: what does it cover?", "vi": "🎁 Thẻ quà tặng: được làm những gì?" },
+  "difficulty": "easy",
+  "eligible": { "difficulties": ["easy", "medium"] },
+  "occasion": "You have a $50 gift card for the salon.",
+  "constraints": "You are confused about what the gift card covers, whether extras cost more, and whether the tip is included. You need the stylist to explain the prices politely and clearly; you get uneasy if they are vague.",
+  "openingLine": "Hi! I got a gift card for $50. What can I get with it? Does it include the tip?"
+}
