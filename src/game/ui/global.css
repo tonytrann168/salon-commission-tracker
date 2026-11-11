@@ -1,3 +1,6 @@
 /* App-wide base styles, loaded at startup (main.ts). Form controls do not inherit the font by default. */
 html, body { font-family: system-ui, sans-serif; color: #3b2a33; }
 button, input, textarea { font: inherit; }
+
+/* Story 018: a short message over any screen (e.g. no connection). */
+.app-note { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 70; margin: 0; padding: 12px 14px; border-radius: 16px; background: #3b2a33; color: #fff; font: 600 15px/1.35 system-ui, sans-serif; box-shadow: 0 4px 16px rgba(59, 42, 51, 0.3); }

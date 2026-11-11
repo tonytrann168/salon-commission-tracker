@@ -1,5 +1,4 @@
-import { Application, Container, Graphics } from 'pixi.js';
-import { createPortrait } from './game/portraits/definitions';
+import type { SceneName, Stage } from './game/stage';
 import { createAppointment } from './game/appointment';
 import { createFetchTransport } from './game/client-turn-transport';
 import { createGradeTransport } from './game/grade-appointment-transport';
@@ -10,8 +9,6 @@ import { NAIL_ART_CONFIG } from './game/nail-art/design';
 import { applyAppointment, dailyChallenge, dailyDoneToday, liveStreak, rankUnlocking, stationPalette, unlockedDifficulties, upgradeEffects } from './game/progression';
 import { loadSave, writeSave } from './game/save';
 import { afterHello, localDay } from './game/bestie-memory';
-import { createShopScreen } from './game/ui/shop-screen';
-import { createProfileScreen } from './game/ui/profile-screen';
 import { celebrationsFor, createProgressPanel } from './game/ui/progress-panel';
 import { celebrate } from './game/ui/celebration';
 import { companionIdentity, loadCompanion } from './game/companion';
@@ -20,8 +17,7 @@ import { gainFriendship } from './game/ui/friendship';
 import { startTour } from './game/ui/tour';
 import { feedbackButton } from './game/ui/feedback-sheet';
 import { SCORING_CONFIG } from './game/scoring';
-import { createSalonScene } from './game/salon-scene';
-import { createTitleMenu, createTitleScreen } from './game/title-screen';
+import { createTitleMenu } from './game/ui/title-menu';
 import { createBestieTransport } from './game/bestie';
 import { createTranslateTransport } from './game/translate-transport';
 import { createTranslationCache } from './game/translation-cache';
@@ -40,7 +36,6 @@ import { createAudioEngine } from './game/audio';
 import { emitSound } from './game/sound-events';
 import type { SpeechHost } from './game/voice';
 import { createLearningPanel, createLevelChangePanel } from './game/ui/recap-screen';
-import { createChatPanel } from './game/ui/chat-panel';
 import { applyDocumentLanguage, getLanguage, t } from './game/i18n';
 import { createDebriefPanel } from './game/ui/bestie-panel';
 import { el } from './game/ui/dom';
@@ -60,34 +55,27 @@ async function boot(): Promise<void> {
   // Hosted preview only (VITE_INVITE_GATE=1, set by scripts/build-preview.mjs): ask for an invite code first.
   // Tester codes the owner lists in UNLOCK_ALL_CODES open every client difficulty; the server decides, each load.
   let unlockAll = false;
-  if (import.meta.env.VITE_INVITE_GATE === '1') {
+  // Story 018: offline the invite check can't run; the title opens and Start explains a connection is needed (the
+  // server still needs the cookie for every AI call).
+  if (import.meta.env.VITE_INVITE_GATE === '1' && navigator.onLine) {
     if (!(await getSession()).signedIn) await askForInvite(host);
     unlockAll = (await getSession()).unlockAll;
   }
 
-  const app = new Application();
-  await app.init({ resizeTo: host, background: 0xfff4f8, antialias: true, autoDensity: true, resolution: window.devicePixelRatio || 1 });
-  host.appendChild(app.canvas);
-
-  let buildScene: (width: number, height: number) => Container = createTitleScreen;
-  let teardownDom: () => void = () => undefined;
-
-  // Scenes are rebuilt on resize. Portraits live on their own layer so they survive redraws.
-  const sceneRoot = new Container();
-  const portraitLayer = new Container();
-  app.stage.addChild(sceneRoot, portraitLayer);
-
-  const draw = () => {
-    sceneRoot.removeChildren().forEach((old) => old.destroy({ children: true }));
-    sceneRoot.addChild(buildScene(app.screen.width, app.screen.height));
+  // Story 018: PixiJS and everything drawn with it load in the background; the HTML title menu shows at once.
+  const stageReady: Promise<Stage> = import('./game/stage').then((module) => module.createStage(appHost));
+  let scene: SceneName = 'title';
+  const showScene = (next: SceneName): void => {
+    scene = next;
+    void stageReady.then((stage) => stage.show(scene)).catch(() => undefined);
   };
+  let teardownDom: () => void = () => undefined;
 
   const showTitle = () => {
     teardownDom();
     // Story 013: the first open of the day is Mai's daily hello (a little friendship; a new level gets her card).
     gainFriendship((memory) => afterHello(memory, localDay()));
-    buildScene = createTitleScreen;
-    draw();
+    showScene('title');
     const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook, showShop, showProfile);
     teardownDom = () => menu.remove();
   };
@@ -99,13 +87,15 @@ async function boot(): Promise<void> {
   };
 
   /** Story 007: the shop and the profile. */
-  const showShop = () => {
+  const showShop = async () => {
+    const { createShopScreen } = await import('./game/ui/shop-screen');
     teardownDom();
     const screen = createShopScreen(host, { load: loadSave, save: writeSave, onBack: showTitle });
     teardownDom = () => screen.remove();
   };
 
-  const showProfile = () => {
+  const showProfile = async () => {
+    const { createProfileScreen } = await import('./game/ui/profile-screen');
     teardownDom();
     const screen = createProfileScreen(host, { save: loadSave(), today: localDay(), onBack: showTitle, onDressUp: () => showDressUp(showProfile) });
     teardownDom = () => screen.remove();
@@ -169,12 +159,15 @@ async function boot(): Promise<void> {
   /** Story 006: the clients still to come in a shift (empty outside a shift) and its size. */
   let shift: { queue: ClientPersona[]; total: number } = { queue: [], total: 0 };
   const SHIFT_SIZE = 3;
+  const NOTE_MS = 4000;
   /** Let the stars land before a celebration card covers them. */
   const CELEBRATE_DELAY_MS = 900;
 
   const startAppointment = () => {
     // Inside the Start tap: lets the client's voice play on iPhone (story 004).
     voice.unlock();
+    // Story 018: clients are AI, so offline the title explains instead of starting.
+    if (!navigator.onLine) return showNote(t('title.needsConnection'));
     // Story 013: the first time, meet your bestie (female or male, and a name) before anything else.
     if (!loadCompanion().chosen) return showMeet();
     if (getEnglishLevel() === null) showLevelPicker();
@@ -203,19 +196,7 @@ async function boot(): Promise<void> {
   const faceImage = (client: ClientPersona): Promise<string | null> => {
     const cached = faces.get(client.id);
     if (cached) return cached;
-    const drawn = (async () => {
-      const portrait = createPortrait(client.portraitId, FACE_PX, 'neutral');
-      // A clear square behind the face keeps every image the same size and centred.
-      const frame = new Container();
-      frame.addChild(new Graphics().rect(0, 0, FACE_PX, FACE_PX).fill({ color: 0xffffff, alpha: 0 }), portrait.view);
-      try {
-        return await app.renderer.extract.base64({ target: frame, resolution: 2 });
-      } catch {
-        return null;
-      } finally {
-        frame.destroy({ children: true });
-      }
-    })();
+    const drawn = stageReady.then((stage) => stage.faceImage(client.portraitId, FACE_PX)).catch(() => null);
     faces.set(client.id, drawn);
     return drawn;
   };
@@ -256,14 +237,21 @@ async function boot(): Promise<void> {
     else showClientPicker();
   };
 
-  const beginAppointment = (level: EnglishLevel, persona: ClientPersona, daily = false) => {
+  const beginAppointment = async (level: EnglishLevel, persona: ClientPersona, daily = false) => {
+    // Story 018: the appointment needs the PixiJS stage (usually loaded by now) and a connection.
+    let stage: Stage;
+    try {
+      stage = await stageReady;
+    } catch {
+      showNote(t('title.needsConnection'));
+      return;
+    }
     // Story 007: owned upgrades (a comfier chair starts clients happier; finer brush; better clean-up pen).
     const effects = upgradeEffects(loadSave());
     const client: ClientPersona = { ...persona, startingMood: Math.min(90, persona.startingMood + effects.startMood) };
     const shiftPosition = shift.total > 0 ? shift.total - shift.queue.length : 0;
     teardownDom();
-    buildScene = createSalonScene;
-    draw();
+    showScene('salon');
     // Story 005: what the client hears about her nails, and the finished result for the review and the stars.
     const nails: { note: string | undefined; finished: { description: string; match: number } | undefined } = { note: undefined, finished: undefined };
     const appointment = createAppointment({
@@ -273,9 +261,9 @@ async function boot(): Promise<void> {
       // Grading starts from the chat panel's onEnded, once the final line has finished revealing (story 002).
       onFinished: () => undefined,
     });
-    const panel = createChatPanel(host, appointment, {
+    const panel = stage.createChatPanel(host, appointment, {
       client,
-      layer: portraitLayer,
+      layer: stage.layer,
       level,
       helpLanguage: getHelpLanguage(),
       translations,
@@ -371,8 +359,20 @@ async function boot(): Promise<void> {
     }
   };
 
-  app.renderer.on('resize', draw);
+  /** A short message over the current screen (e.g. no connection). */
+  function showNote(text: string): void {
+    const note = el('p', 'app-note', text);
+    note.setAttribute('role', 'alert');
+    appHost.append(note);
+    window.setTimeout(() => note.remove(), NOTE_MS);
+  }
+
   showTitle();
+
+  // Story 018: installable app with an offline title (built files only; never /api). Production builds only.
+  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => void navigator.serviceWorker.register('/sw.js').catch(() => undefined));
+  }
 }
 
 void boot();

@@ -339,5 +339,6 @@
   "feedback.busy": "Cảm ơn em! Chờ một chút rồi gửi tiếp nha.",
   "feedback.failed": "Chưa gửi được. Em thử lại nha.",
   "station.handRight": "Tay phải (1/2). Bấm ✋ để đổi tay.",
-  "station.handLeft": "Tay trái (2/2). Bấm ✋ để đổi tay."
+  "station.handLeft": "Tay trái (2/2). Bấm ✋ để đổi tay.",
+  "title.needsConnection": "Cần có mạng để đón khách. Em kiểm tra Wi-Fi hoặc dữ liệu di động rồi bấm Bắt đầu lại nha."
 }

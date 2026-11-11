@@ -32,6 +32,7 @@ Listed in build order.
 | 015 | First-time onboarding with Mai | UI | Complete (review) | N/A |
 | 016 | Tester feedback button | Integration | Complete (review) | N/A |
 | 017 | Harder nail requests (art tools, both hands) | Feature | Complete (review) | N/A |
+| 018 | Installable app, offline title, fast first load | Integration | Complete (review + phone install check) | N/A |
 
 ## Backlog
 
