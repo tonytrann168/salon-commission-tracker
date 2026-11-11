@@ -1,6 +1,7 @@
 import { companionFrom, companionGrammar } from '../companion-core';
 import { readStored } from '../safe-storage';
 import { getHelpLanguage } from '../settings';
+import { clientGrammar } from '../types';
 import en from './en.json';
 import vi from './vi.json';
 
@@ -24,7 +25,7 @@ const PLACEHOLDER = /\{(\w+)\}/g;
  * "Anh/anh"), {maiShe}/{maiHer} (English she/her or he/his). Grammar exists in one language only, so these may appear
  * in just one table. {mai}, the companion's name, is filled too but must appear in both, like any placeholder.
  */
-export const GRAMMAR_PLACEHOLDERS: readonly string[] = ['self', 'selfLower', 'maiShe', 'maiHer'];
+export const GRAMMAR_PLACEHOLDERS: readonly string[] = ['self', 'selfLower', 'maiShe', 'maiHer', 'cShe', 'CShe', 'cHer'];
 
 /** The companion params for `t`, from the device's saved companion (Mai, female by default). */
 export function companionParams(): StringParams {
@@ -86,7 +87,10 @@ export function getLanguage(): Language {
 /** Interface text for `key` in `language` (the saved language by default). */
 export function t(key: StringKey, params?: StringParams, language: Language = getLanguage()): string {
   const template = TABLES[language][key];
-  return fillTemplate(template, /\{(mai|self|selfLower|maiShe|maiHer)\}/.test(template) ? { ...companionParams(), ...params } : params);
+  // Client grammar ({cShe}/{CShe}/{cHer}) defaults to "they" when the caller doesn't say who the client is.
+  const companion = /\{(mai|self|selfLower|maiShe|maiHer)\}/.test(template) ? companionParams() : {};
+  const client = /\{(cShe|CShe|cHer)\}/.test(template) ? clientGrammar() : {};
+  return fillTemplate(template, { ...client, ...companion, ...params });
 }
 
 /** Keep `<html lang>` in step with the interface language, so screen readers and fonts use the right voice and shaping. */

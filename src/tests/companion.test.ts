@@ -64,7 +64,11 @@ describe('gender and grammar', () => {
     for (const system of systems) {
       expect(system).toMatch(/You are Minh/);
       expect(system).toMatch(/call yourself "anh"/i);
-      expect(system).not.toMatch(/call yourself "chị"/i);
+      expect(system).toMatch(/refer to yourself as "anh" at least once/);
+      expect(system).toMatch(/anh thấy/);
+      // The male rule may say 'Never call yourself "chị"', but never tells him to.
+      expect(system).not.toMatch(/Call yourself "chị"/);
+      expect(system).toMatch(/Never call yourself "chị"/);
       expect(system).not.toMatch(/You are Mai/);
     }
     const { systems: female, fetchImpl: f2 } = capture();

@@ -1,6 +1,7 @@
 {
   "id": "grace",
   "name": "Grace",
+  "pronoun": "she",
   "difficulty": "easy",
   "types": [],
   "description": {

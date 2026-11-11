@@ -85,3 +85,18 @@ describe('difficulty in play', () => {
     expect(JSON.parse(sent).system[0].text).toContain('roleplaying Tom');
   });
 });
+
+describe('client pronouns (follow-up)', () => {
+  it('every client has a pronoun; English results text follows it, "they" when unknown', async () => {
+    const { t } = await import('../game/i18n');
+    const { clientGrammar } = await import('../game/types');
+    expect(getClient('tom')?.pronoun).toBe('he');
+    expect(getClient('dana')?.pronoun).toBe('she');
+    expect(t('results.fail.walked_out', clientGrammar(getClient('tom')?.pronoun), 'en')).toBe('He walked out. You can try again!');
+    expect(t('results.fail.walked_out', clientGrammar(getClient('dana')?.pronoun), 'en')).toBe('She walked out. You can try again!');
+    expect(t('results.fail.low_stars', {}, 'en')).toBe('Not their best visit. Try again!');
+    expect(t('station.doneMessage', { ...clientGrammar('he'), score: 90 }, 'en')).toBe('Nails done! They match his request: 90%.');
+    const good = { ...structuredClone(ROSTER[0]) } as Record<string, unknown>;
+    expect(() => parseClient({ ...good, pronoun: 'it' }, 'x.json')).toThrow(/"pronoun"/);
+  });
+});

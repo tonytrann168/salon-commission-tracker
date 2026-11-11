@@ -1,3 +1,5 @@
+import { clientGrammar } from '../types';
+import type { ClientPronoun } from '../types';
 import type { Container } from 'pixi.js';
 import { getLanguage, t } from '../i18n';
 import { NAIL_ART_CONFIG, emptyDesign } from '../nail-art/design';
@@ -31,6 +33,8 @@ export interface NailStationOptions {
   /** Story 007: the colours on offer (free ones plus bought shop polishes) and the tool sizes (shop upgrades). */
   palette?: PaletteColor[];
   tools?: StationTools;
+  /** The client's pronoun for the Done message ("her request" / "his request"). */
+  clientPronoun?: ClientPronoun;
 }
 
 export interface NailStation {
@@ -121,7 +125,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const doneButton = button(t('station.done'), 'station-done', () => {
     if (done) return;
     const result = finish();
-    say(t('station.doneMessage', { score: result.score }), true);
+    say(t('station.doneMessage', { ...clientGrammar(options.clientPronoun), score: result.score }), true);
     emitSound(result.moodDelta >= 0 ? 'moodUp' : 'moodDown');
     options.onDone(design, result);
   });

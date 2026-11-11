@@ -1,6 +1,7 @@
 {
   "id": "kim",
   "name": "Kim",
+  "pronoun": "she",
   "difficulty": "medium",
   "types": [
     "price-booking"

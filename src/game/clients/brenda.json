@@ -1,6 +1,7 @@
 {
   "id": "brenda",
   "name": "Brenda",
+  "pronoun": "she",
   "difficulty": "hard",
   "types": [
     "complaint-redo"

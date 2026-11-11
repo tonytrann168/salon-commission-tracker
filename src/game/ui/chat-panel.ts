@@ -177,6 +177,7 @@ export function createChatPanel(
         zone: zone.element,
         layer: portraits.layer,
         request: nailArt.request,
+        clientPronoun: portraits.client.pronoun,
         ...(nailArt.palette ? { palette: nailArt.palette } : {}),
         ...(nailArt.tools ? { tools: nailArt.tools } : {}),
         maiSide: () => (mai ? ((mai.element.dataset.side as 'left' | 'right' | undefined) ?? 'right') : null),

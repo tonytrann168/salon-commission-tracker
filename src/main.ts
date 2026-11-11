@@ -316,6 +316,7 @@ async function boot(): Promise<void> {
         createResultsScreen(container, {
           clientName: client.name,
           clientId: client.id,
+          clientPronoun: client.pronoun,
           result,
           level,
           config: SCORING_CONFIG,

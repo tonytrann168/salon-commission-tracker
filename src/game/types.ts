@@ -51,6 +51,8 @@ export interface ClientPersona {
   /** Story 005: what the client wants done to her nails, as data (compared with the finished design). */
   nailRequest?: NailRequest;
   /** Story 006: roster data. */
+  /** Story 006 follow-up: the client's pronoun for English interface text (Tom is "he"). */
+  pronoun: ClientPronoun;
   difficulty: Difficulty;
   /** The hard-client types this client covers (the brief's list). */
   types: ClientType[];
@@ -63,6 +65,13 @@ export interface ClientPersona {
 }
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
+export const CLIENT_PRONOUNS = ['she', 'he', 'they'] as const;
+export type ClientPronoun = (typeof CLIENT_PRONOUNS)[number];
+
+/** English interface grammar for a client: {cShe}/{CShe}/{cHer} in the string tables ("they" when unknown). */
+export function clientGrammar(pronoun: ClientPronoun = 'they'): { cShe: string; CShe: string; cHer: string } {
+  return pronoun === 'he' ? { cShe: 'he', CShe: 'He', cHer: 'his' } : pronoun === 'she' ? { cShe: 'she', CShe: 'She', cHer: 'her' } : { cShe: 'they', CShe: 'They', cHer: 'their' };
+}
 export type Difficulty = (typeof DIFFICULTIES)[number];
 /** The brief's hard-client types (story 006). */
 export const CLIENT_TYPES = ['picky', 'rude-impatient', 'complaint-redo', 'price-booking'] as const;

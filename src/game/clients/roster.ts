@@ -1,6 +1,6 @@
 import { NAIL_ART_CONFIG } from '../nail-art/design';
 import type { NailRequest } from '../nail-art/design';
-import { CLIENT_TYPES, DIFFICULTIES } from '../types';
+import { CLIENT_PRONOUNS, CLIENT_TYPES, DIFFICULTIES } from '../types';
 import type { ClientPersona, ClientType, Difficulty } from '../types';
 
 /**
@@ -44,8 +44,10 @@ export function parseClient(raw: unknown, file: string): ClientPersona {
     const gradient = ['no', 'ok', 'yes'].includes(n.gradient as string) ? (n.gradient as 'no' | 'ok' | 'yes') : fail('"nailRequest.gradient" must be no, ok or yes');
     nailRequest = { shapes, colors, gradient, gems: level(n.gems, 'gems'), stickers: level(n.stickers, 'stickers') };
   }
+  const pronoun = CLIENT_PRONOUNS.find((p) => p === raw.pronoun) ?? fail('"pronoun" must be she, he or they');
   return {
     id,
+    pronoun,
     name: text('name', 30),
     portraitId: text('portraitId', 30),
     difficulty,

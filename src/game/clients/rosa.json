@@ -1,6 +1,7 @@
 {
   "id": "rosa",
   "name": "Rosa",
+  "pronoun": "she",
   "difficulty": "easy",
   "types": [],
   "description": {

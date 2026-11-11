@@ -1,6 +1,7 @@
 {
   "id": "priya",
   "name": "Priya",
+  "pronoun": "she",
   "difficulty": "medium",
   "types": [
     "picky"

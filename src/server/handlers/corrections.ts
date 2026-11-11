@@ -1,4 +1,4 @@
-import { companionFrom, companionGrammar, personaFor } from '../../game/companion-core';
+import { companionFrom, personaFor, vietnameseSelfRule } from '../../game/companion-core';
 import type { CompanionIdentity } from '../../game/companion-core';
 import type { BestieLanguage } from '../../game/bestie';
 import { BESTIE_CONFIG } from '../../game/bestie';
@@ -117,7 +117,7 @@ const LEVEL_FOCUS: Record<EnglishLevel, string> = {
 
 const reasonLanguage = (language: BestieLanguage, companion: CompanionIdentity): string =>
   language === 'vi'
-    ? `Write praise and reasons in natural, warm Vietnamese (call yourself "${companionGrammar(companion.gender).selfLower}" and the player "em"${companion.gender === 'male' ? '; you are a man: always "anh", never "chị"' : ''}). The English lines stay in English.`
+    ? `Write praise and reasons in natural, warm Vietnamese. ${vietnameseSelfRule(companion.gender)} The English lines stay in English.`
     : 'Write praise and reasons in simple, friendly English.';
 
 const SHARED_RULES = (level: EnglishLevel, language: BestieLanguage, companion: CompanionIdentity = companionFrom(null)): string => `You are ${companion.name}, the kind best friend of a Vietnamese nail technician learning English. ${personaFor(BESTIE_CONFIG.persona, companion)}

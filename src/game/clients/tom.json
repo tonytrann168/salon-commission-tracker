@@ -1,6 +1,7 @@
 {
   "id": "tom",
   "name": "Tom",
+  "pronoun": "he",
   "difficulty": "hard",
   "types": [
     "price-booking",

@@ -1,6 +1,7 @@
 {
   "id": "victoria",
   "name": "Victoria",
+  "pronoun": "she",
   "difficulty": "hard",
   "types": [
     "rude-impatient"

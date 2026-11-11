@@ -1,3 +1,5 @@
+import { clientGrammar } from '../types';
+import type { ClientPronoun } from '../types';
 import { scoreAppointment } from '../scoring';
 import type { ScoreResult, ScoringConfig } from '../scoring';
 import { ENGLISH_KEYS, SKILL_KEYS, TurnError } from '../types';
@@ -29,6 +31,8 @@ export interface ResultsScreenOptions {
   helpLanguage: HelpLanguage;
   /** Story 006: which roster client (sent to grading). */
   clientId?: string;
+  /** The client's pronoun for English text ("She walked out" / "He walked out"); "they" when not given. */
+  clientPronoun?: ClientPronoun;
   /** Story 006: the Next client button's label during a shift ("Next client (2/3)", "Shift done!"). */
   nextLabel?: string;
   /** Story 005: the finished nails and their match (0-100), for the review and the stars. */
@@ -136,6 +140,7 @@ function translatableReview(text: string, translations: TranslationCache, full: 
 /** Mount the results screen into `container` and start grading. `destroy` ignores a grading that is still running. */
 export function createResultsScreen(container: HTMLElement, options: ResultsScreenOptions): { destroy: () => void } {
   const { clientName, result, level, config, grade, onNextClient, onBackToMenu, translations, helpLanguage, extras } = options;
+  const who = clientGrammar(options.clientPronoun);
   let destroyed = false;
 
   const show = (...nodes: HTMLElement[]): void => {
@@ -145,7 +150,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
   const showLoading = (): void => {
     const box = el('div', 'results-message');
     box.setAttribute('role', 'status');
-    box.append(el('p', '', t('results.writingReview', { name: clientName })), el('span', 'results-spinner'));
+    box.append(el('p', '', t('results.writingReview', { ...who, name: clientName })), el('span', 'results-spinner'));
     show(box);
   };
 
@@ -154,7 +159,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     box.setAttribute('role', 'alert');
     const unavailable = error instanceof TurnError && error.code === 'missing_api_key';
     box.append(
-      el('p', '', guardMessage(error) ?? (unavailable ? t('results.reviewUnavailable') : t('results.reviewTrouble', { name: clientName }))),
+      el('p', '', guardMessage(error) ?? (unavailable ? t('results.reviewUnavailable') : t('results.reviewTrouble', { ...who, name: clientName }))),
       button(t('common.tryAgain'), () => void run()),
       button(t('results.backToMenu'), onBackToMenu, true),
     );
@@ -171,9 +176,9 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     tip.append(el('span', '', `${t('results.tip')}: `), el('strong', '', t('results.tipAmount', { dollars: score.tip })));
 
     const notes: HTMLElement[] = [];
-    if (score.goalMet) notes.push(el('p', 'results-note good', t('results.goalMet')));
-    else if (grading.rebooked && !score.failed) notes.push(el('p', 'results-note', t('results.rebooked')));
-    score.failReasons.forEach((reason) => notes.push(el('p', 'results-note bad', t(`results.fail.${reason}`))));
+    if (score.goalMet) notes.push(el('p', 'results-note good', t('results.goalMet', who)));
+    else if (grading.rebooked && !score.failed) notes.push(el('p', 'results-note', t('results.rebooked', who)));
+    score.failReasons.forEach((reason) => notes.push(el('p', 'results-note bad', t(`results.fail.${reason}`, who))));
 
     const actions = el('div', 'results-actions');
     actions.append(button(options.nextLabel ?? t('results.nextClient'), onNextClient), button(t('results.backToMenu'), onBackToMenu, true));

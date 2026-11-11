@@ -21,3 +21,5 @@ Checked in the same run (script log, en and vi, "problems: none"):
 
 Unit tests (`tests/companion.test.ts`, 11): names (diacritics fine; Long, Điền, Edith not blocked; empty, too long, digits/emoji, offensive refused), defaults (Mai / Minh), grammar (anh/he/his vs chị/she/her), persona for a male companion, server prompts for bestie and corrections use the name and "anh" (never "chị") for a male companion, interface strings follow the saved companion, damaged saves, gender switch keeps a typed name, accessory unlock rules, the daily hello once a day, best skill remembered.
 `smoke:api` has a 13th check: a male companion answering in Vietnamese says "anh" and never "chị" (not run here: no key).
+
+**Re-shot after the overseer's review of 7924b1f:** the top-rank card's subtitle now speaks to the player as "em" ("Em lên bậc cao nhất rồi. Giỏi quá trời!"); every other player-facing "bạn" in vi.json became "em" ("bạn thân", best friend, stays). Run: problems none, nothing clipped.

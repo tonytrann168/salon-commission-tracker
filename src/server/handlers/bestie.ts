@@ -1,4 +1,4 @@
-import { companionFrom, companionGrammar, personaFor } from '../../game/companion-core';
+import { companionFrom, personaFor, vietnameseSelfRule } from '../../game/companion-core';
 import type { CompanionIdentity } from '../../game/companion-core';
 import { BESTIE_CONFIG } from '../../game/bestie';
 import type {
@@ -149,8 +149,7 @@ export function parseBestieOutput(request: BestieRequest, upstream: unknown, max
 /** How the bestie talks, by coaching language and the player's English level. */
 function voiceRules(language: BestieLanguage, level: EnglishLevel, companion: CompanionIdentity): string {
   if (language === 'vi') {
-    const self = companionGrammar(companion.gender).selfLower;
-    return `- Talk to the player in natural, warm Vietnamese, the way two friends talk in a Vietnamese nail salon. Call yourself "${self}" and the player "em".${companion.gender === 'male' ? ' You are a man: always "anh", never "chị".' : ''}
+    return `- Talk to the player in natural, warm Vietnamese, the way two friends talk in a Vietnamese nail salon. ${vietnameseSelfRule(companion.gender)}
 - Any English line you suggest the player say to a client stays in English, inside quotation marks, pitched to a ${level} English learner.`;
   }
   const simple = level === 'beginner' || level === 'some';

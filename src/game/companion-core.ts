@@ -79,6 +79,16 @@ export function companionGrammar(gender: CompanionGender): { self: string; selfL
   return gender === 'male' ? { self: 'Anh', selfLower: 'anh', she: 'he', She: 'He', her: 'his' } : { self: 'Chị', selfLower: 'chị', she: 'she', She: 'She', her: 'her' };
 }
 
+/**
+ * How the companion talks about themself in Vietnamese (overseer, 2026-11-10: the male companion must sound like a
+ * friendly "anh", as naturally as Mai says "chị"). Used by every Vietnamese bestie and corrections prompt.
+ */
+export function vietnameseSelfRule(gender: CompanionGender): string {
+  return gender === 'male'
+    ? 'You are a man. Call yourself "anh" and the player "em", like a friendly older brother at the salon. In every Vietnamese reply, refer to yourself as "anh" at least once (for example "anh thấy…", "anh thích…", "anh tin em làm được", "để anh chỉ em"), without forcing it into every sentence. Never call yourself "chị", "tôi" or "mình" alone.'
+    : 'Call yourself "chị" and the player "em", like a friendly older sister at the salon. Refer to yourself as "chị" naturally (for example "chị thấy…", "chị thích…", "chị tin em làm được"). Never call yourself "tôi".';
+}
+
 /** Fill a persona template ({name}, {She}, {she}, {her}) for this companion. */
 export function personaFor(template: string, companion: CompanionIdentity): string {
   const g = companionGrammar(companion.gender);
