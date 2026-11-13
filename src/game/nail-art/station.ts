@@ -162,6 +162,13 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
           points.push(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
         }
         g.poly(points).fill({ color: 0xffd54f }).stroke({ width: 0.3, color: 0xc9952e });
+      } else if (d.kind === 'hoa-mai') {
+        // Story 028: hoa mai, the Tết apricot blossom: five yellow petals, a red-orange heart.
+        for (let i = 0; i < 5; i++) {
+          const angle = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+          g.circle(x + Math.cos(angle) * r * 0.6, y + Math.sin(angle) * r * 0.6, r * 0.5).fill({ color: 0xffd23f }).stroke({ width: 0.25, color: 0xd99a00 });
+        }
+        g.circle(x, y, r * 0.32).fill({ color: 0xe8541c });
       } else {
         for (let i = 0; i < 5; i++) {
           const angle = (i * 2 * Math.PI) / 5;

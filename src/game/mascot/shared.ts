@@ -66,6 +66,11 @@ export function accessories(equipped: Equipped, anchors: Anchors): string {
     const [x, y] = anchors.neck;
     out += `<path d="M${x - 16} ${y} Q${x} ${y + 7} ${x + 16} ${y} l0 5 Q${x} ${y + 12} ${x - 16} ${y + 5} z" fill="#7ad7c3"/><path d="M${x + 8} ${y + 6} l4 12 l6 -2 l-3 -11 z" fill="#5fc4ae"/>`;
   }
+  // Story 028: áo dài-inspired placeholder (red, gold trim, a high mandarin collar) until the designer's art.
+  if (equipped.outfit === 'ao-dai-red') {
+    const [x, y] = anchors.neck;
+    out += `<path d="M${x - 24} ${y + 16} Q${x - 22} ${y + 2} ${x - 9} ${y} L${x + 9} ${y} Q${x + 22} ${y + 2} ${x + 24} ${y + 16} z" fill="#d1141f"/><rect x="${x - 9}" y="${y - 5}" width="18" height="7" rx="2" fill="#d1141f" stroke="#f2c230" stroke-width="1.4"/><path d="M${x + 1} ${y + 2} Q${x + 10} ${y + 4} ${x + 12} ${y + 14}" stroke="#f2c230" stroke-width="1.4" fill="none"/><circle cx="${x + 6}" cy="${y + 8}" r="1.6" fill="#f2c230"/>`;
+  }
   if (equipped.held === 'brush-gold') {
     const [x, y] = anchors.hand;
     out += `<path d="M${x} ${y} l10 -16" stroke="#e0b44a" stroke-width="3" stroke-linecap="round"/><path d="M${x + 9} ${y - 15} l4 -6 l3 2 l-3 6 z" fill="#ff5c9a"/>`;

@@ -14,7 +14,7 @@ import { createMaiBubble } from './mai-bubble';
 import { createPrepOverlay } from './pedicure-prep';
 import type { PrepOverlay } from './pedicure-prep';
 import { createNailStation, nailsNote } from './nail-station-panel';
-import type { NailDesign, NailRequest, PaletteColor } from '../nail-art/design';
+import type { NailDesign, NailRequest, PaletteColor, StickerKind } from '../nail-art/design';
 import type { StationTools } from '../nail-art/station';
 import type { MatchResult } from '../nail-art/match';
 import type { BestieLanguage, BestieTransport } from '../bestie';
@@ -75,6 +75,8 @@ export function createChatPanel(
     /** Story 005: the nail art station during the service phase (omitted when the client has no nail request). */
     nailArt?: {
       request: NailRequest;
+      /** Story 028: the sticker cycle for today. */
+      stickers?: StickerKind[];
       /** The client's game note about the nails (undefined before any work). */
       onNote: (note: string | undefined) => void;
       /** Finished (Done, or the appointment ended): the design and its match. */
@@ -183,6 +185,7 @@ export function createChatPanel(
         request: nailArt.request,
         clientPronoun: portraits.client.pronoun,
         ...(nailArt.palette ? { palette: nailArt.palette } : {}),
+        ...(nailArt.stickers ? { stickers: nailArt.stickers } : {}),
         ...(nailArt.tools ? { tools: nailArt.tools } : {}),
         maiSide: () => (mai ? ((mai.element.dataset.side as 'left' | 'right' | undefined) ?? 'right') : null),
         onChange: (design) => nailArt.onNote(nailsNote(design, null, nailArt.request.service)),

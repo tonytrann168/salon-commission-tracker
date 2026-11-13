@@ -8,7 +8,7 @@ import nailJson from '../config/nail-art.json';
  */
 
 export type NailShape = 'square' | 'round' | 'oval' | 'almond' | 'stiletto';
-export type StickerKind = 'heart' | 'star' | 'flower';
+export type StickerKind = 'heart' | 'star' | 'flower' | 'hoa-mai';
 export type DecorationLevel = 'none' | 'few' | 'lots';
 
 export interface PaletteColor {
@@ -156,7 +156,7 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
     ),
     palette: parsedPalette,
     stickers: (Array.isArray(raw.stickers) ? raw.stickers : fail('"stickers" must be a list')).map((kind, index) =>
-      ['heart', 'star', 'flower'].includes(kind as string) ? (kind as StickerKind) : fail(`"stickers[${index}]" is not a sticker`),
+      ['heart', 'star', 'flower', 'hoa-mai'].includes(kind as string) ? (kind as StickerKind) : fail(`"stickers[${index}]" is not a sticker`),
     ),
     grid: { cols: num(grid.cols, 'grid.cols', 2, 20), rows: num(grid.rows, 'grid.rows', 2, 30) },
     hand,

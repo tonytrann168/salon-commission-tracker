@@ -485,5 +485,13 @@
   "companion.youngerNote": "{name} says “em” and calls you “chị” or “anh”",
   "companion.titleQuestion": "Should {name} call you chị or anh?",
   "companion.titleChi": "Chị",
-  "companion.titleAnh": "Anh"
+  "companion.titleAnh": "Anh",
+  "station.sticker.hoa-mai": "🌼 Hoa mai",
+  "unlock.gift": "A free gift from a season (Tết lì xì)",
+  "tet.envelope": "🧧 Lì xì from {mai}!",
+  "tet.open": "Open",
+  "tet.later": "Later",
+  "tet.wish": "Happy Lunar New Year! Wishing you lots of happy clients and big tips this year!",
+  "tet.got": "+{tips} tips in your wallet. See you again tomorrow!",
+  "tet.gotOutfit": "+{tips} tips, and a red áo dài for {mai} to wear (Dress-up). See you tomorrow!"
 }

@@ -16,3 +16,6 @@
 .account-nudge { display: flex; flex-direction: column; gap: 6px; }
 .account-nudge .feedback-actions .chat-button { min-height: 40px; }
 html[data-contrast='high'] .account-link { color: #6b0f3c; }
+/* Story 028: the Tết lì xì card (red envelope colours). */
+.season-gift { background: #fff1ec; border: 2px solid #d1141f; }
+.season-gift > strong { color: #b3101a; }

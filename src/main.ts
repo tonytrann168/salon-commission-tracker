@@ -56,6 +56,8 @@ import { accountNudge, showSyncOutcome } from './game/ui/account-panel';
 import { isBackedUp } from './game/backup';
 import { onStoredWrite, readStored, writeStored } from './game/safe-storage';
 import { CORNER_SEEN_KEY, shouldCue } from './game/corner';
+import { SEASON_KEY, activeSeason, giftDue, openGift, parseSeasonState, seasonOverride, seasonPalette, seasonStickers } from './game/seasons';
+import type { Season } from './game/seasons';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('app');
@@ -141,6 +143,14 @@ async function boot(): Promise<void> {
     const account = getAccount();
     const nudge = account ? accountNudge(host, account, loadSave().appointments) : null;
     if (nudge) menu.prepend(nudge);
+    // Story 028: during a season, the companion's daily gift (Tết: a lì xì envelope of in-game tips; free).
+    const season = activeSeason(localDay(), seasonOverride());
+    const seasonState = parseSeasonState(readStored(SEASON_KEY));
+    if (season && giftDue(seasonState, season, localDay())) menu.prepend(seasonGiftCard(season));
+    // Story 027: the "tap me" cue appears only once the companion is drawn (the menu shows before PixiJS loads).
+    void stageReady
+      .then(() => requestAnimationFrame(() => requestAnimationFrame(() => menu.querySelector('.companion-cue')?.classList.add('ready'))))
+      .catch(() => undefined);
     teardownDom = () => menu.remove();
   };
 
@@ -366,7 +376,9 @@ async function boot(): Promise<void> {
         ? {
             nailArt: {
               request: client.nailRequest,
-              palette: stationPalette(NAIL_ART_CONFIG.palette, loadSave()),
+              // Story 028: seasonal polishes and stickers only while their season runs.
+              palette: seasonPalette(stationPalette(NAIL_ART_CONFIG.palette, loadSave()), activeSeason(localDay(), seasonOverride())),
+              stickers: seasonStickers(NAIL_ART_CONFIG.stickers, activeSeason(localDay(), seasonOverride())),
               tools: { brushRadius: NAIL_ART_CONFIG.brushRadius * effects.brushScale, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius * effects.cleanupScale },
               onNote: (note: string | undefined) => {
                 nails.note = note;
@@ -456,6 +468,32 @@ async function boot(): Promise<void> {
       return panel;
     }
   };
+
+  /** Story 028: the season's daily gift card on the title. Opening it adds tips (and the outfit the first time). */
+  function seasonGiftCard(season: Season): HTMLElement {
+    const card = el('div', 'bestie-bubble account-nudge season-gift');
+    card.setAttribute('role', 'status');
+    const line = el('p', '', t('tet.wish'));
+    const later = el('button', 'chat-button secondary', t('tet.later'));
+    later.type = 'button';
+    later.addEventListener('click', () => card.remove());
+    const open = el('button', 'chat-button', t('tet.open'));
+    open.type = 'button';
+    open.addEventListener('click', () => {
+      const result = openGift(loadSave(), parseSeasonState(readStored(SEASON_KEY)), season, localDay());
+      actions.remove();
+      if (!result) return card.remove();
+      writeSave(result.save);
+      writeStored(SEASON_KEY, JSON.stringify(result.state));
+      emitSound('moodUp');
+      line.textContent = t(result.outfit ? 'tet.gotOutfit' : 'tet.got', { tips: result.tips });
+      window.setTimeout(() => card.isConnected && card.remove(), 6000);
+    });
+    const actions = el('div', 'feedback-actions');
+    actions.append(later, open);
+    card.append(el('strong', '', t('tet.envelope')), line, actions);
+    return card;
+  }
 
   /** A short message over the current screen (e.g. no connection). */
   function showNote(text: string): void {

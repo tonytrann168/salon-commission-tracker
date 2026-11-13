@@ -1,0 +1,17 @@
+{
+  "seasons": [
+    {
+      "id": "tet",
+      "name": { "en": "Tết · Lunar New Year", "vi": "Tết Nguyên Đán" },
+      "windows": [
+        { "from": "2027-01-30", "to": "2027-02-20" },
+        { "from": "2028-01-19", "to": "2028-02-09" },
+        { "from": "2029-02-06", "to": "2029-02-27" }
+      ],
+      "polishes": ["tet-red", "tet-gold"],
+      "stickers": ["hoa-mai"],
+      "outfit": "ao-dai-red",
+      "dailyGift": { "tips": 8 }
+    }
+  ]
+}

@@ -119,6 +119,16 @@
       },
       "free": true,
       "unlock": "phrasebook-20"
+    },
+    {
+      "id": "ao-dai-red",
+      "slot": "outfit",
+      "name": {
+        "en": "Red áo dài (Tết)",
+        "vi": "Áo dài đỏ (Tết)"
+      },
+      "free": true,
+      "unlock": "gift"
     }
   ],
   "equipped": {},

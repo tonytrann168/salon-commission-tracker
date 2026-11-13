@@ -92,11 +92,13 @@ export interface UnlockFacts {
   fiveStars: boolean;
   /** Best daily streak reached (from the streak badges) or the live one. */
   streak: number;
+  /** Story 028: gifted items (a season's outfit) are worn once they are in the save's owned list. */
+  owned: readonly string[];
 }
 
 export function unlockFacts(memory: BestieMemory = loadMemory(), save: ProgressSave = loadSave(), phrases: number = loadPhrasebook().length): UnlockFacts {
   const badgeStreak = save.badges.includes('streak-7') ? 7 : save.badges.includes('streak-3') ? 3 : 0;
-  return { friendshipLevel: bestieLevel(memory.xp), phrases, fiveStars: save.badges.includes('five-stars'), streak: Math.max(badgeStreak, save.streak) };
+  return { friendshipLevel: bestieLevel(memory.xp), phrases, fiveStars: save.badges.includes('five-stars'), streak: Math.max(badgeStreak, save.streak), owned: save.owned };
 }
 
 /** Is this accessory's unlock rule met? Rules: start, bestie-level-N, first-five-stars, phrasebook-N, streak-N. */
@@ -104,6 +106,7 @@ export function isUnlocked(accessory: Accessory, facts: UnlockFacts): boolean {
   const rule = accessory.unlock;
   if (rule === 'start') return true;
   if (rule === 'first-five-stars') return facts.fiveStars;
+  if (rule === 'gift') return facts.owned.includes(accessory.id);
   const match = /^(bestie-level|phrasebook|streak)-(\d+)$/.exec(rule);
   if (!match) return false;
   const n = Number(match[2]);

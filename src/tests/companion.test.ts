@@ -170,7 +170,7 @@ describe('the companion on the device', () => {
 
   it('accessories unlock by playing; a locked one cannot be worn', () => {
     const find = (id: string) => MASCOT_CONFIG.accessories.find((a) => a.id === id)!;
-    const fresh = { friendshipLevel: 1, phrases: 0, fiveStars: false, streak: 0 };
+    const fresh = { friendshipLevel: 1, phrases: 0, fiveStars: false, streak: 0, owned: [] as string[] };
     expect(isUnlocked(find('bow-pink'), fresh)).toBe(true);
     expect(isUnlocked(find('glasses-round'), fresh)).toBe(false);
     expect(isUnlocked(find('glasses-round'), { ...fresh, friendshipLevel: 2 })).toBe(true);

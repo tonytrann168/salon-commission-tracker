@@ -15,7 +15,9 @@
     { "id": "sky-blue", "hex": "#8ec5ef", "shop": true, "name": { "en": "Sky blue", "vi": "Xanh da trời" } },
     { "id": "burgundy", "hex": "#7a1f3d", "shop": true, "name": { "en": "Burgundy", "vi": "Đỏ rượu vang" } },
     { "id": "chrome", "hex": "#c5cad3", "shop": true, "name": { "en": "Chrome", "vi": "Tráng gương" } },
-    { "id": "gold-shimmer", "hex": "#d8b25a", "shop": true, "name": { "en": "Gold shimmer", "vi": "Nhũ vàng" } }
+    { "id": "gold-shimmer", "hex": "#d8b25a", "shop": true, "name": { "en": "Gold shimmer", "vi": "Nhũ vàng" } },
+    { "id": "tet-red", "hex": "#d1141f", "name": { "en": "Lucky red (Tết)", "vi": "Đỏ may mắn (Tết)" } },
+    { "id": "tet-gold", "hex": "#e3b21c", "name": { "en": "Lucky gold (Tết)", "vi": "Vàng may mắn (Tết)" } }
   ],
   "stickers": ["heart", "star", "flower"],
   "grid": { "cols": 6, "rows": 10 },

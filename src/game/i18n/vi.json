@@ -485,5 +485,13 @@
   "companion.youngerNote": "{name} xưng “em”, gọi là “chị” hoặc “anh”",
   "companion.titleQuestion": "{name} nên gọi bạn là chị hay anh?",
   "companion.titleChi": "Chị",
-  "companion.titleAnh": "Anh"
+  "companion.titleAnh": "Anh",
+  "station.sticker.hoa-mai": "🌼 Hoa mai",
+  "unlock.gift": "Quà miễn phí theo mùa (lì xì Tết)",
+  "tet.envelope": "🧧 {mai} lì xì nè!",
+  "tet.open": "Mở",
+  "tet.later": "Để sau",
+  "tet.wish": "Chúc mừng năm mới! {Self} chúc {you} năm nay đông khách, tip thật nhiều nha!",
+  "tet.got": "+{tips} tiền tip vào ví của {you}. Ngày mai {self} lì xì tiếp nha!",
+  "tet.gotOutfit": "+{tips} tiền tip, và áo dài đỏ cho {mai} mặc (Thay đồ). Ngày mai {self} lì xì tiếp nha!"
 }

@@ -33,6 +33,8 @@ export interface NailStationOptions {
   onDone: (design: NailDesign, result: MatchResult) => void;
   /** Story 007: the colours on offer (free ones plus bought shop polishes) and the tool sizes (shop upgrades). */
   palette?: PaletteColor[];
+  /** Story 028: the sticker cycle (seasonal stickers while their season runs). */
+  stickers?: StickerKind[];
   tools?: StationTools;
   /** The client's pronoun for the Done message ("her request" / "his request"). */
   clientPronoun?: ClientPronoun;
@@ -77,7 +79,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
   view.container.visible = false;
   let design = emptyDesign(SHAPES[1] ?? 'round', nails);
   let tool: StationTool = 'polish';
-  let sticker: StickerKind = NAIL_ART_CONFIG.stickers[0] ?? 'heart';
+  const stickerKinds = options.stickers ?? NAIL_ART_CONFIG.stickers;
+  let sticker: StickerKind = stickerKinds[0] ?? 'heart';
   let open = false;
   let done = false;
   const lang = getLanguage();
@@ -145,7 +148,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     sticker: button(t(`station.sticker.${sticker}`), 'station-tool', () => {
       // Tapping Sticker again cycles heart → star → flower.
       if (tool === 'sticker') {
-        const kinds = NAIL_ART_CONFIG.stickers;
+        const kinds = stickerKinds;
         sticker = kinds[(kinds.indexOf(sticker) + 1) % kinds.length] ?? sticker;
         toolButtons.sticker.innerHTML = t(`station.sticker.${sticker}`);
       }

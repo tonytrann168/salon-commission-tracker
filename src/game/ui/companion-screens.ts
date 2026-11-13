@@ -182,6 +182,7 @@ export function createCompanionSettings(onDressUp: () => void, onChange: () => v
 export function unlockText(accessory: Accessory): string {
   const rule = accessory.unlock;
   if (rule === 'first-five-stars') return t('unlock.fiveStars');
+  if (rule === 'gift') return t('unlock.gift');
   const match = /^(bestie-level|phrasebook|streak)-(\d+)$/.exec(rule);
   if (!match) return t('unlock.start');
   const n = Number(match[2]);
