@@ -1,0 +1,37 @@
+{
+  "id": "jake",
+  "name": "Jake",
+  "pronoun": "he",
+  "difficulty": "easy",
+  "types": [],
+  "description": {
+    "en": "First manicure ever. A bit nervous, very polite.",
+    "vi": "Lần đầu làm móng. Hơi ngại, rất lịch sự."
+  },
+  "look": {
+    "skin": "#e8b896",
+    "hair": "#2f2a2a",
+    "accent": "#3a7bd5",
+    "hairStyle": "short"
+  },
+  "wants": "His first manicure: his girlfriend gave him a gift card. He wants short, clean, square nails with clear or nude polish, nothing shiny. He doesn't know what to ask for, so he likes simple explanations.",
+  "personality": "Friendly, a little awkward and nervous. He laughs at himself, asks what each step is, and thanks the stylist a lot. He relaxes when the stylist explains things simply.",
+  "startingMood": 60,
+  "moodSensitivity": {
+    "up": 1.1,
+    "down": 0.9
+  },
+  "openingLine": "Hi! Um, this is my first manicure ever. My girlfriend says I need one. Is that okay?",
+  "nailRequest": {
+    "shapes": [
+      "square"
+    ],
+    "colors": [
+      "nude"
+    ],
+    "gradient": "no",
+    "gems": "none",
+    "stickers": "none"
+  },
+  "portraitId": "jake"
+}

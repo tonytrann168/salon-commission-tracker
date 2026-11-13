@@ -28,6 +28,39 @@
         "Microsoft David",
         "Fred"
       ]
+    },
+    "jake": {
+      "pitch": 0.95,
+      "preferredVoices": [
+        "Daniel",
+        "Alex",
+        "Google UK English Male",
+        "Microsoft Guy",
+        "Microsoft David",
+        "Fred"
+      ]
+    },
+    "marcus": {
+      "pitch": 0.85,
+      "preferredVoices": [
+        "Daniel",
+        "Alex",
+        "Google UK English Male",
+        "Microsoft Guy",
+        "Microsoft David",
+        "Fred"
+      ]
+    },
+    "derek": {
+      "pitch": 0.88,
+      "preferredVoices": [
+        "Daniel",
+        "Alex",
+        "Google UK English Male",
+        "Microsoft Guy",
+        "Microsoft David",
+        "Fred"
+      ]
     }
   },
   "defaultClient": {

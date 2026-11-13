@@ -100,3 +100,20 @@ describe('client pronouns (follow-up)', () => {
     expect(() => parseClient({ ...good, pronoun: 'it' }, 'x.json')).toThrow(/"pronoun"/);
   });
 });
+
+describe('roster expansion (story 022)', () => {
+  it('has 15 clients, five per difficulty, with at least three men and the new kinds of client', () => {
+    expect(ROSTER).toHaveLength(15);
+    for (const difficulty of DIFFICULTIES) expect(clientsByDifficulty(difficulty), difficulty).toHaveLength(5);
+    expect(ROSTER.filter((c) => c.pronoun === 'he').map((c) => c.id).sort()).toEqual(['derek', 'jake', 'marcus', 'tom']);
+    expect(getClient('lily')?.personality).toMatch(/Mom/);
+    expect(getClient('ana')?.personality).toMatch(/simple sentences/);
+    expect(getClient('hana')).toMatchObject({ difficulty: 'hard', types: ['picky'] });
+  });
+
+  it('the new clients reach the AI with their own persona', () => {
+    const prompt = buildSystemPrompt(getClient('hana')!, 'some');
+    expect(prompt).toContain('roleplaying Hana');
+    expect(prompt).toContain('Your nails: you want oval shape, red');
+  });
+});

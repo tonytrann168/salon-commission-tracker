@@ -1,11 +1,28 @@
 {
   "id": "elderly-regular",
-  "name": { "en": "A gentle regular", "vi": "Khách quen lớn tuổi" },
-  "tag": { "en": "🌸 Gentle regular: slow and careful", "vi": "🌸 Khách quen lớn tuổi: nhẹ tay, từ tốn" },
+  "name": {
+    "en": "A gentle regular",
+    "vi": "Khách quen lớn tuổi"
+  },
+  "tag": {
+    "en": "🌸 Gentle regular: slow and careful",
+    "vi": "🌸 Khách quen lớn tuổi: nhẹ tay, từ tốn"
+  },
   "difficulty": "easy",
-  "eligible": { "clients": ["grace"] },
+  "eligible": {
+    "clients": [
+      "grace"
+    ]
+  },
   "occasion": "You are in your seventies and a regular here.",
   "constraints": "You speak slowly, in short sentences. Your hands are a little sore today, so you ask for a gentle touch, and you want your nails short and round. You really appreciate patience and a kind word.",
   "openingLine": "Hello, dear. My hands are a bit sore today, so please be gentle. Short and round, like always.",
-  "nailRequest": { "shapes": ["round"], "gems": "none", "stickers": "none", "gradient": "no" }
+  "nailRequest": {
+    "shapes": [
+      "round"
+    ],
+    "gems": "none",
+    "stickers": "none",
+    "gradient": "no"
+  }
 }

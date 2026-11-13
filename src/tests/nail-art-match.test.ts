@@ -190,7 +190,9 @@ describe('harder nail requests (story 017)', async () => {
       const r = getClient(id)!.nailRequest!;
       return r.gradient === 'yes' || r.gems !== 'none' || r.stickers !== 'none';
     };
-    for (const client of ROSTER.filter((c) => c.difficulty !== 'easy' && c.id !== 'dana' && c.id !== 'tom')) expect(usesArt(client.id), client.id).toBe(true);
+    // Story 017's art clients; story 022 added plain-nail clients on purpose (men's manicures, a nail tech who judges the basics).
+    for (const id of ['priya', 'kim', 'brenda', 'victoria']) expect(usesArt(id), id).toBe(true);
+    for (const difficulty of ['medium', 'hard'] as const) expect(ROSTER.some((c) => c.difficulty === difficulty && usesArt(c.id)), difficulty).toBe(true);
     expect(ROSTER.filter((c) => c.nailRequest?.hands === 2).map((c) => c.id).sort()).toEqual(['brenda', 'tom', 'victoria']);
     expect(ROSTER.filter((c) => c.nailRequest?.hands === 2).every((c) => c.difficulty === 'hard')).toBe(true);
     expect(getClient('victoria')!.personality).toMatch(/fast/);

@@ -1,0 +1,37 @@
+{
+  "id": "ana",
+  "name": "Ana",
+  "pronoun": "she",
+  "difficulty": "easy",
+  "types": [],
+  "description": {
+    "en": "New in the US. Speaks simple English, very patient.",
+    "vi": "Mới sang Mỹ. Nói tiếng Anh đơn giản, rất kiên nhẫn."
+  },
+  "look": {
+    "skin": "#c98e6a",
+    "hair": "#3b2418",
+    "accent": "#2bb3a3"
+  },
+  "wants": "Short round nails in coral or red. She is still learning English, so she likes short, slow sentences and sometimes asks the stylist to repeat.",
+  "personality": "Warm and patient. She came to the US from Brazil last year and is still learning English. She speaks in short, simple sentences with small mistakes (never mock them), asks 'Sorry, again please?' when she doesn't understand, and is very happy when the stylist speaks slowly and kindly.",
+  "startingMood": 62,
+  "moodSensitivity": {
+    "up": 1.1,
+    "down": 0.8
+  },
+  "openingLine": "Hello! Sorry, my English is little. I want nails... short, round, red color. Is possible?",
+  "nailRequest": {
+    "shapes": [
+      "round"
+    ],
+    "colors": [
+      "red",
+      "coral"
+    ],
+    "gradient": "no",
+    "gems": "none",
+    "stickers": "none"
+  },
+  "portraitId": "ana"
+}

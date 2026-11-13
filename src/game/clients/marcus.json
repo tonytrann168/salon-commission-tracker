@@ -1,0 +1,39 @@
+{
+  "id": "marcus",
+  "name": "Marcus",
+  "pronoun": "he",
+  "difficulty": "medium",
+  "types": [
+    "price-booking"
+  ],
+  "description": {
+    "en": "Businessman on a lunch break. Wants it done right, and fast.",
+    "vi": "Doanh nhân giờ nghỉ trưa. Muốn làm kỹ, và nhanh."
+  },
+  "look": {
+    "skin": "#7a4f36",
+    "hair": "#1d1513",
+    "accent": "#4b5563",
+    "hairStyle": "short"
+  },
+  "wants": "A neat men's manicure before a big meeting: short square nails, clear or nude, buffed. He has 40 minutes and asks how long it takes and what it costs before starting, and wants to book a regular time every two weeks.",
+  "personality": "Polite, direct and busy. He checks the time, likes clear answers about time and price, and appreciates a professional stylist. He gets short if answers are vague, and warm when the stylist is efficient.",
+  "startingMood": 50,
+  "moodSensitivity": {
+    "up": 1.0,
+    "down": 1.1
+  },
+  "openingLine": "Hi there. I have a meeting at two. Can you do a quick, clean manicure in forty minutes? How much is it?",
+  "nailRequest": {
+    "shapes": [
+      "square"
+    ],
+    "colors": [
+      "nude"
+    ],
+    "gradient": "no",
+    "gems": "none",
+    "stickers": "none"
+  },
+  "portraitId": "marcus"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "hana",
+  "name": "Hana",
+  "pronoun": "she",
+  "difficulty": "hard",
+  "types": [
+    "picky"
+  ],
+  "description": {
+    "en": "A nail tech from another salon. Notices every detail.",
+    "vi": "Thợ nail tiệm khác. Để ý từng chi tiết."
+  },
+  "look": {
+    "skin": "#f0caa8",
+    "hair": "#111111",
+    "accent": "#ef4444"
+  },
+  "wants": "Short oval nails in red with a perfect, thin line at the cuticle and no polish on the skin. She is a nail tech herself and asks which base coat and top coat you use, and how you prep the cuticles.",
+  "personality": "Knowledgeable and picky, but fair. She works at another salon and watches the stylist's technique closely, asks professional questions (prep, base coat, top coat, cure time), and points out any flooding at the cuticle. She respects a stylist who answers honestly and carefully, and becomes friendly when she sees good work.",
+  "startingMood": 45,
+  "moodSensitivity": {
+    "up": 0.9,
+    "down": 1.3
+  },
+  "openingLine": "Hi. I'm a nail tech too, so I'm a little picky. Red, short oval. What base coat do you use?",
+  "nailRequest": {
+    "shapes": [
+      "oval"
+    ],
+    "colors": [
+      "red"
+    ],
+    "gradient": "no",
+    "gems": "none",
+    "stickers": "none"
+  },
+  "portraitId": "hana"
+}
