@@ -464,5 +464,17 @@
   "account.keepWarning": "The other one is replaced.",
   "account.nudge": "{name} here! Make a free account so you never lose your progress, or me.",
   "account.nudgeGo": "Make an account",
-  "account.nudgeLater": "Later"
+  "account.nudgeLater": "Later",
+  "prep.soakTitle": "🛁 Soak",
+  "prep.soakNote": "Warm water first. Tap Start.",
+  "prep.soaking": "Soaking… relax!",
+  "prep.start": "Start",
+  "prep.scrubTitle": "🫧 Scrub",
+  "prep.scrubNote": "Swipe back and forth over the feet.",
+  "prep.scrubTap": "Scrub",
+  "prep.skip": "Skip",
+  "corner.cue": "Tap me! 💕",
+  "backup.qrNote": "Or scan this with the other phone's camera, then paste the text into \"Restore from code\".",
+  "backup.qrLabel": "QR code of your backup code",
+  "backup.qrTooLong": "This backup is too big for a QR code. Use Copy or Save as file instead."
 }

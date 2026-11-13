@@ -11,6 +11,8 @@ import type { TranslationCache } from '../translation-cache';
 import { t } from '../i18n';
 import { el } from './dom';
 import { createMaiBubble } from './mai-bubble';
+import { createPrepOverlay } from './pedicure-prep';
+import type { PrepOverlay } from './pedicure-prep';
 import { createNailStation, nailsNote } from './nail-station-panel';
 import type { NailDesign, NailRequest, PaletteColor } from '../nail-art/design';
 import type { StationTools } from '../nail-art/station';
@@ -218,6 +220,21 @@ export function createChatPanel(
       mai.element.classList.add('over-station');
     } else mai.element.classList.remove('over-station');
   }
+  let prep: PrepOverlay | null = null;
+  function startPrep(): void {
+    if (!station || !nailArt) return;
+    root.classList.add('prepping');
+    prep = createPrepOverlay({
+      difficulty: portraits.client.difficulty,
+      onFinish: (moodDelta) => {
+        prep = null;
+        root.classList.remove('prepping');
+        if (moodDelta !== 0) appointment.adjustMood(moodDelta);
+        requestAnimationFrame(() => station.relayout());
+      },
+    });
+    zone.element.append(prep.element);
+  }
   stationToggle.addEventListener('click', () => setStationOpen(!stationOpen));
   if (station) {
     zone.element.append(station.touch);
@@ -401,8 +418,13 @@ export function createChatPanel(
       if (working && !stationOpened) {
         stationOpened = true;
         setStationOpen(true);
+        // Story 026: a pedicure starts with soak & scrub over the foot, then the paint tools.
+        if (nailArt.request.service === 'pedicure') startPrep();
       }
       if (snapshot.status === 'finished') {
+        prep?.destroy();
+        prep = null;
+        root.classList.remove('prepping');
         if (stationOpen) setStationOpen(false);
         // Ended before Done: score what was done (no mood change: the appointment is over).
         if (stationOpened && !station.done) nailArt.onDone(station.design(), station.finish());
@@ -557,6 +579,7 @@ export function createChatPanel(
   return {
     setBestieExpression: zone.setBestieExpression,
     destroy() {
+      prep?.destroy();
       station?.destroy();
       mai?.destroy();
       follower.destroy();

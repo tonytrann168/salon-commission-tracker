@@ -1,5 +1,5 @@
 -- Story 025: one cloud save per player. Run in the Supabase SQL editor (or `supabase db push`).
--- Players sign in with an email code (Supabase Auth). Row-level security: each player reads and writes only their row.
+-- Players sign in with email + password (Supabase Auth; 6-digit codes confirm the email and reset the password). Row-level security: each player reads and writes only their row.
 
 create table if not exists public.saves (
   user_id uuid primary key references auth.users (id) on delete cascade,

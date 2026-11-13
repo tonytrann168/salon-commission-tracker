@@ -464,5 +464,17 @@
   "account.keepWarning": "Cái còn lại sẽ bị thay thế.",
   "account.nudge": "{name} đây! Tạo tài khoản miễn phí để không bao giờ mất tiến độ, hay mất {selfLower} nha.",
   "account.nudgeGo": "Tạo tài khoản",
-  "account.nudgeLater": "Để sau"
+  "account.nudgeLater": "Để sau",
+  "prep.soakTitle": "🛁 Ngâm chân",
+  "prep.soakNote": "Ngâm nước ấm trước. Bấm Bắt đầu.",
+  "prep.soaking": "Đang ngâm… thư giãn nha!",
+  "prep.start": "Bắt đầu",
+  "prep.scrubTitle": "🫧 Chà chân",
+  "prep.scrubNote": "Vuốt qua lại trên bàn chân.",
+  "prep.scrubTap": "Chà",
+  "prep.skip": "Bỏ qua",
+  "corner.cue": "Chạm vào nè! 💕",
+  "backup.qrNote": "Hoặc dùng camera của điện thoại kia quét mã này, rồi dán chữ vào \"Khôi phục từ mã\".",
+  "backup.qrLabel": "Mã QR của mã sao lưu",
+  "backup.qrTooLong": "Bản sao lưu này quá lớn để làm mã QR. Hãy dùng Sao chép hoặc Lưu thành tệp."
 }
