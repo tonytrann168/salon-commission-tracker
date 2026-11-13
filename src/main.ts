@@ -51,6 +51,10 @@ import type { ScoreResult } from './game/scoring';
 import './game/ui/global.css';
 import './game/ui/comfort.css';
 import { applyComfort } from './game/comfort';
+import { getAccount, useCloudForTesting } from './game/account/account';
+import { accountNudge, showSyncOutcome } from './game/ui/account-panel';
+import { isBackedUp } from './game/backup';
+import { onStoredWrite } from './game/safe-storage';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('app');
@@ -59,6 +63,15 @@ async function boot(): Promise<void> {
   applyDocumentLanguage();
   // Story 023: text size, reduced motion and contrast from the saved comfort settings.
   applyComfort();
+  // Story 025: accounts (only when this build has the account settings). Saved changes go up after a quiet moment;
+  // a remembered session is matched with the cloud at start.
+  onStoredWrite((key) => {
+    if (isBackedUp(key)) getAccount()?.changed();
+  });
+  const account = getAccount();
+  if (account) void account.start().then((outcome) => (outcome.kind !== 'error' || navigator.onLine) && showSyncOutcome(appHost, outcome));
+  // Dev builds only: evidence scripts swap in a stand-in cloud.
+  if (import.meta.env.DEV) (window as unknown as { salonUseCloud?: typeof useCloudForTesting }).salonUseCloud = useCloudForTesting;
   // Hosted preview only (VITE_INVITE_GATE=1, set by scripts/build-preview.mjs): ask for an invite code first.
   // Tester codes the owner lists in UNLOCK_ALL_CODES open every client difficulty; the server decides, each load.
   let unlockAll = false;
@@ -123,6 +136,10 @@ async function boot(): Promise<void> {
     gainFriendship((memory) => afterHello(memory, localDay()));
     showScene('title');
     const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook, showShop, showProfile, showCorner);
+    // Story 025: once, after a few appointments, the companion suggests an account.
+    const account = getAccount();
+    const nudge = account ? accountNudge(host, account, loadSave().appointments) : null;
+    if (nudge) menu.prepend(nudge);
     teardownDom = () => menu.remove();
   };
 
@@ -426,6 +443,8 @@ async function boot(): Promise<void> {
         today: localDay(),
       });
       writeSave(update.save);
+      // Story 025: signed in → the appointment's progress goes to the account now.
+      void getAccount()?.appointmentDone();
       const items = celebrationsFor(update);
       const panel = createProgressPanel(update);
       // Only while the results are still showing (the player may already have tapped Next).

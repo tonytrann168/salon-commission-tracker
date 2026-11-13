@@ -9,7 +9,7 @@
 export const BACKUP_PREFIX = 'SB1';
 export const BACKUP_KEY_PREFIX = 'salon.';
 /** Keys never backed up (per-device or per-session). */
-const SKIPPED = new Set(['salon.reloadedForUpdate', 'salon.maiSide']);
+const SKIPPED = new Set(['salon.reloadedForUpdate', 'salon.maiSide', 'salon.account.v1']);
 const MAX_CODE_CHARS = 400_000;
 const MAX_VALUE_CHARS = 200_000;
 

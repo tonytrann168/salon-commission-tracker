@@ -24,4 +24,13 @@ export function writeStored(key: string, value: string): void {
   } catch {
     // Storage unavailable or full: the in-memory copy still serves this session.
   }
+  for (const listener of writeListeners) listener(key);
+}
+
+const writeListeners = new Set<(key: string) => void>();
+
+/** Story 025: hear about each saved change (the account uploads the progress after a quiet moment). */
+export function onStoredWrite(listener: (key: string) => void): () => void {
+  writeListeners.add(listener);
+  return () => writeListeners.delete(listener);
 }

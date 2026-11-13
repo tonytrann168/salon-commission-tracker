@@ -13,6 +13,7 @@
     "smoke:api": "node scripts/smoke-api.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
     "pixi.js": "^8.22.0"
   },
   "devDependencies": {

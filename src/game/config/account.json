@@ -1,0 +1,6 @@
+{
+  "minPassword": 8,
+  "resendSeconds": 60,
+  "syncDebounceMs": 4000,
+  "nudgeAfterAppointments": 2
+}

@@ -11,6 +11,8 @@ import { replayTour } from '../onboarding';
 import { feedbackButton } from './feedback-sheet';
 import { createBackupSection } from './backup-panel';
 import { createComfortSection } from './comfort-section';
+import { createAccountSection } from './account-panel';
+import { getAccount } from '../account/account';
 import './level-picker.css';
 
 /**
@@ -145,7 +147,10 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
     const backup = createBackupSection(host);
     // Story 023: comfort and accessibility.
     const comfort = createComfortSection();
-    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, comfort, backup, back);
+    // Story 025: player accounts (only when this build has the account settings).
+    const account = getAccount();
+    const accountSection = account ? [createAccountSection(host, account)] : [];
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, comfort, backup, back);
   };
 
   render();
