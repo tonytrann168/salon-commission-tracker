@@ -1,3 +1,4 @@
+import { haptic } from '../comfort';
 import { clientGrammar } from '../types';
 import type { ClientPronoun } from '../types';
 import type { Container } from 'pixi.js';
@@ -127,6 +128,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const doneButton = button(t('station.done'), 'station-done', () => {
     if (done) return;
     const result = finish();
+    haptic(30);
     say(t('station.doneMessage', { ...clientGrammar(options.clientPronoun), score: result.score }), true);
     emitSound(result.moodDelta >= 0 ? 'moodUp' : 'moodDown');
     options.onDone(design, result);

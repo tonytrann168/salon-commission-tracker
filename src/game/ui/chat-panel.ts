@@ -1,3 +1,4 @@
+import { prefersReducedMotion } from '../comfort';
 import type { Container } from 'pixi.js';
 import type { Appointment, AppointmentSnapshot } from '../appointment';
 import { MOOD_MAX } from '../mood';
@@ -86,7 +87,8 @@ export function createChatPanel(
 ): { destroy: () => void; setBestieExpression: (expression: Expression) => void } {
   const root = el('div', 'chat-panel');
   const clientName = getPortraitDefinition(portraits.client.portraitId).name;
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  // Story 023: the phone's setting or the game's own Reduce motion.
+  const reducedMotion = { get matches(): boolean { return prefersReducedMotion(); } };
   // Assistive tech gets each reply whole, here, while the visible bubble reveals letter by letter (aria-hidden).
   const announcer = el('div', 'visually-hidden');
   announcer.setAttribute('aria-live', 'polite');

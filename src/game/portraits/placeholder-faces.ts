@@ -1,3 +1,4 @@
+import { prefersReducedMotion } from '../comfort';
 import { Container, Graphics, Ticker } from 'pixi.js';
 import { EXPRESSION_CONFIG, FACE_PARAM_KEYS } from './portrait';
 import type { FaceParams, Portrait, PortraitPalette, Pose } from './portrait';
@@ -177,7 +178,7 @@ export function createPlaceholderFace(palette: PortraitPalette, size: number): P
       if (next === talking) return;
       talking = next;
       talkElapsed = 0;
-      talkStill = next && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      talkStill = next && prefersReducedMotion();
       if (next && !talkStill) {
         start();
       } else if (!animating) {

@@ -37,6 +37,7 @@ Listed in build order.
 | 020 | Save backup & transfer | Integration | Complete (review) | N/A |
 | 021 | Companion corner (pet-like) | UI | Complete (review) | N/A |
 | 022 | Roster expansion (15 clients) | Config/Data | Complete (review) | N/A |
+| 023 | Comfort & accessibility | UI | Complete (review) | N/A |
 
 ## Backlog
 

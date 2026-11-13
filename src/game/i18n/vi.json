@@ -388,5 +388,16 @@
   "corner.gift": "🎁 {name} có quà cho em nè!",
   "corner.giftPolish": "Màu sơn mới: {thing}! Có trong bàn làm móng rồi đó.",
   "corner.giftAccessory": "Phụ kiện mới: {thing}! Thử trong phần thay đồ nha.",
-  "corner.claim": "Mở quà"
+  "corner.claim": "Mở quà",
+  "comfort.title": "Dễ dùng",
+  "comfort.textSize": "Cỡ chữ",
+  "comfort.small": "Nhỏ hơn",
+  "comfort.normal": "Bình thường",
+  "comfort.large": "Lớn hơn",
+  "comfort.motion": "Giảm chuyển động",
+  "comfort.motionNote": "Ít hiệu ứng động hơn. Tự bật khi điện thoại yêu cầu.",
+  "comfort.vibration": "Rung",
+  "comfort.vibrationNote": "Rung nhẹ khi làm móng xong và khi ăn mừng (điện thoại hỗ trợ).",
+  "comfort.contrast": "Tương phản cao",
+  "comfort.contrastNote": "Chữ đậm hơn, viền rõ hơn."
 }

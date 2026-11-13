@@ -1,0 +1,19 @@
+/* Story 023: comfort settings, read from <html> attributes set by game/comfort.ts. */
+/* Text size: the chat and the menus (screens) scale; the layout keeps its width. */
+html[data-text='small'] .chat-log, html[data-text='small'] .screen, html[data-text='small'] .title-menu { zoom: 0.92; }
+html[data-text='large'] .chat-log, html[data-text='large'] .screen, html[data-text='large'] .title-menu { zoom: 1.15; }
+html[data-text='large'] .chat-form .chat-input { font-size: 19px; }
+/* Reduced motion, from the phone or from Settings: no animations or transitions anywhere. */
+html[data-motion='reduce'] *, html[data-motion='reduce'] *::before, html[data-motion='reduce'] *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+html[data-motion='reduce'] .confetti { display: none; }
+/* High contrast: darker text, stronger outlines. */
+html[data-contrast='high'] body, html[data-contrast='high'] .screen { color: #000; }
+html[data-contrast='high'] .setting-note, html[data-contrast='high'] .picker-line, html[data-contrast='high'] .learning-reason, html[data-contrast='high'] .rank-label, html[data-contrast='high'] .shop-about, html[data-contrast='high'] .badge-goal, html[data-contrast='high'] .dress-how { color: #1b1116; }
+html[data-contrast='high'] .chat-button.secondary { background: #f5d0e0; color: #000; box-shadow: inset 0 0 0 2px #3b2a33; }
+html[data-contrast='high'] .chat-button { box-shadow: inset 0 0 0 2px #3b2a33; }
+html[data-contrast='high'] .chat-bubble { box-shadow: 0 0 0 2px #3b2a33; color: #000; }
+html[data-contrast='high'] .picker-card, html[data-contrast='high'] .shop-item, html[data-contrast='high'] .dress-item, html[data-contrast='high'] .profile-stat { border-color: #3b2a33; box-shadow: 0 0 0 2px #3b2a33; }
+html[data-contrast='high'] :focus-visible { outline: 3px solid #000 !important; outline-offset: 2px; }
+.comfort-section { display: flex; flex-direction: column; gap: 10px; }
+.comfort-sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.comfort-sizes .chat-button[aria-pressed='true'] { background: #ff5c9a; color: #fff; }

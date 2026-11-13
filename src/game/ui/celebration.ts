@@ -1,3 +1,4 @@
+import { haptic } from '../comfort';
 import { companionLook, companionName } from '../companion';
 import { t } from '../i18n';
 import { renderMascot } from '../mascot';
@@ -35,6 +36,7 @@ function next(host: HTMLElement): void {
   }
   showing = true;
   emitSound('levelUp');
+  haptic([20, 40, 20]);
   const overlay = el('div', 'celebration');
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');

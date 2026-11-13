@@ -49,12 +49,16 @@ import { DIFFICULTIES } from './game/types';
 import type { ClientPersona, EnglishLevel, Grading, Outcome } from './game/types';
 import type { ScoreResult } from './game/scoring';
 import './game/ui/global.css';
+import './game/ui/comfort.css';
+import { applyComfort } from './game/comfort';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('app');
   if (!host) throw new Error('#app element missing');
   const appHost: HTMLElement = host;
   applyDocumentLanguage();
+  // Story 023: text size, reduced motion and contrast from the saved comfort settings.
+  applyComfort();
   // Hosted preview only (VITE_INVITE_GATE=1, set by scripts/build-preview.mjs): ask for an invite code first.
   // Tester codes the owner lists in UNLOCK_ALL_CODES open every client difficulty; the server decides, each load.
   let unlockAll = false;

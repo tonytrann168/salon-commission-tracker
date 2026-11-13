@@ -388,5 +388,16 @@
   "corner.gift": "🎁 {name} has a gift for you!",
   "corner.giftPolish": "A new polish colour: {thing}! It's in your nail station.",
   "corner.giftAccessory": "A new accessory: {thing}! Try it in dress-up.",
-  "corner.claim": "Open the gift"
+  "corner.claim": "Open the gift",
+  "comfort.title": "Comfort",
+  "comfort.textSize": "Text size",
+  "comfort.small": "Smaller",
+  "comfort.normal": "Normal",
+  "comfort.large": "Larger",
+  "comfort.motion": "Reduce motion",
+  "comfort.motionNote": "Fewer animations. On automatically when your phone asks for it.",
+  "comfort.vibration": "Vibration",
+  "comfort.vibrationNote": "A short buzz when nails are done and for celebrations (on phones that support it).",
+  "comfort.contrast": "High contrast",
+  "comfort.contrastNote": "Darker text and stronger outlines."
 }

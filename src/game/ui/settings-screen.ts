@@ -10,6 +10,7 @@ import { createCompanionSettings } from './companion-screens';
 import { replayTour } from '../onboarding';
 import { feedbackButton } from './feedback-sheet';
 import { createBackupSection } from './backup-panel';
+import { createComfortSection } from './comfort-section';
 import './level-picker.css';
 
 /**
@@ -142,7 +143,9 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
     const feedback = feedbackButton(host, { details: { language: getLanguage(), ...(getEnglishLevel() ? { level: getEnglishLevel() as string } : {}) } });
     // Story 020: back up / restore (iPhone keeps Safari and the home-screen app apart).
     const backup = createBackupSection(host);
-    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, backup, back);
+    // Story 023: comfort and accessibility.
+    const comfort = createComfortSection();
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, comfort, backup, back);
   };
 
   render();
