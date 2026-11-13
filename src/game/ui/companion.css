@@ -13,3 +13,19 @@
 .dress-item.locked { background: #f7eef2; color: #7a6871; }
 .dress-item:disabled { opacity: 1; }
 .dress-how { font-size: 13px; color: #5b4a53; }
+/* Story 021: the companion corner. */
+.corner-stage { display: flex; justify-content: center; padding: 8px 0; border-radius: 24px; background: radial-gradient(circle at 50% 40%, #fff, #ffe8f1); }
+.corner-line { margin: 0; }
+.corner-bonus { margin: 0; min-height: 1.2em; color: #c0245f; font-weight: 700; }
+.corner-gift { display: flex; flex-direction: column; gap: 6px; }
+.corner-gift:empty { display: none; }
+.corner-gift-line { margin: 0; font-weight: 700; }
+.corner-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.corner-actions .chat-button { padding: 0 6px; font-size: 15px; }
+.corner-nod { animation: corner-nod 0.6s ease-in-out; }
+.corner-wiggle { animation: corner-wiggle 0.7s ease-in-out; }
+.corner-jump { animation: corner-jump 0.6s cubic-bezier(0.3, 1.6, 0.6, 1); }
+@keyframes corner-nod { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-6deg); } 60% { transform: rotate(5deg); } }
+@keyframes corner-wiggle { 0%, 100% { transform: scale(1) rotate(0); } 25% { transform: scale(1.06, 0.94) rotate(-4deg); } 50% { transform: scale(0.96, 1.04) rotate(4deg); } 75% { transform: scale(1.04, 0.96) rotate(-2deg); } }
+@keyframes corner-jump { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-28px) scale(1.04); } 70% { transform: translateY(0) scale(1.06, 0.94); } }
+@media (prefers-reduced-motion: reduce) { .corner-nod, .corner-wiggle, .corner-jump { animation: none; } }

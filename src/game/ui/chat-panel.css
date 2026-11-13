@@ -63,3 +63,6 @@
 /* Keyboard open on a small phone: the portraits fold away (they come back when the keyboard closes). */
 .chat-panel.compact .portrait-zone { flex-basis: 0; }
 .chat-panel.compact .mai-bubble { display: none; }
+/* Story 021: the companion on the title is tappable (same box as the title scene's portrait: 60% wide or 30% high, centred at 27%). */
+.title-menu .companion-hotspot { position: fixed; left: 50%; top: 27vh; width: min(60vw, 30vh); height: min(60vw, 30vh); transform: translate(-50%, -50%); border: 0; border-radius: 50%; background: transparent; min-width: 0; min-height: 0; padding: 0; cursor: pointer; }
+.title-menu .companion-hotspot:focus-visible { outline: 3px solid #ff5c9a; }

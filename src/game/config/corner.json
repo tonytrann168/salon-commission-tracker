@@ -1,0 +1,11 @@
+{
+  "_note": "Story 021: the companion corner. dailyXp: friendship for the first pat or high-five of the day. gifts: one per friendship level, claimed once (free; never sold). lines: how many i18n lines exist per kind (corner.<kind>1..n).",
+  "dailyXp": 2,
+  "gifts": [
+    { "level": 2, "kind": "polish", "id": "sky-blue" },
+    { "level": 3, "kind": "accessory", "id": "glasses-round" },
+    { "level": 4, "kind": "polish", "id": "rose-gold" },
+    { "level": 5, "kind": "polish", "id": "gold-shimmer" }
+  ],
+  "lines": { "chat": 6, "pat": 3, "high": 3 }
+}

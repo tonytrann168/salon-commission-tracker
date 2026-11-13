@@ -1,5 +1,6 @@
 import { t } from '../i18n';
 import { createBestieGreeting } from './bestie-panel';
+import { companionName } from '../companion';
 import './chat-panel.css';
 import './level-picker.css';
 
@@ -7,7 +8,7 @@ import './level-picker.css';
  * Story 018: the title menu is plain HTML, kept apart from the PixiJS title scene so it shows before PixiJS loads.
  */
 /** DOM menu over the title scene: Start and Settings (story 008: in the interface language). Returns the element so the caller can remove it. */
-export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void, onPhrasebook: () => void, onShop?: () => void, onProfile?: () => void): HTMLElement {
+export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void, onPhrasebook: () => void, onShop?: () => void, onProfile?: () => void, onCompanion?: () => void): HTMLElement {
   const menu = document.createElement('div');
   menu.className = 'title-menu';
   const start = document.createElement('button');
@@ -42,6 +43,15 @@ export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettin
     extra.append(button);
   }
   menu.append(createBestieGreeting(), start, row, ...(extra.childElementCount > 0 ? [extra] : []));
+  // Story 021: tap the companion (drawn on the canvas above) to spend a moment together.
+  if (onCompanion) {
+    const spot = document.createElement('button');
+    spot.type = 'button';
+    spot.className = 'companion-hotspot';
+    spot.setAttribute('aria-label', t('corner.open', { name: companionName() }));
+    spot.addEventListener('click', onCompanion);
+    menu.append(spot);
+  }
   host.appendChild(menu);
   return menu;
 }

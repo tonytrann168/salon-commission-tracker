@@ -118,7 +118,7 @@ async function boot(): Promise<void> {
     // Story 013: the first open of the day is Mai's daily hello (a little friendship; a new level gets her card).
     gainFriendship((memory) => afterHello(memory, localDay()));
     showScene('title');
-    const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook, showShop, showProfile);
+    const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook, showShop, showProfile, showCorner);
     teardownDom = () => menu.remove();
   };
 
@@ -144,6 +144,15 @@ async function boot(): Promise<void> {
     const { createProfileScreen } = module;
     teardownDom();
     const screen = createProfileScreen(host, { save: loadSave(), today: localDay(), onBack: showTitle, onDressUp: () => showDressUp(showProfile) });
+    teardownDom = () => screen.remove();
+  };
+
+  /** Story 021: tap the companion on the title. */
+  const showCorner = async () => {
+    const module = await lazy(() => import('./game/ui/companion-corner')).catch(() => null);
+    if (!module) return;
+    teardownDom();
+    const screen = module.createCompanionCorner(host, showTitle);
     teardownDom = () => screen.remove();
   };
 

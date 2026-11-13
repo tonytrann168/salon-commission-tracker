@@ -19,6 +19,9 @@ export interface CompanionSettings extends CompanionIdentity {
   /** False until the player has met and picked their companion. */
   chosen: boolean;
   equipped: Equipped;
+  /** Story 021: the last day of a pat or high-five (for the daily bonus), and the friendship levels whose gift was claimed. */
+  cornerDay?: string;
+  gifts?: number[];
 }
 
 const KEY = 'salon.companion.v1';
@@ -44,7 +47,9 @@ export function parseCompanion(raw: string | null): CompanionSettings {
       if (accessory) equipped[accessory.slot] = accessory.id;
     }
   }
-  return { chosen: d.chosen === true, gender, name: name?.ok ? name.name : COMPANION_CONFIG.defaultName[gender], equipped };
+  const cornerDay = typeof d.cornerDay === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.cornerDay) ? d.cornerDay : undefined;
+  const gifts = Array.isArray(d.gifts) ? d.gifts.filter((n): n is number => Number.isInteger(n)) : undefined;
+  return { chosen: d.chosen === true, gender, name: name?.ok ? name.name : COMPANION_CONFIG.defaultName[gender], equipped, ...(cornerDay ? { cornerDay } : {}), ...(gifts ? { gifts } : {}) };
 }
 
 export const loadCompanion = (): CompanionSettings => parseCompanion(readStored(KEY));
