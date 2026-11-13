@@ -6,6 +6,7 @@ import { getLanguage, t } from '../i18n';
 import { MASCOT_CONFIG, renderMascot } from '../mascot';
 import type { Accessory, AccessorySlot } from '../mascot/mascot';
 import { el } from './dom';
+import { openRestoreSheet } from './backup-panel';
 import './level-picker.css';
 import './companion.css';
 
@@ -83,7 +84,11 @@ export function createMeetScreen(host: HTMLElement, onDone: () => void): HTMLEle
       validName = settings.name;
       draw();
     });
-    screen.replaceChildren(title, el('p', 'setting-note', t('companion.meetNote')), choice, field.root, el('p', 'setting-note', t('companion.changeLater')), go);
+    // Story 020: a player who played in Safari can bring their progress into the home-screen app here.
+    const restore = el('button', 'meet-restore', t('backup.firstRun'));
+    restore.type = 'button';
+    restore.addEventListener('click', () => openRestoreSheet(host));
+    screen.replaceChildren(title, el('p', 'setting-note', t('companion.meetNote')), choice, field.root, el('p', 'setting-note', t('companion.changeLater')), go, restore);
   };
   draw();
   host.append(screen);

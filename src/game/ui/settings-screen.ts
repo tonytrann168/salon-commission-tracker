@@ -9,6 +9,7 @@ import { createLevelPicker } from './level-picker';
 import { createCompanionSettings } from './companion-screens';
 import { replayTour } from '../onboarding';
 import { feedbackButton } from './feedback-sheet';
+import { createBackupSection } from './backup-panel';
 import './level-picker.css';
 
 /**
@@ -139,7 +140,9 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
     tourRow.append(replay, tourNote);
     // Story 016: tester feedback (game details on by default, never chat text from here).
     const feedback = feedbackButton(host, { details: { language: getLanguage(), ...(getEnglishLevel() ? { level: getEnglishLevel() as string } : {}) } });
-    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, back);
+    // Story 020: back up / restore (iPhone keeps Safari and the home-screen app apart).
+    const backup = createBackupSection(host);
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, backup, back);
   };
 
   render();
