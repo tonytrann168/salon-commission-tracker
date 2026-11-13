@@ -3,6 +3,7 @@ import type { BackupContents, BackupProblem } from '../backup';
 import { t } from '../i18n';
 import type { StringKey } from '../i18n';
 import { el } from './dom';
+import { qrMatrix, qrPath } from '../backup-qr';
 import './feedback.css';
 
 /**
@@ -31,6 +32,9 @@ export function createBackupSection(host: HTMLElement): HTMLElement {
   const save = button(t('backup.saveFile'));
   copy.hidden = true;
   save.hidden = true;
+  // Story 027: the same code as a QR code, for another phone's camera.
+  const qr = el('figure', 'backup-qr');
+  qr.hidden = true;
   backUp.addEventListener('click', async () => {
     status.textContent = '';
     try {
@@ -43,6 +47,7 @@ export function createBackupSection(host: HTMLElement): HTMLElement {
     copy.hidden = false;
     save.hidden = false;
     status.textContent = t('backup.made');
+    drawQr(qr, out.value);
   });
   copy.addEventListener('click', async () => {
     out.select();
@@ -62,8 +67,34 @@ export function createBackupSection(host: HTMLElement): HTMLElement {
   });
   const restore = button(t('backup.restore'));
   restore.addEventListener('click', () => openRestoreSheet(host));
-  section.append(el('h2', '', t('backup.title')), el('p', 'setting-note', t('backup.note')), backUp, out, copy, save, status, restore);
+  section.append(el('h2', '', t('backup.title')), el('p', 'setting-note', t('backup.note')), backUp, out, copy, save, status, qr, restore);
   return section;
+}
+
+/** Draw the code as a QR (an SVG built here; no network), or say it is too long for one. */
+function drawQr(figure: HTMLElement, code: string): void {
+  const matrix = qrMatrix(code);
+  figure.hidden = false;
+  if (!matrix) {
+    figure.replaceChildren(el('figcaption', 'setting-note', t('backup.qrTooLong')));
+    return;
+  }
+  const { size, d } = qrPath(matrix);
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', t('backup.qrLabel'));
+  svg.setAttribute('shape-rendering', 'crispEdges');
+  const bg = document.createElementNS(ns, 'rect');
+  bg.setAttribute('width', String(size));
+  bg.setAttribute('height', String(size));
+  bg.setAttribute('fill', '#fff');
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', d);
+  path.setAttribute('fill', '#000');
+  svg.append(bg, path);
+  figure.replaceChildren(svg, el('figcaption', 'setting-note', t('backup.qrNote')));
 }
 
 /** Paste or open a backup, check it, show what it holds, confirm, restore, reload. */

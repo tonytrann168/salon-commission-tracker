@@ -8,7 +8,7 @@ import './level-picker.css';
  * Story 018: the title menu is plain HTML, kept apart from the PixiJS title scene so it shows before PixiJS loads.
  */
 /** DOM menu over the title scene: Start and Settings (story 008: in the interface language). Returns the element so the caller can remove it. */
-export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void, onPhrasebook: () => void, onShop?: () => void, onProfile?: () => void, onCompanion?: () => void): HTMLElement {
+export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void, onPhrasebook: () => void, onShop?: () => void, onProfile?: () => void, onCompanion?: () => void, cue = false): HTMLElement {
   const menu = document.createElement('div');
   menu.className = 'title-menu';
   const start = document.createElement('button');
@@ -51,6 +51,15 @@ export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettin
     spot.setAttribute('aria-label', t('corner.open', { name: companionName() }));
     spot.addEventListener('click', onCompanion);
     menu.append(spot);
+    // Story 027: until the corner is first opened, a small "tap me" bubble by the companion.
+    if (cue) {
+      const tip = document.createElement('span');
+      tip.className = 'companion-cue';
+      tip.textContent = t('corner.cue');
+      tip.setAttribute('aria-hidden', 'true');
+      spot.classList.add('cued');
+      spot.append(tip);
+    }
   }
   host.appendChild(menu);
   return menu;

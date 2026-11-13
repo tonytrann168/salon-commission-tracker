@@ -66,3 +66,7 @@ export function pickLine(action: CornerAction, previous: number, roll: number, c
   if (pick === previous) pick = (pick % n) + 1;
   return pick;
 }
+
+/** Story 027: the "tap me" cue shows on the title companion until the corner is first opened. */
+export const CORNER_SEEN_KEY = 'salon.cornerSeen';
+export const shouldCue = (seen: string | null): boolean => seen !== '1';

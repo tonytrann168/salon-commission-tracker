@@ -54,7 +54,8 @@ import { applyComfort } from './game/comfort';
 import { getAccount, useCloudForTesting } from './game/account/account';
 import { accountNudge, showSyncOutcome } from './game/ui/account-panel';
 import { isBackedUp } from './game/backup';
-import { onStoredWrite } from './game/safe-storage';
+import { onStoredWrite, readStored, writeStored } from './game/safe-storage';
+import { CORNER_SEEN_KEY, shouldCue } from './game/corner';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('app');
@@ -135,7 +136,7 @@ async function boot(): Promise<void> {
     // Story 013: the first open of the day is Mai's daily hello (a little friendship; a new level gets her card).
     gainFriendship((memory) => afterHello(memory, localDay()));
     showScene('title');
-    const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook, showShop, showProfile, showCorner);
+    const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook, showShop, showProfile, showCorner, shouldCue(readStored(CORNER_SEEN_KEY)));
     // Story 025: once, after a few appointments, the companion suggests an account.
     const account = getAccount();
     const nudge = account ? accountNudge(host, account, loadSave().appointments) : null;
@@ -173,6 +174,8 @@ async function boot(): Promise<void> {
     const module = await lazy(() => import('./game/ui/companion-corner')).catch(() => null);
     if (!module) return;
     teardownDom();
+    // Story 027: the corner has been found; the title's "tap me" cue goes away for good.
+    writeStored(CORNER_SEEN_KEY, '1');
     const screen = module.createCompanionCorner(host, showTitle);
     teardownDom = () => screen.remove();
   };

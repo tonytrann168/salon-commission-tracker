@@ -18,3 +18,6 @@
 .backup-confirm { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 14px; background: #fff; box-shadow: 0 0 0 2px #ffc4da; }
 .backup-confirm p { margin: 0; }
 .meet-restore { align-self: center; border: 0; background: none; color: #7a2350; font: 600 14px system-ui, sans-serif; text-decoration: underline; padding: 8px; }
+/* Story 027: backup QR (black on white with a quiet zone, whatever the theme, so cameras read it). */
+.backup-qr { margin: 4px 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.backup-qr svg { width: min(100%, 280px); height: auto; background: #fff; border-radius: 8px; }
