@@ -1,7 +1,7 @@
 import { bestieLevel, loadMemory } from './bestie-memory';
 import type { BestieMemory } from './bestie-memory';
-import { COMPANION_CONFIG, checkCompanionName, companionGrammar } from './companion-core';
-import type { CompanionGender, CompanionIdentity, NameProblem } from './companion-core';
+import { COMPANION_CONFIG, checkCompanionName, vietnameseAddress } from './companion-core';
+import type { CompanionGender, CompanionIdentity, CompanionRelation, NameProblem, PlayerTitle } from './companion-core';
 import { loadPhrasebook } from './learning/phrasebook';
 import { MASCOT_CONFIG } from './mascot/mascot';
 import type { Accessory, Equipped } from './mascot/mascot';
@@ -22,11 +22,14 @@ export interface CompanionSettings extends CompanionIdentity {
   /** Story 021: the last day of a pat or high-five (for the daily bonus), and the friendship levels whose gift was claimed. */
   cornerDay?: string;
   gifts?: number[];
+  /** Story 025b: older (default) or younger than the player; a younger companion calls the player chị or anh. */
+  relation: CompanionRelation;
+  playerTitle: PlayerTitle;
 }
 
 const KEY = 'salon.companion.v1';
 
-const defaults = (gender: CompanionGender = 'female'): CompanionSettings => ({ chosen: false, gender, name: COMPANION_CONFIG.defaultName[gender], equipped: { ...MASCOT_CONFIG.equipped } });
+const defaults = (gender: CompanionGender = 'female'): CompanionSettings => ({ chosen: false, gender, name: COMPANION_CONFIG.defaultName[gender], equipped: { ...MASCOT_CONFIG.equipped }, relation: 'older', playerTitle: 'chi' });
 
 /** Read the saved companion; anything missing or bad falls back (to Mai, female, nothing worn). */
 export function parseCompanion(raw: string | null): CompanionSettings {
@@ -49,7 +52,9 @@ export function parseCompanion(raw: string | null): CompanionSettings {
   }
   const cornerDay = typeof d.cornerDay === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.cornerDay) ? d.cornerDay : undefined;
   const gifts = Array.isArray(d.gifts) ? d.gifts.filter((n): n is number => Number.isInteger(n)) : undefined;
-  return { chosen: d.chosen === true, gender, name: name?.ok ? name.name : COMPANION_CONFIG.defaultName[gender], equipped, ...(cornerDay ? { cornerDay } : {}), ...(gifts ? { gifts } : {}) };
+  const relation: CompanionRelation = d.relation === 'younger' ? 'younger' : 'older';
+  const playerTitle: PlayerTitle = d.playerTitle === 'anh' ? 'anh' : 'chi';
+  return { chosen: d.chosen === true, gender, name: name?.ok ? name.name : COMPANION_CONFIG.defaultName[gender], equipped, relation, playerTitle, ...(cornerDay ? { cornerDay } : {}), ...(gifts ? { gifts } : {}) };
 }
 
 export const loadCompanion = (): CompanionSettings => parseCompanion(readStored(KEY));
@@ -57,11 +62,11 @@ export const saveCompanion = (settings: CompanionSettings): void => writeStored(
 
 export const companionName = (): string => loadCompanion().name;
 export const companionIdentity = (): CompanionIdentity => {
-  const { name, gender } = loadCompanion();
-  return { name, gender };
+  const { name, gender, relation, playerTitle } = loadCompanion();
+  return { name, gender, relation, playerTitle };
 };
-/** How the companion says "I" in Vietnamese, capitalised (Chị / Anh). */
-export const companionSelf = (): string => companionGrammar(loadCompanion().gender).self;
+/** How the companion says "I" in Vietnamese, capitalised (Chị / Anh, or Em when younger). */
+export const companionSelf = (): string => vietnameseAddress(loadCompanion()).Self;
 /** The mascot skin for the companion's gender. */
 export const companionSkin = (settings: CompanionSettings = loadCompanion()): string => COMPANION_CONFIG.skins[settings.gender];
 /** What renderMascot needs to show the companion's current look. */

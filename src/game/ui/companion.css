@@ -29,3 +29,9 @@
 @keyframes corner-wiggle { 0%, 100% { transform: scale(1) rotate(0); } 25% { transform: scale(1.06, 0.94) rotate(-4deg); } 50% { transform: scale(0.96, 1.04) rotate(4deg); } 75% { transform: scale(1.04, 0.96) rotate(-2deg); } }
 @keyframes corner-jump { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-28px) scale(1.04); } 70% { transform: translateY(0) scale(1.06, 0.94); } }
 @media (prefers-reduced-motion: reduce) { .corner-nod, .corner-wiggle, .corner-jump { animation: none; } }
+/* Story 025b: older or younger, then chị or anh. */
+.companion-relation { display: flex; flex-direction: column; gap: 6px; }
+.companion-relation-card { padding: 10px 8px; text-align: center; }
+.companion-relation-card .setting-note { font-size: 13px; }
+.companion-titles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.screen .companion-titles .chat-button.companion-title[aria-checked='true'], .companion-titles .chat-button.companion-title[aria-checked='true'] { background: #ff5c9a; color: #fff; box-shadow: 0 0 0 3px #ffe1ee; }

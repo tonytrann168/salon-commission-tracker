@@ -476,5 +476,14 @@
   "corner.cue": "Tap me! 💕",
   "backup.qrNote": "Or scan this with the other phone's camera, then paste the text into \"Restore from code\".",
   "backup.qrLabel": "QR code of your backup code",
-  "backup.qrTooLong": "This backup is too big for a QR code. Use Copy or Save as file instead."
+  "backup.qrTooLong": "This backup is too big for a QR code. Use Copy or Save as file instead.",
+  "companion.relationQuestion": "Is {name} older or younger than you?",
+  "companion.relationNote": "In Vietnamese, this changes how {name} talks with you.",
+  "companion.older": "Older",
+  "companion.olderNote": "{name} says “{elder}” and calls you “em”",
+  "companion.younger": "Younger",
+  "companion.youngerNote": "{name} says “em” and calls you “chị” or “anh”",
+  "companion.titleQuestion": "Should {name} call you chị or anh?",
+  "companion.titleChi": "Chị",
+  "companion.titleAnh": "Anh"
 }

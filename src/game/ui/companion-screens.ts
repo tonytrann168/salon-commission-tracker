@@ -58,6 +58,47 @@ function genderChoice(current: CompanionSettings, onPick: (gender: CompanionSett
   return row;
 }
 
+/**
+ * Story 025b: older or younger than the player (Vietnamese kinship pronouns); younger asks chị or anh. The title
+ * question is phrased without "em" so it never contradicts the choice just made.
+ */
+function relationChoice(current: CompanionSettings, name: string, onPick: (change: Pick<CompanionSettings, 'relation' | 'playerTitle'>) => void): HTMLElement {
+  const box = el('div', 'companion-relation');
+  const question = el('strong', '', t('companion.relationQuestion', { name }));
+  question.id = `relation-q-${Math.random().toString(36).slice(2, 8)}`;
+  const row = el('div', 'companion-genders companion-relations');
+  row.setAttribute('role', 'radiogroup');
+  row.setAttribute('aria-labelledby', question.id);
+  const elder = current.gender === 'male' ? 'anh' : 'chị';
+  for (const relation of ['older', 'younger'] as const) {
+    const option = el('button', 'companion-gender companion-relation-card');
+    option.type = 'button';
+    option.setAttribute('role', 'radio');
+    option.setAttribute('aria-checked', String(current.relation === relation));
+    option.append(el('strong', '', t(`companion.${relation}`)), el('span', 'setting-note', t(`companion.${relation}Note`, { name, elder })));
+    option.addEventListener('click', () => onPick({ relation, playerTitle: current.playerTitle }));
+    row.append(option);
+  }
+  box.append(question, el('span', 'setting-note', t('companion.relationNote', { name })), row);
+  if (current.relation === 'younger') {
+    const titleQ = el('strong', '', t('companion.titleQuestion', { name }));
+    titleQ.id = `${question.id}-title`;
+    const titles = el('div', 'companion-titles');
+    titles.setAttribute('role', 'radiogroup');
+    titles.setAttribute('aria-labelledby', titleQ.id);
+    for (const title of ['chi', 'anh'] as const) {
+      const b = el('button', 'chat-button secondary companion-title', t(title === 'chi' ? 'companion.titleChi' : 'companion.titleAnh'));
+      b.type = 'button';
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String(current.playerTitle === title));
+      b.addEventListener('click', () => onPick({ relation: 'younger', playerTitle: title }));
+      titles.append(b);
+    }
+    box.append(titleQ, titles);
+  }
+  return box;
+}
+
 /** The first meeting: pick your bestie and their name. Resolves when the player taps Let's go. */
 export function createMeetScreen(host: HTMLElement, onDone: () => void): HTMLElement {
   const screen = el('section', 'screen companion-meet');
@@ -84,11 +125,17 @@ export function createMeetScreen(host: HTMLElement, onDone: () => void): HTMLEle
       validName = settings.name;
       draw();
     });
+    const relation = relationChoice(settings, validName ?? settings.name, (change) => {
+      // Saved at once so every string (and the question itself) follows the choice.
+      settings = { ...settings, ...change, name: validName ?? settings.name };
+      saveCompanion({ ...loadCompanion(), ...change });
+      draw();
+    });
     // Story 020: a player who played in Safari can bring their progress into the home-screen app here.
     const restore = el('button', 'meet-restore', t('backup.firstRun'));
     restore.type = 'button';
     restore.addEventListener('click', () => openRestoreSheet(host));
-    screen.replaceChildren(title, el('p', 'setting-note', t('companion.meetNote')), choice, field.root, el('p', 'setting-note', t('companion.changeLater')), go, restore);
+    screen.replaceChildren(title, el('p', 'setting-note', t('companion.meetNote')), choice, field.root, relation, el('p', 'setting-note', t('companion.changeLater')), go, restore);
   };
   draw();
   host.append(screen);
@@ -121,7 +168,11 @@ export function createCompanionSettings(onDressUp: () => void, onChange: () => v
     const dress = el('button', 'chat-button secondary', t('companion.dressUp', { name: settings.name }));
     dress.type = 'button';
     dress.addEventListener('click', onDressUp);
-    section.replaceChildren(title, choice, field.root, save, dress, status);
+    const relation = relationChoice(settings, settings.name, (change) => {
+      saveCompanion({ ...loadCompanion(), ...change, chosen: true });
+      onChange();
+    });
+    section.replaceChildren(title, choice, field.root, save, relation, dress, status);
   };
   draw();
   return section;

@@ -1,4 +1,4 @@
-import { companionFrom, companionGrammar } from '../companion-core';
+import { companionFrom, companionGrammar, vietnameseAddress } from '../companion-core';
 import { readStored } from '../safe-storage';
 import { getHelpLanguage } from '../settings';
 import { clientGrammar } from '../types';
@@ -21,11 +21,11 @@ export type StringTable = Record<StringKey, string>;
 const PLACEHOLDER = /\{(\w+)\}/g;
 
 /**
- * Companion grammar (story 013), filled by `t` from the saved companion: {self}/{selfLower} (Vietnamese "Chị/chị" or
- * "Anh/anh"), {maiShe}/{maiHer} (English she/her or he/his). Grammar exists in one language only, so these may appear
+ * Companion grammar (story 013), filled by `t` from the saved companion: {self}/{Self} (how the companion says "I"), {you}/{You} (the player), {pair} ("chị em"; Vietnamese, story 025b) —
+ * and {maiShe}/{maiHer} (English she/her or he/his). Grammar exists in one language only, so these may appear
  * in just one table. {mai}, the companion's name, is filled too but must appear in both, like any placeholder.
  */
-export const GRAMMAR_PLACEHOLDERS: readonly string[] = ['self', 'selfLower', 'maiShe', 'maiHer', 'cShe', 'CShe', 'cHer'];
+export const GRAMMAR_PLACEHOLDERS: readonly string[] = ['self', 'Self', 'you', 'You', 'pair', 'maiShe', 'maiHer', 'cShe', 'CShe', 'cHer'];
 
 /** The companion params for `t`, from the device's saved companion (Mai, female by default). */
 export function companionParams(): StringParams {
@@ -37,7 +37,8 @@ export function companionParams(): StringParams {
   }
   const companion = companionFrom(raw);
   const g = companionGrammar(companion.gender);
-  return { mai: companion.name, self: g.self, selfLower: g.selfLower, maiShe: g.she, maiHer: g.her };
+  const a = vietnameseAddress(companion);
+  return { mai: companion.name, self: a.self, Self: a.Self, you: a.you, You: a.You, pair: a.pair, maiShe: g.she, maiHer: g.her };
 }
 
 /** The `{name}` placeholders in a template, sorted, for comparing the two tables. */
@@ -88,7 +89,7 @@ export function getLanguage(): Language {
 export function t(key: StringKey, params?: StringParams, language: Language = getLanguage()): string {
   const template = TABLES[language][key];
   // Client grammar ({cShe}/{CShe}/{cHer}) defaults to "they" when the caller doesn't say who the client is.
-  const companion = /\{(mai|self|selfLower|maiShe|maiHer)\}/.test(template) ? companionParams() : {};
+  const companion = /\{(mai|self|Self|you|You|pair|maiShe|maiHer)\}/.test(template) ? companionParams() : {};
   const client = /\{(cShe|CShe|cHer)\}/.test(template) ? clientGrammar() : {};
   return fillTemplate(template, { ...client, ...companion, ...params });
 }

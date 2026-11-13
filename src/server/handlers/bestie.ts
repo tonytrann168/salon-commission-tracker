@@ -149,7 +149,7 @@ export function parseBestieOutput(request: BestieRequest, upstream: unknown, max
 /** How the bestie talks, by coaching language and the player's English level. */
 function voiceRules(language: BestieLanguage, level: EnglishLevel, companion: CompanionIdentity): string {
   if (language === 'vi') {
-    return `- Talk to the player in natural, warm Vietnamese, the way two friends talk in a Vietnamese nail salon. ${vietnameseSelfRule(companion.gender)}
+    return `- Talk to the player in natural, warm Vietnamese, the way two friends talk in a Vietnamese nail salon. ${vietnameseSelfRule(companion)}
 - Any English line you suggest the player say to a client stays in English, inside quotation marks, pitched to a ${level} English learner.`;
   }
   const simple = level === 'beginner' || level === 'some';

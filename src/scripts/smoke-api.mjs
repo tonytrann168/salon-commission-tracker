@@ -54,6 +54,11 @@ const checks = [
       question: 'Em thích màu sơn nào nhất?', answer: 'Em thích màu hồng nhạt.', companion: { name: 'Minh', gender: 'male' } }, env, fetch),
     (b) => typeof b.reply === 'string' && /(^|[^\p{L}])anh([^\p{L}]|$)/iu.test(b.reply) && !/(^|[^\p{L}])chị([^\p{L}]|$)/iu.test(b.reply),
     (b) => `"${b.reply}"`],
+  // Story 025b: a younger female companion with a player titled "anh": "em" for herself, "anh" for the player, never "chị".
+  ['younger companion answer (some, vi): says "em", calls the player "anh", never "chị"', () => handleBestie({ kind: 'answer', level: 'some', language: 'vi', memory: '',
+      question: 'Anh thích màu sơn nào nhất?', answer: 'Anh thích màu hồng nhạt.', companion: { name: 'Mai', gender: 'female', relation: 'younger', playerTitle: 'anh' } }, env, fetch),
+    (b) => typeof b.reply === 'string' && /(^|[^\p{L}])em([^\p{L}]|$)/iu.test(b.reply) && /(^|[^\p{L}])anh([^\p{L}]|$)/iu.test(b.reply) && !/(^|[^\p{L}])chị([^\p{L}]|$)/iu.test(b.reply),
+    (b) => `"${b.reply}"`],
   ['corrections line check (beginner, vi)', () => handleCorrections({ kind: 'line', level: 'beginner', language: 'vi', phase: 'consultation',
       line: 'What color you like today?', clientLine: DEFAULT_CLIENT.openingLine }, env, fetch),
     (b) => typeof b.needsCorrection === 'boolean' && (!b.needsCorrection || (b.better && typeof b.reason === 'string')),

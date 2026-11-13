@@ -9,9 +9,17 @@ import companionJson from './config/companion.json';
 export type CompanionGender = 'female' | 'male';
 export const COMPANION_GENDERS: readonly CompanionGender[] = ['female', 'male'];
 
+/** Story 025b: whether the companion is older than the player (default) or younger (Vietnamese kinship pronouns). */
+export type CompanionRelation = 'older' | 'younger';
+/** How a younger companion addresses the player: chị (older sister) or anh (older brother). */
+export type PlayerTitle = 'chi' | 'anh';
+
 export interface CompanionIdentity {
   name: string;
   gender: CompanionGender;
+  /** Missing (old saves) means older. */
+  relation?: CompanionRelation;
+  playerTitle?: PlayerTitle;
 }
 
 export interface CompanionConfig {
@@ -71,20 +79,41 @@ export function checkCompanionName(raw: string, config: CompanionConfig = COMPAN
 export function companionFrom(value: unknown, config: CompanionConfig = COMPANION_CONFIG): CompanionIdentity {
   const gender: CompanionGender = isRecord(value) && value.gender === 'male' ? 'male' : 'female';
   const checked = isRecord(value) && typeof value.name === 'string' ? checkCompanionName(value.name, config) : null;
-  return { gender, name: checked?.ok ? checked.name : config.defaultName[gender] };
+  const relation: CompanionRelation = isRecord(value) && value.relation === 'younger' ? 'younger' : 'older';
+  const playerTitle: PlayerTitle = isRecord(value) && value.playerTitle === 'anh' ? 'anh' : 'chi';
+  return { gender, name: checked?.ok ? checked.name : config.defaultName[gender], relation, playerTitle };
+}
+
+/**
+ * Story 025b: Vietnamese address, from gender, relation and player title. `self`: how the companion says "I";
+ * `you`: how the companion (and the game) addresses the player; `pair`: "chị em" / "anh em", elder first.
+ */
+export function vietnameseAddress(companion: Pick<CompanionIdentity, 'gender' | 'relation' | 'playerTitle'>): { self: string; Self: string; you: string; You: string; pair: string } {
+  const cap = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
+  const elder = companion.gender === 'male' ? 'anh' : 'chị';
+  if (companion.relation === 'younger') {
+    const you = companion.playerTitle === 'anh' ? 'anh' : 'chị';
+    return { self: 'em', Self: 'Em', you, You: cap(you), pair: `${you} em` };
+  }
+  return { self: elder, Self: cap(elder), you: 'em', You: 'Em', pair: `${elder} em` };
 }
 
 /** Grammar for strings and prompts. `self`: how the companion says "I" in Vietnamese. */
-export function companionGrammar(gender: CompanionGender): { self: string; selfLower: string; she: string; She: string; her: string } {
-  return gender === 'male' ? { self: 'Anh', selfLower: 'anh', she: 'he', She: 'He', her: 'his' } : { self: 'Chị', selfLower: 'chị', she: 'she', She: 'She', her: 'her' };
+export function companionGrammar(gender: CompanionGender): { she: string; She: string; her: string } {
+  return gender === 'male' ? { she: 'he', She: 'He', her: 'his' } : { she: 'she', She: 'She', her: 'her' };
 }
 
 /**
  * How the companion talks about themself in Vietnamese (overseer, 2026-11-10: the male companion must sound like a
  * friendly "anh", as naturally as Mai says "chị"). Used by every Vietnamese bestie and corrections prompt.
  */
-export function vietnameseSelfRule(gender: CompanionGender): string {
-  return gender === 'male'
+export function vietnameseSelfRule(companion: Pick<CompanionIdentity, 'gender' | 'relation' | 'playerTitle'>): string {
+  if (companion.relation === 'younger') {
+    const you = companion.playerTitle === 'anh' ? 'anh' : 'chị';
+    const who = companion.gender === 'male' ? 'You are a young man' : 'You are a young woman';
+    return `${who}, younger than the player. Call yourself "em" and the player "${you}", like a friendly younger ${companion.gender === 'male' ? 'brother' : 'sister'} at the salon (for example "em thấy…", "em tin ${you} làm được", "để em chỉ ${you}"). Never call the player "em", and never call yourself "${companion.gender === 'male' ? 'anh' : 'chị'}", "tôi" or "mình" alone.`;
+  }
+  return companion.gender === 'male'
     ? 'You are a man. Call yourself "anh" and the player "em", like a friendly older brother at the salon. In every Vietnamese reply, refer to yourself as "anh" at least once (for example "anh thấy…", "anh thích…", "anh tin em làm được", "để anh chỉ em"), without forcing it into every sentence. Never call yourself "chị", "tôi" or "mình" alone.'
     : 'Call yourself "chị" and the player "em", like a friendly older sister at the salon. Refer to yourself as "chị" naturally (for example "chị thấy…", "chị thích…", "chị tin em làm được"). Never call yourself "tôi".';
 }
