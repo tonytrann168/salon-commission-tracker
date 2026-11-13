@@ -352,7 +352,7 @@ async function boot(): Promise<void> {
                 nails.note = note;
               },
               onDone: (design: NailDesign, result: MatchResult) => {
-                nails.finished = { description: describeDesign(design), match: result.score };
+                nails.finished = { description: describeDesign(design, undefined, client.nailRequest?.service), match: result.score };
               },
             },
           }

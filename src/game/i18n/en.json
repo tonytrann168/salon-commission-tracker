@@ -399,5 +399,7 @@
   "comfort.vibration": "Vibration",
   "comfort.vibrationNote": "A short buzz when nails are done and for celebrations (on phones that support it).",
   "comfort.contrast": "High contrast",
-  "comfort.contrastNote": "Darker text and stronger outlines."
+  "comfort.contrastNote": "Darker text and stronger outlines.",
+  "station.footRight": "Right foot (1 of 2). Tap 🦶 for the other foot.",
+  "station.footLeft": "Left foot (2 of 2). Tap 🦶 for the other foot."
 }

@@ -43,7 +43,8 @@ export function parseClient(raw: unknown, file: string): ClientPersona {
     const level = (value: unknown, key: string) => (['none', 'few', 'lots'].includes(value as string) ? (value as 'none' | 'few' | 'lots') : fail(`"nailRequest.${key}" must be none, few or lots`));
     const gradient = ['no', 'ok', 'yes'].includes(n.gradient as string) ? (n.gradient as 'no' | 'ok' | 'yes') : fail('"nailRequest.gradient" must be no, ok or yes');
     const hands = n.hands === undefined || n.hands === 1 ? 1 : n.hands === 2 ? 2 : fail('"nailRequest.hands" must be 1 or 2');
-    nailRequest = { shapes, colors, gradient, gems: level(n.gems, 'gems'), stickers: level(n.stickers, 'stickers'), ...(hands === 2 ? { hands: 2 as const } : {}) };
+    const service = n.service === undefined || n.service === 'manicure' ? undefined : n.service === 'pedicure' ? ('pedicure' as const) : fail('"nailRequest.service" must be manicure or pedicure');
+    nailRequest = { shapes, colors, gradient, gems: level(n.gems, 'gems'), stickers: level(n.stickers, 'stickers'), ...(hands === 2 ? { hands: 2 as const } : {}), ...(service ? { service } : {}) };
   }
   const pronoun = CLIENT_PRONOUNS.find((p) => p === raw.pronoun) ?? fail('"pronoun" must be she, he or they');
   return {

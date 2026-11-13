@@ -1,0 +1,11 @@
+{
+  "id": "pedicure-day",
+  "name": { "en": "Pedicure day", "vi": "Ngày làm móng chân" },
+  "tag": { "en": "🦶 Pedicure: tired feet, sandal season", "vi": "🦶 Làm móng chân: chân mỏi, mùa dép sandal" },
+  "difficulty": "easy",
+  "eligible": { "difficulties": ["easy", "medium"], "excludeClients": ["jake", "marcus"] },
+  "occasion": "You came for a pedicure, not a manicure: your feet are tired and sandal season is here.",
+  "constraints": "You want a relaxing pedicure on both feet and a bright colour on your toes. You may ask about a foot scrub or massage and what it costs. You are happy when the stylist explains the steps and checks the water temperature.",
+  "openingLine": "Hi! Can I get a pedicure today? My feet are so tired, and I want a bright colour for my sandals.",
+  "nailRequest": { "service": "pedicure", "hands": 2, "shapes": ["square", "round"], "colors": ["coral", "hot-pink", "red"], "gradient": "no", "gems": "none", "stickers": "none" }
+}

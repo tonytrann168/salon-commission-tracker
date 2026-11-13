@@ -174,6 +174,7 @@ describe('a realistic hand: finger sizes, spill and clean-up (owner, 2026-11-10)
   it('the hand is data: a second hand is just more fingers; a bad finger is refused', () => {
     const twoHands = structuredClone(NAIL_ART_CONFIG);
     twoHands.hand.fingers = [...fingers, ...fingers.map((f) => ({ ...f, id: `left-${f.id}`, x: 200 - f.x, angle: -f.angle }))];
+    twoHands.foot.fingers = [...twoHands.foot.fingers, ...twoHands.foot.fingers.map((f) => ({ ...f, id: `left-${f.id}` }))];
     expect(parseNailArtConfig(twoHands).hand.fingers).toHaveLength(10);
     const bad = structuredClone(NAIL_ART_CONFIG);
     (bad.hand.fingers[0] as { nail: unknown }).nail = { w: 0, h: 5 };
@@ -222,5 +223,30 @@ describe('harder nail requests (story 017)', async () => {
     expect(matchDesign(oneHand, twoHands).score).toBeLessThan(matchDesign(both, twoHands).score);
     expect(describeDesign(both)).toMatch(/^both hands: square shape, pale pink/);
     expect(describeRequest(twoHands)).toMatch(/^both hands: square shape/);
+  });
+});
+
+describe('pedicure (story 024)', async () => {
+  const { limbFor } = await import('../game/nail-art/design');
+  const { applyScenario, getScenario } = await import('../game/scenarios');
+  const { getClient } = await import('../game/clients/roster');
+
+  it('a foot is toes as fingers: five toes, the big toe largest, the little toe smallest', () => {
+    const toes = NAIL_ART_CONFIG.foot.fingers;
+    expect(toes).toHaveLength(5);
+    const area = (f: { nail: { w: number; h: number } }) => f.nail.w * f.nail.h;
+    expect(area(toes[0]!)).toBeGreaterThan(Math.max(...toes.slice(1).map(area)));
+    expect(area(toes[4]!)).toBeLessThan(Math.min(...toes.slice(0, 4).map(area)));
+    expect(() => parseNailArtConfig({ ...structuredClone(NAIL_ART_CONFIG), foot: { ...NAIL_ART_CONFIG.foot, fingers: NAIL_ART_CONFIG.foot.fingers.slice(0, 3) } })).toThrow(/as many toes/);
+  });
+
+  it('a pedicure request picks the foot and says so; a manicure keeps the hand', () => {
+    expect(limbFor({ service: 'pedicure' })).toBe(NAIL_ART_CONFIG.foot);
+    expect(limbFor(undefined)).toBe(NAIL_ART_CONFIG.hand);
+    const ped = applyScenario(getClient('grace')!, getScenario('pedicure-day'));
+    expect(ped.nailRequest).toMatchObject({ service: 'pedicure', hands: 2 });
+    expect(describeRequest(ped.nailRequest!)).toMatch(/^pedicure, both feet: square or round shape, coral or hot pink or red/);
+    expect(describeRequest(getClient('grace')!.nailRequest!)).not.toMatch(/pedicure/);
+    expect(describeDesign({ ...emptyDesign('square', 10), base: 'coral' }, undefined, 'pedicure')).toMatch(/^pedicure, both feet: square shape, coral/);
   });
 });

@@ -3,7 +3,7 @@ import { clientGrammar } from '../types';
 import type { ClientPronoun } from '../types';
 import type { Container } from 'pixi.js';
 import { getLanguage, t } from '../i18n';
-import { NAIL_ART_CONFIG, emptyDesign, nailsFor } from '../nail-art/design';
+import { NAIL_ART_CONFIG, emptyDesign, limbFor, nailsFor } from '../nail-art/design';
 import type { NailDesign, NailRequest, NailShape, PaletteColor, StickerKind } from '../nail-art/design';
 import { describeDesign, matchDesign } from '../nail-art/match';
 import type { MatchResult } from '../nail-art/match';
@@ -70,7 +70,8 @@ const HINT_MS = 3000;
 export function createNailStation(options: NailStationOptions): NailStation {
   // Story 017: both hands (10 nails) when the client asks for it.
   const nails = nailsFor(options.request);
-  const view = createStationView(emptyDesign(SHAPES[1] ?? 'round', nails), options.tools);
+  // Story 024: a pedicure shows the foot (toes as fingers).
+  const view = createStationView(emptyDesign(SHAPES[1] ?? 'round', nails), options.tools, limbFor(options.request));
   const palette = options.palette ?? NAIL_ART_CONFIG.palette.filter((colour) => !colour.shop);
   options.layer.addChild(view.container);
   view.container.visible = false;
@@ -173,16 +174,20 @@ export function createNailStation(options: NailStationOptions): NailStation {
   tabs.append(...Object.values(tabButtons));
   // Story 017: the hand switch, only for two-hand clients (one hand on the station at a time keeps the chat space).
   let hand: 0 | 1 = 0;
-  const handButton = button('✋1', 'station-hand', () => {
+  // Story 024: feet for a pedicure.
+  const foot = options.request.service === 'pedicure';
+  const icon = foot ? '🦶' : '✋';
+  const sideLabel = (side: 0 | 1): string => t(foot ? (side === 0 ? 'station.footRight' : 'station.footLeft') : side === 0 ? 'station.handRight' : 'station.handLeft');
+  const handButton = button(`${icon}1`, 'station-hand', () => {
     hand = hand === 0 ? 1 : 0;
     view.setHand(hand);
     view.setDesign(design);
     const r = options.rect();
     placeHint(r.width, r.height);
-    handButton.innerHTML = hand === 0 ? '✋1' : '✋2';
-    handButton.setAttribute('aria-label', t(hand === 0 ? 'station.handRight' : 'station.handLeft'));
-    say(t(hand === 0 ? 'station.handRight' : 'station.handLeft'));
-  }, t('station.handRight'));
+    handButton.innerHTML = `${icon}${hand + 1}`;
+    handButton.setAttribute('aria-label', sideLabel(hand));
+    say(sideLabel(hand));
+  }, sideLabel(0));
   toolbar.append(tabs, optionsRow, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []), doneButton);
 
   function selectTab(next: Tab): void {
@@ -322,7 +327,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
 }
 
 /** The client's game note line for the nails (story 005). */
-export function nailsNote(design: NailDesign, result: MatchResult | null): string {
-  const line = describeDesign(design);
+export function nailsNote(design: NailDesign, result: MatchResult | null, service?: 'manicure' | 'pedicure'): string {
+  const line = describeDesign(design, undefined, service);
   return result ? `finished: ${line}; matches what you asked for: ${result.score}/100` : `in progress: ${line}`;
 }

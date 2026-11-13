@@ -62,7 +62,8 @@ export function matchDesign(design: NailDesign, request: NailRequest, config: Na
 }
 
 /** One English line about the nails for the AI client and the review, e.g. "square, pale pink, 2 gems; 96% painted". */
-export function describeDesign(design: NailDesign, config: NailArtConfig = NAIL_ART_CONFIG): string {
+/** `service` (story 024): a pedicure says so ("pedicure, both feet: …"). */
+export function describeDesign(design: NailDesign, config: NailArtConfig = NAIL_ART_CONFIG, service?: 'manicure' | 'pedicure'): string {
   const perNail = coverage(design, config);
   const covered = Math.round((perNail.reduce((sum, value) => sum + value, 0) / perNail.length) * 100);
   const base = paletteColor(design.base, config)?.name.en.toLowerCase() ?? 'no polish yet';
@@ -72,7 +73,8 @@ export function describeDesign(design: NailDesign, config: NailArtConfig = NAIL_
   const extras = [...counts].map(([kind, n]) => `${n} ${kind}${n === 1 ? '' : 's'}`).join(', ');
   const messy = design.spill.filter((cells) => cells.length > 0).length;
   const edges = messy === 0 ? 'clean edges' : `polish on the skin around ${messy} nail${messy === 1 ? '' : 's'}`;
-  const hands = design.painted.length > NAIL_ART_CONFIG.hand.fingers.length ? 'both hands: ' : '';
+  const both = design.painted.length > NAIL_ART_CONFIG.hand.fingers.length;
+  const hands = service === 'pedicure' ? (both ? 'pedicure, both feet: ' : 'pedicure: ') : both ? 'both hands: ' : '';
   return `${hands}${design.shape} shape, ${base}${fade}${extras ? `, ${extras}` : ', no gems or stickers'}; ${covered}% painted, ${edges}`;
 }
 
@@ -80,5 +82,6 @@ export function describeDesign(design: NailDesign, config: NailArtConfig = NAIL_
 export function describeRequest(request: NailRequest, config: NailArtConfig = NAIL_ART_CONFIG): string {
   const colors = request.colors.map((id) => paletteColor(id, config)?.name.en.toLowerCase() ?? id).join(' or ');
   const art = [request.gems !== 'none' ? `${request.gems} gems` : 'no gems', request.stickers !== 'none' ? `${request.stickers} stickers` : 'no stickers', request.gradient === 'yes' ? 'a gradient' : request.gradient === 'no' ? 'no gradient' : 'a gradient is fine'].join(', ');
-  return `${request.hands === 2 ? 'both hands: ' : ''}${request.shapes.join(' or ')} shape, ${colors}, ${art}`;
+  const where = request.service === 'pedicure' ? (request.hands === 2 ? 'pedicure, both feet: ' : 'pedicure: ') : request.hands === 2 ? 'both hands: ' : '';
+  return `${where}${request.shapes.join(' or ')} shape, ${colors}, ${art}`;
 }

@@ -183,10 +183,10 @@ export function createChatPanel(
         ...(nailArt.palette ? { palette: nailArt.palette } : {}),
         ...(nailArt.tools ? { tools: nailArt.tools } : {}),
         maiSide: () => (mai ? ((mai.element.dataset.side as 'left' | 'right' | undefined) ?? 'right') : null),
-        onChange: (design) => nailArt.onNote(nailsNote(design, null)),
+        onChange: (design) => nailArt.onNote(nailsNote(design, null, nailArt.request.service)),
         onDone: (design, result) => {
           appointment.adjustMood(result.moodDelta);
-          nailArt.onNote(nailsNote(design, result));
+          nailArt.onNote(nailsNote(design, result, nailArt.request.service));
           nailArt.onDone(design, result);
           window.setTimeout(() => setStationOpen(false), 1800);
         },

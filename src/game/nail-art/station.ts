@@ -1,6 +1,6 @@
 import { Container, Graphics } from 'pixi.js';
 import { NAIL_ART_CONFIG, mirroredFingers, addSpill, cleanUp, dab, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid, wipeCells } from './design';
-import type { Decoration, FingerConfig, NailDesign, NailShape, StickerKind } from './design';
+import type { Decoration, FingerConfig, HandConfig, NailDesign, NailShape, StickerKind } from './design';
 
 /**
  * The nail art station's drawing and input (story 005; realistic hand, owner 2026-11-10): one hand drawn from the
@@ -61,7 +61,7 @@ export interface StationTools {
   cleanupRadius: number;
 }
 
-export function createStationView(initial: NailDesign = emptyDesign(), tools: StationTools = { brushRadius: NAIL_ART_CONFIG.brushRadius, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius }): StationView {
+export function createStationView(initial: NailDesign = emptyDesign(), tools: StationTools = { brushRadius: NAIL_ART_CONFIG.brushRadius, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius }, limb: HandConfig = NAIL_ART_CONFIG.hand): StationView {
   const container = new Container();
   container.label = 'nail-station';
   const fingersLayer = new Container();
@@ -69,7 +69,8 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
   const nailsLayer = new Container();
   // The palm goes under the fingers, so the thumb lies over it and every nail sits on a visible fingertip.
   container.addChild(palm, fingersLayer, nailsLayer);
-  const hand = NAIL_ART_CONFIG.hand;
+  // A hand, or a foot for a pedicure (story 024): same drawing, toes as fingers.
+  const hand = limb;
   /** The hand on the station, and its first nail in the design. */
   let handIndex: 0 | 1 = 0;
   const firstNail = (): number => handIndex * hand.fingers.length;

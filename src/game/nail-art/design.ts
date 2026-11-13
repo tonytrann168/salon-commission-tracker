@@ -43,6 +43,8 @@ export interface NailArtConfig {
   /** Polish coverage is tracked on this grid per nail. */
   grid: { cols: number; rows: number };
   hand: HandConfig;
+  /** Story 024: a foot for pedicures (toes as fingers; same count as the hand). */
+  foot: HandConfig;
   /** Brush radius in hand units: the same on every finger, so it fills a small nail faster and spills off it more easily. */
   brushRadius: number;
   /** Paint off the nail is tracked this many grid cells out; a nail's neatness hits 0 when its spill reaches this share of its area. */
@@ -90,8 +92,10 @@ export interface NailRequest {
   gradient: 'no' | 'ok' | 'yes';
   gems: DecorationLevel;
   stickers: DecorationLevel;
-  /** Story 017: hard clients may want both hands (10 nails). Default one hand. */
+  /** Story 017: hard clients may want both hands (10 nails). Default one hand. For a pedicure: both feet. */
   hands?: 1 | 2;
+  /** Story 024: a pedicure (toes) instead of a manicure. */
+  service?: 'manicure' | 'pedicure';
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -120,22 +124,31 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
   const parsedBands = bands.map((band, index) => (isRecord(band) ? { min: num(band.min, `moodByMatch[${index}].min`, 0, 100), delta: num(band.delta, `moodByMatch[${index}].delta`, -30, 30) } : fail(`"moodByMatch[${index}]" must be an object`)));
   if (!parsedBands.some((band) => band.min === 0)) fail('"moodByMatch" needs a band with min 0');
   const fps = isRecord(raw.fps) ? raw.fps : fail('"fps" must be an object');
-  const hand = isRecord(raw.hand) ? raw.hand : fail('"hand" must be an object');
-  const box = isRecord(hand.box) ? hand.box : fail('"hand.box" must be an object');
-  const fingers = Array.isArray(hand.fingers) && hand.fingers.length > 0 ? hand.fingers : fail('"hand.fingers" must be a non-empty list');
-  const parsedFingers = fingers.map((finger, i): FingerConfig => {
-    const at = `hand.fingers[${i}]`;
-    if (!isRecord(finger) || typeof finger.id !== 'string' || !isRecord(finger.nail)) return fail(`"${at}" needs an id and a nail size`);
+  // A hand or a foot (story 024): the same finger list shape (toes are fingers).
+  const limb = (value: unknown, name: string): HandConfig => {
+    const limbRaw = isRecord(value) ? value : fail(`"${name}" must be an object`);
+    const box = isRecord(limbRaw.box) ? limbRaw.box : fail(`"${name}.box" must be an object`);
+    const fingers = Array.isArray(limbRaw.fingers) && limbRaw.fingers.length > 0 ? limbRaw.fingers : fail(`"${name}.fingers" must be a non-empty list`);
     return {
-      id: finger.id,
-      x: num(finger.x, `${at}.x`, 0, 1000),
-      y: num(finger.y, `${at}.y`, 0, 1000),
-      angle: num(finger.angle, `${at}.angle`, -90, 90),
-      nail: { w: num(finger.nail.w, `${at}.nail.w`, 1, 100), h: num(finger.nail.h, `${at}.nail.h`, 1, 100) },
-      length: num(finger.length, `${at}.length`, 0, 200),
-      width: num(finger.width, `${at}.width`, 1, 3),
+      box: { w: num(box.w, `${name}.box.w`, 10, 1000), h: num(box.h, `${name}.box.h`, 10, 1000) },
+      fingers: fingers.map((finger, i): FingerConfig => {
+        const at = `${name}.fingers[${i}]`;
+        if (!isRecord(finger) || typeof finger.id !== 'string' || !isRecord(finger.nail)) return fail(`"${at}" needs an id and a nail size`);
+        return {
+          id: finger.id,
+          x: num(finger.x, `${at}.x`, 0, 1000),
+          y: num(finger.y, `${at}.y`, 0, 1000),
+          angle: num(finger.angle, `${at}.angle`, -90, 90),
+          nail: { w: num(finger.nail.w, `${at}.nail.w`, 1, 100), h: num(finger.nail.h, `${at}.nail.h`, 1, 100) },
+          length: num(finger.length, `${at}.length`, 0, 200),
+          width: num(finger.width, `${at}.width`, 1, 3),
+        };
+      }),
     };
-  });
+  };
+  const hand = limb(raw.hand, 'hand');
+  const foot = limb(raw.foot, 'foot');
+  if (foot.fingers.length !== hand.fingers.length) fail('"foot" needs as many toes as the hand has fingers');
   const spill = isRecord(raw.spill) ? raw.spill : fail('"spill" must be an object');
   return {
     shapes: (Array.isArray(raw.shapes) ? raw.shapes : fail('"shapes" must be a list')).map((shape, index) =>
@@ -146,7 +159,8 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
       ['heart', 'star', 'flower'].includes(kind as string) ? (kind as StickerKind) : fail(`"stickers[${index}]" is not a sticker`),
     ),
     grid: { cols: num(grid.cols, 'grid.cols', 2, 20), rows: num(grid.rows, 'grid.rows', 2, 30) },
-    hand: { box: { w: num(box.w, 'hand.box.w', 10, 1000), h: num(box.h, 'hand.box.h', 10, 1000) }, fingers: parsedFingers },
+    hand,
+    foot,
     brushRadius: num(raw.brushRadius, 'brushRadius', 0.5, 20),
     spill: { marginCells: num(spill.marginCells, 'spill.marginCells', 0, 6), forgiveRing: num(spill.forgiveRing, 'spill.forgiveRing', 0, 3), zeroNeatnessAt: num(spill.zeroNeatnessAt, 'spill.zeroNeatnessAt', 0.05, 2) },
     cleanupRadius: num(raw.cleanupRadius, 'cleanupRadius', 0.5, 30),
@@ -169,6 +183,9 @@ export const nailsFor = (request?: { hands?: 1 | 2 }): number => NAIL_COUNT * (r
 
 const empties = (count: number): number[][] => Array.from({ length: count }, () => []);
 export const emptyDesign = (shape: NailShape = 'round', nails: number = NAIL_COUNT): NailDesign => ({ shape, base: null, gradient: null, painted: empties(nails), spill: empties(nails), decorations: [] });
+
+/** The hand or foot a request needs (story 024). */
+export const limbFor = (request?: { service?: 'manicure' | 'pedicure' }, config: NailArtConfig = NAIL_ART_CONFIG): HandConfig => (request?.service === 'pedicure' ? config.foot : config.hand);
 
 /** The left hand: the configured hand mirrored (x across the box, lean reversed). The hand stays data. */
 export function mirroredFingers(hand: HandConfig = NAIL_ART_CONFIG.hand): FingerConfig[] {

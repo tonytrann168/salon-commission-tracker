@@ -64,6 +64,7 @@ export function parseScenario(raw: unknown, file: string, clientIds: readonly st
       ...(level(n.gems, 'gems') ? { gems: level(n.gems, 'gems') as 'none' | 'few' | 'lots' } : {}),
       ...(level(n.stickers, 'stickers') ? { stickers: level(n.stickers, 'stickers') as 'none' | 'few' | 'lots' } : {}),
       ...(n.hands !== undefined ? { hands: n.hands === 1 || n.hands === 2 ? n.hands : fail('"nailRequest.hands" must be 1 or 2') } : {}),
+      ...(n.service !== undefined ? { service: n.service === 'manicure' || n.service === 'pedicure' ? n.service : fail('"nailRequest.service" must be manicure or pedicure') } : {}),
     };
   }
   return {
