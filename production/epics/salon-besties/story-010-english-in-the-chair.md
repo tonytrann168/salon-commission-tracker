@@ -1,7 +1,7 @@
 # Story 010: English in the chair
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: In Progress
+> **Status**: Complete (sweep 030)
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
@@ -28,16 +28,16 @@
 
 *From `design/game-brief.md`, scoped to this story:*
 
-- [ ] Before the first appointment the player picks an English level — Beginner, Some, Comfortable or Fluent — each explained in one short line in Vietnamese and English. The choice is saved on the device and can be changed later in settings.
-- [ ] Clients speak at the player's level: Beginner gets short, slow, simple sentences with common salon words and one question at a time; Fluent gets natural speed, slang and idioms; Some and Comfortable sit between. The rules for each level live in a config file.
-- [ ] At Beginner and Some, the client's mood never changes because of grammar, vocabulary or spelling — only because of how the player treats her (listening, respect, honesty about time and price, rudeness). Polite but broken English never lowers her mood or causes a walk-out.
-- [ ] At Comfortable and Fluent, the client reacts realistically when the player's English is unclear: she may ask again, and her mood may dip.
-- [ ] **Tap to translate:** tapping any client line shows its Vietnamese translation under it; tapping again hides it. A line already translated shows instantly on the next tap, with no new AI call.
-- [ ] **Help me say it:** the player types in Vietnamese and sees the English. To send, they must re-type the English themselves; Send stays off until their typing matches, allowing for capital letters, punctuation and small typos (tolerance in config). The sent line counts as the player's own. Using Help me say it never lowers the client's mood.
-- [ ] *(Added 2026-11-09 at the owner's request.)* At **Beginner**, Help me say it offers **word tiles** instead of re-typing: the English words appear shuffled, and the player taps them in the right order to build and send the line. At Some and above, the player re-types.
-- [ ] **Full Vietnamese mode:** a setting that shows every client line with its Vietnamese translation side by side, automatically. The same setting is the language the bestie (story 003) and the recap (story 011) will use.
-- [ ] Vietnamese with all its diacritics can be typed on a phone's Vietnamese keyboard in Help me say it, and displays correctly in translations.
-- [ ] All translation goes through a server function; the API key never reaches the browser. A failed translation shows a friendly retry and never breaks the appointment.
+- [x] Before the first appointment the player picks an English level — Beginner, Some, Comfortable or Fluent — each explained in one short line in Vietnamese and English. The choice is saved on the device and can be changed later in settings.
+- [x] Clients speak at the player's level: Beginner gets short, slow, simple sentences with common salon words and one question at a time; Fluent gets natural speed, slang and idioms; Some and Comfortable sit between. The rules for each level live in a config file.
+- [x] At Beginner and Some, the client's mood never changes because of grammar, vocabulary or spelling — only because of how the player treats her (listening, respect, honesty about time and price, rudeness). Polite but broken English never lowers her mood or causes a walk-out.
+- [x] At Comfortable and Fluent, the client reacts realistically when the player's English is unclear: she may ask again, and her mood may dip.
+- [x] **Tap to translate:** tapping any client line shows its Vietnamese translation under it; tapping again hides it. A line already translated shows instantly on the next tap, with no new AI call.
+- [x] **Help me say it:** the player types in Vietnamese and sees the English. To send, they must re-type the English themselves; Send stays off until their typing matches, allowing for capital letters, punctuation and small typos (tolerance in config). The sent line counts as the player's own. Using Help me say it never lowers the client's mood.
+- [x] *(Added 2026-11-09 at the owner's request.)* At **Beginner**, Help me say it offers **word tiles** instead of re-typing: the English words appear shuffled, and the player taps them in the right order to build and send the line. At Some and above, the player re-types.
+- [x] **Full Vietnamese mode:** a setting that shows every client line with its Vietnamese translation side by side, automatically. The same setting is the language the bestie (story 003) and the recap (story 011) will use.
+- [x] Vietnamese with all its diacritics can be typed on a phone's Vietnamese keyboard in Help me say it, and displays correctly in translations.
+- [x] All translation goes through a server function; the API key never reaches the browser. A failed translation shows a friendly retry and never breaks the appointment.
 
 ---
 
@@ -113,3 +113,10 @@
 ## Owner Decisions (2026-11-10, relayed by the overseer)
 
 - Choosing Beginner (first pick, Settings, or an accepted suggestion to move down) turns full Vietnamese mode on. Never re-applied on launch, so a player's manual off sticks. Built with story 008's follow-up: `chooseEnglishLevel` in `src/game/settings.ts`, tested in `src/tests/beginner-vietnamese.test.ts`.
+
+## Acceptance sweep (story 030, 2026-11-13)
+
+Checked: level picker (en/vi lines; Settings), level rules in `config/english-levels.json`, mood rules per level
+(`tests/english-level.test.ts`, 33 tests), tap to translate with cache (`tests/translation-cache.test.ts`), Help me say
+it with re-typing tolerance and Beginner word tiles (`tests/beginner-vietnamese.test.ts`), full Vietnamese mode,
+server-only translation with a friendly retry.

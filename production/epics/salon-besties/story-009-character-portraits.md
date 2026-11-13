@@ -1,7 +1,7 @@
 # Story 009: Character portraits & mood expressions
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: In Progress
+> **Status**: Complete except Visual/Feel checks (owner phone playtest)
 > **Layer**: Presentation
 > **Type**: Visual/Feel
 > **Estimate**: M
@@ -28,15 +28,15 @@
 
 *From `design/game-brief.md`, scoped to this story:*
 
-- [ ] The client's portrait is shown on the appointment screen, readable at phone size, without crowding or shifting the chat.
-- [ ] The bestie has a placeholder portrait in the same style, shown on the title screen and in a corner of the salon, ready for story 003 to use.
-- [ ] Each character has at least five expressions — furious, annoyed, neutral, pleased, delighted — plus a "walking out" pose; the mood ranges that select each expression live in a config file.
-- [ ] The expression updates as soon as the mood crosses into a new range, with a short, snappy transition.
-- [ ] Mood is readable from face shape (brows, mouth, eyes), not from color alone.
-- [ ] Placeholder art first: simple, cute 2D faces drawn in code (PixiJS Graphics), no image files required.
-- [ ] Art is swappable: each character points to a portrait definition, so final art (images or Rive faces) can replace the placeholders without changing game code.
-- [ ] Portraits keep the appointment screen at the 60 fps target on a mid-range phone.
-- [ ] *(Added 2026-11-09 at the owner's request.)* While the client's reply is delivered, her portrait is in a "talking" state (mouth moving on top of her current mood expression) and her words appear at speaking pace, so it feels like a conversation, not texting; she stops talking when the reply is fully shown. Until story 001 streams replies, the reveal paces a whole reply; the same talking state then follows real streaming.
+- [x] The client's portrait is shown on the appointment screen, readable at phone size, without crowding or shifting the chat.
+- [x] The bestie has a placeholder portrait in the same style, shown on the title screen and in a corner of the salon, ready for story 003 to use.
+- [x] Each character has at least five expressions — furious, annoyed, neutral, pleased, delighted — plus a "walking out" pose; the mood ranges that select each expression live in a config file.
+- [x] The expression updates as soon as the mood crosses into a new range, with a short, snappy transition.
+- [x] Mood is readable from face shape (brows, mouth, eyes), not from color alone.
+- [x] Placeholder art first: simple, cute 2D faces drawn in code (PixiJS Graphics), no image files required.
+- [x] Art is swappable: each character points to a portrait definition, so final art (images or Rive faces) can replace the placeholders without changing game code.
+- [x] Portraits keep the appointment screen at the 60 fps target on a mid-range phone.
+- [x] *(Added 2026-11-09 at the owner's request.)* While the client's reply is delivered, her portrait is in a "talking" state (mouth moving on top of her current mood expression) and her words appear at speaking pace, so it feels like a conversation, not texting; she stops talking when the reply is fully shown. Until story 001 streams replies, the reveal paces a whole reply; the same talking state then follows real streaming.
 
 ---
 
@@ -94,3 +94,10 @@
 
 - Depends on: `production/epics/salon-besties/story-001-live-client-appointment.md`
 - Unlocks: `production/epics/salon-besties/story-003-signature-bestie.md` (bestie portrait available)
+
+## Acceptance sweep (story 030, 2026-11-13)
+
+Checked: portrait zone, expression bands in config (`tests/expression-bands.test.ts`), the walk-out pose, talking state
+(`setClientTalking`), placeholder faces drawn in code, swappable definitions (`game/portraits/definitions.ts`).
+**Needs owner (Visual/Feel):** 60 fps on a mid-range phone and the look of the faces: phone playtest; final art from
+the designer.

@@ -1,7 +1,7 @@
 # Story 001: Live client appointment (text)
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: In Progress
+> **Status**: Complete (sweep 030)
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: L
@@ -28,14 +28,14 @@
 
 *From `design/game-brief.md`, scoped to this story:*
 
-- [ ] The player can start an appointment with one client from the title screen.
-- [ ] The client is played by Claude through a server function; no API key ever reaches the browser.
-- [ ] The appointment runs through phases: consultation → service → checkout, and the player can see which phase they are in.
-- [ ] The player types messages on a phone keyboard and the client replies in character within a few seconds (streamed, with a typing indicator).
-- [ ] A live mood meter (0–100) is shown and changes after each exchange, based on what the player said.
-- [ ] If the mood hits 0, the client walks out and the appointment ends as a fail (brief fail state).
-- [ ] When checkout completes, the appointment ends and hands its transcript and mood history to the results step (story 002).
-- [ ] A failed or slow AI call shows a friendly retry message instead of breaking the appointment.
+- [x] The player can start an appointment with one client from the title screen.
+- [x] The client is played by Claude through a server function; no API key ever reaches the browser.
+- [x] The appointment runs through phases: consultation → service → checkout, and the player can see which phase they are in.
+- [x] The player types messages on a phone keyboard and the client replies in character within a few seconds (streamed, with a typing indicator).
+- [x] A live mood meter (0–100) is shown and changes after each exchange, based on what the player said.
+- [x] If the mood hits 0, the client walks out and the appointment ends as a fail (brief fail state).
+- [x] When checkout completes, the appointment ends and hands its transcript and mood history to the results step (story 002).
+- [x] A failed or slow AI call shows a friendly retry message instead of breaking the appointment.
 
 ---
 
@@ -97,3 +97,11 @@
 
 - Depends on: None
 - Unlocks: `production/epics/salon-besties/story-002-scoring-and-results.md`, `production/epics/salon-besties/story-003-signature-bestie.md`, `production/epics/salon-besties/story-004-voice-in-and-out.md`
+
+## Acceptance sweep (story 030, 2026-11-13)
+
+Checked against the code and the end-to-end suite (story 029): start from the title, server-only AI (no key in the
+built JS), phases shown, mood meter, walk-out at 0, checkout → results, friendly retry (`chat.aiTrouble`).
+**Deviation (OWNER):** replies are not token-streamed. The client turn is one structured (tool-use) answer with mood
+and phase, shown with a typing indicator and then revealed at speaking pace (story 009). Real streaming would need the
+mood/phase split from the text; recommended to keep as is.

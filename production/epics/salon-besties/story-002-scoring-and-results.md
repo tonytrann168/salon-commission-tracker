@@ -1,7 +1,7 @@
 # Story 002: Scoring & results
 
 > **Epic**: Salon Besties (MVP)
-> **Status**: Complete
+> **Status**: Complete (sweep 030)
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: M
@@ -28,16 +28,16 @@
 
 *From `design/game-brief.md`, scoped to this story:*
 
-- [ ] Every finished appointment (checkout or walk-out) produces a result: 1–5 stars, a tip amount and a short written review in the client's voice.
-- [ ] Stars and tip are calculated by game code from the final mood and the scorecard, so the same inputs always give the same result.
-- [ ] A scorecard rates five skills — greeting, consultation, upsell, rebooking, problem handling — each 0–100, from the transcript.
-- [ ] A walk-out always gives 1 star and no tip; a 5-star result needs high final mood and no skill below a set floor.
-- [ ] The result marks the brief's goal (5 stars + good tip + rebooking) and fail (walk-out, 1–2 stars, redo demand) outcomes.
-- [ ] A results screen shows stars, tip, review and scorecard, and offers "next client" or "back to menu".
-- [ ] The scoring formulas live in one config file so they can be tuned without code changes.
-- [ ] *(Added 2026-11-09, educational-first redesign.)* The scorecard adds an **English score** with three parts — clarity, politeness, grammar/vocabulary — each 0–100, graded from the player's own lines only (never the client's), and graded against what is expected at the player's English level.
-- [ ] The English score's weight in stars and tip depends on the player's level (Beginner / Some / Comfortable / Fluent), set in the scoring config: at Beginner and Some, grammar/vocabulary can never cost a star (it counts only toward the English score itself); at Comfortable and Fluent it counts toward stars like the other skills.
-- [ ] The results screen shows the English score with its three parts, in plain words a Beginner can follow.
+- [x] Every finished appointment (checkout or walk-out) produces a result: 1–5 stars, a tip amount and a short written review in the client's voice.
+- [x] Stars and tip are calculated by game code from the final mood and the scorecard, so the same inputs always give the same result.
+- [x] A scorecard rates five skills — greeting, consultation, upsell, rebooking, problem handling — each 0–100, from the transcript.
+- [x] A walk-out always gives 1 star and no tip; a 5-star result needs high final mood and no skill below a set floor.
+- [x] The result marks the brief's goal (5 stars + good tip + rebooking) and fail (walk-out, 1–2 stars, redo demand) outcomes.
+- [x] A results screen shows stars, tip, review and scorecard, and offers "next client" or "back to menu".
+- [x] The scoring formulas live in one config file so they can be tuned without code changes.
+- [x] *(Added 2026-11-09, educational-first redesign.)* The scorecard adds an **English score** with three parts — clarity, politeness, grammar/vocabulary — each 0–100, graded from the player's own lines only (never the client's), and graded against what is expected at the player's English level.
+- [x] The English score's weight in stars and tip depends on the player's level (Beginner / Some / Comfortable / Fluent), set in the scoring config: at Beginner and Some, grammar/vocabulary can never cost a star (it counts only toward the English score itself); at Comfortable and Fluent it counts toward stars like the other skills.
+- [x] The results screen shows the English score with its three parts, in plain words a Beginner can follow.
 
 ---
 
@@ -111,3 +111,9 @@
 - A redo demand only marks a fail; goal and fail can both be true (`src/game/scoring.ts`) · kept 2026-11-09
 - Screen wording and labels — "Dana is writing her review…", the five skill and three English labels, goal/fail lines (`src/game/ui/strings.ts`) · kept 2026-11-09
 - *(Fixed 2026-11-09 after the owner's real-API check.)* The grading model rejects forced `tool_choice`, so grading now uses `tool_choice: auto` with a strict tool and a prompt line to call it, retries once when no valid tool call comes back, then shows the friendly error; `max_tokens` raised to 4000 for the model's thinking (`src/api/grade-appointment.ts`)
+
+## Acceptance sweep (story 030, 2026-11-13)
+
+Checked: `tests/scoring.test.ts` (32 tests), results screen in the e2e suite (en + vi). The two items deferred for a
+real grading call (five skills from a real transcript; English from the player's lines only) are now covered by
+`smoke:api` (grade-appointment), which the overseer ran against the real API (16/16, 2026-11-13).
