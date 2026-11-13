@@ -117,6 +117,20 @@ for (const lang of LANGS) {
       await context.close();
     });
 
+    test('privacy and terms open from Settings in the player\'s language', async ({ page, context }) => {
+      await seed(page, lang);
+      await mockApi(page);
+      await page.goto('/');
+      await openSettings(page);
+      const links = page.locator('.screen > .legal-links a');
+      await expect(links).toHaveCount(2);
+      const [privacy] = await Promise.all([context.waitForEvent('page'), links.first().click()]);
+      await privacy.waitForLoadState();
+      expect(privacy.url()).toContain(`/privacy.html#${lang}`);
+      await expect(privacy.locator(`section#${lang} h1`)).toBeVisible();
+      expect(await privacy.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+    });
+
     test('a new build while open: one reload with a note, never a loop', async ({ page }) => {
       await seed(page, lang);
       await mockApi(page);

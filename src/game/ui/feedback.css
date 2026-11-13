@@ -21,3 +21,6 @@
 /* Story 027: backup QR (black on white with a quiet zone, whatever the theme, so cameras read it). */
 .backup-qr { margin: 4px 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .backup-qr svg { width: min(100%, 280px); height: auto; background: #fff; border-radius: 8px; }
+/* Story 031: privacy and terms links. */
+.legal-links { display: flex; gap: 16px; flex-wrap: wrap; }
+.legal-link { color: #a2346a; text-decoration: underline; min-height: 32px; display: inline-flex; align-items: center; }

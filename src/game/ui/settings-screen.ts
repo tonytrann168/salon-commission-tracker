@@ -13,6 +13,7 @@ import { createBackupSection } from './backup-panel';
 import { createComfortSection } from './comfort-section';
 import { createAccountSection } from './account-panel';
 import { getAccount } from '../account/account';
+import { legalLinks } from './legal-links';
 import './level-picker.css';
 
 /**
@@ -150,7 +151,7 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
     // Story 025: player accounts (only when this build has the account settings).
     const account = getAccount();
     const accountSection = account ? [createAccountSection(host, account)] : [];
-    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, comfort, backup, back);
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, comfort, backup, legalLinks(), back);
   };
 
   render();

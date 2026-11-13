@@ -1,4 +1,5 @@
 import { t } from '../i18n';
+import { legalLinks } from './legal-links';
 import { el } from './dom';
 import './level-picker.css';
 
@@ -46,7 +47,7 @@ export function askForInvite(host: HTMLElement): Promise<void> {
     const status = el('p', 'invite-status');
     status.setAttribute('role', 'alert');
     form.append(label, input, submit, status);
-    screen.append(title, el('p', 'setting-note', t('invite.note')), form);
+    screen.append(title, el('p', 'setting-note', t('invite.note')), form, legalLinks());
     host.append(screen);
     input.focus();
 

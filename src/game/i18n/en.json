@@ -493,5 +493,7 @@
   "tet.later": "Later",
   "tet.wish": "Happy Lunar New Year! Wishing you lots of happy clients and big tips this year!",
   "tet.got": "+{tips} tips in your wallet. See you again tomorrow!",
-  "tet.gotOutfit": "+{tips} tips, and a red áo dài for {mai} to wear (Dress-up). See you tomorrow!"
+  "tet.gotOutfit": "+{tips} tips, and a red áo dài for {mai} to wear (Dress-up). See you tomorrow!",
+  "legal.privacy": "Privacy",
+  "legal.terms": "Terms"
 }

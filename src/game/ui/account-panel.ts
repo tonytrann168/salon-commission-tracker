@@ -8,6 +8,7 @@ import type { StringKey } from '../i18n';
 import { el } from './dom';
 import './feedback.css';
 import './account.css';
+import { legalLinks } from './legal-links';
 
 /**
  * Story 025: Settings → Your account, the sign-in sheet (sign in, create an account, confirm the email with a code,
@@ -34,7 +35,7 @@ export function createAccountSection(host: HTMLElement, account: Account): HTMLE
     if (!user) {
       const open = button(t('account.open'), 'chat-button');
       open.addEventListener('click', () => openSignInSheet(host, account, { onDone: draw }));
-      section.replaceChildren(title, el('p', 'setting-note', t('account.note')), open, status);
+      section.replaceChildren(title, el('p', 'setting-note', t('account.note')), legalLinks(), open, status);
       return;
     }
     const signOut = button(t('account.signOut'));
@@ -244,7 +245,7 @@ export function openSignInSheet(host: HTMLElement, account: Account, options: { 
       } else {
         links.append(link(t('account.toSignIn'), () => show('signIn')));
       }
-      body.push(el('p', 'setting-note', t('account.note')), field(t('account.email'), mail), pass.node, rememberRow(), links, hint);
+      body.push(el('p', 'setting-note', t('account.note')), legalLinks(), field(t('account.email'), mail), pass.node, rememberRow(), links, hint);
       actions.append(cancel, main);
       requestAnimationFrame(() => (mail.value ? pass.input : mail).focus());
     } else if (mode === 'confirm') {
