@@ -1,0 +1,6 @@
+/* Story 032: the global error screen. */
+.error-screen { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(59, 42, 51, 0.45); }
+.error-card { box-sizing: border-box; width: min(420px, 100%); padding: 18px 16px; border-radius: 22px; background: #fff4f8; color: #3b2a33; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.error-card h2 { margin: 0; font-size: 20px; }
+.error-card p { margin: 0; }
+.error-card .feedback-actions { width: 100%; }

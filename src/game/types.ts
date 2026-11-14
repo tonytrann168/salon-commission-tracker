@@ -92,7 +92,13 @@ export type TurnErrorCode =
   | 'upstream_unreachable'
   | 'invalid_model_output'
   | 'network'
+  /** Story 032: the call took longer than its time limit. */
+  | 'timeout'
   | 'unknown';
+
+/** Story 032: a fetch that failed, as a TurnError: a timed-out call says so (the chat offers Try again either way). */
+export const networkError = (error: unknown): TurnError =>
+  error instanceof DOMException && (error.name === 'TimeoutError' || error.name === 'AbortError') ? new TurnError('timeout', 'The server took too long.') : new TurnError('network', 'Could not reach the server.');
 
 /** Typed failure of a client turn. */
 export class TurnError extends Error {

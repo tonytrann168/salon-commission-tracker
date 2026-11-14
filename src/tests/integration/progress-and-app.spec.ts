@@ -131,6 +131,24 @@ for (const lang of LANGS) {
       expect(await privacy.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
     });
 
+    test('an uncaught error shows the friendly screen and sends a report without chat or email', async ({ page }) => {
+      await seed(page, lang);
+      const seen = await mockApi(page);
+      await page.goto('/');
+      await expect(page.locator('.title-menu')).toBeVisible();
+      await page.evaluate(() => setTimeout(() => { throw new Error('Test failure for lan@example.com'); }, 0));
+      await expect(page.locator('.error-screen')).toBeVisible();
+      await expect(page.locator('.error-card h2')).toHaveText(lang === 'vi' ? 'Ối, có lỗi rồi' : 'Oops, something went wrong');
+      await expect.poll(() => seen['client-error']?.length ?? 0).toBe(1);
+      const report = seen['client-error']![0] as Record<string, unknown>;
+      expect(Object.keys(report).sort()).toEqual(['message', 'path', 'stack', 'version']);
+      expect(JSON.stringify(report)).not.toMatch(/example\.com/);
+      // The game was usable: "Keep playing" closes it.
+      await page.locator('.error-card .chat-button.secondary').click();
+      await expect(page.locator('.error-screen')).toHaveCount(0);
+      await expect(page.locator('.title-menu')).toBeVisible();
+    });
+
     test('a new build while open: one reload with a note, never a loop', async ({ page }) => {
       await seed(page, lang);
       await mockApi(page);

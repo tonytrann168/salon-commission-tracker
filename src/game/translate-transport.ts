@@ -1,4 +1,4 @@
-import { TurnError } from './types';
+import { TurnError, networkError } from './types';
 import type { Translate, TurnErrorCode } from './types';
 
 const ENDPOINT = '/api/translate';
@@ -17,8 +17,8 @@ export function createTranslateTransport(): Translate {
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       body = await response.json();
-    } catch {
-      throw new TurnError('network', 'Could not reach the server.');
+    } catch (error) {
+      throw networkError(error);
     }
     if (!response.ok) {
       const error = (body as { error?: { code?: TurnErrorCode; message?: string } } | null)?.error;

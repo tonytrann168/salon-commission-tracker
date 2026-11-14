@@ -51,6 +51,8 @@ import type { ScoreResult } from './game/scoring';
 import './game/ui/global.css';
 import './game/ui/comfort.css';
 import { applyComfort } from './game/comfort';
+import { installErrorHandling } from './game/ui/error-screen';
+import { APP_VERSION } from './game/feedback';
 import { getAccount, useCloudForTesting } from './game/account/account';
 import { accountNudge, showSyncOutcome } from './game/ui/account-panel';
 import { isBackedUp } from './game/backup';
@@ -511,4 +513,10 @@ async function boot(): Promise<void> {
   }
 }
 
-void boot();
+// Story 032: a friendly screen (and a privacy-safe report) for any error the game did not catch, boot included.
+const failApp = installErrorHandling({
+  host: document.getElementById('app') ?? document.body,
+  version: APP_VERSION,
+  usable: () => document.querySelector('.title-menu, .screen, .chat-panel') !== null,
+});
+void boot().catch(failApp);

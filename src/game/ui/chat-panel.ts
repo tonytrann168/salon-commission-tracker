@@ -497,7 +497,9 @@ export function createChatPanel(
         guardMessage(snapshot.error) ??
         (snapshot.error instanceof TurnError && snapshot.error.code === 'missing_api_key'
           ? t('chat.aiUnavailable')
-          : t('chat.aiTrouble'));
+          : snapshot.error instanceof TurnError && snapshot.error.code === 'timeout'
+            ? t('chat.aiSlow', { name: clientName })
+            : t('chat.aiTrouble'));
     }
 
     // The results wait until the final line has finished revealing (settle shows them).

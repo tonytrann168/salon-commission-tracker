@@ -495,5 +495,10 @@
   "tet.got": "+{tips} tips in your wallet. See you again tomorrow!",
   "tet.gotOutfit": "+{tips} tips, and a red áo dài for {mai} to wear (Dress-up). See you tomorrow!",
   "legal.privacy": "Privacy",
-  "legal.terms": "Terms"
+  "legal.terms": "Terms",
+  "chat.aiSlow": "{name} is taking too long to answer. Your message is safe. Try again?",
+  "error.title": "Oops, something went wrong",
+  "error.line": "{mai} is so sorry! Your progress is safe: the game saves as you play. Let's try again.",
+  "error.retry": "Try again",
+  "error.keepPlaying": "Keep playing"
 }

@@ -8,5 +8,7 @@
   "defaultGlobalPerDay": 2000,
   "maxBodyBytes": 65536,
   "feedbackPerCodePerMinute": 3,
-  "feedbackPerCodePerDay": 30
+  "feedbackPerCodePerDay": 30,
+  "clientErrorPerCodePerMinute": 5,
+  "clientErrorPerCodePerDay": 50
 }

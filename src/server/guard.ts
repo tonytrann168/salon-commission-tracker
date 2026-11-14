@@ -25,6 +25,9 @@ export interface GuardConfig {
   /** Story 016: feedback posts, separate from the AI budget. */
   feedbackPerCodePerMinute: number;
   feedbackPerCodePerDay: number;
+  /** Story 032: client error reports, separate from AI and feedback. */
+  clientErrorPerCodePerMinute: number;
+  clientErrorPerCodePerDay: number;
 }
 
 export const GUARD_CONFIG: GuardConfig = guardJson;
@@ -139,6 +142,8 @@ export interface Guard {
   chargeAiCall(cookieHeader: string | undefined, ip: string): GuardResult<string>;
   /** Story 016: signed in and within the feedback limits (separate from the AI budget); counts the post. */
   chargeFeedback(cookieHeader: string | undefined, ip: string): GuardResult<string>;
+  /** Story 032: signed in and within the client-error limits; counts the report. */
+  chargeClientError(cookieHeader: string | undefined, ip: string): GuardResult<string>;
 }
 
 export function createGuard(env: GuardEnv, clock: () => number = Date.now, config: GuardConfig = GUARD_CONFIG): Guard {
@@ -165,6 +170,17 @@ export function createGuard(env: GuardEnv, clock: () => number = Date.now, confi
     return id ? { ok: true, value: id } : fail(401, 'unauthorized');
   };
 
+  /** A plain (non-AI) route: signed in, its own per-code limits, and the shared per-IP limit. */
+  const chargePlain = (kind: string, perMinute: number, perDay: number, cookieHeader: string | undefined, ip: string): GuardResult<string> => {
+    const signedIn = session(cookieHeader);
+    if (!signedIn.ok) return signedIn;
+    const id = signedIn.value;
+    const now = clock();
+    if (daily.count(`${kind}:${id}`, now) >= perDay) return fail(429, 'daily_cap');
+    if (!minute.hit(`${kind}:${id}`, perMinute, now) || !minute.hit(`ip:${ip}`, config.perIpPerMinute, now)) return fail(429, 'rate_limited');
+    daily.add(`${kind}:${id}`, now);
+    return { ok: true, value: id };
+  };
   return {
     login(code, ip) {
       const setup = configured();
@@ -187,15 +203,7 @@ export function createGuard(env: GuardEnv, clock: () => number = Date.now, confi
       daily.add(`code:${id}`, now);
       return { ok: true, value: id };
     },
-    chargeFeedback(cookieHeader, ip) {
-      const signedIn = session(cookieHeader);
-      if (!signedIn.ok) return signedIn;
-      const id = signedIn.value;
-      const now = clock();
-      if (daily.count(`feedback:${id}`, now) >= config.feedbackPerCodePerDay) return fail(429, 'daily_cap');
-      if (!minute.hit(`feedback:${id}`, config.feedbackPerCodePerMinute, now) || !minute.hit(`ip:${ip}`, config.perIpPerMinute, now)) return fail(429, 'rate_limited');
-      daily.add(`feedback:${id}`, now);
-      return { ok: true, value: id };
-    },
+    chargeFeedback: (cookieHeader, ip) => chargePlain('feedback', config.feedbackPerCodePerMinute, config.feedbackPerCodePerDay, cookieHeader, ip),
+    chargeClientError: (cookieHeader, ip) => chargePlain('client-error', config.clientErrorPerCodePerMinute, config.clientErrorPerCodePerDay, cookieHeader, ip),
   };
 }

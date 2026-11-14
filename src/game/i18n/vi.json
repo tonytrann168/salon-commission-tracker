@@ -495,5 +495,10 @@
   "tet.got": "+{tips} tiền tip vào ví của {you}. Ngày mai {self} lì xì tiếp nha!",
   "tet.gotOutfit": "+{tips} tiền tip, và áo dài đỏ cho {mai} mặc (Thay đồ). Ngày mai {self} lì xì tiếp nha!",
   "legal.privacy": "Quyền riêng tư",
-  "legal.terms": "Điều khoản"
+  "legal.terms": "Điều khoản",
+  "chat.aiSlow": "{name} trả lời lâu quá. Tin nhắn của {you} vẫn còn đó. Thử lại nhé?",
+  "error.title": "Ối, có lỗi rồi",
+  "error.line": "{mai} xin lỗi {you} nha! Tiến độ của {you} vẫn an toàn, game lưu liên tục mà. Mình thử lại nha.",
+  "error.retry": "Thử lại",
+  "error.keepPlaying": "Chơi tiếp"
 }

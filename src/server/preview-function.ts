@@ -81,7 +81,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const plain = PLAIN_ROUTES[route];
   if (plain) {
     // Story 016: feedback needs the invite cookie and has its own limits; it never spends the AI budget.
-    const allowed = guard.chargeFeedback(req.headers.cookie, ip);
+    // Story 032: client error reports have their own limits.
+    const allowed = route === 'client-error' ? guard.chargeClientError(req.headers.cookie, ip) : guard.chargeFeedback(req.headers.cookie, ip);
     if (!allowed.ok) {
       send(res, allowed.status, error(allowed.code, allowed.code === 'unauthorized' ? 'Enter your invite code.' : 'Thanks! Please wait a little before sending more.'));
       return;
