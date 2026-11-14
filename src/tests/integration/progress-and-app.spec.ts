@@ -165,6 +165,33 @@ for (const lang of LANGS) {
       await expect(page.locator('.whats-new')).toBeVisible();
     });
 
+    test('EN | VI on the title switches the whole interface at once and is remembered; the tagline shows', async ({ page }) => {
+      await seed(page, lang);
+      await mockApi(page);
+      await page.goto('/');
+      const start = page.locator('.title-menu > .chat-button').first();
+      const other = lang === 'vi' ? 'en' : 'vi';
+      const texts = { en: 'Start appointment', vi: 'Bắt đầu đón khách' };
+      await expect(start).toHaveText(texts[lang]);
+      await expect(page.locator('.title-tagline')).not.toBeEmpty();
+      await expect(page.locator(`.language-option[lang=${lang}]`)).toHaveAttribute('aria-pressed', 'true');
+      const before = await page.locator('.title-tagline').textContent();
+      await page.locator(`.language-option[lang=${other}]`).click();
+      await expect(start).toHaveText(texts[other]);
+      await expect(page.locator(`.language-option[lang=${other}]`)).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.title-tagline')).not.toHaveText(before!);
+      expect(await page.evaluate(() => document.documentElement.lang)).toBe(other);
+      await page.reload();
+      await expect(page.locator('.title-menu > .chat-button').first()).toHaveText(texts[other]);
+      // The tagline and the switch stay inside the screen and off the Start button.
+      const clear = await page.evaluate(() => {
+        const box = (sel: string) => document.querySelector(sel)!.getBoundingClientRect();
+        const tag = box('.title-tagline'); const toggle = box('.language-toggle'); const startBox = box('.title-menu > .chat-button');
+        return tag.left >= 0 && tag.right <= window.innerWidth && toggle.right <= window.innerWidth && toggle.top >= 0 && tag.bottom <= startBox.top;
+      });
+      expect(clear).toBe(true);
+    });
+
     test('a new build while open: one reload with a note, never a loop', async ({ page }) => {
       await seed(page, lang);
       await mockApi(page);

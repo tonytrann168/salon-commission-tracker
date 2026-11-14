@@ -6,9 +6,9 @@ describe('title screen', () => {
     expect(GAME_TITLE).toBe('Salon Besties');
   });
 
-  it('builds a screen container with background, polish, title and tagline', () => {
+  it('builds a screen container with background, bestie and title (the tagline is HTML since story 042)', () => {
     const screen = createTitleScreen(390, 844);
     expect(screen.label).toBe('title-screen');
-    expect(screen.children).toHaveLength(4);
+    expect(screen.children).toHaveLength(3);
   });
 });

@@ -24,7 +24,7 @@ import { createTitleMenu } from './game/ui/title-menu';
 import { createBestieTransport } from './game/bestie';
 import { createTranslateTransport } from './game/translate-transport';
 import { createTranslationCache } from './game/translation-cache';
-import { getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, chooseEnglishLevel } from './game/settings';
+import { getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, chooseEnglishLevel, setHelpLanguage } from './game/settings';
 import { loadMemory } from './game/bestie-memory';
 import { createCorrectionsTransport } from './game/learning/corrections';
 import { addPhrases, loadPhrasebook, savePhrasebook } from './game/learning/phrasebook';
@@ -41,7 +41,9 @@ import { createAudioEngine } from './game/audio';
 import { emitSound } from './game/sound-events';
 import type { SpeechHost } from './game/voice';
 import { createLearningPanel, createLevelChangePanel } from './game/ui/recap-screen';
-import { applyDocumentLanguage, getLanguage, t } from './game/i18n';
+import { applyDocumentLanguage, companionParams, fillTemplate, getLanguage, t } from './game/i18n';
+import { nextTagline, taglineText } from './game/taglines';
+import { loadRecent, saveRecent } from './game/fresh-lines';
 import { createDebriefPanel } from './game/ui/bestie-panel';
 import { el } from './game/ui/dom';
 import { createLevelPicker } from './game/ui/level-picker';
@@ -139,12 +141,26 @@ async function boot(): Promise<void> {
   };
   let teardownDom: () => void = () => undefined;
 
+  // Story 042: one tagline per visit (page load), never one of the last few.
+  const taglinePick = nextTagline(loadRecent('tagline'), Math.random());
+  saveRecent('tagline', taglinePick.recent);
+  const visitTagline = taglinePick.pick;
   const showTitle = () => {
     teardownDom();
     // Story 013: the first open of the day is Mai's daily hello (a little friendship; a new level gets her card).
     gainFriendship((memory) => afterHello(memory, localDay()));
     showScene('title');
-    const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook, showShop, showProfile, showCorner, shouldCue(readStored(CORNER_SEEN_KEY)));
+    const menu = createTitleMenu(host, startAppointment, showSettings, showPhrasebook, showShop, showProfile, showCorner, shouldCue(readStored(CORNER_SEEN_KEY)), {
+      // Story 042: this visit's line, in the current language (companion tokens filled).
+      tagline: fillTemplate(taglineText(visitTagline, getLanguage()), companionParams()),
+      // Story 041: EN | VI switches the whole interface at once (the same setting as full Vietnamese mode).
+      language: getLanguage(),
+      onLanguage: (language) => {
+        setHelpLanguage(language === 'vi' ? 'full' : 'tap');
+        applyDocumentLanguage();
+        showTitle();
+      },
+    });
     // Story 025: once, after a few appointments, the companion suggests an account.
     const account = getAccount();
     const nudge = account ? accountNudge(host, account, loadSave().appointments) : null;

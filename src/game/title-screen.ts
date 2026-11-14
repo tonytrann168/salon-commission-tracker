@@ -23,13 +23,7 @@ export function createTitleScreen(width: number, height: number): Container {
   title.anchor.set(0.5);
   title.position.set(width / 2, height * 0.52);
 
-  const tagline = new Text({
-    text: t('title.tagline'),
-    style: { fontFamily: 'system-ui, sans-serif', fontSize: 18, fill: 0x8a6575 },
-  });
-  tagline.anchor.set(0.5);
-  tagline.position.set(width / 2, height * 0.52 + 44);
-
-  screen.addChild(bg, bestie.view, title, tagline);
+  // Story 042: the tagline is plain HTML in the title menu now (it rotates, and follows the language switch).
+  screen.addChild(bg, bestie.view, title);
   return screen;
 }

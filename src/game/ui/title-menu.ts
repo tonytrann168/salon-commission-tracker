@@ -8,7 +8,7 @@ import './level-picker.css';
  * Story 018: the title menu is plain HTML, kept apart from the PixiJS title scene so it shows before PixiJS loads.
  */
 /** DOM menu over the title scene: Start and Settings (story 008: in the interface language). Returns the element so the caller can remove it. */
-export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void, onPhrasebook: () => void, onShop?: () => void, onProfile?: () => void, onCompanion?: () => void, cue = false): HTMLElement {
+export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void, onPhrasebook: () => void, onShop?: () => void, onProfile?: () => void, onCompanion?: () => void, cue = false, extras: { tagline?: string; language?: 'en' | 'vi'; onLanguage?: (language: 'en' | 'vi') => void } = {}): HTMLElement {
   const menu = document.createElement('div');
   menu.className = 'title-menu';
   const start = document.createElement('button');
@@ -60,6 +60,33 @@ export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettin
       spot.classList.add('cued');
       spot.append(tip);
     }
+  }
+  // Story 042: this visit's catchy line, above the menu (plain HTML: it shows before PixiJS loads).
+  if (extras.tagline) {
+    const tagline = document.createElement('p');
+    tagline.className = 'title-tagline';
+    tagline.textContent = extras.tagline;
+    menu.append(tagline);
+  }
+  // Story 041: EN | VI in the top corner switches the whole interface at once (the labels are never translated).
+  if (extras.onLanguage) {
+    const onLanguage = extras.onLanguage;
+    const toggle = document.createElement('div');
+    toggle.className = 'language-toggle';
+    toggle.setAttribute('role', 'group');
+    toggle.setAttribute('aria-label', 'Language / Ngôn ngữ');
+    for (const [code, label, name] of [['en', 'EN', 'English'], ['vi', 'VI', 'Tiếng Việt']] as const) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'language-option';
+      button.textContent = label;
+      button.lang = code;
+      button.setAttribute('aria-label', name);
+      button.setAttribute('aria-pressed', String(extras.language === code));
+      button.addEventListener('click', () => extras.language !== code && onLanguage(code));
+      toggle.append(button);
+    }
+    menu.append(toggle);
   }
   host.appendChild(menu);
   return menu;

@@ -1,0 +1,32 @@
+{
+  "_note": "Story 042: catchy lines on the title, one per visit (no repeat of the last noRepeatWithin). Fun + nail salon + learn English + level up. The Vietnamese lines may use the companion tokens ({self}, {Self}, {you}, {You}) where the companion speaks; the owner will pick favourites later.",
+  "noRepeatWithin": 3,
+  "en": [
+    "Polish your nails. Polish your English.",
+    "Every set of nails, a new English line!",
+    "Paint pretty, speak up, tips up! 💅",
+    "Small talk, big tips.",
+    "Your chair. Your clients. Your English.",
+    "From \"hello\" to five stars. ⭐",
+    "Nail the look. Nail the conversation.",
+    "Real salon talk, one client at a time.",
+    "Practice today, confident tomorrow.",
+    "Happy clients start with \"How are you today?\"",
+    "Level up your English, one manicure at a time.",
+    "Speak it, paint it, own it! ✨"
+  ],
+  "vi": [
+    "Sơn đẹp, nói hay, tip đầy túi! 💅",
+    "Mỗi bộ móng một câu tiếng Anh mới!",
+    "Làm nail giỏi, nói tiếng Anh còn giỏi hơn!",
+    "Nói chuyện tự tin, khách thương, tip nhiều.",
+    "Từ \"hello\" tới năm sao. ⭐",
+    "Hôm nay tập một câu, mai nói như gió!",
+    "Ghế của {you}, khách của {you}, tiếng Anh của {you}.",
+    "{Self} với {you} cùng lên tay nghề, lên tiếng Anh nha!",
+    "Khách vui bắt đầu từ câu \"How are you today?\"",
+    "Mỗi ngày một khách, tiếng Anh lên trình!",
+    "Vừa sơn vừa học, vui hết biết! ✨",
+    "Tập ở đây cho quen, ra tiệm nói cho ngon!"
+  ]
+}

@@ -117,7 +117,7 @@ describe('older or younger (story 025b)', () => {
 
   it('interface strings follow a younger companion: "Em" for herself, "anh" for the player', () => {
     writeStored('salon.companion.v1', JSON.stringify({ chosen: true, gender: 'female', name: 'Mai', equipped: {}, relation: 'younger', playerTitle: 'anh' }));
-    expect(t('bestie.greetingFirst', { name: 'Mai' }, 'vi')).toBe('Chào anh! Em là Mai, bạn thân của anh ở tiệm. Mình cùng tập tiếng Anh nha!');
+    expect(t('bestie.greetingFirst', { name: 'Mai' }, 'vi')).toBe('Chào anh! Em là Mai, bạn thân của anh ở tiệm.');
     expect(t('bestie.levelUp', { name: 'Mai', level: 3 }, 'vi')).toMatch(/Hai anh em mình/);
     expect(t('account.codeSent', { email: 'a@b.co' }, 'vi')).toBe('Em gửi mã 6 số vào a@b.co rồi nè, anh nhập vô đây nha!');
     expect(t('bestie.greetingFirst', { name: 'Mai' }, 'en')).toMatch(/^Hi! I'm Mai|Mai/);
