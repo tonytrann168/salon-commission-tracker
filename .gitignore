@@ -8,3 +8,4 @@ production/session-logs/
 production/session-state/
 .scratch/
 .DS_Store
+polishpay-dist/

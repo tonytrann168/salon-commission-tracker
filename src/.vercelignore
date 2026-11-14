@@ -1,0 +1,9 @@
+# Salon Besties (Vercel project "salon-besties", Root Directory = src): build junk only. The game needs everything else
+# under src/ to build. Note: Vercel also applies the repository-root .vercelignore (made for PolishPay), whose `src/`
+# line is what breaks git builds of this project; see scripts/polishpay-build.mjs at the repo root for the fix.
+node_modules/
+dist/
+dist-e2e/
+.vercel/
+test-results/
+playwright-report/
