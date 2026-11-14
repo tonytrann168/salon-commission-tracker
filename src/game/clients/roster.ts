@@ -1,6 +1,6 @@
 import { NAIL_ART_CONFIG } from '../nail-art/design';
 import type { NailRequest } from '../nail-art/design';
-import { CLIENT_PRONOUNS, CLIENT_TYPES, DIFFICULTIES } from '../types';
+import { CLIENT_PRONOUNS, CLIENT_TYPES, DIFFICULTIES, VI_SELF_WORDS, VI_YOU_WORDS } from '../types';
 import type { ClientPersona, ClientType, Difficulty } from '../types';
 
 /**
@@ -47,9 +47,19 @@ export function parseClient(raw: unknown, file: string): ClientPersona {
     nailRequest = { shapes, colors, gradient, gems: level(n.gems, 'gems'), stickers: level(n.stickers, 'stickers'), ...(hands === 2 ? { hands: 2 as const } : {}), ...(service ? { service } : {}) };
   }
   const pronoun = CLIENT_PRONOUNS.find((p) => p === raw.pronoun) ?? fail('"pronoun" must be she, he or they');
+  // Story 036: optional Vietnamese address (default: male → anh, female → chị; the stylist is em).
+  let vi: ClientPersona['vi'];
+  if (raw.vi !== undefined) {
+    const v = isRecord(raw.vi) ? raw.vi : fail('"vi" must be an object');
+    const self = v.self === undefined ? undefined : (VI_SELF_WORDS.find((w) => w === v.self) ?? fail(`"vi.self" must be one of ${VI_SELF_WORDS.join(', ')}`));
+    const you = v.you === undefined ? undefined : (VI_YOU_WORDS.find((w) => w === v.you) ?? fail(`"vi.you" must be one of ${VI_YOU_WORDS.join(', ')}`));
+    const note = v.note === undefined ? undefined : typeof v.note === 'string' && v.note.length <= 300 ? v.note : fail('"vi.note" must be text up to 300 characters');
+    vi = { ...(self ? { self } : {}), ...(you ? { you } : {}), ...(note ? { note } : {}) };
+  }
   return {
     id,
     pronoun,
+    ...(vi ? { vi } : {}),
     name: text('name', 30),
     portraitId: text('portraitId', 30),
     difficulty,
@@ -99,4 +109,10 @@ export function pickShift(pool: readonly ClientPersona[], count: number, random:
     [shuffled[i], shuffled[j]] = [shuffled[j] as ClientPersona, shuffled[i] as ClientPersona];
   }
   return shuffled.slice(0, count);
+}
+
+/** Story 036: the roster client a request names (`clientId`), or undefined. Unknown ids are ignored, never trusted. */
+export function clientFromBody(body: unknown): ClientPersona | undefined {
+  const id = (body as { clientId?: unknown } | null)?.clientId;
+  return typeof id === 'string' ? getClient(id) : undefined;
 }

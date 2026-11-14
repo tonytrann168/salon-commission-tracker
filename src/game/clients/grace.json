@@ -2,6 +2,7 @@
   "id": "grace",
   "name": "Grace",
   "pronoun": "she",
+  "vi": {"self": "cô"},
   "difficulty": "easy",
   "types": [],
   "description": {

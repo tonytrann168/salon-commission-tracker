@@ -6,9 +6,9 @@
   "skipFor": ["easy"],
   "reactions": {
     "done": [
-      { "en": "Ahh, the warm water feels amazing. My feet feel brand new!", "vi": "Ôi, nước ấm dễ chịu quá. Chân chị như mới luôn!" },
-      { "en": "Oh, that scrub is so nice. I could fall asleep right here!", "vi": "Chà xát thích quá. Chị ngủ luôn ở đây được đó!" },
-      { "en": "Mmm, so relaxing. Thank you for taking your time.", "vi": "Thư giãn quá. Cảm ơn em đã làm kỹ nha." }
+      { "en": "Ahh, the warm water feels amazing. My feet feel brand new!", "vi": "Ôi, nước ấm dễ chịu quá. Chân {c} như mới luôn!" },
+      { "en": "Oh, that scrub is so nice. I could fall asleep right here!", "vi": "Chà xát thích quá. {C} ngủ luôn ở đây được đó!" },
+      { "en": "Mmm, so relaxing. Thank you for taking your time.", "vi": "Thư giãn quá. Cảm ơn {s} đã làm kỹ nha." }
     ],
     "skipped": [
       { "en": "No soak today? That's okay, let's go straight to the colour.", "vi": "Hôm nay không ngâm hả? Không sao, mình sơn màu luôn nha." }

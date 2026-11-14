@@ -126,8 +126,8 @@ const ENDPOINT = '/api/corrections';
 const TIMEOUT_MS = 30_000;
 
 /** Browser transport: posts to the corrections server function. The API key never reaches the browser. */
-/** `getCompanion` (story 013) adds the companion's name and gender to every request. */
-export function createCorrectionsTransport(getCompanion?: () => CompanionIdentity): CorrectionsTransport {
+/** `getCompanion` (story 013) adds the companion's name and gender to every request; `getClientId` (story 036) the client. */
+export function createCorrectionsTransport(getCompanion?: () => CompanionIdentity, getClientId?: () => string | undefined): CorrectionsTransport {
   const post = async <T>(request: LineCheckRequest | ReviewRequest): Promise<T> => {
     let response: Response;
     let body: unknown;
@@ -135,7 +135,7 @@ export function createCorrectionsTransport(getCompanion?: () => CompanionIdentit
       response = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(getCompanion ? { ...request, companion: getCompanion() } : request),
+        body: JSON.stringify({ ...request, ...(getCompanion ? { companion: getCompanion() } : {}), ...(getClientId?.() ? { clientId: getClientId() } : {}) }),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       body = await response.json();

@@ -19,7 +19,7 @@ export interface PrepOverlay {
 
 const LINE_MS = 2600;
 
-export function createPrepOverlay(options: { difficulty: Difficulty; onFinish: (moodDelta: number, line: string) => void; roll?: number }): PrepOverlay {
+export function createPrepOverlay(options: { vi?: { self: string; you: string }; difficulty: Difficulty; onFinish: (moodDelta: number, line: string) => void; roll?: number }): PrepOverlay {
   const box = el('div', 'pedi-prep');
   box.setAttribute('role', 'group');
   const title = el('p', 'pedi-prep-title');
@@ -109,7 +109,9 @@ export function createPrepOverlay(options: { difficulty: Difficulty; onFinish: (
     const line = el('p', 'pedi-prep-line', outcome.line.en);
     line.lang = 'en';
     if (getHelpLanguage() === 'full') {
-      const vi = el('small', '', outcome.line.vi);
+      // Story 036: the Vietnamese help uses this client's own words ({c}/{C} = their "I", {s} = the stylist).
+      const v = options.vi ?? { self: 'chị', you: 'em' };
+      const vi = el('small', '', outcome.line.vi.replace(/\{c\}/g, v.self).replace(/\{C\}/g, v.self.charAt(0).toUpperCase() + v.self.slice(1)).replace(/\{s\}/g, v.you));
       vi.lang = 'vi';
       line.append(vi);
     }

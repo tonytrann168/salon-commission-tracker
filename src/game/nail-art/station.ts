@@ -70,6 +70,10 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
   const nailsLayer = new Container();
   // The palm goes under the fingers, so the thumb lies over it and every nail sits on a visible fingertip.
   container.addChild(palm, fingersLayer, nailsLayer);
+  // 035 fixes: nothing is drawn outside the zone (the palm used to bleed onto the chat at checkout).
+  const clip = new Graphics();
+  container.addChild(clip);
+  container.mask = clip;
   // A hand, or a foot for a pedicure (story 024): same drawing, toes as fingers.
   const hand = limb;
   /** The hand on the station, and its first nail in the design. */
@@ -234,6 +238,7 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
     container,
     layout(x, y, w, h, reserveLeft, reserveRight, topBand = 0) {
       container.position.set(x, y);
+      clip.clear().rect(0, 0, w, h).fill({ color: 0xffffff });
       for (const old of views) old.root.destroy({ children: true });
       fingersLayer.removeChildren().forEach((child) => child.destroy());
       views = [];

@@ -53,6 +53,8 @@ export interface ClientPersona {
   /** Story 006: roster data. */
   /** Story 006 follow-up: the client's pronoun for English interface text (Tom is "he"). */
   pronoun: ClientPronoun;
+  /** Story 036: how this client speaks Vietnamese, when it isn't the default for the pronoun (see clientVietnamese). */
+  vi?: { self?: string; you?: string; note?: string };
   difficulty: Difficulty;
   /** The hard-client types this client covers (the brief's list). */
   types: ClientType[];
@@ -69,6 +71,32 @@ export const CLIENT_PRONOUNS = ['she', 'he', 'they'] as const;
 export type ClientPronoun = (typeof CLIENT_PRONOUNS)[number];
 
 /** English interface grammar for a client: {cShe}/{CShe}/{cHer} in the string tables ("they" when unknown). */
+/** Story 036: the Vietnamese words a client may use for themself, and for the stylist. */
+export const VI_SELF_WORDS = ['chị', 'anh', 'cô', 'chú', 'em', 'bà', 'ông'] as const;
+export const VI_YOU_WORDS = ['em', 'chị', 'anh', 'con', 'cháu'] as const;
+
+/**
+ * How a client talks in Vietnamese: `self` is their word for "I" (male → anh, female → chị, unless the client file
+ * says otherwise), `you` their word for the stylist (em by default: the player is the stylist).
+ */
+export function clientVietnamese(client: Pick<ClientPersona, 'pronoun' | 'vi'>): { self: string; you: string; note: string } {
+  return { self: client.vi?.self ?? (client.pronoun === 'he' ? 'anh' : 'chị'), you: client.vi?.you ?? 'em', note: client.vi?.note ?? '' };
+}
+
+/** The rule for a Vietnamese translation of this client's own words. */
+export function clientVietnameseRule(client: Pick<ClientPersona, 'pronoun' | 'vi' | 'name'>): string {
+  const v = clientVietnamese(client);
+  const others = VI_SELF_WORDS.filter((w) => w !== v.self && w !== v.you).slice(0, 3).map((w) => `"${w}"`).join(', ');
+  return `This client is ${client.name}${client.pronoun === 'he' ? ', a man' : client.pronoun === 'she' ? ', a woman' : ''}. In Vietnamese ${client.name} calls ${client.pronoun === 'he' ? 'himself' : client.pronoun === 'she' ? 'herself' : 'themself'} "${v.self}" and calls the nail technician "${v.you}" (so "I" becomes "${v.self}" and "you" becomes "${v.you}"). Never use ${others} for ${client.name}, and never "tôi" or "bạn".${v.note ? ` ${v.note}` : ''}`;
+}
+
+/** Story 036: how the companion and the corrections talk ABOUT this client, and write Vietnamese said TO them. */
+export function clientMentionRule(client: Pick<ClientPersona, 'pronoun' | 'vi' | 'name'>): string {
+  const v = clientVietnamese(client);
+  const third = v.self === 'em' ? 'em ấy' : `${v.self} ấy`;
+  return `The client in this appointment is ${client.name}${client.pronoun === 'he' ? ', a man' : client.pronoun === 'she' ? ', a woman' : ''}. In Vietnamese, refer to ${client.name} as "${third}", "khách" or by name, and when you write the Vietnamese meaning of a line the technician says to ${client.name}, the technician calls ${client.name} "${v.self}" and themself "${v.you}"${client.pronoun === 'he' ? ' (never "chị" for him)' : ''}.`;
+}
+
 export function clientGrammar(pronoun: ClientPronoun = 'they'): { cShe: string; CShe: string; cHer: string } {
   return pronoun === 'he' ? { cShe: 'he', CShe: 'He', cHer: 'his' } : pronoun === 'she' ? { cShe: 'she', CShe: 'She', cHer: 'her' } : { cShe: 'they', CShe: 'They', cHer: 'their' };
 }
@@ -168,7 +196,7 @@ export type GradeAppointment = (request: GradingRequest) => Promise<Grading>;
 export type TranslateDirection = 'en-to-vi' | 'vi-to-en';
 
 /** Transport that translates one line through the server. Rejects with TurnError. */
-export type Translate = (text: string, direction: TranslateDirection, level?: EnglishLevel) => Promise<string>;
+export type Translate = (text: string, direction: TranslateDirection, level?: EnglishLevel, clientId?: string) => Promise<string>;
 
 /** How Vietnamese help is shown on client lines: on tap, or always side by side (full Vietnamese mode). Story: story-010. */
 export const HELP_LANGUAGES = ['tap', 'full'] as const;

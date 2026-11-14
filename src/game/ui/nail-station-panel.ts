@@ -27,6 +27,8 @@ export interface NailStationOptions {
   request: NailRequest;
   /** Mai's bubble corner, so the hand leaves room for her. */
   maiSide: () => 'left' | 'right' | null;
+  /** Full-screen service: the height taken at the top by her face, her bubble and the order (measured). */
+  topBand?: () => number;
   /** The design changed (for the client's game note). */
   onChange: (design: NailDesign) => void;
   /** The player tapped Done. */
@@ -291,7 +293,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     const tall = r.height >= 300;
     const left = tall ? 8 : side === 'left' ? 70 : 20;
     const right = tall ? 8 : side === 'right' ? 70 : 8;
-    view.layout(r.left, r.top, r.width, r.height, left, right, tall ? 138 : 0);
+    view.layout(r.left, r.top, r.width, r.height, left, right, tall ? Math.max(84, options.topBand?.() ?? 138) : 0);
     view.setDesign(design);
     placeHint(r.width, r.height);
   };

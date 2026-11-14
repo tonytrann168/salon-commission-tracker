@@ -229,8 +229,10 @@ async function boot(): Promise<void> {
 
   const gradeAppointment = createGradeTransport();
   // Story 013: every bestie and corrections request carries the companion's name and gender.
-  const bestie = createBestieTransport(companionIdentity);
-  const corrections = createCorrectionsTransport(companionIdentity);
+  // Story 036: the client in the chair, so Vietnamese help uses that client's own words (Tom says "anh").
+  let currentClientId: string | undefined;
+  const bestie = createBestieTransport(companionIdentity, () => currentClientId);
+  const corrections = createCorrectionsTransport(companionIdentity, () => currentClientId);
   // Voice: the phone's own speech recognition and synthesis (story 004). No key, nothing on the server.
   // Music and sound (story 012): silent until the first tap; music ducks while anything is spoken.
   const audio = createAudioEngine({
@@ -249,9 +251,10 @@ async function boot(): Promise<void> {
   const practice = voice.canListen
     ? (line: string) => openPracticeSheet(host, { voice, line, level: getEnglishLevel() ?? 'beginner' })
     : undefined;
-  const translateTransport = createTranslateTransport();
+  const rawTranslate = createTranslateTransport();
+  const translateTransport: typeof rawTranslate = (text, direction, level, clientId) => rawTranslate(text, direction, level, clientId ?? currentClientId);
   // Every client's opening line is fixed text, so its translation is also kept on the device.
-  const translations = createTranslationCache(translateTransport, [...ROSTER.map((client) => client.openingLine), ...SCENARIOS.map((scenario) => scenario.openingLine)]);
+  const translations = createTranslationCache(translateTransport, [...ROSTER.map((client) => client.openingLine), ...SCENARIOS.map((scenario) => scenario.openingLine)], () => currentClientId);
 
   /** Story 006: the clients still to come in a shift (empty outside a shift) and its size. */
   let shift: { queue: ClientPersona[]; total: number } = { queue: [], total: 0 };
@@ -358,6 +361,7 @@ async function boot(): Promise<void> {
     // Story 007: owned upgrades (a comfier chair starts clients happier; finer brush; better clean-up pen).
     const effects = upgradeEffects(loadSave());
     // Story 019: the scenario's opening line and nail request; the AI gets the situation (and past visits if returning).
+    currentClientId = persona.id;
     const client: ClientPersona = applyScenario({ ...persona, startingMood: Math.min(90, persona.startingMood + effects.startMood) }, scenario);
     const visits = loadSave().history[persona.id];
     const scenarioFields = scenario ? { scenarioId: scenario.id, ...(scenario.eligible.returning && visits ? { visits } : {}) } : undefined;

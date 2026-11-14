@@ -114,3 +114,13 @@ html[data-motion='reduce'] .reply-chip.pulse { animation: none; }
 .chat-panel.service-mode .pedi-prep { top: 112px; }
 /* Checkout: the job is finished. No tools, no pill on the hand: just the finished nails. */
 .chat-panel.service-over .station-tools, .chat-panel.service-over .station-toggle, .chat-panel.service-over .station-status { display: none; }
+
+/* 036 commit, overseer A–C: the top block (her bubble + Reply, then the order) is in flow and measured. */
+.service-top { display: none; }
+.chat-panel.service-mode .service-top { display: flex; flex-direction: column; gap: 4px; position: absolute; left: 0; right: 0; top: 0; z-index: 4; padding: 6px 8px 0; pointer-events: none; }
+.service-top .service-talk { position: static; margin: 0 70px 0 78px; min-height: 60px; }
+.service-top .service-talk .service-say { -webkit-line-clamp: 4; }
+.chat-panel.service-mode .service-top .service-order { position: static; white-space: pre-line; text-overflow: clip; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; pointer-events: auto; cursor: pointer; }
+.chat-panel.service-mode .service-top .service-order.full { display: block; }
+.chat-panel.prepping .service-top .service-order { display: none; }
+.chat-panel.service-mode .pedi-prep { top: var(--service-top, 112px); }

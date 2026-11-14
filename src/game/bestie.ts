@@ -161,8 +161,8 @@ const ENDPOINT = '/api/bestie';
 const TIMEOUT_MS = 30_000;
 
 /** Browser transport: posts to the bestie server function. The API key never reaches the browser. */
-/** `getCompanion` (story 013) adds the companion's name and gender to every request. */
-export function createBestieTransport(getCompanion?: () => CompanionIdentity): BestieTransport {
+/** `getCompanion` (story 013) adds the companion's name and gender to every request; `getClientId` (story 036) the client. */
+export function createBestieTransport(getCompanion?: () => CompanionIdentity, getClientId?: () => string | undefined): BestieTransport {
   const post = async <T>(request: BestieRequest): Promise<T> => {
     let response: Response;
     let body: unknown;
@@ -170,7 +170,7 @@ export function createBestieTransport(getCompanion?: () => CompanionIdentity): B
       response = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(getCompanion ? { ...request, companion: getCompanion() } : request),
+        body: JSON.stringify({ ...request, ...(getCompanion ? { companion: getCompanion() } : {}), ...(getClientId?.() ? { clientId: getClientId() } : {}) }),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       body = await response.json();

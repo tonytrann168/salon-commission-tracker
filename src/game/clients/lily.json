@@ -2,6 +2,7 @@
   "id": "lily",
   "name": "Lily",
   "pronoun": "she",
+  "vi": {"self": "em", "you": "chị", "note": "Lily is a teenager, younger than the technician. When her mother speaks, the mother calls herself \"cô\" and the technician \"em\"."},
   "difficulty": "medium",
   "types": [
     "price-booking"

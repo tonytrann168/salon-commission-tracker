@@ -5,7 +5,7 @@ import { MOOD_MAX } from '../mood';
 import { getPortraitDefinition } from '../portraits/definitions';
 import { EXPRESSION_CONFIG, poseFor } from '../portraits/portrait';
 import type { Expression } from '../portraits/portrait';
-import { PHASES, TurnError } from '../types';
+import { PHASES, TurnError, clientVietnamese } from '../types';
 import type { AppointmentResult, ClientPersona, EnglishLevel, HelpLanguage, Translate } from '../types';
 import type { TranslationCache } from '../translation-cache';
 import { getLanguage, t } from '../i18n';
@@ -180,6 +180,7 @@ export function createChatPanel(
     : null;
 
   // Story 005: the nail station draws over the portrait zone in the service phase; the chat below stays usable.
+  const serviceTop = el('div', 'service-top');
   const nailArt = portraits.nailArt;
   const station = nailArt
     ? createNailStation({
@@ -192,6 +193,7 @@ export function createChatPanel(
         ...(nailArt.stickers ? { stickers: nailArt.stickers } : {}),
         ...(nailArt.redos ? { redos: nailArt.redos } : {}),
         ...(nailArt.tools ? { tools: nailArt.tools } : {}),
+        topBand: () => serviceTop.offsetHeight + 6,
         maiSide: () => (mai ? ((mai.element.dataset.side as 'left' | 'right' | undefined) ?? 'right') : null),
         onChange: (design) => nailArt.onNote(nailsNote(design, null, nailArt.request.service)),
         onDone: (design, result) => {
@@ -236,6 +238,7 @@ export function createChatPanel(
     root.classList.add('prepping');
     prep = createPrepOverlay({
       difficulty: portraits.client.difficulty,
+      vi: clientVietnamese(portraits.client),
       onFinish: (moodDelta) => {
         prep = null;
         root.classList.remove('prepping');
@@ -320,10 +323,21 @@ export function createChatPanel(
     const colours = r.colors.map((id) => NAIL_ART_CONFIG.palette.find((c) => c.id === id)?.name[lang] ?? id).join(' / ');
     const shapes = r.shapes.map((shape) => t(`station.shape.${shape}`)).join(' / ');
     const extras = [r.gradient === 'yes' ? '🌈' : '', r.gems !== 'none' ? `💎 ${t(`service.order.${r.gems}`)}` : '', r.stickers !== 'none' ? `⭐ ${t(`service.order.${r.stickers}`)}` : ''].filter(Boolean);
-    order.textContent = [`🎨 ${colours}`, shapes, ...extras].join(' · ');
+    // Colours on the first line, shape and extras on the second (never cut; a tap shows it all if it is longer).
+    order.textContent = `🎨 ${colours}\n${[shapes, ...extras].join(' · ')}`;
     order.setAttribute('aria-label', `${t('service.order.label')}: ${order.textContent}`);
   }
-  if (station) zone.element.append(talk, order, nudge, doneBanner);
+  // Her bubble grows to fit the whole sentence (this is an English-practice game) and the order is never cut: the block
+  // is measured, and the hand is laid out below it.
+  serviceTop.append(talk, order);
+  order.addEventListener('click', () => order.classList.toggle('full'));
+  if (station) {
+    zone.element.append(serviceTop, nudge, doneBanner);
+    new ResizeObserver(() => {
+      root.style.setProperty('--service-top', `${serviceTop.offsetHeight + 6}px`);
+      station.relayout();
+    }).observe(serviceTop);
+  }
   let serviceMode = false;
   let serviceStarted = false;
   let replyOpen = false;

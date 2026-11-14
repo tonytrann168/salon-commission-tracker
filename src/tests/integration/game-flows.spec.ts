@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import serviceTalk from '../../game/config/service-talk.json' with { type: 'json' };
 import { LANGS, dailyWith, mockApi, noOverflow, playToResults, seed } from './fixtures';
 
 /** Story 029: the game's main flows, end to end, at 320 px, in English and Vietnamese. */
@@ -168,6 +169,26 @@ for (const lang of LANGS) {
       await expect(page.locator('.phrasebook-fold')).toHaveCount(5);
       await page.locator('.phrasebook-fold summary').first().click();
       await expect(page.locator('.phrasebook-fold').first().locator('.learning-phrase')).toHaveCount(10);
+      expect(await noOverflow(page)).toBe(true);
+    });
+
+    test('her longest line is readable in full on the service screen, and the order is never cut', async ({ page }) => {
+      const longest = Object.values(serviceTalk.lines).flat().sort((a, b) => b.length - a.length)[0]!;
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
+      await mockApi(page, { replies: ['Hi!', longest] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('Hello! What colour would you like?');
+      await page.locator('.chat-form button[type=submit]').click();
+      await expect(page.locator('.service-say')).toHaveText(longest);
+      const fits = (selector: string) => page.locator(selector).evaluate((node) => node.scrollHeight <= node.clientHeight + 1 && node.scrollWidth <= node.clientWidth + 1);
+      expect(await fits('.service-say')).toBe(true);
+      expect(await fits('.service-order')).toBe(true);
+      // The hand is laid out below the block: no nail under her bubble or the order.
+      const blockBottom = await page.locator('.service-top').evaluate((node) => node.getBoundingClientRect().bottom);
+      const zoneBottom = await page.locator('.portrait-zone').evaluate((node) => node.getBoundingClientRect().bottom);
+      expect(zoneBottom - blockBottom).toBeGreaterThan(150);
       expect(await noOverflow(page)).toBe(true);
     });
 

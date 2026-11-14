@@ -59,6 +59,10 @@ const checks = [
       question: 'Anh thích màu sơn nào nhất?', answer: 'Anh thích màu hồng nhạt.', companion: { name: 'Mai', gender: 'female', relation: 'younger', playerTitle: 'anh' } }, env, fetch),
     (b) => typeof b.reply === 'string' && /(^|[^\p{L}])em([^\p{L}]|$)/iu.test(b.reply) && /(^|[^\p{L}])anh([^\p{L}]|$)/iu.test(b.reply) && !/(^|[^\p{L}])chị([^\p{L}]|$)/iu.test(b.reply),
     (b) => `"${b.reply}"`],
+  // Story 036: a male client's line in Vietnamese: he says "anh", never "chị".
+  ['translate Tom (male client) en→vi: says "anh", never "chị"', () => handleTranslate({ text: "I don't have much time. Can you do my nails quickly? I think you charge too much.", direction: 'en-to-vi', clientId: 'tom' }, env, fetch),
+    (b) => typeof b.translation === 'string' && /(^|[^\p{L}])anh([^\p{L}]|$)/iu.test(b.translation) && !/(^|[^\p{L}])chị([^\p{L}]|$)/iu.test(b.translation),
+    (b) => `"${b.translation}"`],
   ['corrections line check (beginner, vi)', () => handleCorrections({ kind: 'line', level: 'beginner', language: 'vi', phase: 'consultation',
       line: 'What color you like today?', clientLine: DEFAULT_CLIENT.openingLine }, env, fetch),
     (b) => typeof b.needsCorrection === 'boolean' && (!b.needsCorrection || (b.better && typeof b.reason === 'string')),
