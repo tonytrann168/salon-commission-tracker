@@ -1,5 +1,5 @@
 /* Laid over the fixed top strip (header + portraits). Mai's bubble sits in a bottom corner of the portrait strip. */
-.mai-layer { position: absolute; inset: 0; pointer-events: none; }
+.mai-layer { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
 .mai-layer > * { pointer-events: auto; }
 .mai-layer.over-station .mai-bubble { top: var(--mai-top, 8px); bottom: auto; width: 52px; height: 52px; }
 .mai-layer.over-station .mai-bubble .mascot { width: 48px !important; height: 48px !important; }
@@ -21,3 +21,17 @@
 .mai-notes-card { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; border: 2px solid #e4d0fb; border-radius: 16px; background: #fff; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .mai-notes-card strong { display: block; color: #5b2d91; }
 .mai-notes-card span.mai-notes-tap { font-size: 13px; color: #8a6575; }
+
+/* Story 040: a waiting tip stands out: a pulsing glow ring, a small label with a speech tail, one bounce on arrival. */
+.mai-bubble.has-tip { box-shadow: 0 0 0 3px #ffb300, 0 0 14px 4px rgba(255, 179, 0, 0.55); animation: mai-glow 1.6s ease-in-out infinite; }
+.mai-bubble.has-tip.bounce { animation: mai-bounce 0.5s ease-out 1, mai-glow 1.6s ease-in-out 0.5s infinite; }
+@keyframes mai-glow { 0%, 100% { box-shadow: 0 0 0 3px #ffb300, 0 0 8px 2px rgba(255, 179, 0, 0.35); } 50% { box-shadow: 0 0 0 4px #ffb300, 0 0 18px 7px rgba(255, 179, 0, 0.6); } }
+@keyframes mai-bounce { 0% { transform: translateY(0); } 35% { transform: translateY(-10px); } 70% { transform: translateY(2px); } 100% { transform: translateY(0); } }
+.mai-cue { position: absolute; bottom: 22px; right: 80px; max-width: 150px; padding: 5px 10px; border-radius: 12px 12px 2px 12px; background: #fff8e1; color: #5b3d00; font: 700 13px/1.25 system-ui, sans-serif; box-shadow: 0 1px 6px rgba(59, 42, 51, 0.25); pointer-events: none; white-space: nowrap; }
+.mai-layer[data-side='left'] .mai-cue { right: auto; left: 80px; border-radius: 12px 12px 12px 2px; }
+.mai-layer.over-station .mai-cue { bottom: auto; top: calc(var(--mai-top, 8px) + 60px); right: 8px; border-radius: 12px 2px 12px 12px; }
+.mai-layer.over-station[data-side='left'] .mai-cue { right: auto; left: 8px; border-radius: 2px 12px 12px 12px; }
+.mai-cue.hidden { display: none; }
+.mai-badge { min-width: 18px; height: 18px; padding: 0 5px; font: 700 11px/18px system-ui, sans-serif; border-radius: 9px; }
+html[data-motion='reduce'] .mai-bubble.has-tip, html[data-motion='reduce'] .mai-bubble.has-tip.bounce { animation: none; }
+@media (prefers-reduced-motion: reduce) { .mai-bubble.has-tip, .mai-bubble.has-tip.bounce { animation: none; } }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_TIPS, addTip, openTips } from '../game/mai-tips';
+import { EMPTY_TIPS, addTip, openTips, tipCueShown } from '../game/mai-tips';
 import type { Tip } from '../game/mai-tips';
 import { ACCESSORY_SLOTS, MASCOT_CONFIG, MASCOT_EXPRESSIONS, getSkin, parseMascotConfig, skinIds } from '../game/mascot';
 
@@ -12,6 +12,14 @@ describe("Mai's waiting tips", () => {
     const queue = addTip(addTip(EMPTY_TIPS, tip('one'), 3), tip('two'), 3);
     expect(queue.tips.map((item) => item.said)).toEqual(['one', 'two']);
     expect(queue.unseen).toBe(2);
+  });
+
+  it('the tip cue (glow ring and label) shows only while a tip waits unopened (story 040)', () => {
+    const waiting = addTip(EMPTY_TIPS, tip('one'), 3);
+    expect(tipCueShown(EMPTY_TIPS, false)).toBe(false);
+    expect(tipCueShown(waiting, false)).toBe(true);
+    expect(tipCueShown(waiting, true)).toBe(false);
+    expect(tipCueShown(openTips(waiting).queue, false)).toBe(false);
   });
 
   it('keeps the per-appointment cap', () => {

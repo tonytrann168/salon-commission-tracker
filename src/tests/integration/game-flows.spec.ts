@@ -200,6 +200,23 @@ for (const lang of LANGS) {
       expect(await noOverflow(page)).toBe(true);
     });
 
+    test('a waiting tip stands out: a glow ring and a label by the companion, gone once opened', async ({ page }) => {
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('ana') } });
+      await mockApi(page, { correct: true, replies: ['Hi!', 'Hello! Pink, please.'] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('What color you want today?');
+      await page.locator('.chat-form button[type=submit]').click();
+      await expect(page.locator('.mai-bubble.has-tip')).toBeVisible();
+      await expect(page.locator('.mai-cue')).toHaveText(lang === 'vi' ? 'Chị có mẹo nè! 💡' : 'Tip for you! 💡');
+      const inside = await page.locator('.mai-cue').evaluate((node) => { const r = node.getBoundingClientRect(); return r.left >= 0 && r.right <= window.innerWidth; });
+      expect(inside).toBe(true);
+      await page.locator('.mai-bubble').click();
+      await expect(page.locator('.mai-cue')).toBeHidden();
+      await expect(page.locator('.mai-bubble.has-tip')).toHaveCount(0);
+    });
+
     test('reaching a new rank shows the celebration', async ({ page }) => {
       await seed(page, lang, { save: { xp: 55, appointments: 2, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page);

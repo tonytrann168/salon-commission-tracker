@@ -53,6 +53,8 @@ export interface ApiOptions {
   /** Client replies in order; the phase walks consultation → service → checkout → done one step per turn. */
   replies?: string[];
   grading?: Record<string, unknown>;
+  /** Story 040: the line check finds something to improve (a tip waits behind the companion's bubble). */
+  correct?: boolean;
 }
 
 /** Answer every /api call the game makes. Returns the requests seen, by route. */
@@ -84,7 +86,7 @@ export async function mockApi(target: Page | BrowserContext, options: ApiOptions
       case 'translate':
         return json({ translation: 'Chào em, chị muốn làm móng.' });
       case 'corrections':
-        return json({ needsCorrection: false, praise: '', better: null, reason: '' });
+        return json(options.correct ? { needsCorrection: true, praise: 'Nice and friendly!', better: { en: 'What colour would you like today?', vi: 'Hôm nay chị thích màu gì?', topic: 'consultation' }, reason: 'A little more polite.' } : { needsCorrection: false, praise: '', better: null, reason: '', lines: [], tryLines: [], usedWell: [], recap: '' });
       case 'bestie':
         return json({ hint: 'Ask what colour she likes.', praise: 'Great job!', tryNext: 'Offer a top coat.', question: '', memory: '', reply: 'Nice!' });
       case 'session':

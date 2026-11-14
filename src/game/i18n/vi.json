@@ -528,5 +528,6 @@
   "payment.cheer.top": "Quá đỉnh! Năm sao luôn! {mai} tự hào về {you} lắm! 🎉",
   "payment.cheer.good": "Giỏi lắm! Khách vui rồi đó. 💖",
   "payment.cheer.okay": "Làm tốt lắm! Thêm chút nữa là lần sau bốn sao nha.",
-  "payment.cheer.tough": "Khách này khó ghê. Mà {you} vẫn làm xong rồi đó. Lần sau mình làm tốt hơn nha! 💪"
+  "payment.cheer.tough": "Khách này khó ghê. Mà {you} vẫn làm xong rồi đó. Lần sau mình làm tốt hơn nha! 💪",
+  "mai.tipCue": "{Self} có mẹo nè! 💡"
 }

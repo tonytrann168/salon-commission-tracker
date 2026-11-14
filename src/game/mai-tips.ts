@@ -33,3 +33,6 @@ export function addTip(queue: TipQueue, tip: Tip, cap: number): TipQueue {
 export function openTips(queue: TipQueue): { queue: TipQueue; fresh: Tip[] } {
   return { queue: { tips: queue.tips, unseen: 0 }, fresh: queue.tips.slice(queue.tips.length - queue.unseen) };
 }
+
+/** Story 040: the glow ring and the "Tip for you!" label show while a tip waits unopened. */
+export const tipCueShown = (queue: TipQueue, panelOpen: boolean): boolean => queue.unseen > 0 && !panelOpen;

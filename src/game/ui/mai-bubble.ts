@@ -1,8 +1,9 @@
+import { prefersReducedMotion } from '../comfort';
 import { companionLook, companionName } from '../companion';
 import type { BestieLanguage, BestieTransport } from '../bestie';
 import { loadMemory } from '../bestie-memory';
 import { t } from '../i18n';
-import { EMPTY_TIPS, addTip, openTips } from '../mai-tips';
+import { EMPTY_TIPS, addTip, openTips, tipCueShown } from '../mai-tips';
 import type { Tip } from '../mai-tips';
 import { renderMascot } from '../mascot';
 import type { MascotExpression } from '../mascot';
@@ -62,7 +63,9 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
   const panel = el('div', 'mai-panel hidden');
   panel.setAttribute('role', 'dialog');
   panel.setAttribute('aria-label', companionName());
-  layer.append(panel, bubble);
+  const cue = el('span', 'mai-cue hidden', t('mai.tipCue'));
+  cue.setAttribute('aria-hidden', 'true');
+  layer.append(panel, bubble, cue);
 
   let queue = EMPTY_TIPS;
   let open = false;
@@ -75,6 +78,10 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
     const face = renderMascot(queue.unseen > 0 ? 'tipWaiting' : expression, BUBBLE_PX, { crop: 'bust', ...companionLook() });
     badge.textContent = String(queue.unseen);
     badge.classList.toggle('hidden', queue.unseen === 0);
+    // Story 040: a waiting tip is hard to miss: a glow ring and a small label by the bubble (a bare number wasn't).
+    const waiting = tipCueShown(queue, open);
+    bubble.classList.toggle('has-tip', waiting);
+    cue.classList.toggle('hidden', !waiting);
     bubble.replaceChildren(face, badge);
     bubble.setAttribute('aria-label', queue.unseen > 0 ? t('mai.openTips', { name: companionName(), count: queue.unseen }) : t('mai.open', { name: companionName() }));
     bubble.setAttribute('aria-expanded', String(open));
@@ -250,7 +257,15 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
       if (next === queue) return false;
       queue = next;
       if (open) setOpen(true);
-      else drawBubble();
+      else {
+        drawBubble();
+        // One gentle bounce when a new tip arrives (not with reduced motion).
+        if (!prefersReducedMotion()) {
+          bubble.classList.remove('bounce');
+          void bubble.offsetWidth;
+          bubble.classList.add('bounce');
+        }
+      }
       return true;
     },
     setEnabled(next) {

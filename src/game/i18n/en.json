@@ -528,5 +528,6 @@
   "payment.cheer.top": "Yesss! Five stars! {mai} is SO proud of you! 🎉",
   "payment.cheer.good": "Great job! That's a happy client. 💖",
   "payment.cheer.okay": "Nice work! A little more and it's four stars next time.",
-  "payment.cheer.tough": "That was a tough one. You did it anyway. We'll get them next time! 💪"
+  "payment.cheer.tough": "That was a tough one. You did it anyway. We'll get them next time! 💪",
+  "mai.tipCue": "Tip for you! 💡"
 }
