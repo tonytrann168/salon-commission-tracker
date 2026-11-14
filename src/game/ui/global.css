@@ -4,3 +4,6 @@ button, input, textarea { font: inherit; }
 
 /* Story 018: a short message over any screen (e.g. no connection). */
 .app-note { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 70; margin: 0; padding: 12px 14px; border-radius: 16px; background: #3b2a33; color: #fff; font: 600 15px/1.35 system-ui, sans-serif; box-shadow: 0 4px 16px rgba(59, 42, 51, 0.3); }
+
+/* Story 047: while a finger paints, decorative animations pause (glows, pulses); they come back when it lifts. */
+html.painting *, html.painting *::before, html.painting *::after { animation-play-state: paused !important; }

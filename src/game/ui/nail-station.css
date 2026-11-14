@@ -40,3 +40,21 @@
 .station-row { flex: none; padding: 3px 10px; min-height: 48px; align-items: center; }
 .station-row .station-swatch { width: 40px; min-width: 40px; min-height: 40px; border-radius: 50%; }
 .station-row .station-swatch[aria-pressed='true'] { border-color: #fff; box-shadow: 0 0 0 3px #3b2a33; transform: scale(1.08); }
+
+/* Story 047: the bottom row: every button an icon with its word under it, 8 px apart, the tools in one group and
+   Done set apart on the right. */
+.station-controls { gap: 8px; align-items: stretch; }
+.station-controls .station-tabs { gap: 8px; padding: 0; background: none; border-radius: 0; }
+.station-controls .station-button { flex-direction: column; gap: 1px; min-width: 52px; min-height: 52px; height: auto; padding: 4px 6px; border-radius: 14px; border: 2px solid #ecd3de; background: #fff; }
+.station-controls .station-button .tab-icon { margin: 0; font-size: 18px; line-height: 1.1; }
+.station-controls .station-button .tab-text { display: block !important; font: 700 13px/1.15 system-ui, sans-serif; white-space: nowrap; }
+.station-controls .station-tab[aria-selected='true'] { background: #ff5c9a; border-color: #ff5c9a; color: #fff; }
+.station-controls .station-tool[aria-pressed='true'] { background: #ffe8f1; border-color: #ff5c9a; }
+.station-controls .station-done { margin-left: auto; min-width: 60px; background: #2f9e5b; border-color: #2f9e5b; color: #fff; box-shadow: 0 2px 6px rgba(47, 158, 91, 0.35); }
+.station-controls .station-done .tab-icon { font-size: 20px; }
+.station-controls .station-hand { background: #f3e8ff; border-color: #e1cdf5; color: #5b2d91; }
+.station-controls .station-tab, .station-controls .station-hand { width: auto; }
+.station-row { gap: 10px; }
+@media (max-width: 400px) {
+  .station-controls .station-tab { width: auto; padding: 4px 6px; }
+}

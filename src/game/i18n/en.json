@@ -535,5 +535,9 @@
   "voice.checkWords": "Check your words. Tap the box to change them.",
   "voice.checkWordsManual": "Change your words if needed, then tap Send.",
   "voice.micWord": "Speak",
-  "voice.micAgain": "Again"
+  "voice.micAgain": "Again",
+  "station.redoWord": "Redo",
+  "station.cleanWord": "Clean",
+  "station.handWord": "Hand",
+  "station.footWord": "Foot"
 }

@@ -535,5 +535,9 @@
   "voice.checkWords": "{You} xem lại câu nha. Chạm vào ô để sửa.",
   "voice.checkWordsManual": "Sửa câu nếu cần, rồi bấm Gửi nha.",
   "voice.micWord": "Nói",
-  "voice.micAgain": "Nói lại"
+  "voice.micAgain": "Nói lại",
+  "station.redoWord": "Làm lại",
+  "station.cleanWord": "Lau",
+  "station.handWord": "Tay",
+  "station.footWord": "Chân"
 }

@@ -74,6 +74,9 @@ function shapeIcon(shape: NailShape): string {
 
 const HINT_MS = 3000;
 
+/** Story 047: an icon with its word under it (the audience reads words more easily than icons). */
+const labelled = (icon: string, word: string): string => `<span class="tab-icon" aria-hidden="true">${icon}</span><span class="tab-text">${word}</span>`;
+
 export function createNailStation(options: NailStationOptions): NailStation {
   // Story 017: both hands (10 nails) when the client asks for it.
   const nails = nailsFor(options.request);
@@ -119,13 +122,22 @@ export function createNailStation(options: NailStationOptions): NailStation {
   };
 
   const spillCount = (d: NailDesign): number => d.spill.reduce((sum, cells) => sum + cells.length, 0);
+  // Story 047: the spill count is compared only when the spill changed (same arrays → no recount).
+  let changeTimer = 0;
+  const flushChange = (): void => {
+    window.clearTimeout(changeTimer);
+    changeTimer = 0;
+    options.onChange(design);
+  };
   const setDesign = (next: NailDesign): void => {
     if (next === design) return;
     // Polish landed on the skin: say so once per slip, and point at Clean up (owner, 2026-11-10).
-    if (spillCount(next) > spillCount(design) && tool !== 'cleanup' && !status.classList.contains('show')) say(t('station.spill'));
+    if (next.spill !== design.spill && tool !== 'cleanup' && !status.classList.contains('show') && spillCount(next) > spillCount(design)) say(t('station.spill'));
     design = next;
     view.setDesign(design);
-    options.onChange(design);
+    // Story 047: the client's note about the nails is rebuilt at most every 250 ms (and when the finger lifts), not on
+    // every movement.
+    if (changeTimer === 0) changeTimer = window.setTimeout(flushChange, 250);
   };
 
   const shapeButtons = SHAPES.map((shape) =>
@@ -137,10 +149,10 @@ export function createNailStation(options: NailStationOptions): NailStation {
   // Story 033: a redo scenario lets Done turn into "Redo" once; the latest design is the one that counts.
   let redosLeft = options.redos ?? 0;
   const setDoneLabel = (redo: boolean): void => {
-    doneButton.innerHTML = t(redo ? 'station.redo' : 'station.done');
+    doneButton.innerHTML = labelled(redo ? '↺' : '✓', t(redo ? 'station.redoWord' : 'station.doneLabel'));
     doneButton.setAttribute('aria-label', t(redo ? 'station.redoLabel' : 'station.doneLabel'));
   };
-  const doneButton = button(t('station.done'), 'station-done', () => {
+  const doneButton = button(labelled('✓', t('station.doneLabel')), 'station-done', () => {
     if (done) {
       if (redosLeft <= 0) return;
       redosLeft -= 1;
@@ -167,7 +179,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     polish: button(t('station.polish'), 'station-tool', () => selectTool('polish')),
     gradient: button(`<span aria-hidden="true">🌈</span><span class="tab-text">${t('station.gradient').replace('🌈', '').trim()}</span>`, 'station-tool', () => selectTool('gradient'), t('station.gradient').replace('🌈', '').trim()),
     gem: button(t('station.gem'), 'station-tool', () => selectTool('gem')),
-    cleanup: button(`<span aria-hidden="true">🧽</span><span class="tab-text">${t('station.cleanup')}</span>`, 'station-tool', () => selectTool('cleanup'), t('station.cleanup')),
+    cleanup: button(labelled('🧽', t('station.cleanWord')), 'station-tool', () => selectTool('cleanup'), t('station.cleanup')),
     sticker: button(t(`station.sticker.${sticker}`), 'station-tool', () => {
       // Tapping Sticker again cycles heart → star → flower.
       if (tool === 'sticker') {
@@ -204,13 +216,14 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const foot = options.request.service === 'pedicure';
   const icon = foot ? '🦶' : '✋';
   const sideLabel = (side: 0 | 1): string => t(foot ? (side === 0 ? 'station.footRight' : 'station.footLeft') : side === 0 ? 'station.handRight' : 'station.handLeft');
-  const handButton = button(`${icon}1`, 'station-hand', () => {
+  const handWord = (): string => t(foot ? 'station.footWord' : 'station.handWord');
+  const handButton = button(labelled(`${icon}1`, handWord()), 'station-hand', () => {
     hand = hand === 0 ? 1 : 0;
     view.setHand(hand);
     view.setDesign(design);
     const r = options.rect();
     placeHint(r.width, r.height);
-    handButton.innerHTML = `${icon}${hand + 1}`;
+    handButton.innerHTML = labelled(`${icon}${hand + 1}`, handWord());
     handButton.setAttribute('aria-label', sideLabel(hand));
     say(sideLabel(hand));
   }, sideLabel(0));
@@ -255,15 +268,19 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const touch = el('div', 'station-touch hidden');
   touch.append(status);
   let drawing = false;
+  // Story 047: the layer's position is read once per stroke (not on every finger movement).
+  let box: DOMRect | null = null;
   const forward = (event: PointerEvent, phase: 'down' | 'move'): void => {
     if (done) return;
-    const box = touch.getBoundingClientRect();
+    if (phase === 'down' || !box) box = touch.getBoundingClientRect();
     setDesign(view.pointer(event.clientX - box.left, event.clientY - box.top, phase, tool, sticker));
   };
   touch.addEventListener('pointerdown', (event) => {
     // No text selection or native drag from a mouse stroke (either cancels the stroke part-way).
     event.preventDefault();
     drawing = true;
+    // Story 047: decorative animations pause while a finger paints (they cost frames on a mid-range phone).
+    document.documentElement.classList.add('painting');
     try {
       touch.setPointerCapture(event.pointerId);
     } catch {
@@ -279,6 +296,9 @@ export function createNailStation(options: NailStationOptions): NailStation {
   });
   const stop = (): void => {
     drawing = false;
+    box = null;
+    document.documentElement.classList.remove('painting');
+    flushChange();
   };
   touch.addEventListener('pointerup', stop);
   touch.addEventListener('pointercancel', stop);
@@ -324,6 +344,9 @@ export function createNailStation(options: NailStationOptions): NailStation {
   }
 
   function finish(): MatchResult {
+    // A pending "in progress" note must not land after the finished one.
+    window.clearTimeout(changeTimer);
+    changeTimer = 0;
     done = true;
     refresh();
     return matchDesign(design, options.request);

@@ -52,9 +52,9 @@ for (const lang of LANGS) {
       await page.locator('.chat-form button[type=submit]').click();
       const hand = page.locator('.station-hand');
       await expect(hand).toBeVisible();
-      await expect(hand).toHaveText(/✋1/);
+      await expect(hand).toContainText('✋1');
       await hand.click();
-      await expect(hand).toHaveText(/✋2/);
+      await expect(hand).toContainText('✋2');
     });
 
     test('a pedicure starts with soak and scrub, then the paint tools', async ({ page }) => {
@@ -111,7 +111,7 @@ for (const lang of LANGS) {
       await expect(done).toHaveText(/↺/);
       await expect(done).toBeEnabled();
       await done.click();
-      await expect(done).toHaveText('✓');
+      await expect(done).toContainText('✓');
       await done.click();
       // The second Done ends the service: back to the chat for checkout.
       await expect(page.locator('.chat-panel.service-mode')).toHaveCount(0, { timeout: 5_000 });
@@ -139,6 +139,17 @@ for (const lang of LANGS) {
       expect(await page.locator('.station-row').evaluate((row) => row.scrollWidth > row.clientWidth)).toBe(true);
       await page.locator('.station-swatch').nth(3).click();
       await expect(page.locator('.station-swatch').nth(3)).toHaveAttribute('aria-pressed', 'true');
+      // Story 047: the bottom row: every button shows a word, at least 8 px apart, all inside the screen.
+      const row = await page.locator('.station-controls').evaluate((controls) => {
+        const buttons = [...controls.querySelectorAll<HTMLElement>('button')].filter((b) => b.offsetParent !== null);
+        const boxes = buttons.map((b) => b.getBoundingClientRect()).sort((a, b) => a.left - b.left);
+        const gaps = boxes.slice(1).map((b, i) => b.left - boxes[i]!.right);
+        return { words: buttons.map((b) => b.querySelector('.tab-text')?.textContent?.trim() ?? ''), minGap: Math.min(...gaps), inside: boxes.every((b) => b.left >= 0 && b.right <= window.innerWidth), minHeight: Math.min(...boxes.map((b) => b.height)) };
+      });
+      expect(row.words.every((w) => w.length > 0)).toBe(true);
+      expect(row.minGap).toBeGreaterThanOrEqual(8);
+      expect(row.inside).toBe(true);
+      expect(row.minHeight).toBeGreaterThanOrEqual(44);
       await expect(page.locator('.service-order')).toContainText('🎨');
       const overlap = await page.evaluate(() => {
         const box = (sel: string) => document.querySelector(sel)?.getBoundingClientRect();
@@ -235,7 +246,8 @@ for (const lang of LANGS) {
           onresult: ((e: unknown) => void) | null = null; onerror: ((e: unknown) => void) | null = null; onend: (() => void) | null = null;
           start() {
             setTimeout(() => {
-              const result = Object.assign([{ transcript: 'Hello welcome to are salon' }], { isFinal: true });
+              const heard = (window as unknown as { __heard?: string }).__heard ?? 'Hello welcome to are salon';
+              const result = Object.assign([{ transcript: heard }], { isFinal: true });
               this.onresult?.({ resultIndex: 0, results: [result] });
               this.onend?.();
             }, 50);
@@ -264,11 +276,22 @@ for (const lang of LANGS) {
       await page.locator('.chat-form button[type=submit]').click();
       await expect.poll(turns).toBe(1);
       expect((seen['client-turn']![0] as { transcript: { content: string }[] }).transcript.at(-1)!.content).toBe('Hello, welcome to our salon!');
-      // 2. Left alone, the spoken words send by themselves after the countdown.
+      // 2. Left alone, the spoken words send by themselves after the countdown. Story 047: a long line shows whole while
+      // it waits (the box grows), so it can be checked before it goes.
+      const long = 'Hello and welcome to our salon, please sit down and pick a colour today';
+      await page.evaluate((line) => ((window as unknown as { __heard?: string }).__heard = line), long);
       await expect(input).toBeEnabled();
       await page.locator('.mic-button').click();
-      await expect(input).toHaveValue('Hello welcome to are salon');
+      await expect(input).toHaveValue(long);
+      await expect(page.locator('.chat-form button[type=submit].counting')).toHaveCount(1);
+      const fit = await input.evaluate((box) => ({ scroll: box.scrollHeight, client: box.clientHeight, scrollW: box.scrollWidth, clientW: box.clientWidth, font: parseFloat(getComputedStyle(box).fontSize) }));
+      expect(fit.scroll).toBeLessThanOrEqual(fit.client);
+      expect(fit.scrollW).toBeLessThanOrEqual(fit.clientW);
+      expect(fit.font).toBeGreaterThanOrEqual(16);
       await expect.poll(turns, { timeout: 6000 }).toBe(2);
+      await expect(input).toHaveValue('');
+      expect(await input.evaluate((box) => box.getBoundingClientRect().height)).toBeLessThan(60);
+      await page.evaluate(() => delete (window as unknown as { __heard?: string }).__heard);
       // 3. With the setting off, the words always wait for Send.
       await page.evaluate(() => localStorage.setItem('salon.voiceAutoSend', 'off'));
       await expect(input).toBeEnabled();

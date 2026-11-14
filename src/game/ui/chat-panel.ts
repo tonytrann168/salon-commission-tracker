@@ -157,11 +157,30 @@ export function createChatPanel(
   const helpButton = el('button', 'chat-button help-button');
   helpButton.type = 'button';
   helpButton.textContent = t('help.button');
-  const input = el('input', 'chat-input');
-  input.type = 'text';
+  // Story 047: a box that grows with the line (up to about 4 lines, then it scrolls), so a whole spoken line can be
+  // checked before it is sent. Enter sends; Shift+Enter is never needed for one line of chat.
+  const input = el('textarea', 'chat-input');
+  input.rows = 1;
   input.placeholder = t('chat.placeholder');
   input.autocomplete = 'off';
   input.enterKeyHint = 'send';
+  input.spellcheck = false;
+  const fitInput = (): void => {
+    input.style.height = 'auto';
+    if (input.value) input.style.height = `${input.scrollHeight + (input.offsetHeight - input.clientHeight)}px`;
+    else input.style.height = '';
+  };
+  const setInput = (text: string): void => {
+    input.value = text;
+    fitInput();
+  };
+  input.addEventListener('input', fitInput);
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      form.requestSubmit();
+    }
+  });
   const sendButton = el('button', 'chat-button', t('common.send'));
   sendButton.type = 'submit';
   form.append(helpButton, input, sendButton);
@@ -274,11 +293,11 @@ export function createChatPanel(
           reveal?.finish();
         },
         onPartial: (text) => {
-          input.value = text;
+          setInput(text);
         },
         onText: (text) => {
           // Story 046: the words wait in the box; a countdown on Send sends them unless the player changes them.
-          input.value = text;
+          setInput(text);
           if (getVoiceAutoSend()) {
             voiceStatus.textContent = t('voice.checkWords');
             countdown.start();
@@ -779,7 +798,7 @@ export function createChatPanel(
     countdown.cancel();
     const text = input.value;
     if (text.trim() === '') return;
-    input.value = '';
+    setInput('');
     voiceStatus.textContent = '';
     mic?.setAgain(false);
     sendLine(text, false);
