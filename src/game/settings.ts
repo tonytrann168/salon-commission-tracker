@@ -72,6 +72,17 @@ export function setCorrectionsEnabled(enabled: boolean): void {
   writeStored(CORRECTIONS_KEY, enabled ? 'on' : 'off');
 }
 
+const VOICE_AUTO_SEND_KEY = 'salon.voiceAutoSend';
+
+/** Story 046: spoken replies send by themselves after a short countdown (on unless the player turned it off). */
+export function getVoiceAutoSend(): boolean {
+  return readStored(VOICE_AUTO_SEND_KEY) !== 'off';
+}
+
+export function setVoiceAutoSend(enabled: boolean): void {
+  writeStored(VOICE_AUTO_SEND_KEY, enabled ? 'on' : 'off');
+}
+
 const CLIENT_VOICE_KEY = 'salon.clientVoice';
 
 /** Whether clients speak their lines aloud (story 004). On unless the player turned it off. */

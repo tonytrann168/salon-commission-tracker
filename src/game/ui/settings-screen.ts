@@ -3,7 +3,7 @@ import { applyDocumentLanguage, getLanguage, t } from '../i18n';
 import { loadAudioSettings, saveAudioSettings } from '../audio';
 import type { AudioSettings } from '../audio';
 import { LEARNING_CONFIG } from '../learning/corrections';
-import { getPlayerName, setPlayerName, PLAYER_NAME_MAX, getClientVoiceEnabled, setClientVoiceEnabled, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, chooseEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
+import { getPlayerName, setPlayerName, PLAYER_NAME_MAX, getClientVoiceEnabled, setClientVoiceEnabled, getVoiceAutoSend, setVoiceAutoSend, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, chooseEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
 import { bilingual, el } from './dom';
 import { createLevelPicker } from './level-picker';
 import { createCompanionSettings } from './companion-screens';
@@ -104,6 +104,16 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
     voiceText.append(el('strong', '', t('settings.clientVoice')), el('span', 'setting-note', t('settings.clientVoiceNote')));
     voiceRow.append(voiceText, voiceToggle);
 
+    // Story 046: spoken replies wait a moment so a mis-heard line can be fixed; off: they always wait for Send.
+    const autoSendRow = el('label', 'setting-row');
+    const autoSendToggle = el('input');
+    autoSendToggle.type = 'checkbox';
+    autoSendToggle.checked = getVoiceAutoSend();
+    autoSendToggle.addEventListener('change', () => setVoiceAutoSend(autoSendToggle.checked));
+    const autoSendText = el('span', 'setting-text');
+    autoSendText.append(el('strong', '', t('settings.voiceAutoSend')), el('span', 'setting-note', t('settings.voiceAutoSendNote')));
+    autoSendRow.append(autoSendText, autoSendToggle);
+
     // Music and sound effects (story 012): a volume slider and a mute each, saved and applied at once.
     const soundRow = (key: 'music' | 'sfx'): HTMLElement => {
       const row = el('div', 'setting-row sound-row');
@@ -164,7 +174,7 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
       open.addEventListener('click', () => openWhatsNew(host, notes));
       versionRow.append(open);
     }
-    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, comfort, backup, legalLinks(), versionRow, back);
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, autoSendRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, comfort, backup, legalLinks(), versionRow, back);
   };
 
   render();

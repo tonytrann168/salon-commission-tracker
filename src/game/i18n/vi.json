@@ -529,5 +529,11 @@
   "payment.cheer.good": "Giỏi lắm! Khách vui rồi đó. 💖",
   "payment.cheer.okay": "Làm tốt lắm! Thêm chút nữa là lần sau bốn sao nha.",
   "payment.cheer.tough": "Khách này khó ghê. Mà {you} vẫn làm xong rồi đó. Lần sau mình làm tốt hơn nha! 💪",
-  "mai.tipCue": "{Self} có mẹo nè! 💡"
+  "mai.tipCue": "{Self} có mẹo nè! 💡",
+  "settings.voiceAutoSend": "Tự gửi câu nói",
+  "settings.voiceAutoSendNote": "Nói xong, câu chờ 3 giây để {you} sửa nếu cần. Tắt: luôn chờ {you} bấm Gửi.",
+  "voice.checkWords": "{You} xem lại câu nha. Chạm vào ô để sửa.",
+  "voice.checkWordsManual": "Sửa câu nếu cần, rồi bấm Gửi nha.",
+  "voice.micWord": "Nói",
+  "voice.micAgain": "Nói lại"
 }

@@ -227,6 +227,58 @@ for (const lang of LANGS) {
       await expect(page.locator('.mai-bubble.has-tip')).toHaveCount(0);
     });
 
+    test('speaking: the words wait so they can be fixed; tapping the box never sends; left alone they send', async ({ page }) => {
+      // A stand-in microphone: it "hears" a slightly wrong line.
+      await page.addInitScript(() => {
+        class FakeRecognition {
+          lang = ''; interimResults = false; continuous = false; maxAlternatives = 1;
+          onresult: ((e: unknown) => void) | null = null; onerror: ((e: unknown) => void) | null = null; onend: (() => void) | null = null;
+          start() {
+            setTimeout(() => {
+              const result = Object.assign([{ transcript: 'Hello welcome to are salon' }], { isFinal: true });
+              this.onresult?.({ resultIndex: 0, results: [result] });
+              this.onend?.();
+            }, 50);
+          }
+          stop() {}
+        }
+        for (const name of ['SpeechRecognition', 'webkitSpeechRecognition']) Object.defineProperty(window, name, { value: FakeRecognition, configurable: true, writable: true });
+      });
+      await seed(page, lang, { save: { xp: 100, appointments: 3, badges: ['first-client'], ...dailyWith('ana') } });
+      const seen = await mockApi(page, { phases: ['consultation'] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      const input = page.locator('.chat-input');
+      const turns = () => seen['client-turn']?.length ?? 0;
+      // 1. Tap the box during the countdown: nothing is sent, the words can be fixed, Send sends them.
+      await page.locator('.mic-button').click();
+      await expect(input).toHaveValue('Hello welcome to are salon');
+      await expect(page.locator('.chat-form button[type=submit].counting')).toHaveCount(1);
+      await expect(page.locator('.mic-button')).toContainText(lang === 'vi' ? 'Nói lại' : 'Again');
+      await input.click();
+      await expect(page.locator('.chat-form button[type=submit].counting')).toHaveCount(0);
+      await page.waitForTimeout(3600);
+      expect(turns()).toBe(0);
+      await input.fill('Hello, welcome to our salon!');
+      await page.locator('.chat-form button[type=submit]').click();
+      await expect.poll(turns).toBe(1);
+      expect((seen['client-turn']![0] as { transcript: { content: string }[] }).transcript.at(-1)!.content).toBe('Hello, welcome to our salon!');
+      // 2. Left alone, the spoken words send by themselves after the countdown.
+      await expect(input).toBeEnabled();
+      await page.locator('.mic-button').click();
+      await expect(input).toHaveValue('Hello welcome to are salon');
+      await expect.poll(turns, { timeout: 6000 }).toBe(2);
+      // 3. With the setting off, the words always wait for Send.
+      await page.evaluate(() => localStorage.setItem('salon.voiceAutoSend', 'off'));
+      await expect(input).toBeEnabled();
+      await page.locator('.mic-button').click();
+      await expect(input).toHaveValue('Hello welcome to are salon');
+      await expect(page.locator('.chat-form button[type=submit].counting')).toHaveCount(0);
+      await page.waitForTimeout(3600);
+      expect(turns()).toBe(2);
+    });
+
     test('reaching a new rank shows the celebration', async ({ page }) => {
       await seed(page, lang, { save: { xp: 55, appointments: 2, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page);

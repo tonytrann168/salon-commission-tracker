@@ -25,8 +25,9 @@ export interface MicButtonOptions {
   onStart?: () => void;
 }
 
-export function createMicButton(options: MicButtonOptions): { element: HTMLButtonElement; stop: () => void } {
-  const button = el('button', 'chat-button mic-button', '🎤');
+export function createMicButton(options: MicButtonOptions): { element: HTMLButtonElement; stop: () => void; setAgain: (again: boolean) => void } {
+  // Story 046: the icon with a word (the audience reads words more easily than icons).
+  const button = el('button', 'chat-button mic-button', `🎤 ${t('voice.micWord')}`);
   button.type = 'button';
   button.setAttribute('aria-label', t('voice.micLabel'));
   button.setAttribute('aria-pressed', 'false');
@@ -60,6 +61,8 @@ export function createMicButton(options: MicButtonOptions): { element: HTMLButto
       (text) => {
         reset();
         options.onStatus('');
+        // Story 046: words are in the box now; the mic offers to say them again.
+        button.textContent = `🎤 ${t('voice.micAgain')}`;
         options.onText(text);
       },
       (error: unknown) => {
@@ -69,5 +72,11 @@ export function createMicButton(options: MicButtonOptions): { element: HTMLButto
     );
   });
 
-  return { element: button, stop: () => active?.stop() };
+  return {
+    element: button,
+    stop: () => active?.stop(),
+    setAgain: (again) => {
+      if (!active) button.textContent = `🎤 ${t(again ? 'voice.micAgain' : 'voice.micWord')}`;
+    },
+  };
 }

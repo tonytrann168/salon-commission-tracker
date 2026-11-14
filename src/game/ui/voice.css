@@ -21,3 +21,12 @@
   .chat-form:has(.mic-button) .chat-input { flex: 1 1 calc(100% - 56px); }
   .chat-form .chat-button.mic-button { order: -1; }
 }
+
+/* Story 046: the mic has a word next to its icon; Send fills up while the spoken words wait (tap the box to stop it). */
+.chat-form .chat-button.mic-button { width: auto; min-width: 72px; padding: 0 12px; font-size: 16px; white-space: nowrap; }
+@media (max-width: 480px) { .chat-form:has(.mic-button) .chat-input { flex: 1 1 calc(100% - 110px); } }
+.chat-form button[type='submit'] { position: relative; overflow: hidden; }
+.chat-form button[type='submit'].counting::after { content: ''; position: absolute; inset: 0; background: rgba(255, 255, 255, 0.4); transform-origin: left center; animation: send-fill 3s linear forwards; pointer-events: none; }
+@keyframes send-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+html[data-motion='reduce'] .chat-form button[type='submit'].counting::after { animation: none; transform: scaleX(0.5); }
+.voice-status { font-size: 16px; }

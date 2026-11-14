@@ -25,6 +25,8 @@ import { LEARNING_CONFIG, shouldCheckLine } from '../learning/corrections';
 import type { CorrectionsTransport, Phrase } from '../learning/corrections';
 import { createHelpMeSayIt } from './help-me-say-it';
 import { createMicButton } from './mic-button';
+import { createSendCountdown } from '../voice-send';
+import { getVoiceAutoSend } from '../settings';
 import { openPracticeSheet, practiceButton } from './practice-sheet';
 import type { VoiceIO } from '../voice';
 import { createPortraitZone } from './portrait-zone';
@@ -267,6 +269,7 @@ export function createChatPanel(
     ? createMicButton({
         voice: voice.io,
         onStart: () => {
+          countdown.cancel();
           voice.io.cancelSpeech();
           reveal?.finish();
         },
@@ -274,8 +277,14 @@ export function createChatPanel(
           input.value = text;
         },
         onText: (text) => {
-          input.value = '';
-          sendLine(text, false);
+          // Story 046: the words wait in the box; a countdown on Send sends them unless the player changes them.
+          input.value = text;
+          if (getVoiceAutoSend()) {
+            voiceStatus.textContent = t('voice.checkWords');
+            countdown.start();
+          } else {
+            voiceStatus.textContent = t('voice.checkWordsManual');
+          }
         },
         onStatus: (message) => {
           voiceStatus.textContent = message;
@@ -750,12 +759,29 @@ export function createChatPanel(
     });
   }
 
+  // Story 046: the countdown after speaking. Tapping the box or typing stops it; Send sends at once.
+  const countdown = createSendCountdown(
+    () => form.requestSubmit(),
+    (running) => {
+      sendButton.classList.toggle('counting', running);
+      if (!running && voiceStatus.textContent === t('voice.checkWords')) voiceStatus.textContent = '';
+    },
+  );
+  for (const type of ['pointerdown', 'focus', 'keydown', 'input'] as const) {
+    input.addEventListener(type, () => {
+      if (!countdown.running) return;
+      countdown.cancel();
+      voiceStatus.textContent = t('voice.checkWordsManual');
+    });
+  }
   form.addEventListener('submit', (event) => {
     event.preventDefault();
+    countdown.cancel();
     const text = input.value;
     if (text.trim() === '') return;
     input.value = '';
     voiceStatus.textContent = '';
+    mic?.setAgain(false);
     sendLine(text, false);
   });
   retryButton.addEventListener('click', () => void appointment.retry());
