@@ -500,5 +500,10 @@
   "error.title": "Oops, something went wrong",
   "error.line": "{mai} is so sorry! Your progress is safe: the game saves as you play. Let's try again.",
   "error.retry": "Try again",
-  "error.keepPlaying": "Keep playing"
+  "error.keepPlaying": "Keep playing",
+  "station.redo": "↺ Redo",
+  "station.redoLabel": "Redo the nails (the client asked)",
+  "station.redoStart": "Redo: change the colour, then tap ✓ again.",
+  "phrasebook.starters": "Useful phrases",
+  "phrasebook.startersNote": "Ready-made salon phrases to learn and practise, by topic."
 }

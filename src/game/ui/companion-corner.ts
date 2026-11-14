@@ -1,6 +1,7 @@
 import { bestieLevel, loadMemory, localDay, saveMemory } from '../bestie-memory';
 import { companionLook, loadCompanion, saveCompanion } from '../companion';
-import { claimGift, dailyBonus, giftsDue, pickLine } from '../corner';
+import { CORNER_CONFIG, claimGift, dailyBonus, giftsDue, pickLine } from '../corner';
+import { loadRecent, remember, saveRecent } from '../fresh-lines';
 import type { CornerAction } from '../corner';
 import { getLanguage, t } from '../i18n';
 import type { StringKey } from '../i18n';
@@ -38,7 +39,6 @@ export function createCompanionCorner(host: HTMLElement, onBack: () => void): HT
   const bonus = el('p', 'setting-note corner-bonus');
   bonus.setAttribute('aria-live', 'polite');
   const giftBox = el('div', 'corner-gift');
-  let last: Record<CornerAction, number> = { chat: 0, pat: 0, high: 0 };
 
   const figure = (mood: MascotMood, move?: string): void => {
     const node = renderMascot(mood, FIGURE_PX, { label: settings.name, crop: 'full', ...companionLook() });
@@ -49,8 +49,10 @@ export function createCompanionCorner(host: HTMLElement, onBack: () => void): HT
   const act = (action: CornerAction): void => {
     const moods = MOOD[action];
     figure(moods[Math.floor(Math.random() * moods.length)] ?? 'happy', MOVE[action]);
-    const n = pickLine(action, last[action], Math.random());
-    last = { ...last, [action]: n };
+    // Story 033: no repeats within the last few lines of this kind, across visits.
+    const recent = loadRecent(`corner.${action}`);
+    const n = pickLine(action, recent, Math.random());
+    saveRecent(`corner.${action}`, remember(recent, n, CORNER_CONFIG.noRepeatWithin));
     bubble.textContent = t(`corner.${action}${n}` as StringKey);
     emitSound(action === 'high' ? 'stars' : 'moodUp');
     const companion = loadCompanion();

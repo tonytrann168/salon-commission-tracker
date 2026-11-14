@@ -1,6 +1,7 @@
 import { prefersReducedMotion, haptic } from '../comfort';
 import { getHelpLanguage } from '../settings';
 import { t } from '../i18n';
+import { loadRecent, remember, saveRecent } from '../fresh-lines';
 import { PREP_CONFIG, isFinished, prepOutcome, startPrep, stepPrep } from '../nail-art/prep';
 import type { Prep, PrepEvent } from '../nail-art/prep';
 import type { Difficulty } from '../types';
@@ -98,8 +99,12 @@ export function createPrepOverlay(options: { difficulty: Difficulty; onFinish: (
   function end(): void {
     ended = true;
     cancelAnimationFrame(frame);
-    const outcome = prepOutcome(prep, options.roll ?? Math.random());
+    // Story 033: the client's reaction doesn't repeat the last ones.
+    const kind = `pedi.${prep.state}`;
+    const recent = loadRecent(kind);
+    const outcome = prepOutcome(prep, options.roll ?? Math.random(), PREP_CONFIG, recent);
     if (!outcome) return;
+    saveRecent(kind, remember(recent, outcome.pick, 3));
     if (prep.state === 'done') haptic([20, 40, 20]);
     const line = el('p', 'pedi-prep-line', outcome.line.en);
     line.lang = 'en';

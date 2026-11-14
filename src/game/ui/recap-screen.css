@@ -12,3 +12,7 @@
 .level-change.up { background: #d9f5e3; text-align: center; }
 .level-change-burst { margin: 0; font-size: 36px; }
 .learning-both { gap: 6px; }
+/* Story 033: starter phrases, one fold per topic. */
+.phrasebook-fold { border-top: 1px solid #ecdcf7; padding: 4px 0; }
+.phrasebook-fold > summary { min-height: 44px; display: flex; align-items: center; font-weight: 700; cursor: pointer; }
+.phrasebook-fold .learning-phrase { margin: 6px 0; }

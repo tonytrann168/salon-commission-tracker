@@ -381,6 +381,8 @@ async function boot(): Promise<void> {
               // Story 028: seasonal polishes and stickers only while their season runs.
               palette: seasonPalette(stationPalette(NAIL_ART_CONFIG.palette, loadSave()), activeSeason(localDay(), seasonOverride())),
               stickers: seasonStickers(NAIL_ART_CONFIG.stickers, activeSeason(localDay(), seasonOverride())),
+              // Story 033: the "Colour redo" scenario lets the client ask for one redo after Done.
+              ...(scenario?.redo ? { redos: 1 } : {}),
               tools: { brushRadius: NAIL_ART_CONFIG.brushRadius * effects.brushScale, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius * effects.cleanupScale },
               onNote: (note: string | undefined) => {
                 nails.note = note;

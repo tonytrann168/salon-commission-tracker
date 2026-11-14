@@ -1,5 +1,6 @@
 import prepJson from '../config/pedicure-prep.json';
 import type { Difficulty } from '../types';
+import { pickFresh } from '../fresh-lines';
 
 /**
  * Story 026: the pedicure prep step (soak, then scrub) before painting. A small state machine, timed with delta
@@ -88,9 +89,10 @@ export function stepPrep(prep: Prep, event: PrepEvent, config: PrepConfig = PREP
 }
 
 /** The mood change and the client's line once the prep is over. `roll` in [0, 1) picks the line. */
-export function prepOutcome(prep: Prep, roll: number, config: PrepConfig = PREP_CONFIG): { moodDelta: number; line: PrepLine } | null {
+/** Story 033: `recent` (1-based picks) avoids repeating the last reaction lines. */
+export function prepOutcome(prep: Prep, roll: number, config: PrepConfig = PREP_CONFIG, recent: readonly number[] = []): { moodDelta: number; line: PrepLine; pick: number } | null {
   if (!isFinished(prep)) return null;
   const list = prep.state === 'done' ? config.reactions.done : config.reactions.skipped;
-  const line = list[Math.min(list.length - 1, Math.floor(Math.max(0, roll) * list.length))] as PrepLine;
-  return { moodDelta: prep.state === 'done' ? config.moodBonus : 0, line };
+  const pick = pickFresh(list.length, recent, list.length - 1, roll);
+  return { moodDelta: prep.state === 'done' ? config.moodBonus : 0, line: list[pick - 1] as PrepLine, pick };
 }

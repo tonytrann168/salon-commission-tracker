@@ -12,8 +12,8 @@ const ALL = ['easy', 'medium', 'hard'] as const;
 const ids = (list: { id: string }[]) => list.map((s) => s.id).sort();
 
 describe('scenario data', () => {
-  it('has the scenarios (six from story 019, pedicure day from 024), each with a tag and an opening line in place', () => {
-    expect(ids(SCENARIOS)).toEqual(['bridal-trial', 'elderly-regular', 'gift-card', 'party-tonight', 'pedicure-day', 'returning-client', 'walk-in-rush']);
+  it('has the scenarios (six from story 019, pedicure day from 024, rainy day and colour redo from 033), each with a tag and an opening line in place', () => {
+    expect(ids(SCENARIOS)).toEqual(['bridal-trial', 'colour-redo', 'elderly-regular', 'gift-card', 'party-tonight', 'pedicure-day', 'rainy-day', 'returning-client', 'walk-in-rush']);
     for (const s of SCENARIOS) {
       expect(s.tag.en.length, s.id).toBeGreaterThan(5);
       expect(s.tag.vi.length, s.id).toBeGreaterThan(5);
@@ -34,7 +34,7 @@ describe('eligibility', () => {
   it('fits the client, needs the difficulty unlocked, and "returning" only after a real visit', () => {
     const grace = getClient('grace')!;
     const tom = getClient('tom')!;
-    expect(ids(eligibleScenarios(grace, SCENARIOS, { unlocked: ['easy'] }))).toEqual(['elderly-regular', 'gift-card', 'pedicure-day', 'walk-in-rush']);
+    expect(ids(eligibleScenarios(grace, SCENARIOS, { unlocked: ['easy'] }))).toEqual(['elderly-regular', 'gift-card', 'pedicure-day', 'rainy-day', 'walk-in-rush']);
     expect(ids(eligibleScenarios(grace, SCENARIOS, { unlocked: [...ALL], visits: { visits: 2, lastStars: 4, lastDay: '2026-11-09' } }))).toContain('returning-client');
     expect(ids(eligibleScenarios(tom, SCENARIOS, { unlocked: [...ALL] }))).not.toContain('bridal-trial');
     expect(ids(eligibleScenarios(tom, SCENARIOS, { unlocked: [...ALL] }))).not.toContain('returning-client');

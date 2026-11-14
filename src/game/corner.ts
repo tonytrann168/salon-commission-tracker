@@ -1,4 +1,5 @@
 import cornerJson from './config/corner.json';
+import { pickFresh } from './fresh-lines';
 import { MASCOT_CONFIG } from './mascot/mascot';
 import { NAIL_ART_CONFIG } from './nail-art/design';
 import type { ProgressSave } from './progression';
@@ -20,6 +21,8 @@ export interface CornerConfig {
   dailyXp: number;
   gifts: Gift[];
   lines: Record<CornerAction, number>;
+  /** Story 033: no line repeats within this many picks of its kind. */
+  noRepeatWithin: number;
 }
 
 export function parseCornerConfig(raw: unknown): CornerConfig {
@@ -38,7 +41,8 @@ export function parseCornerConfig(raw: unknown): CornerConfig {
   if (new Set(gifts.map((g) => g.level)).size !== gifts.length) fail('one gift per level');
   const lines = (typeof r.lines === 'object' && r.lines !== null ? r.lines : fail('"lines" must be an object')) as Record<string, unknown>;
   const count = (k: CornerAction): number => (typeof lines[k] === 'number' && Number.isInteger(lines[k]) && (lines[k] as number) >= 1 ? (lines[k] as number) : fail(`"lines.${k}" must be 1 or more`));
-  return { dailyXp, gifts, lines: { chat: count('chat'), pat: count('pat'), high: count('high') } };
+  const noRepeatWithin = r.noRepeatWithin === undefined ? 1 : typeof r.noRepeatWithin === 'number' && Number.isInteger(r.noRepeatWithin) && r.noRepeatWithin >= 1 ? r.noRepeatWithin : fail('"noRepeatWithin" must be 1 or more');
+  return { dailyXp, gifts, lines: { chat: count('chat'), pat: count('pat'), high: count('high') }, noRepeatWithin };
 }
 
 export const CORNER_CONFIG: CornerConfig = parseCornerConfig(cornerJson);
@@ -59,12 +63,9 @@ export function claimGift(save: ProgressSave, gift: Gift): ProgressSave {
 }
 
 /** Which numbered line to say (1-based), never the same twice in a row. `roll` in [0, 1). */
-export function pickLine(action: CornerAction, previous: number, roll: number, config: CornerConfig = CORNER_CONFIG): number {
-  const n = config.lines[action];
-  if (n === 1) return 1;
-  let pick = 1 + Math.floor(roll * n);
-  if (pick === previous) pick = (pick % n) + 1;
-  return pick;
+/** Which line (1..n) to say: never one of the recent picks (story 033; a single number is the previous pick). */
+export function pickLine(action: CornerAction, recent: number | readonly number[], roll: number, config: CornerConfig = CORNER_CONFIG): number {
+  return pickFresh(config.lines[action], typeof recent === 'number' ? [recent] : recent, typeof recent === 'number' ? 1 : config.noRepeatWithin, roll);
 }
 
 /** Story 027: the "tap me" cue shows on the title companion until the corner is first opened. */

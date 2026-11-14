@@ -86,6 +86,39 @@ for (const lang of LANGS) {
       await expect(page.locator(`.station-swatch[aria-label*="${lang === 'vi' ? 'Vàng hồng' : 'Rose gold'}" i]`)).toHaveCount(1);
     });
 
+    test('colour redo: after Done the client may ask once for a redo; the station takes exactly one more Done', async ({ page }) => {
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('kim', 'colour-redo') } });
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('Hello! Red is lovely on you. Let me start.');
+      await page.locator('.chat-form button[type=submit]').click();
+      const done = page.locator('.station-done');
+      await expect(done).toBeVisible();
+      await done.click();
+      await expect(done).toHaveText(/↺/);
+      await expect(done).toBeEnabled();
+      // The station closes by itself after Done; open it again for the redo.
+      await expect(page.locator('.station-tools')).toBeHidden();
+      await page.locator('.station-toggle').click();
+      await done.click();
+      await expect(done).toHaveText('✓');
+      await done.click();
+      await expect(done).toBeDisabled();
+    });
+
+    test('the phrasebook has useful phrases by topic, even before any are earned', async ({ page }) => {
+      await seed(page, lang);
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu-row').first().locator('button').nth(1).click();
+      await expect(page.locator('.phrasebook-fold')).toHaveCount(5);
+      await page.locator('.phrasebook-fold summary').first().click();
+      await expect(page.locator('.phrasebook-fold').first().locator('.learning-phrase')).toHaveCount(10);
+      expect(await noOverflow(page)).toBe(true);
+    });
+
     test('reaching a new rank shows the celebration', async ({ page }) => {
       await seed(page, lang, { save: { xp: 55, appointments: 2, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page);

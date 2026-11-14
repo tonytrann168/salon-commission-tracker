@@ -1,0 +1,10 @@
+{
+  "id": "rainy-day",
+  "name": { "en": "Rainy day", "vi": "Ngày mưa" },
+  "tag": { "en": "🌧️ Rainy day: wet, cold, worried about smudges", "vi": "🌧️ Ngày mưa: ướt, lạnh, sợ lem móng" },
+  "difficulty": "easy",
+  "eligible": { "difficulties": ["easy", "medium", "hard"] },
+  "occasion": "It is pouring rain. You came in wet and cold, holding a dripping umbrella.",
+  "constraints": "You are worried your new polish will smudge or chip on the way home in the rain. You are happy when the stylist welcomes you warmly, offers a place for your umbrella or a towel, and suggests a quick-dry top coat or waiting a few minutes under the dryer. You get a little impatient if nobody notices you are wet.",
+  "openingLine": "Hi! Wow, it's pouring out there. Sorry, my umbrella is dripping everywhere. Can I still get my nails done today?"
+}

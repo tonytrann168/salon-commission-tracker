@@ -500,5 +500,10 @@
   "error.title": "Ối, có lỗi rồi",
   "error.line": "{mai} xin lỗi {you} nha! Tiến độ của {you} vẫn an toàn, game lưu liên tục mà. Mình thử lại nha.",
   "error.retry": "Thử lại",
-  "error.keepPlaying": "Chơi tiếp"
+  "error.keepPlaying": "Chơi tiếp",
+  "station.redo": "↺ Làm lại",
+  "station.redoLabel": "Làm lại móng (khách yêu cầu)",
+  "station.redoStart": "Làm lại: đổi màu, rồi bấm ✓ lần nữa.",
+  "phrasebook.starters": "Câu hữu ích",
+  "phrasebook.startersNote": "Những câu hay dùng ở tiệm, theo chủ đề, để học và luyện nói."
 }

@@ -1,0 +1,215 @@
+{
+  "_note": "Story 033: starter phrases per phrasebook topic (the stylist talking to a client; vi is the meaning, the client as chị). Shown in the phrasebook as Useful phrases.",
+  "topics": {
+    "greeting": [
+      {
+        "en": "Hello! Welcome to our salon.",
+        "vi": "Xin chào! Chào mừng chị đến tiệm."
+      },
+      {
+        "en": "Hi, how are you today?",
+        "vi": "Chào chị, hôm nay chị khỏe không?"
+      },
+      {
+        "en": "Do you have an appointment?",
+        "vi": "Chị có hẹn trước không ạ?"
+      },
+      {
+        "en": "Please have a seat. I'll be right with you.",
+        "vi": "Mời chị ngồi. Em tới ngay ạ."
+      },
+      {
+        "en": "Can I take your coat?",
+        "vi": "Để em cất áo khoác cho chị nha?"
+      },
+      {
+        "en": "Would you like some water or tea?",
+        "vi": "Chị uống nước hay trà không ạ?"
+      },
+      {
+        "en": "Nice to see you again!",
+        "vi": "Rất vui được gặp lại chị!"
+      },
+      {
+        "en": "Sorry for the wait. Thank you for your patience.",
+        "vi": "Xin lỗi đã để chị chờ. Cảm ơn chị đã kiên nhẫn."
+      },
+      {
+        "en": "My name is Lan. I'll do your nails today.",
+        "vi": "Em tên Lan. Hôm nay em làm móng cho chị."
+      },
+      {
+        "en": "Come this way, please.",
+        "vi": "Mời chị đi lối này."
+      }
+    ],
+    "consultation": [
+      {
+        "en": "What would you like today?",
+        "vi": "Hôm nay chị muốn làm gì ạ?"
+      },
+      {
+        "en": "Which colour would you like?",
+        "vi": "Chị thích màu nào ạ?"
+      },
+      {
+        "en": "What shape do you like: square, round or almond?",
+        "vi": "Chị thích dáng nào: vuông, tròn hay hạnh nhân?"
+      },
+      {
+        "en": "Short or long?",
+        "vi": "Chị để ngắn hay dài ạ?"
+      },
+      {
+        "en": "Would you like gel or regular polish?",
+        "vi": "Chị muốn sơn gel hay sơn thường?"
+      },
+      {
+        "en": "Do you want any design or gems?",
+        "vi": "Chị có muốn vẽ hay đính đá không?"
+      },
+      {
+        "en": "Is this length okay for you?",
+        "vi": "Độ dài này được chưa chị?"
+      },
+      {
+        "en": "Let me know if anything hurts.",
+        "vi": "Có đau chỗ nào chị nói em nha."
+      },
+      {
+        "en": "Is the water temperature okay?",
+        "vi": "Nước vậy có vừa không chị?"
+      },
+      {
+        "en": "Here is the colour chart. Take your time.",
+        "vi": "Đây là bảng màu. Chị cứ từ từ chọn."
+      }
+    ],
+    "price": [
+      {
+        "en": "A manicure is twenty-five dollars.",
+        "vi": "Làm tay là hai mươi lăm đô."
+      },
+      {
+        "en": "Gel is ten dollars more.",
+        "vi": "Sơn gel thêm mười đô."
+      },
+      {
+        "en": "The design is five dollars per nail.",
+        "vi": "Vẽ móng là năm đô một ngón."
+      },
+      {
+        "en": "Would you like to add a hand massage?",
+        "vi": "Chị có muốn thêm massage tay không?"
+      },
+      {
+        "en": "Your total is forty dollars.",
+        "vi": "Tổng cộng là bốn mươi đô."
+      },
+      {
+        "en": "Cash or card?",
+        "vi": "Chị trả tiền mặt hay thẻ?"
+      },
+      {
+        "en": "Here is your receipt.",
+        "vi": "Đây là hoá đơn của chị."
+      },
+      {
+        "en": "We have a special today: a pedicure and manicure for fifty dollars.",
+        "vi": "Hôm nay có khuyến mãi: làm cả tay và chân năm mươi đô."
+      },
+      {
+        "en": "The tip is up to you. Thank you so much!",
+        "vi": "Tiền tip tuỳ chị. Cảm ơn chị nhiều!"
+      },
+      {
+        "en": "Let me check the price for you.",
+        "vi": "Để em kiểm tra giá cho chị."
+      }
+    ],
+    "booking": [
+      {
+        "en": "When would you like to come back?",
+        "vi": "Khi nào chị muốn quay lại ạ?"
+      },
+      {
+        "en": "We have an opening on Friday at two.",
+        "vi": "Thứ Sáu lúc hai giờ còn trống ạ."
+      },
+      {
+        "en": "Your fill is due in about two weeks.",
+        "vi": "Khoảng hai tuần nữa chị cần dặm lại."
+      },
+      {
+        "en": "Can I have your phone number for the booking?",
+        "vi": "Cho em xin số điện thoại để đặt lịch nha?"
+      },
+      {
+        "en": "Would you like the same colour next time?",
+        "vi": "Lần sau chị muốn màu này nữa không?"
+      },
+      {
+        "en": "We are open from ten to seven.",
+        "vi": "Tiệm mở cửa từ mười giờ đến bảy giờ."
+      },
+      {
+        "en": "I'll put you down for Saturday morning.",
+        "vi": "Em ghi chị sáng thứ Bảy nha."
+      },
+      {
+        "en": "Please call us if you need to change the time.",
+        "vi": "Nếu cần đổi giờ chị gọi tiệm nha."
+      },
+      {
+        "en": "See you next time!",
+        "vi": "Hẹn gặp lại chị lần sau!"
+      },
+      {
+        "en": "Have a great day!",
+        "vi": "Chúc chị một ngày vui vẻ!"
+      }
+    ],
+    "problems": [
+      {
+        "en": "I'm so sorry about that.",
+        "vi": "Em thành thật xin lỗi chị."
+      },
+      {
+        "en": "Let me fix it for you right away.",
+        "vi": "Để em sửa cho chị ngay."
+      },
+      {
+        "en": "No charge for the fix.",
+        "vi": "Sửa lại không tính tiền ạ."
+      },
+      {
+        "en": "I understand. Would you like a different colour?",
+        "vi": "Em hiểu. Chị có muốn đổi màu khác không?"
+      },
+      {
+        "en": "Please wait a few minutes for it to dry.",
+        "vi": "Chị chờ vài phút cho khô nha."
+      },
+      {
+        "en": "Be careful, the polish is still wet.",
+        "vi": "Cẩn thận chị ơi, sơn còn ướt."
+      },
+      {
+        "en": "Did I cut too close? I'm sorry.",
+        "vi": "Em cắt sát quá hả? Em xin lỗi."
+      },
+      {
+        "en": "Let me check with my manager.",
+        "vi": "Để em hỏi quản lý."
+      },
+      {
+        "en": "Thank you for telling me.",
+        "vi": "Cảm ơn chị đã cho em biết."
+      },
+      {
+        "en": "Would you like to come back tomorrow for a free touch-up?",
+        "vi": "Mai chị ghé lại để em dặm miễn phí nha?"
+      }
+    ]
+  }
+}

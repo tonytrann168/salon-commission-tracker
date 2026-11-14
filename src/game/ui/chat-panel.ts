@@ -77,6 +77,8 @@ export function createChatPanel(
       request: NailRequest;
       /** Story 028: the sticker cycle for today. */
       stickers?: StickerKind[];
+      /** Story 033: redos allowed after Done (the "Colour redo" scenario). */
+      redos?: number;
       /** The client's game note about the nails (undefined before any work). */
       onNote: (note: string | undefined) => void;
       /** Finished (Done, or the appointment ended): the design and its match. */
@@ -186,6 +188,7 @@ export function createChatPanel(
         clientPronoun: portraits.client.pronoun,
         ...(nailArt.palette ? { palette: nailArt.palette } : {}),
         ...(nailArt.stickers ? { stickers: nailArt.stickers } : {}),
+        ...(nailArt.redos ? { redos: nailArt.redos } : {}),
         ...(nailArt.tools ? { tools: nailArt.tools } : {}),
         maiSide: () => (mai ? ((mai.element.dataset.side as 'left' | 'right' | undefined) ?? 'right') : null),
         onChange: (design) => nailArt.onNote(nailsNote(design, null, nailArt.request.service)),

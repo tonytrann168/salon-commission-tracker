@@ -33,6 +33,8 @@ export interface NailStationOptions {
   onDone: (design: NailDesign, result: MatchResult) => void;
   /** Story 007: the colours on offer (free ones plus bought shop polishes) and the tool sizes (shop upgrades). */
   palette?: PaletteColor[];
+  /** Story 033: how many times the client may ask for a redo after Done (the "Colour redo" scenario). */
+  redos?: number;
   /** Story 028: the sticker cycle (seasonal stickers while their season runs). */
   stickers?: StickerKind[];
   tools?: StationTools;
@@ -129,13 +131,31 @@ export function createNailStation(options: NailStationOptions): NailStation {
       refresh();
     }, t('station.shapeLabel', { shape: t(`station.shape.${shape}`) })),
   );
+  // Story 033: a redo scenario lets Done turn into "Redo" once; the latest design is the one that counts.
+  let redosLeft = options.redos ?? 0;
+  const setDoneLabel = (redo: boolean): void => {
+    doneButton.innerHTML = t(redo ? 'station.redo' : 'station.done');
+    doneButton.setAttribute('aria-label', t(redo ? 'station.redoLabel' : 'station.doneLabel'));
+  };
   const doneButton = button(t('station.done'), 'station-done', () => {
-    if (done) return;
+    if (done) {
+      if (redosLeft <= 0) return;
+      redosLeft -= 1;
+      done = false;
+      setDoneLabel(false);
+      refresh();
+      say(t('station.redoStart'), true);
+      return;
+    }
     const result = finish();
     haptic(30);
     say(t('station.doneMessage', { ...clientGrammar(options.clientPronoun), score: result.score }), true);
     emitSound(result.moodDelta >= 0 ? 'moodUp' : 'moodDown');
     options.onDone(design, result);
+    if (redosLeft > 0) {
+      setDoneLabel(true);
+      doneButton.disabled = false;
+    }
   });
   doneButton.setAttribute('aria-label', t('station.doneLabel'));
   const resetButton = button(t('station.reset'), 'station-reset', () => setDesign(emptyDesign(design.shape, nails)), t('station.resetLabel'));
@@ -220,7 +240,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
       node.setAttribute('aria-pressed', String(tool === 'gradient' ? id === design.gradient : id === design.base));
     });
     toolbar.querySelectorAll('button').forEach((node) => {
-      (node as HTMLButtonElement).disabled = done;
+      (node as HTMLButtonElement).disabled = done && !(node === doneButton && redosLeft > 0);
     });
   }
 

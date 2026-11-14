@@ -1,6 +1,8 @@
 import { companionName } from '../companion';
 import { t } from '../i18n';
 import { groupByTopic, loadPhrasebook } from '../learning/phrasebook';
+import { STARTERS } from '../learning/starters';
+import { TOPICS } from '../learning/corrections';
 import { el } from './dom';
 import { practiceButton } from './practice-sheet';
 import './level-picker.css';
@@ -30,6 +32,25 @@ export function createPhrasebookScreen(host: HTMLElement, onBack: () => void, on
     }
     screen.append(section);
   }
+  // Story 033: ready-made phrases per topic, folded so the player's own phrases stay on top.
+  const starters = el('section', 'results-section phrasebook-starters');
+  starters.append(el('h2', '', t('phrasebook.starters')), el('p', 'learning-reason', t('phrasebook.startersNote')));
+  for (const topic of TOPICS) {
+    const fold = el('details', 'phrasebook-fold');
+    fold.append(el('summary', '', `${t(`phrasebook.topic.${topic}`)} (${STARTERS[topic].length})`));
+    for (const phrase of STARTERS[topic]) {
+      const item = el('div', 'learning-phrase');
+      const en = el('span', 'learning-en', phrase.en);
+      en.lang = 'en';
+      const vi = el('span', 'learning-vi', phrase.vi);
+      vi.lang = 'vi';
+      item.append(en, vi);
+      if (onPractice) item.append(practiceButton(phrase.en, onPractice));
+      fold.append(item);
+    }
+    starters.append(fold);
+  }
+  screen.append(starters);
   const back = el('button', 'chat-button secondary', t('common.back'));
   back.type = 'button';
   back.addEventListener('click', onBack);

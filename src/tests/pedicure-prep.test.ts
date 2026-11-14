@@ -38,14 +38,14 @@ describe('pedicure prep', () => {
     const taps = Math.ceil(PREP_CONFIG.scrubWidths / 2 / PREP_CONFIG.scrubTapWidths);
     for (let i = 0; i < taps; i++) p = stepPrep(p, { type: 'scrub', widths: PREP_CONFIG.scrubTapWidths });
     expect(p).toMatchObject({ state: 'done', progress: 1 });
-    expect(prepOutcome(p, 0)).toEqual({ moodDelta: PREP_CONFIG.moodBonus, line: PREP_CONFIG.reactions.done[0] });
+    expect(prepOutcome(p, 0)).toMatchObject({ moodDelta: PREP_CONFIG.moodBonus, line: PREP_CONFIG.reactions.done[0] });
   });
 
   it('only easy clients can skip; skipping gives no bonus and no penalty', () => {
     expect(stepPrep(startPrep('medium'), { type: 'skip' }).state).toBe('ready');
     const skipped = run(startPrep('easy'), { type: 'start' }, { type: 'skip' });
     expect(skipped.state).toBe('skipped');
-    expect(prepOutcome(skipped, 0.99)).toEqual({ moodDelta: 0, line: PREP_CONFIG.reactions.skipped.at(-1) });
+    expect(prepOutcome(skipped, 0.99)).toMatchObject({ moodDelta: 0, line: PREP_CONFIG.reactions.skipped.at(-1) });
     // Final states ignore everything.
     expect(run(skipped, { type: 'start' }, { type: 'scrub', widths: 99 })).toEqual(skipped);
     expect(prepOutcome(startPrep('easy'), 0)).toBeNull();

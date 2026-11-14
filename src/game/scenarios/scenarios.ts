@@ -20,6 +20,8 @@ export interface Scenario {
   constraints: string;
   openingLine: string;
   nailRequest?: Partial<NailRequest>;
+  /** Story 033: after Done, the client asks for one redo (the station allows one more Done). */
+  redo?: boolean;
 }
 
 /** What the save knows about past visits of one client (for "returning"). */
@@ -77,6 +79,7 @@ export function parseScenario(raw: unknown, file: string, clientIds: readonly st
     constraints: text('constraints', 600),
     openingLine: text('openingLine', 300),
     ...(nailRequest ? { nailRequest } : {}),
+    ...(raw.redo === undefined ? {} : raw.redo === true ? { redo: true } : fail('"redo" must be true when set')),
   };
 }
 
