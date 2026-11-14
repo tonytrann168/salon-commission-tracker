@@ -1,0 +1,16 @@
+{
+  "_note": "Story 034: notes shown once on the title after updating to a version listed here (newest first), and in Settings. Plain words, en and vi; the vi lines may use the companion tokens ({self}, {you}).",
+  "releases": [
+    {
+      "version": "1.0.0-rc.1",
+      "items": [
+        { "en": "Make a free account to keep your progress and continue on any phone (email + password).", "vi": "Tạo tài khoản miễn phí để giữ tiến độ và chơi tiếp trên điện thoại nào cũng được (email + mật khẩu)." },
+        { "en": "Choose whether your bestie is older or younger than you (changes how they talk in Vietnamese).", "vi": "Chọn bạn thân lớn hơn hay nhỏ hơn {you} (đổi cách xưng hô bằng tiếng Việt)." },
+        { "en": "Pedicures now start with soak and scrub.", "vi": "Làm móng chân giờ có bước ngâm và chà chân." },
+        { "en": "Back up with a QR code, and 50 useful phrases in your phrasebook.", "vi": "Sao lưu bằng mã QR, và 50 câu hữu ích trong sổ tay câu." },
+        { "en": "New situations: a rainy day, and a client who wants a different colour.", "vi": "Tình huống mới: ngày mưa, và khách muốn đổi màu sơn." },
+        { "en": "Tết is coming: free red and gold polish, a hoa mai sticker and a daily lì xì around Lunar New Year.", "vi": "Tết sắp tới: sơn đỏ, vàng và sticker hoa mai miễn phí, và lì xì mỗi ngày dịp Tết." }
+      ]
+    }
+  ]
+}

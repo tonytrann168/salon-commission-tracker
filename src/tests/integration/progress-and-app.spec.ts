@@ -149,6 +149,22 @@ for (const lang of LANGS) {
       await expect(page.locator('.title-menu')).toBeVisible();
     });
 
+    test('after an update, What\'s new shows once on the title and stays in Settings', async ({ page }) => {
+      await seed(page, lang, { whatsNewSeen: false, extra: { 'salon.whatsNewSeen': '0.1.0' } });
+      await mockApi(page);
+      await page.goto('/');
+      await expect(page.locator('.whats-new')).toBeVisible();
+      await expect(page.locator('.whats-new li')).toHaveCount(6);
+      await page.locator('.whats-new .chat-button').click();
+      await page.reload();
+      await expect(page.locator('.title-menu')).toBeVisible();
+      await expect(page.locator('.whats-new')).toHaveCount(0);
+      await openSettings(page);
+      await expect(page.locator('.app-version')).toContainText('1.0.0-rc.1');
+      await page.locator('.app-version .chat-button').click();
+      await expect(page.locator('.whats-new')).toBeVisible();
+    });
+
     test('a new build while open: one reload with a note, never a loop', async ({ page }) => {
       await seed(page, lang);
       await mockApi(page);

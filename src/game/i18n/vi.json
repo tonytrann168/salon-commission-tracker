@@ -505,5 +505,9 @@
   "station.redoLabel": "Làm lại móng (khách yêu cầu)",
   "station.redoStart": "Làm lại: đổi màu, rồi bấm ✓ lần nữa.",
   "phrasebook.starters": "Câu hữu ích",
-  "phrasebook.startersNote": "Những câu hay dùng ở tiệm, theo chủ đề, để học và luyện nói."
+  "phrasebook.startersNote": "Những câu hay dùng ở tiệm, theo chủ đề, để học và luyện nói.",
+  "whatsNew.title": "Có gì mới trong {version}",
+  "whatsNew.ok": "Đã hiểu!",
+  "whatsNew.open": "Có gì mới",
+  "settings.version": "Phiên bản {version}"
 }

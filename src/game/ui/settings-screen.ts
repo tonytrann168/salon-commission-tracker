@@ -14,6 +14,9 @@ import { createComfortSection } from './comfort-section';
 import { createAccountSection } from './account-panel';
 import { getAccount } from '../account/account';
 import { legalLinks } from './legal-links';
+import { APP_VERSION } from '../feedback';
+import { notesFor } from '../whats-new';
+import { openWhatsNew } from './whats-new';
 import './level-picker.css';
 
 /**
@@ -151,7 +154,17 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
     // Story 025: player accounts (only when this build has the account settings).
     const account = getAccount();
     const accountSection = account ? [createAccountSection(host, account)] : [];
-    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, comfort, backup, legalLinks(), back);
+    // Story 034: the version, and What's new.
+    const versionRow = el('div', 'setting-note app-version');
+    versionRow.append(el('span', 'app-version-number', t('settings.version', { version: APP_VERSION })));
+    const notes = notesFor(APP_VERSION);
+    if (notes) {
+      const open = el('button', 'chat-button secondary', t('whatsNew.open'));
+      open.type = 'button';
+      open.addEventListener('click', () => openWhatsNew(host, notes));
+      versionRow.append(open);
+    }
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, comfort, backup, legalLinks(), versionRow, back);
   };
 
   render();

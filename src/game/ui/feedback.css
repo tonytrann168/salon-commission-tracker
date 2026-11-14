@@ -24,3 +24,6 @@
 /* Story 031: privacy and terms links. */
 .legal-links { display: flex; gap: 16px; flex-wrap: wrap; }
 .legal-link { color: #a2346a; text-decoration: underline; min-height: 32px; display: inline-flex; align-items: center; }
+/* Story 034: What's new and the version line. */
+.whats-new-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.app-version { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }

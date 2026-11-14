@@ -1,4 +1,7 @@
 import type { BrowserContext, Page, Route } from '@playwright/test';
+import pkg from '../../package.json' with { type: 'json' };
+
+const APP_VERSION: string = pkg.version;
 
 /**
  * Story 029: shared helpers for the end-to-end suite. Every /api route and every Supabase call is answered here, so the
@@ -18,6 +21,7 @@ export interface SeedOptions {
   tourDone?: boolean;
   save?: Record<string, unknown>;
   extra?: Record<string, string>;
+  whatsNewSeen?: boolean;
 }
 
 /** Storage for a player, written once per browser context (a reload keeps what the game saved). */
@@ -26,6 +30,8 @@ export async function seed(target: Page | BrowserContext, lang: Lang, options: S
     'salon.helpLanguage': lang === 'vi' ? 'full' : 'tap',
     'salon.clientVoice': 'off',
     'salon.cornerSeen': '1',
+    // Story 034: What's new is tested on its own; elsewhere it is already seen.
+    ...(options.whatsNewSeen === false ? {} : { 'salon.whatsNewSeen': APP_VERSION }),
     ...(options.level === false ? {} : { 'salon.englishLevel': 'some' }),
     ...(options.companion === false ? {} : { 'salon.companion.v1': JSON.stringify({ chosen: true, gender: 'female', name: 'Mai', equipped: {} }) }),
     ...(options.tourDone === false ? {} : { 'salon.tour.v1': JSON.stringify({ done: true, seen: [] }) }),

@@ -53,6 +53,8 @@ import './game/ui/comfort.css';
 import { applyComfort } from './game/comfort';
 import { installErrorHandling } from './game/ui/error-screen';
 import { APP_VERSION } from './game/feedback';
+import { markWhatsNewSeen, notesFor, shouldShowWhatsNew, whatsNewSeen } from './game/whats-new';
+import { openWhatsNew } from './game/ui/whats-new';
 import { getAccount, useCloudForTesting } from './game/account/account';
 import { accountNudge, showSyncOutcome } from './game/ui/account-panel';
 import { isBackedUp } from './game/backup';
@@ -153,6 +155,10 @@ async function boot(): Promise<void> {
     void stageReady
       .then(() => requestAnimationFrame(() => requestAnimationFrame(() => menu.querySelector('.companion-cue')?.classList.add('ready'))))
       .catch(() => undefined);
+    // Story 034: after an update, What's new once (a first run has nothing new: it is marked seen quietly).
+    const firstRun = !loadCompanion().chosen;
+    if (shouldShowWhatsNew(APP_VERSION, whatsNewSeen(), firstRun)) openWhatsNew(appHost, notesFor(APP_VERSION)!);
+    if (whatsNewSeen() !== APP_VERSION) markWhatsNewSeen(APP_VERSION);
     teardownDom = () => menu.remove();
   };
 

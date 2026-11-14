@@ -505,5 +505,9 @@
   "station.redoLabel": "Redo the nails (the client asked)",
   "station.redoStart": "Redo: change the colour, then tap ✓ again.",
   "phrasebook.starters": "Useful phrases",
-  "phrasebook.startersNote": "Ready-made salon phrases to learn and practise, by topic."
+  "phrasebook.startersNote": "Ready-made salon phrases to learn and practise, by topic.",
+  "whatsNew.title": "What's new in {version}",
+  "whatsNew.ok": "Got it!",
+  "whatsNew.open": "What's new",
+  "settings.version": "Version {version}"
 }
