@@ -517,5 +517,16 @@
   "service.toCheckout": "✨ Đẹp quá! Giờ tính tiền nha.",
   "service.order.label": "Khách yêu cầu",
   "service.order.few": "ít",
-  "service.order.lots": "nhiều"
+  "service.order.lots": "nhiều",
+  "payment.manicure": "Làm móng tay",
+  "payment.pedicure": "Làm móng chân",
+  "payment.part.service": "Tip cho tay nghề",
+  "payment.part.match": "Đúng ý khách",
+  "payment.part.mood": "Khách vui",
+  "payment.part.scenario": "Xử lý tình huống tốt",
+  "payment.skip": "Chạm để bỏ qua",
+  "payment.cheer.top": "Quá đỉnh! Năm sao luôn! {mai} tự hào về {you} lắm! 🎉",
+  "payment.cheer.good": "Giỏi lắm! Khách vui rồi đó. 💖",
+  "payment.cheer.okay": "Làm tốt lắm! Thêm chút nữa là lần sau bốn sao nha.",
+  "payment.cheer.tough": "Khách này khó ghê. Mà {you} vẫn làm xong rồi đó. Lần sau mình làm tốt hơn nha! 💪"
 }

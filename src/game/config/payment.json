@@ -1,0 +1,6 @@
+{
+  "_note": "Story 039: the payment moment on the results. prices: pretend money the client pays the salon (display only; the wallet gets the tip). tipShares: how the tip is itemised (each share is weighted by how well that part went; the rest is 'service'). timing (ms): when each beat shows; the whole sequence must stay under maxTotalMs.",
+  "prices": { "manicure": 25, "pedicure": 35, "bothExtra": 10 },
+  "tipShares": { "match": 0.35, "mood": 0.25, "scenario": 0.15 },
+  "timing": { "priceMs": 300, "firstPartMs": 900, "partGapMs": 450, "starGapMs": 300, "cheerMs": 500, "holdMs": 700, "maxTotalMs": 6000 }
+}

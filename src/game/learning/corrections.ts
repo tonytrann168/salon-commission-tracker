@@ -125,6 +125,12 @@ export interface CorrectionsTransport {
 const ENDPOINT = '/api/corrections';
 const TIMEOUT_MS = 30_000;
 
+/** The review has its three lists and its recap. */
+export const isReviewResult = (value: unknown): value is ReviewResult => {
+  const v = value as Partial<ReviewResult> | null;
+  return !!v && Array.isArray(v.lines) && Array.isArray(v.tryLines) && Array.isArray(v.usedWell) && typeof v.recap === 'string';
+};
+
 /** Browser transport: posts to the corrections server function. The API key never reaches the browser. */
 /** `getCompanion` (story 013) adds the companion's name and gender to every request; `getClientId` (story 036) the client. */
 export function createCorrectionsTransport(getCompanion?: () => CompanionIdentity, getClientId?: () => string | undefined): CorrectionsTransport {
@@ -150,7 +156,12 @@ export function createCorrectionsTransport(getCompanion?: () => CompanionIdentit
   };
   return {
     checkLine: (request) => post<LineCheckResult>({ kind: 'line', ...request }),
-    review: (request) => post<ReviewResult>({ kind: 'review', ...request }),
+    review: async (request) => {
+      const result = await post<ReviewResult>({ kind: 'review', ...request });
+      // Story 039 (found while taking evidence): an answer without its lists must fail softly, not crash the results.
+      if (!isReviewResult(result)) throw new TurnError('invalid_model_output', 'The review came back incomplete.');
+      return result;
+    },
   };
 }
 

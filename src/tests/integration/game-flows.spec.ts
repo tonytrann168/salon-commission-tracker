@@ -27,6 +27,14 @@ for (const lang of LANGS) {
       const seen = await mockApi(page);
       await page.goto('/');
       await playToResults(page);
+      // Story 039: the payment moment: the price, the tip in parts that add up, the stars; then the review.
+      const card = page.locator('.payment-card.done');
+      await expect(card).toBeVisible({ timeout: 10_000 });
+      await expect(card.locator('.payment-price')).toContainText('$25');
+      const sum = await card.locator('.payment-parts li strong').evaluateAll((nodes) => nodes.reduce((total, n) => total + Number((n.textContent ?? '').replace(/[^0-9]/g, '')), 0));
+      const tip = Number(((await card.locator('.payment-tip-amount').textContent()) ?? '').replace(/[^0-9]/g, ''));
+      expect(tip).toBeGreaterThan(0);
+      expect(sum).toBe(tip);
       await expect(page.locator('.chat-results .results-section').first()).toBeVisible();
       expect(seen['grade-appointment']).toHaveLength(1);
       const save = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}'));

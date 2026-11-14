@@ -6,7 +6,8 @@ import { ENGLISH_KEYS, SKILL_KEYS, TurnError } from '../types';
 import type { TranslationCache } from '../translation-cache';
 import type { AppointmentResult, EnglishLevel, GradeAppointment, Grading, HelpLanguage } from '../types';
 import { t } from '../i18n';
-import { emitSound } from '../sound-events';
+import { servicePrice, tipParts } from '../payment';
+import { createPaymentCard } from './payment-card';
 import { guardMessage } from './guard-message';
 import './results-screen.css';
 
@@ -41,6 +42,8 @@ export interface ResultsScreenOptions {
   nails?: { description: string; match: number };
   /** Sections built once the scorecard is ready: the bestie's debrief (story 003), the English review, recap and level change (story 011). */
   extras?: (grading: Grading, score: ScoreResult) => HTMLElement[];
+  /** Story 039: what was done (for the price the client pays): a manicure or a pedicure, one or both hands/feet. */
+  service?: { kind: 'manicure' | 'pedicure'; hands: 1 | 2 };
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -169,13 +172,20 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
   };
 
   const showResults = (grading: Grading, score: ScoreResult): void => {
-    emitSound('stars');
-    if (score.tip > 0) emitSound('tip');
-    const stars = el('div', 'results-stars', '★'.repeat(score.stars) + '☆'.repeat(5 - score.stars));
-    stars.setAttribute('role', 'img');
-    stars.setAttribute('aria-label', t(score.stars === 1 ? 'results.starsOne' : 'results.starsMany', { count: score.stars }));
-    const tip = el('p', 'results-tip');
-    tip.append(el('span', '', `${t('results.tip')}: `), el('strong', '', t('results.tipAmount', { dollars: score.tip })));
+    // Story 039: the payment moment first (price, the tip part by part, stars, the companion's cheer); the review and
+    // the scorecard appear when it is done (a tap skips; reduced motion shows the totals at once).
+    const finalMood = result.moodHistory[result.moodHistory.length - 1] ?? 0;
+    const kind = options.service?.kind ?? 'manicure';
+    container.classList.add('paying');
+    const payment = createPaymentCard({
+      serviceLabel: t(kind === 'pedicure' ? 'payment.pedicure' : 'payment.manicure'),
+      price: servicePrice(kind, options.service?.hands ?? 1),
+      parts: tipParts({ tip: score.tip, finalMood, scenario: options.scenario !== undefined, ...(options.nails ? { nailMatch: options.nails.match } : {}) }),
+      tip: score.tip,
+      stars: score.stars,
+      walkedOut: result.outcome === 'walked_out',
+      onDone: () => container.classList.remove('paying'),
+    });
 
     const notes: HTMLElement[] = [];
     if (score.goalMet) notes.push(el('p', 'results-note good', t('results.goalMet', who)));
@@ -186,8 +196,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     actions.append(button(options.nextLabel ?? t('results.nextClient'), onNextClient), button(t('results.backToMenu'), onBackToMenu, true));
 
     show(
-      stars,
-      tip,
+      payment,
       ...notes,
       ...(extras ? extras(grading, score) : []),
       section(t('results.reviewTitle', { name: clientName }), translatableReview(grading.review, translations, helpLanguage === 'full')),

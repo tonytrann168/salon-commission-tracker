@@ -517,5 +517,16 @@
   "service.toCheckout": "✨ Beautiful! Time to check out.",
   "service.order.label": "Her order",
   "service.order.few": "a few",
-  "service.order.lots": "lots"
+  "service.order.lots": "lots",
+  "payment.manicure": "Manicure",
+  "payment.pedicure": "Pedicure",
+  "payment.part.service": "Tip for your service",
+  "payment.part.match": "Matched the request",
+  "payment.part.mood": "Happy client",
+  "payment.part.scenario": "Handled the situation",
+  "payment.skip": "Tap to skip",
+  "payment.cheer.top": "Yesss! Five stars! {mai} is SO proud of you! 🎉",
+  "payment.cheer.good": "Great job! That's a happy client. 💖",
+  "payment.cheer.okay": "Nice work! A little more and it's four stars next time.",
+  "payment.cheer.tough": "That was a tough one. You did it anyway. We'll get them next time! 💪"
 }

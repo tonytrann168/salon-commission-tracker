@@ -433,6 +433,7 @@ async function boot(): Promise<void> {
           clientName: client.name,
           clientId: client.id,
           clientPronoun: client.pronoun,
+          ...(client.nailRequest ? { service: { kind: client.nailRequest.service ?? 'manicure', hands: client.nailRequest.hands ?? 1 } } : {}),
           ...(scenarioFields ? { scenario: scenarioFields } : {}),
           result,
           level,
