@@ -12,6 +12,7 @@ import { t } from '../i18n';
 import { el } from './dom';
 import { createMaiBubble } from './mai-bubble';
 import { createPrepOverlay } from './pedicure-prep';
+import { SERVICE_TALK, checkoutLine, expectsAnswer, planServiceTalk } from '../service-talk';
 import type { PrepOverlay } from './pedicure-prep';
 import { createNailStation, nailsNote } from './nail-station-panel';
 import type { NailDesign, NailRequest, PaletteColor, StickerKind } from '../nail-art/design';
@@ -196,7 +197,8 @@ export function createChatPanel(
           appointment.adjustMood(result.moodDelta);
           nailArt.onNote(nailsNote(design, result, nailArt.request.service));
           nailArt.onDone(design, result);
-          window.setTimeout(() => setStationOpen(false), 1800);
+          // Story 035: Done ends the service (or, in a redo scenario, the client asks for her redo first).
+          afterDone();
         },
       })
     : null;
@@ -284,6 +286,161 @@ export function createChatPanel(
 
   root.append(top, logWrap, errorBox, resultsBox, voiceStatus, form, announcer);
   host.appendChild(root);
+
+  // Story 035: the service is the game. While the nails are painted the screen is the station (the client's face small,
+  // her mood, the companion); the chat and the reply box wait in a bottom sheet behind a "💬 Reply" chip. She still talks:
+  // her lines pop from her face, a few data lines of her own, and an unanswered question costs a little mood, once.
+  const say = el('button', 'service-say hidden');
+  say.type = 'button';
+  const chip = el('button', 'reply-chip hidden', t('service.reply'));
+  chip.type = 'button';
+  const nudge = el('p', 'service-nudge hidden');
+  nudge.setAttribute('role', 'status');
+  const doneBanner = el('p', 'service-done hidden', t('service.toCheckout'));
+  doneBanner.setAttribute('role', 'status');
+  const sheet = el('div', 'reply-sheet');
+  sheet.setAttribute('role', 'dialog');
+  sheet.setAttribute('aria-label', t('service.replyTitle', { name: clientName }));
+  const sheetHead = el('div', 'reply-sheet-head');
+  const sheetClose = el('button', 'reply-sheet-close', '✕');
+  sheetClose.type = 'button';
+  sheetClose.setAttribute('aria-label', t('service.backToNails'));
+  sheetHead.append(el('strong', '', t('service.replyTitle', { name: clientName })), sheetClose);
+  sheet.append(sheetHead);
+  if (station) zone.element.append(say, chip, nudge, doneBanner);
+  let serviceMode = false;
+  let serviceStarted = false;
+  let replyOpen = false;
+  let ending = false;
+  let lastSeenClient = -1;
+  let awaitingAnswer = false;
+  let ignoreTimer = 0;
+  let nudgeTimer = 0;
+  const talkTimers: number[] = [];
+  const setReplyOpen = (open: boolean): void => {
+    if (open === replyOpen) return;
+    replyOpen = open;
+    root.classList.toggle('reply-open', open);
+    if (open) {
+      // Opening the sheet is paying attention: no penalty for this question, and her later lines can come.
+      window.clearTimeout(ignoreTimer);
+      awaitingAnswer = false;
+      chip.classList.add('hidden');
+      say.classList.add('hidden');
+      sheet.append(logWrap, voiceStatus, form);
+      root.append(sheet);
+      requestAnimationFrame(() => log.scrollTo({ top: log.scrollHeight }));
+      input.focus({ preventScroll: true });
+    } else {
+      root.insertBefore(logWrap, errorBox);
+      root.insertBefore(voiceStatus, announcer);
+      root.insertBefore(form, announcer);
+      sheet.remove();
+    }
+  };
+  chip.addEventListener('click', () => setReplyOpen(true));
+  say.addEventListener('click', () => setReplyOpen(true));
+  sheetClose.addEventListener('click', () => setReplyOpen(false));
+  const showNudge = (text: string): void => {
+    nudge.textContent = text;
+    nudge.classList.remove('hidden');
+    window.clearTimeout(nudgeTimer);
+    nudgeTimer = window.setTimeout(() => nudge.classList.add('hidden'), 4500);
+  };
+  /** A client line while the station is on screen: a bubble from her face, the Reply chip, and a wait for questions. */
+  const clientLineInService = (index: number, text: string): void => {
+    lastSeenClient = index;
+    say.textContent = text.length > 140 ? `${text.slice(0, 137)}…` : text;
+    say.classList.remove('hidden');
+    chip.classList.remove('hidden');
+    chip.classList.remove('pulse');
+    void chip.offsetWidth;
+    chip.classList.add('pulse');
+    window.clearTimeout(ignoreTimer);
+    awaitingAnswer = expectsAnswer(text);
+    if (!awaitingAnswer) return;
+    ignoreTimer = window.setTimeout(() => {
+      awaitingAnswer = false;
+      const answered = latest.transcript.slice(index + 1).some((m) => m.role === 'player');
+      if (answered || !serviceMode) return;
+      appointment.adjustMood(SERVICE_TALK.ignoreMoodDip);
+      showNudge(t('service.nudge', { name: clientName }));
+    }, SERVICE_TALK.ignoreSeconds * 1000);
+  };
+  /** Her own line, when she can say it (not over a reply, a turn in flight, or the pedicure prep). */
+  const sayWhenFree = (text: string, tries = 0): void => {
+    if (!serviceMode || ending || tries > 12) return;
+    // She doesn't pile up questions: her next line waits while one is still unanswered (until its wait runs out).
+    if (awaitingAnswer || replyOpen || latest.status !== 'awaiting_player' || root.classList.contains('prepping')) {
+      talkTimers.push(window.setTimeout(() => sayWhenFree(text, tries + 1), 5000));
+      return;
+    }
+    appointment.clientSays(text);
+  };
+  const startService = (): void => {
+    serviceStarted = true;
+    appointment.holdPhase('service');
+    for (const line of planServiceTalk(portraits.client.difficulty)) talkTimers.push(window.setTimeout(() => sayWhenFree(line.text), line.at * 1000));
+  };
+  /** After Done: a redo scenario's first Done → her redo line, the station stays; otherwise → checkout in the chat. */
+  function afterDone(): void {
+    if (!station) return;
+    if (station.canRedo) {
+      appointment.clientSays(SERVICE_TALK.redo);
+      return;
+    }
+    if (!serviceStarted) {
+      window.setTimeout(() => setStationOpen(false), 1800);
+      return;
+    }
+    ending = true;
+    talkTimers.forEach((id) => window.clearTimeout(id));
+    window.clearTimeout(ignoreTimer);
+    setReplyOpen(false);
+    chip.classList.add('hidden');
+    say.classList.add('hidden');
+    doneBanner.classList.remove('hidden');
+    window.setTimeout(() => {
+      doneBanner.classList.add('hidden');
+      appointment.holdPhase(null);
+      appointment.advance('checkout');
+      appointment.clientSays(checkoutLine());
+      ending = false;
+    }, 1600);
+  }
+  /** Called at the end of each render. */
+  const updateService = (snapshot: AppointmentSnapshot): void => {
+    if (!station || !nailArt) return;
+    const next = snapshot.phase === 'service' && snapshot.status !== 'finished';
+    if (next && !serviceStarted) startService();
+    if (next !== serviceMode) {
+      serviceMode = next;
+      root.classList.toggle('service-mode', next);
+      if (next) {
+        // The line that brought her into the service shows from her face too (the log is out of sight now).
+        const lastIndex = snapshot.transcript.length - 1;
+        if (snapshot.transcript[lastIndex]?.role === 'client') clientLineInService(lastIndex, snapshot.transcript[lastIndex]!.content);
+        else lastSeenClient = lastIndex;
+      } else {
+        setReplyOpen(false);
+        [say, chip, nudge].forEach((node) => node.classList.add('hidden'));
+        window.clearTimeout(ignoreTimer);
+        if (stationOpen && !ending) setStationOpen(false);
+      }
+      requestAnimationFrame(() => station.relayout());
+    }
+    if (!serviceMode) return;
+    if (!stationOpen) setStationOpen(true);
+    // The player sent from the sheet: back to the nails; her question is answered.
+    if (snapshot.status === 'waiting') {
+      awaitingAnswer = false;
+      window.clearTimeout(ignoreTimer);
+      if (replyOpen) setReplyOpen(false);
+    }
+    const lastIndex = snapshot.transcript.length - 1;
+    const last = snapshot.transcript[lastIndex];
+    if (last?.role === 'client' && lastIndex > lastSeenClient) clientLineInService(lastIndex, last.content);
+  };
 
   let latest = initial;
   let reveal: TextReveal | null = null;
@@ -518,6 +675,7 @@ export function createChatPanel(
     if (mic) mic.element.disabled = !canType;
     mai?.setEnabled(canType);
     mai?.element.classList.toggle('hidden', snapshot.status === 'finished');
+    updateService(snapshot);
   };
 
   /** Corrections queued for Mai this appointment (capped in config/learning.json). */

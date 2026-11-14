@@ -103,6 +103,11 @@ export async function playToResults(page: Page, lines = ['Hello! Welcome to our 
   await page.waitForSelector('.chat-input');
   for (const line of lines) {
     if (await page.locator('.chat-results:not(.hidden)').count()) break;
+    // Story 035: during the service the screen is the station; Done leads on to checkout in the chat.
+    if (await page.locator('.chat-panel.service-mode').count()) {
+      await page.locator('.station-done').click();
+      await page.waitForSelector('.chat-panel:not(.service-mode) .chat-input', { timeout: 6_000 });
+    }
     await page.locator('.chat-input').fill(line);
     await page.locator('.chat-form button[type=submit]').click();
     await page.waitForFunction(() => !document.querySelector<HTMLButtonElement>('.chat-form button[type=submit]')?.disabled || document.querySelector('.chat-results:not(.hidden)'));

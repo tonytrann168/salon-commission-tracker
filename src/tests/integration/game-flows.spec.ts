@@ -97,15 +97,50 @@ for (const lang of LANGS) {
       const done = page.locator('.station-done');
       await expect(done).toBeVisible();
       await done.click();
+      // Story 035: she asks for the redo herself (from her face), and the station stays on screen.
+      await expect(page.locator('.service-say')).toContainText('different one');
       await expect(done).toHaveText(/↺/);
       await expect(done).toBeEnabled();
-      // The station closes by itself after Done; open it again for the redo.
-      await expect(page.locator('.station-tools')).toBeHidden();
-      await page.locator('.station-toggle').click();
       await done.click();
       await expect(done).toHaveText('✓');
       await done.click();
-      await expect(done).toBeDisabled();
+      // The second Done ends the service: back to the chat for checkout.
+      await expect(page.locator('.chat-panel.service-mode')).toHaveCount(0, { timeout: 5_000 });
+      await expect(page.locator('.chat-input')).toBeVisible();
+    });
+
+    test('the service is full screen: her own line, the Reply sheet, an ignored question costs a little, Done → checkout', async ({ page }) => {
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
+      test.setTimeout(80_000);
+      await mockApi(page, { replies: ['Hi!', 'Red, please. Is that okay?', 'Great, thank you!'] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('Hello! What colour would you like?');
+      await page.locator('.chat-form button[type=submit]').click();
+      // The station takes the screen; the chat and the reply box are out of sight.
+      await expect(page.locator('.chat-panel.service-mode')).toHaveCount(1);
+      await expect(page.locator('.chat-input')).toBeHidden();
+      await expect(page.locator('.service-say')).toHaveText('Red, please. Is that okay?');
+      await expect(page.locator('.reply-chip')).toBeVisible();
+      // Reply from the sheet; sending closes it and the service goes on (the AI can't end it).
+      await page.locator('.reply-chip').click();
+      await expect(page.locator('.reply-sheet .chat-input')).toBeVisible();
+      await page.locator('.reply-sheet .chat-input').fill('Yes, red is perfect!');
+      await page.locator('.reply-sheet button[type=submit]').click();
+      await expect(page.locator('.reply-sheet')).toHaveCount(0);
+      await expect(page.locator('.chat-panel.service-mode')).toHaveCount(1);
+      // Her own line comes ~10 s into the service (all of Lily's are questions); left unanswered for 20 s it costs a
+      // little mood, once, with a nudge.
+      await expect(page.locator('.service-say')).toHaveText('Great, thank you!');
+      await expect(page.locator('.service-say')).not.toHaveText('Great, thank you!', { timeout: 15_000 });
+      const before = Number(await page.locator('.mood-value').textContent());
+      await expect(page.locator('.service-nudge')).toBeVisible({ timeout: 25_000 });
+      expect(Number(await page.locator('.mood-value').textContent())).toBe(before - 3);
+      // Done → a short transition → checkout in the chat, opened by her line.
+      await page.locator('.station-done').click();
+      await expect(page.locator('.chat-panel.service-mode')).toHaveCount(0, { timeout: 5_000 });
+      await expect(page.locator('.chat-bubble.client').last()).toContainText(/owe|total|How much/i);
     });
 
     test('the phrasebook has useful phrases by topic, even before any are earned', async ({ page }) => {

@@ -28,7 +28,8 @@ interface NailView {
 export interface StationView {
   container: Container;
   /** Lay the hand out in a w x h box (the station's rectangle), positioned at (x, y) on the layer. */
-  layout(x: number, y: number, w: number, h: number, reserveLeft: number, reserveRight: number): void;
+  /** `topBand` (story 035): room kept at the top (the client's face, her bubble); the hand is centred below it. */
+  layout(x: number, y: number, w: number, h: number, reserveLeft: number, reserveRight: number, topBand?: number): void;
   setDesign(design: NailDesign): void;
   /** Pointer down/move at (x, y) in the station rectangle. Returns the new design (or the same one if nothing changed). */
   pointer(x: number, y: number, phase: 'down' | 'move', tool: StationTool, sticker: StickerKind): NailDesign;
@@ -74,7 +75,7 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
   /** The hand on the station, and its first nail in the design. */
   let handIndex: 0 | 1 = 0;
   const firstNail = (): number => handIndex * hand.fingers.length;
-  let lastLayout: [number, number, number, number, number, number] | null = null;
+  let lastLayout: [number, number, number, number, number, number, number] | null = null;
   let design = initial;
   let views: NailView[] = [];
   /** Hand units → pixels, and the hand box's offset in the station rectangle. */
@@ -231,7 +232,7 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
 
   const view: StationView = {
     container,
-    layout(x, y, w, h, reserveLeft, reserveRight) {
+    layout(x, y, w, h, reserveLeft, reserveRight, topBand = 0) {
       container.position.set(x, y);
       for (const old of views) old.root.destroy({ children: true });
       fingersLayer.removeChildren().forEach((child) => child.destroy());
@@ -239,18 +240,23 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       // Fit the hand box into the free width and the height less a small top margin (so pointed tips show), keeping
       // its proportions: the hand never pushes the layout.
       const free = Math.max(80, w - reserveLeft - reserveRight);
-      scale = Math.min(free / hand.box.w, (h - TOP_MARGIN) / hand.box.h);
+      const top = Math.max(TOP_MARGIN, topBand);
+      // With a top band (the full-screen service) the hand also keeps room under it for the palm and the hint.
+      const below = topBand > 0 ? Math.min(90, h * 0.16) : 0;
+      scale = Math.min(free / hand.box.w, (h - top - below) / hand.box.h);
       offsetX = reserveLeft + (free - hand.box.w * scale) / 2;
-      offsetY = TOP_MARGIN;
+      offsetY = topBand > 0 ? top + Math.max(0, (h - top - below - hand.box.h * scale) / 2) : TOP_MARGIN;
       for (const layer of [fingersLayer, palm, nailsLayer]) {
         layer.position.set(offsetX, offsetY);
         layer.scale.set(scale);
       }
       // The palm: below the fingers, covering their bases (cropped by the toolbar under the zone).
-      const bottom = h / scale;
-      palm.clear().ellipse(hand.box.w * 0.52, Math.max(hand.box.h * 1.02, bottom * 0.98), hand.box.w * 0.42, hand.box.h * 0.2).fill({ color: SKIN });
-      palm.ellipse(hand.box.w * 0.3, Math.max(hand.box.h * 1.02, bottom * 0.98) - hand.box.h * 0.04, hand.box.w * 0.16, hand.box.h * 0.12).fill({ color: SKIN_SHADE, alpha: 0.35 });
-      lastLayout = [x, y, w, h, reserveLeft, reserveRight];
+      const bottom = (h - offsetY) / scale;
+      // Full-screen service: the palm sits right under the fingers; otherwise it reaches the bottom of the zone.
+      const palmY = topBand > 0 ? hand.box.h * 1.04 : Math.max(hand.box.h * 1.02, bottom * 0.98);
+      palm.clear().ellipse(hand.box.w * 0.52, palmY, hand.box.w * 0.42, hand.box.h * 0.2).fill({ color: SKIN });
+      palm.ellipse(hand.box.w * 0.3, palmY - hand.box.h * 0.04, hand.box.w * 0.16, hand.box.h * 0.12).fill({ color: SKIN_SHADE, alpha: 0.35 });
+      lastLayout = [x, y, w, h, reserveLeft, reserveRight, topBand];
       for (const finger of handIndex === 1 ? mirroredFingers(hand) : hand.fingers) {
         fingersLayer.addChild(drawFinger(finger));
         const root = new Container();

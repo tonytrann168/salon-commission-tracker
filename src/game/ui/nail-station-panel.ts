@@ -43,6 +43,7 @@ export interface NailStationOptions {
 }
 
 export interface NailStation {
+  readonly canRedo: boolean;
   /** The toolbar (mount right under the zone). */
   toolbar: HTMLElement;
   /** The touch layer (mount over the zone, in the same positioned parent). */
@@ -282,9 +283,11 @@ export function createNailStation(options: NailStationOptions): NailStation {
     const side = options.maiSide();
     // Leave room for Mai's bubble (her corner). The client's small face is top-left, where the hand is empty (the
     // thumb sits low), so only a little room is kept on that side unless Mai is there too.
-    const left = side === 'left' ? 70 : 20;
-    const right = side === 'right' ? 70 : 8;
-    view.layout(r.left, r.top, r.width, r.height, left, right);
+    // Story 035: a tall zone is the full-screen service: the hand uses the width, below a band for her face and bubble.
+    const tall = r.height >= 300;
+    const left = tall ? 8 : side === 'left' ? 70 : 20;
+    const right = tall ? 8 : side === 'right' ? 70 : 8;
+    view.layout(r.left, r.top, r.width, r.height, left, right, tall ? 84 : 0);
     view.setDesign(design);
     placeHint(r.width, r.height);
   };
@@ -339,6 +342,10 @@ export function createNailStation(options: NailStationOptions): NailStation {
     finish,
     get done() {
       return done;
+    },
+    /** Story 035: Done was tapped and a redo is still allowed (the client asks for it). */
+    get canRedo() {
+      return done && redosLeft > 0;
     },
     destroy() {
       window.clearTimeout(hideHint);

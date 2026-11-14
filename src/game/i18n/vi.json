@@ -509,5 +509,10 @@
   "whatsNew.title": "Có gì mới trong {version}",
   "whatsNew.ok": "Đã hiểu!",
   "whatsNew.open": "Có gì mới",
-  "settings.version": "Phiên bản {version}"
+  "settings.version": "Phiên bản {version}",
+  "service.reply": "💬 Trả lời",
+  "service.replyTitle": "Nói chuyện với {name}",
+  "service.backToNails": "Quay lại làm móng",
+  "service.nudge": "{name} đang hỏi {you} đó, bấm 💬 để trả lời nha!",
+  "service.toCheckout": "✨ Đẹp quá! Giờ tính tiền nha."
 }

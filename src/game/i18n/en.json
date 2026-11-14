@@ -509,5 +509,10 @@
   "whatsNew.title": "What's new in {version}",
   "whatsNew.ok": "Got it!",
   "whatsNew.open": "What's new",
-  "settings.version": "Version {version}"
+  "settings.version": "Version {version}",
+  "service.reply": "💬 Reply",
+  "service.replyTitle": "Talk with {name}",
+  "service.backToNails": "Back to the nails",
+  "service.nudge": "{name} asked you something. Tap 💬 to answer!",
+  "service.toCheckout": "✨ Beautiful! Time to check out."
 }

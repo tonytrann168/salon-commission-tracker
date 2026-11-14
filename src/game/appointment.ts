@@ -44,6 +44,15 @@ export interface Appointment {
    * nails alone never make her walk out; ignored once the appointment is over.
    */
   adjustMood(delta: number): void;
+  /**
+   * Story 035: keep the appointment in this phase (the model can't move it on) until `advance`. Service is held while
+   * the nails are being painted; null releases the hold.
+   */
+  holdPhase(phase: Phase | null): void;
+  /** Story 035: the game moves the phase on (e.g. Done at the station → checkout). Never backwards. */
+  advance(to: Phase): void;
+  /** Story 035: the client speaks on her own (mid-service talk, data lines); added to the transcript for grading. */
+  clientSays(text: string): void;
 }
 
 /**
@@ -70,6 +79,7 @@ export function createAppointment(options: AppointmentOptions): Appointment {
   let pendingHelped = false;
   let error: Error | null = null;
   let result: AppointmentResult | null = null;
+  let hold: Phase | null = null;
 
   const getSnapshot = (): AppointmentSnapshot => ({
     status,
@@ -111,7 +121,8 @@ export function createAppointment(options: AppointmentOptions): Appointment {
     const delta = moodDeltaAfterEnglishRule(turn, level, helped);
     mood = applyMoodDelta(mood, delta * (delta > 0 ? client.moodSensitivity.up : client.moodSensitivity.down));
     moodHistory = [...moodHistory, mood];
-    phase = nextPhase(phase, turn.phase);
+    const proposed = nextPhase(phase, turn.phase);
+    phase = hold !== null && phase === hold ? phase : proposed;
     pending = null;
 
     // Walking out takes priority over completing checkout on the same turn.
@@ -146,6 +157,21 @@ export function createAppointment(options: AppointmentOptions): Appointment {
       if (status === 'finished' || delta === 0) return;
       mood = Math.max(1, applyMoodDelta(mood, delta));
       moodHistory = [...moodHistory, mood];
+      notify();
+    },
+    holdPhase(next) {
+      hold = next;
+    },
+    advance(to) {
+      if (status === 'finished' || PHASES.indexOf(to) <= PHASES.indexOf(phase) || to === 'done') return;
+      phase = to;
+      if (hold !== null && hold !== phase) hold = null;
+      notify();
+    },
+    clientSays(text) {
+      const line = text.trim();
+      if (status === 'finished' || status === 'waiting' || line === '') return;
+      transcript = [...transcript, { role: 'client', content: line }];
       notify();
     },
   };

@@ -1,0 +1,37 @@
+{
+  "_note": "Story 035: what the client says on her own while the nails are painted (the screen is the station then). count: lines per service (random in range). firstAfterSeconds / gapSeconds: timing. ignoreSeconds: a question left unanswered this long costs ignoreMoodDip once (never a walk-out: mood has a floor). checkout: her line when Done leads to checkout. redo: her line for a redo scenario's first Done.",
+  "count": { "min": 1, "max": 3 },
+  "firstAfterSeconds": 10,
+  "gapSeconds": { "min": 14, "max": 26 },
+  "ignoreSeconds": 20,
+  "ignoreMoodDip": -3,
+  "lines": {
+    "easy": [
+      "Ooh, that colour looks so pretty!",
+      "Is it okay if I check my phone for a second?",
+      "How long have you been doing nails?",
+      "This is so relaxing. Do you like working here?",
+      "Will it be dry before I leave?"
+    ],
+    "medium": [
+      "Can you make them a little shorter, please?",
+      "Is this colour going to last a few weeks?",
+      "Oops, sorry, I moved my hand. Is that okay?",
+      "Do you think a top coat would help?",
+      "Are you almost done? I have to pick up my kids soon."
+    ],
+    "hard": [
+      "Careful, that's a little too close to my skin.",
+      "Hmm, is that the same shade I picked?",
+      "How much longer is this going to take?",
+      "The last salon did it faster. Can you hurry a bit?",
+      "Can you fix that edge? It doesn't look even."
+    ]
+  },
+  "checkout": [
+    "They look great! How much do I owe you?",
+    "I love them! What's the total?",
+    "Okay, all done? How much is it?"
+  ],
+  "redo": "Hmm… actually, I'm not sure about this colour. Could we try a different one?"
+}
