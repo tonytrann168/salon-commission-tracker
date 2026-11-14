@@ -1,6 +1,7 @@
 import { moodDeltaAfterEnglishRule } from './english-level';
 import { applyMoodDelta, clampMood, isWalkOut } from './mood';
 import { PHASES } from './types';
+import type { Emotion } from './voice-cast';
 import type { AppointmentResult, ClientPersona, EnglishLevel, Message, Outcome, Phase, TakeTurn } from './types';
 
 /** Appointment state machine. Story: story-001 (design/game-brief.md, MVP feature 1). */
@@ -9,6 +10,8 @@ export type AppointmentStatus = 'awaiting_player' | 'waiting' | 'error' | 'finis
 
 /** Immutable view of the appointment for the UI. */
 export interface AppointmentSnapshot {
+  /** Story 038: how the client said her latest line (from the turn), or null (her own data lines, the opening). */
+  lastEmotion: Emotion | null;
   status: AppointmentStatus;
   phase: Phase;
   mood: number;
@@ -80,8 +83,10 @@ export function createAppointment(options: AppointmentOptions): Appointment {
   let error: Error | null = null;
   let result: AppointmentResult | null = null;
   let hold: Phase | null = null;
+  let lastEmotion: Emotion | null = null;
 
   const getSnapshot = (): AppointmentSnapshot => ({
+    lastEmotion,
     status,
     phase,
     mood,
@@ -117,6 +122,7 @@ export function createAppointment(options: AppointmentOptions): Appointment {
     }
 
     transcript = [...candidate, { role: 'client', content: turn.reply }];
+    lastEmotion = turn.emotion ?? null;
     // Story 006: each client reacts more or less strongly (moodSensitivity up for raises, down for drops).
     const delta = moodDeltaAfterEnglishRule(turn, level, helped);
     mood = applyMoodDelta(mood, delta * (delta > 0 ? client.moodSensitivity.up : client.moodSensitivity.down));
@@ -172,6 +178,7 @@ export function createAppointment(options: AppointmentOptions): Appointment {
       const line = text.trim();
       if (status === 'finished' || status === 'waiting' || line === '') return;
       transcript = [...transcript, { role: 'client', content: line }];
+      lastEmotion = null;
       notify();
     },
   };

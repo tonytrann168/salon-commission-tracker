@@ -10,5 +10,8 @@
   "feedbackPerCodePerMinute": 3,
   "feedbackPerCodePerDay": 30,
   "clientErrorPerCodePerMinute": 5,
-  "clientErrorPerCodePerDay": 50
+  "clientErrorPerCodePerDay": 50,
+  "ttsPerCodePerMinute": 30,
+  "ttsCharsPerCodePerDay": 6000,
+  "ttsCharsPerDay": 15000
 }

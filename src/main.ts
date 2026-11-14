@@ -32,6 +32,8 @@ import { createPhrasebookScreen } from './game/ui/phrasebook-screen';
 import { askForInvite, getSession } from './game/ui/invite-screen';
 import { openPracticeSheet } from './game/ui/practice-sheet';
 import { createBrowserVoice, withSpeakingSignal } from './game/voice';
+import { withNaturalVoice } from './game/natural-voice';
+import type { AudioLike } from './game/natural-voice';
 import { describeDesign } from './game/nail-art/match';
 import type { MatchResult } from './game/nail-art/match';
 import type { NailDesign } from './game/nail-art/design';
@@ -246,7 +248,11 @@ async function boot(): Promise<void> {
     removeEventListener: (type, listener, options) => window.removeEventListener(type, listener, options),
     isHidden: () => document.visibilityState === 'hidden',
   });
-  const voice = withSpeakingSignal(createBrowserVoice(window as unknown as SpeechHost), (speaking) => audio.duck(speaking));
+  // Story 037: natural voices from the server when it has them; the browser's voice otherwise.
+  const voice = withSpeakingSignal(
+    withNaturalVoice(createBrowserVoice(window as unknown as SpeechHost), { fetch: (input, init) => fetch(input, init), createAudio: () => new Audio() as unknown as AudioLike }),
+    (speaking) => audio.duck(speaking),
+  );
   /** Pronunciation practice, where the phone can listen. Uses the saved level (Beginner if none yet). */
   const practice = voice.canListen
     ? (line: string) => openPracticeSheet(host, { voice, line, level: getEnglishLevel() ?? 'beginner' })

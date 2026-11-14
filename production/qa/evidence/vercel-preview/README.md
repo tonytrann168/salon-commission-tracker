@@ -113,3 +113,23 @@ and "Mai needs a rest" once the cap is hit. Tests: `src/tests/guard.test.ts`.
 | `*-320-04-mai-needs-a-rest` | Over the cap: "Mai needs a rest! Come back tomorrow." |
 
 Local development is unchanged: `npm run dev` (HTTPS on the LAN) and `npm run dev:local` need no invite code.
+
+### Natural voices (Azure AI Speech) — optional, story 037
+Without this the clients speak with the phone's own voice (it works, but sounds robotic). With it they get natural
+neural voices whose tone follows their mood.
+
+1. In the Azure portal (portal.azure.com): **Create a resource → AI Services → Speech** (or search "Speech").
+   Pricing tier **Free F0** (about 0.5 million characters a month for neural voices). Pick a region near your players,
+   for example **West US 2**. Create it.
+2. Open the resource → **Keys and Endpoint**. Copy **KEY 1** and the **Location/Region** (for example `westus2`).
+3. In Vercel → the salon-besties project → **Settings → Environment Variables**, add:
+   - `AZURE_SPEECH_KEY` = KEY 1
+   - `AZURE_SPEECH_REGION` = the region, lower case, no spaces (for example `westus2`)
+   Then **Redeploy**.
+4. Try it: start an appointment with the speaker on (🔊). The client should sound natural; an annoyed client sounds
+   annoyed. If the key is missing or wrong, the game quietly uses the phone's voice.
+
+Limits (in `src/server/guard-config.json`): 6,000 characters of speech per tester code per day and 15,000 for everyone
+per day (about 450,000 a month, inside the free tier). Only clients' lines are sent to Azure, never what the player
+types or says. Voices per client and the mood → tone table are in `src/game/config/voice-cast.json`.
+Locally: with the two variables in `src/.env.local`, `npm run smoke:api` adds a voice check.

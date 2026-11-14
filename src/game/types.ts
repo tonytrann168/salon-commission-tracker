@@ -1,4 +1,6 @@
 import type { NailRequest } from './nail-art/design';
+import type { Emotion } from './voice-cast';
+
 /** Appointment phases in order. `done` is terminal. */
 export const PHASES = ['consultation', 'service', 'checkout', 'done'] as const;
 
@@ -24,6 +26,8 @@ export interface ClientTurn {
   unclearEnglish: boolean;
   /** The player's last line was rude or disrespectful (story 010). */
   rude: boolean;
+  /** Story 038: how the client says this line (optional; the mood decides when missing). */
+  emotion?: Emotion;
 }
 
 /** How an appointment ended. */

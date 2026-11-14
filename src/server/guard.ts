@@ -28,6 +28,10 @@ export interface GuardConfig {
   /** Story 032: client error reports, separate from AI and feedback. */
   clientErrorPerCodePerMinute: number;
   clientErrorPerCodePerDay: number;
+  /** Story 037: natural voices. Characters per day, per code and for everyone (Azure's free tier is 0.5M a month). */
+  ttsPerCodePerMinute: number;
+  ttsCharsPerCodePerDay: number;
+  ttsCharsPerDay: number;
 }
 
 export const GUARD_CONFIG: GuardConfig = guardJson;
@@ -110,9 +114,9 @@ class DailyCounter {
     return this.counts.get(key) ?? 0;
   }
 
-  add(key: string, now: number): void {
+  add(key: string, now: number, amount = 1): void {
     this.roll(now);
-    this.counts.set(key, (this.counts.get(key) ?? 0) + 1);
+    this.counts.set(key, (this.counts.get(key) ?? 0) + amount);
   }
 
   private roll(now: number): void {
@@ -144,6 +148,8 @@ export interface Guard {
   chargeFeedback(cookieHeader: string | undefined, ip: string): GuardResult<string>;
   /** Story 032: signed in and within the client-error limits; counts the report. */
   chargeClientError(cookieHeader: string | undefined, ip: string): GuardResult<string>;
+  /** Story 037: signed in and within the voice limits; counts `chars` characters of speech. */
+  chargeTts(cookieHeader: string | undefined, ip: string, chars: number): GuardResult<string>;
 }
 
 export function createGuard(env: GuardEnv, clock: () => number = Date.now, config: GuardConfig = GUARD_CONFIG): Guard {
@@ -204,6 +210,18 @@ export function createGuard(env: GuardEnv, clock: () => number = Date.now, confi
       return { ok: true, value: id };
     },
     chargeFeedback: (cookieHeader, ip) => chargePlain('feedback', config.feedbackPerCodePerMinute, config.feedbackPerCodePerDay, cookieHeader, ip),
+    chargeTts(cookieHeader, ip, chars) {
+      const signedIn = session(cookieHeader);
+      if (!signedIn.ok) return signedIn;
+      const id = signedIn.value;
+      const now = clock();
+      const amount = Math.max(1, Math.floor(chars));
+      if (daily.count('tts:all', now) + amount > config.ttsCharsPerDay || daily.count(`tts:${id}`, now) + amount > config.ttsCharsPerCodePerDay) return fail(429, 'daily_cap');
+      if (!minute.hit(`tts:${id}`, config.ttsPerCodePerMinute, now) || !minute.hit(`ip:${ip}`, config.perIpPerMinute, now)) return fail(429, 'rate_limited');
+      daily.add('tts:all', now, amount);
+      daily.add(`tts:${id}`, now, amount);
+      return { ok: true, value: id };
+    },
     chargeClientError: (cookieHeader, ip) => chargePlain('client-error', config.clientErrorPerCodePerMinute, config.clientErrorPerCodePerDay, cookieHeader, ip),
   };
 }

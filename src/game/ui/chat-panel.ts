@@ -12,6 +12,7 @@ import { getLanguage, t } from '../i18n';
 import { el } from './dom';
 import { createMaiBubble } from './mai-bubble';
 import { createPrepOverlay } from './pedicure-prep';
+import { emotionFor } from '../voice-cast';
 import { SERVICE_TALK, checkoutLine, expectsAnswer, planServiceTalk } from '../service-talk';
 import type { PrepOverlay } from './pedicure-prep';
 import { createNailStation, nailsNote } from './nail-station-panel';
@@ -569,7 +570,8 @@ export function createChatPanel(
     shown.appendChild(node);
     line.appendChild(shown);
     announcer.textContent = t('chat.clientSaid', { name: clientName, text });
-    if (voice && speakerOn) void voice.io.speak(text, { clientId: voice.clientId, level: portraits.level });
+    // Stories 037/038: her own voice (by gender, pinned), in the tone of this line (her tag, else her mood).
+    if (voice && speakerOn) void voice.io.speak(text, { clientId: voice.clientId, level: portraits.level, gender: portraits.client.pronoun === 'he' ? 'male' : 'female', emotion: emotionFor(latest.mood, latest.lastEmotion) });
     if (reducedMotion.matches) {
       node.data = text;
       settle();

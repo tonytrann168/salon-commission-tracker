@@ -1,3 +1,6 @@
+import { readStored, writeStored } from './safe-storage';
+import { browserProsody, pinVoice } from './voice-cast';
+import type { Emotion, VoiceGender } from './voice-cast';
 import voiceJson from './config/voice.json';
 import { editDistance, normalizeForMatch } from './english-level';
 import { ENGLISH_LEVELS } from './types';
@@ -66,6 +69,18 @@ export const VOICE_CONFIG: VoiceConfig = parseVoiceConfig(voiceJson);
 
 /** The client's voice settings, or the default for a client with none. */
 export const clientVoiceFor = (clientId: string, config: VoiceConfig = VOICE_CONFIG): ClientVoice => config.clients[clientId] ?? config.defaultClient;
+
+const PINNED_KEY = 'salon.voices.v1';
+/** Story 037: the browser voice each character keeps on this device ({ characterId: voice name }). */
+export function loadPinnedVoices(): Record<string, string> {
+  try {
+    const d = JSON.parse(readStored(PINNED_KEY) ?? '{}') as Record<string, unknown>;
+    return Object.fromEntries(Object.entries(d).filter(([, v]) => typeof v === 'string')) as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+export const savePinnedVoices = (pinned: Record<string, string>): void => writeStored(PINNED_KEY, JSON.stringify(pinned));
 
 /** A voice the phone offers (the parts of SpeechSynthesisVoice we use). */
 export interface AvailableVoice {
@@ -140,6 +155,15 @@ export class VoiceError extends Error {
 }
 
 /** Everything the game asks of a voice service. */
+export interface SpeakOptions {
+  clientId?: string;
+  level: EnglishLevel;
+  /** Story 037: the character's gender, for a fitting voice (default female). */
+  gender?: VoiceGender;
+  /** Story 038: how the line should sound (from the client turn or the mood). */
+  emotion?: Emotion;
+}
+
 export interface VoiceIO {
   canListen: boolean;
   canSpeak: boolean;
@@ -149,7 +173,7 @@ export interface VoiceIO {
    */
   listen(onPartial?: (text: string) => void): { result: Promise<string>; stop: () => void };
   /** Speak a line. Resolves when it is done (or cancelled). Never rejects. */
-  speak(text: string, options: { clientId?: string; level: EnglishLevel }): Promise<void>;
+  speak(text: string, options: SpeakOptions): Promise<void>;
   /** Stop speaking at once. */
   cancelSpeech(): void;
   /**
@@ -260,10 +284,18 @@ export function createBrowserVoice(host: SpeechHost, config: VoiceConfig = VOICE
       return new Promise<void>((resolve) => {
         const utterance = new Utterance(text);
         utterance.lang = config.lang;
-        utterance.rate = config.rateByLevel[options.level];
-        utterance.pitch = voice.pitch;
-        const picked = pickVoice(synth.getVoices(), voice.preferredVoices, config.lang);
-        if (picked) utterance.voice = picked;
+        // Story 038: the mood shapes the voice (rate and pitch), within the level's pace.
+        const prosody = browserProsody(config.rateByLevel[options.level], voice.pitch, options.emotion ?? 'neutral');
+        utterance.rate = prosody.rate;
+        utterance.pitch = prosody.pitch;
+        // Story 037: one voice per character, kept for the appointment and across sessions.
+        const key = options.clientId ?? 'default';
+        const pinned = loadPinnedVoices();
+        const picked = pinVoice(synth.getVoices(), key, options.gender ?? 'female', pinned, voice.preferredVoices);
+        if (picked) {
+          utterance.voice = picked;
+          if (pinned[key] !== picked.name) savePinnedVoices({ ...pinned, [key]: picked.name });
+        }
         utterance.onend = () => resolve();
         utterance.onerror = () => resolve();
         synth.cancel();

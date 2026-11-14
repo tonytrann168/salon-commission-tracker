@@ -15,6 +15,7 @@ if (!env.ANTHROPIC_API_KEY) {
 const vite = await createServer({ root, configFile: false, logLevel: 'error', server: { middlewareMode: true }, appType: 'custom' });
 const { handleClientTurn } = await vite.ssrLoadModule('/server/handlers/client-turn.ts');
 const { handleTranslate } = await vite.ssrLoadModule('/server/handlers/translate.ts');
+const { handleTts, azureConfigured } = await vite.ssrLoadModule('/server/handlers/tts.ts');
 const { handleGradeAppointment } = await vite.ssrLoadModule('/server/handlers/grade-appointment.ts');
 const { DEFAULT_CLIENT } = await vite.ssrLoadModule('/game/clients/default-client.ts');
 const { handleBestie } = await vite.ssrLoadModule('/server/handlers/bestie.ts');
@@ -93,6 +94,15 @@ const checks = [
     (b) => typeof b.reply === 'string' && !/\b(fuck|shit|bitch|slut|retard)/i.test(b.reply),
     (b) => `"${b.reply}" mood ${b.moodDelta >= 0 ? '+' : ''}${b.moodDelta}`],
 ];
+
+// Story 037: natural voices, only when the Azure Speech env vars are set locally (skipped otherwise).
+if (azureConfigured(env)) {
+  checks.push(['tts (Tom, annoyed): Azure returns audio', () => handleTts({ text: 'How much longer is this going to take?', clientId: 'tom', emotion: 'annoyed', level: 'some' }, env, fetch),
+    (b) => typeof b.audio === 'string' && b.audio.length > 1000 && b.mime === 'audio/mpeg',
+    (b) => `${Math.round((b.audio.length * 3) / 4 / 1024)} KB of audio`]);
+} else {
+  console.log('SKIP  tts (Azure Speech): AZURE_SPEECH_KEY / AZURE_SPEECH_REGION are not set');
+}
 
 let failed = 0;
 for (const [name, run, valid, describe] of checks) {

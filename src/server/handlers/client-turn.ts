@@ -1,3 +1,4 @@
+import { EMOTIONS, isEmotion } from '../../game/voice-cast';
 import { applyScenario, getScenario, parseScenarioFields, scenarioPrompt } from '../../game/scenarios';
 import type { ClientVisits, Scenario } from '../../game/scenarios';
 import { DEFAULT_CLIENT } from '../../game/clients/default-client';
@@ -96,7 +97,7 @@ export function parseModelOutput(upstream: unknown): ParseResult<ClientTurn> {
   const block = upstream.content.find((item) => isRecord(item) && item.type === 'tool_use' && item.name === TOOL_NAME);
   if (!isRecord(block) || !isRecord(block.input)) return { ok: false, message: 'Model did not call the tool.' };
 
-  const { reply, moodDelta, phase, unclearEnglish, rude } = block.input;
+  const { reply, moodDelta, phase, unclearEnglish, rude, emotion } = block.input;
   if (typeof reply !== 'string' || reply.trim() === '' || reply.length > MAX_REPLY_CHARS) {
     return { ok: false, message: 'Invalid reply.' };
   }
@@ -104,7 +105,8 @@ export function parseModelOutput(upstream: unknown): ParseResult<ClientTurn> {
   if (!isPhase(phase)) return { ok: false, message: 'Invalid phase.' };
   if (typeof unclearEnglish !== 'boolean') return { ok: false, message: 'Invalid unclearEnglish.' };
   if (typeof rude !== 'boolean') return { ok: false, message: 'Invalid rude.' };
-  return { ok: true, value: { reply: reply.trim(), moodDelta, phase, unclearEnglish, rude } };
+  // Story 038: the tone tag is optional; anything outside the list is dropped.
+  return { ok: true, value: { reply: reply.trim(), moodDelta, phase, unclearEnglish, rude, ...(isEmotion(emotion) ? { emotion } : {}) } };
 }
 
 /** Mood rules for levels where English mistakes never cost mood (Beginner, Some). The game also enforces this. */
@@ -166,6 +168,7 @@ const TOOL = {
       phase: { type: 'string', enum: [...PHASES], description: 'The phase the appointment is in after this reply.' },
       unclearEnglish: { type: 'boolean', description: "True when the stylist's last line was hard to understand or ungrammatical." },
       rude: { type: 'boolean', description: "True when the stylist's last line was rude or disrespectful." },
+      emotion: { type: 'string', enum: [...EMOTIONS], description: 'How the client says this reply (her tone of voice).' },
     },
     required: ['reply', 'moodDelta', 'phase', 'unclearEnglish', 'rude'],
   },
