@@ -202,7 +202,8 @@ for (const lang of LANGS) {
 
     test('a waiting tip stands out: a glow ring and a label by the companion, gone once opened', async ({ page }) => {
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('ana') } });
-      await mockApi(page, { correct: true, replies: ['Hi!', 'Hello! Pink, please.'] });
+      // The chat view (consultation): the client's face is large there, the label must stay off it.
+      await mockApi(page, { correct: true, phases: ['consultation'], replies: ['Hi!', 'Hello! Pink, please.'] });
       await page.goto('/');
       await page.locator('.title-menu > .chat-button').first().click();
       await page.locator('.picker-daily').click();
@@ -212,6 +213,15 @@ for (const lang of LANGS) {
       await expect(page.locator('.mai-cue')).toHaveText(lang === 'vi' ? 'Chị có mẹo nè! 💡' : 'Tip for you! 💡');
       const inside = await page.locator('.mai-cue').evaluate((node) => { const r = node.getBoundingClientRect(); return r.left >= 0 && r.right <= window.innerWidth; });
       expect(inside).toBe(true);
+      // The label never covers the client's face (her expression shows the mood).
+      const touchesFace = await page.evaluate(() => {
+        const zone = document.querySelector<HTMLElement>('.portrait-zone')!;
+        const [x, y, w, h] = (zone.dataset.face ?? '0,0,0,0').split(',').map(Number) as [number, number, number, number];
+        const z = zone.getBoundingClientRect();
+        const c = document.querySelector('.mai-cue')!.getBoundingClientRect();
+        return c.left < z.left + x + w && z.left + x < c.right && c.top < z.top + y + h && z.top + y < c.bottom;
+      });
+      expect(touchesFace).toBe(false);
       await page.locator('.mai-bubble').click();
       await expect(page.locator('.mai-cue')).toBeHidden();
       await expect(page.locator('.mai-bubble.has-tip')).toHaveCount(0);

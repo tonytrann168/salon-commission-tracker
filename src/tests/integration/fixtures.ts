@@ -55,12 +55,14 @@ export interface ApiOptions {
   grading?: Record<string, unknown>;
   /** Story 040: the line check finds something to improve (a tip waits behind the companion's bubble). */
   correct?: boolean;
+  /** The phases the client turns walk through (default service → checkout → done). */
+  phases?: string[];
 }
 
 /** Answer every /api call the game makes. Returns the requests seen, by route. */
 export async function mockApi(target: Page | BrowserContext, options: ApiOptions = {}): Promise<Record<string, unknown[]>> {
   const seen: Record<string, unknown[]> = {};
-  const phases = ['service', 'checkout', 'done'];
+  const phases = options.phases ?? ['service', 'checkout', 'done'];
   let turn = 0;
   const replies = options.replies ?? ['Hi! I would like a manicure, please.', 'That colour is lovely, thank you!', 'How much do I owe you?', 'Thank you so much, see you next time!'];
   await target.route('**/api/**', async (route: Route) => {

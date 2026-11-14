@@ -67,6 +67,11 @@ export function createPortraitZone(host: HTMLElement, layer: Container, client: 
       clientPortrait.setSize(clientSize);
       clientPortrait.view.position.set(left + (zone.width - clientSize) / 2, top + CLIENT_PADDING);
     }
+    // Where her face is drawn, relative to the zone (story 040 fix: overlays must keep it visible; tests read it).
+    const face = compact ? { x: 8, y: 6, size: Math.min(COMPACT_CLIENT_PX, Math.max(1, zone.height * 0.4)) } : { x: (zone.width - Math.max(1, zone.height - CLIENT_PADDING * 2)) / 2, y: CLIENT_PADDING, size: Math.max(1, zone.height - CLIENT_PADDING * 2) };
+    element.dataset.face = [face.x, face.y, face.size, face.size].map((n) => Math.round(n)).join(',');
+    // Shared with the overlays laid over the strip (the companion's tip label starts right of her face).
+    (element.parentElement ?? element).style.setProperty('--face-right', `${Math.round(face.x + face.size)}px`);
     const bestieSize = Math.max(1, zone.height * BESTIE_CORNER_FRACTION);
     bestiePortrait.setSize(bestieSize);
     bestiePortrait.view.position.set(

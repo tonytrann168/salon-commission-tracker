@@ -28,3 +28,10 @@ opening the companion clears both. Screens: `production/qa/evidence/story-040-ti
 - Found by the new e2e test: on the full-screen service (035) the painting layer covered the companion's bubble, so she
   could not be tapped while painting. Her layer is now above it.
 - In the chat view the label partly covers the client's face while a tip waits (it goes when opened).
+
+## Fix (overseer, after 3968382)
+
+- In the chat view the label sat over the client's eyes. It now sits above the companion's bubble and starts right of
+  where her face ends (the portrait zone publishes the face box as `data-face` / `--face-right`), wrapping instead of
+  reaching it. The e2e test now runs in the chat view and checks the label's box never meets the face box (en + vi);
+  it failed on the old placement before the fix.
