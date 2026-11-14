@@ -53,3 +53,19 @@ service); the other flows go through Done. Screens: `production/qa/evidence/stor
   to answer, −3 mood). The mid-service lines are fixed data lines (not AI); her replies to what you say are AI.
 - **OWNER:** the lower third of the service screen is empty at 320 × 568 (the hand keeps its proportions); say if you
   want the tools or a bigger hand there.
+
+## 035 fixes (overseer review of b7332ae, 2026-11-13)
+
+1. Toolbar in two rows: the selected tab's options at full width (6 colours in view at 320 px, the 7th cut off; the
+   chosen one has a dark ring), then tabs, Clean up (always at hand), the hand switch and Done. e2e: 5+ swatches inside
+   the screen, the row scrolls, a swatch is tappable right after Service starts.
+2. The Reply chip sits with her bubble beside her face; the nudge takes the hint line's place while it shows. e2e
+   checks that chip, bubble, order reminder and hint don't overlap.
+3. Checkout: no tools, no toggle, no pill; just the finished nails above the chat.
+4. Her checkout line fits the result: `checkout` in `service-talk.json` has happy / okay / unhappy bands (thresholds on
+   nail match and mood, 3 lines each; unhappy stays polite). Unit test, incl. the 28% / mood 49 case.
+5. The pedicure prep starts below her face and the companion.
+6. Order reminder (new; nothing like it existed): "🎨 colours · shapes · extras" under her bubble for the whole
+   service, from the request data, in the interface language.
+Also: a line counts as a question if it has a "?" anywhere (found by the e2e test: "Are you almost done? I have to
+pick up my kids soon." was not waiting for an answer).

@@ -31,3 +31,12 @@
   .station-tab { width: 36px; padding: 0; }
 }
 .station-hand { flex: none; width: 40px; min-height: 40px; padding: 0; font-size: 15px; background: #f3e8ff; color: #5b2d91; }
+
+/* 035 fixes: the toolbar is two rows: options (full width) over tabs / Clean up / hand / Done. */
+.station-tools { flex-direction: column; align-items: stretch; gap: 6px; padding: 6px 8px 8px; }
+.station-controls { display: flex; align-items: center; gap: 6px; }
+.station-controls .station-done { margin-left: auto; width: 56px; min-height: 44px; }
+.station-controls .station-tab { width: 40px; min-height: 40px; }
+.station-row { flex: none; padding: 3px 10px; min-height: 48px; align-items: center; }
+.station-row .station-swatch { width: 40px; min-width: 40px; min-height: 40px; border-radius: 50%; }
+.station-row .station-swatch[aria-pressed='true'] { border-color: #fff; box-shadow: 0 0 0 3px #3b2a33; transform: scale(1.08); }

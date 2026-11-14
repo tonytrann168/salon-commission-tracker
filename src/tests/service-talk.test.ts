@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createAppointment } from '../game/appointment';
-import { SERVICE_TALK, checkoutLine, expectsAnswer, parseServiceTalk, planServiceTalk } from '../game/service-talk';
+import { SERVICE_TALK, checkoutBand, checkoutLine, expectsAnswer, parseServiceTalk, planServiceTalk } from '../game/service-talk';
 import type { ClientPersona, ClientTurn, Phase } from '../game/types';
 
 /** Story 035: the service is the game; the client talks mid-service; Done leads to checkout. */
@@ -32,10 +32,28 @@ describe('mid-service talk', () => {
 
   it('only questions wait for an answer; the data is checked', () => {
     expect(expectsAnswer('Are you almost done?')).toBe(true);
+    expect(expectsAnswer('Are you almost done? I have to pick up my kids soon.')).toBe(true);
     expect(expectsAnswer('Ooh, that colour looks so pretty!')).toBe(false);
-    expect(SERVICE_TALK.checkout).toContain(checkoutLine(() => 0));
     expect(() => parseServiceTalk({ ...SERVICE_TALK, ignoreMoodDip: 2 })).toThrow(/ignoreMoodDip/);
     expect(() => parseServiceTalk({ ...SERVICE_TALK, count: { min: 3, max: 1 } })).toThrow(/count/);
+  });
+});
+
+describe('her checkout line fits the result', () => {
+  it('needs both a good match and a good mood to be happy; a poor result is polite but not delighted', () => {
+    const { happy, okay } = SERVICE_TALK.checkout;
+    expect(checkoutBand(happy.minMatch, happy.minMood)).toBe('happy');
+    expect(checkoutBand(happy.minMatch - 1, 100)).toBe('okay');
+    expect(checkoutBand(100, happy.minMood - 1)).toBe('okay');
+    expect(checkoutBand(okay.minMatch - 1, 100)).toBe('unhappy');
+    expect(checkoutBand(100, okay.minMood - 1)).toBe('unhappy');
+    // The overseer's case: 28% match, mood 49 must not get "I love them!".
+    expect(checkoutBand(28, 49)).toBe('unhappy');
+    expect(SERVICE_TALK.checkout.unhappy.lines).toContain(checkoutLine(28, 49, () => 0.5));
+    expect(SERVICE_TALK.checkout.unhappy.lines.join(' ')).not.toMatch(/love|great|perfect/i);
+    expect(SERVICE_TALK.checkout.happy.lines).toContain(checkoutLine(90, 80, () => 0));
+    for (const band of ['happy', 'okay', 'unhappy'] as const) expect(SERVICE_TALK.checkout[band].lines).toHaveLength(3);
+    expect(() => parseServiceTalk({ ...SERVICE_TALK, checkout: { ...SERVICE_TALK.checkout, okay: { ...okay, minMatch: 99 } } })).toThrow(/okay/);
   });
 });
 

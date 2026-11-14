@@ -8,13 +8,14 @@ import type { Expression } from '../portraits/portrait';
 import { PHASES, TurnError } from '../types';
 import type { AppointmentResult, ClientPersona, EnglishLevel, HelpLanguage, Translate } from '../types';
 import type { TranslationCache } from '../translation-cache';
-import { t } from '../i18n';
+import { getLanguage, t } from '../i18n';
 import { el } from './dom';
 import { createMaiBubble } from './mai-bubble';
 import { createPrepOverlay } from './pedicure-prep';
 import { SERVICE_TALK, checkoutLine, expectsAnswer, planServiceTalk } from '../service-talk';
 import type { PrepOverlay } from './pedicure-prep';
 import { createNailStation, nailsNote } from './nail-station-panel';
+import { NAIL_ART_CONFIG } from '../nail-art/design';
 import type { NailDesign, NailRequest, PaletteColor, StickerKind } from '../nail-art/design';
 import type { StationTools } from '../nail-art/station';
 import type { MatchResult } from '../nail-art/match';
@@ -197,6 +198,7 @@ export function createChatPanel(
           appointment.adjustMood(result.moodDelta);
           nailArt.onNote(nailsNote(design, result, nailArt.request.service));
           nailArt.onDone(design, result);
+          lastMatch = result.score;
           // Story 035: Done ends the service (or, in a redo scenario, the client asks for her redo first).
           afterDone();
         },
@@ -307,13 +309,28 @@ export function createChatPanel(
   sheetClose.setAttribute('aria-label', t('service.backToNails'));
   sheetHead.append(el('strong', '', t('service.replyTitle', { name: clientName })), sheetClose);
   sheet.append(sheetHead);
-  if (station) zone.element.append(say, chip, nudge, doneBanner);
+  // 035 fixes: her bubble and the Reply chip sit together beside her face (nothing covers the hint line), and a small
+  // order reminder stays under them the whole service.
+  const talk = el('div', 'service-talk');
+  talk.append(say, chip);
+  const order = el('p', 'service-order');
+  if (nailArt) {
+    const lang = getLanguage();
+    const r = nailArt.request;
+    const colours = r.colors.map((id) => NAIL_ART_CONFIG.palette.find((c) => c.id === id)?.name[lang] ?? id).join(' / ');
+    const shapes = r.shapes.map((shape) => t(`station.shape.${shape}`)).join(' / ');
+    const extras = [r.gradient === 'yes' ? '🌈' : '', r.gems !== 'none' ? `💎 ${t(`service.order.${r.gems}`)}` : '', r.stickers !== 'none' ? `⭐ ${t(`service.order.${r.stickers}`)}` : ''].filter(Boolean);
+    order.textContent = [`🎨 ${colours}`, shapes, ...extras].join(' · ');
+    order.setAttribute('aria-label', `${t('service.order.label')}: ${order.textContent}`);
+  }
+  if (station) zone.element.append(talk, order, nudge, doneBanner);
   let serviceMode = false;
   let serviceStarted = false;
   let replyOpen = false;
   let ending = false;
   let lastSeenClient = -1;
   let awaitingAnswer = false;
+  let lastMatch = 0;
   let ignoreTimer = 0;
   let nudgeTimer = 0;
   const talkTimers: number[] = [];
@@ -344,8 +361,13 @@ export function createChatPanel(
   const showNudge = (text: string): void => {
     nudge.textContent = text;
     nudge.classList.remove('hidden');
+    // The nudge takes the hint line's place while it shows (they never overlap).
+    root.classList.add('nudging');
     window.clearTimeout(nudgeTimer);
-    nudgeTimer = window.setTimeout(() => nudge.classList.add('hidden'), 4500);
+    nudgeTimer = window.setTimeout(() => {
+      nudge.classList.add('hidden');
+      root.classList.remove('nudging');
+    }, 4500);
   };
   /** A client line while the station is on screen: a bubble from her face, the Reply chip, and a wait for questions. */
   const clientLineInService = (index: number, text: string): void => {
@@ -403,8 +425,10 @@ export function createChatPanel(
     window.setTimeout(() => {
       doneBanner.classList.add('hidden');
       appointment.holdPhase(null);
+      // The job is finished: no tools at checkout, just the finished nails.
+      root.classList.add('service-over');
       appointment.advance('checkout');
-      appointment.clientSays(checkoutLine());
+      appointment.clientSays(checkoutLine(lastMatch, latest.mood));
       ending = false;
     }, 1600);
   }

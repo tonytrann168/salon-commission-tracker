@@ -514,5 +514,8 @@
   "service.replyTitle": "Nói chuyện với {name}",
   "service.backToNails": "Quay lại làm móng",
   "service.nudge": "{name} đang hỏi {you} đó, bấm 💬 để trả lời nha!",
-  "service.toCheckout": "✨ Đẹp quá! Giờ tính tiền nha."
+  "service.toCheckout": "✨ Đẹp quá! Giờ tính tiền nha.",
+  "service.order.label": "Khách yêu cầu",
+  "service.order.few": "ít",
+  "service.order.lots": "nhiều"
 }

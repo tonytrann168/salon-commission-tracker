@@ -1,8 +1,14 @@
 {
-  "_note": "Story 035: what the client says on her own while the nails are painted (the screen is the station then). count: lines per service (random in range). firstAfterSeconds / gapSeconds: timing. ignoreSeconds: a question left unanswered this long costs ignoreMoodDip once (never a walk-out: mood has a floor). checkout: her line when Done leads to checkout. redo: her line for a redo scenario's first Done.",
-  "count": { "min": 1, "max": 3 },
+  "_note": "Story 035: what the client says on her own while the nails are painted (the screen is the station then). count: lines per service (random in range). firstAfterSeconds / gapSeconds: timing. ignoreSeconds: a question left unanswered this long costs ignoreMoodDip once (never a walk-out: mood has a floor). checkout: her line when Done leads to checkout, by band: the first band (in order happy, okay) whose minMatch (nail match %) and minMood are both met, else unhappy (still polite). redo: her line for a redo scenario's first Done.",
+  "count": {
+    "min": 1,
+    "max": 3
+  },
   "firstAfterSeconds": 10,
-  "gapSeconds": { "min": 14, "max": 26 },
+  "gapSeconds": {
+    "min": 14,
+    "max": 26
+  },
   "ignoreSeconds": 20,
   "ignoreMoodDip": -3,
   "lines": {
@@ -28,10 +34,32 @@
       "Can you fix that edge? It doesn't look even."
     ]
   },
-  "checkout": [
-    "They look great! How much do I owe you?",
-    "I love them! What's the total?",
-    "Okay, all done? How much is it?"
-  ],
+  "checkout": {
+    "happy": {
+      "minMatch": 70,
+      "minMood": 60,
+      "lines": [
+        "They look great! How much do I owe you?",
+        "I love them! What's the total?",
+        "Wow, perfect! How much is it?"
+      ]
+    },
+    "okay": {
+      "minMatch": 40,
+      "minMood": 35,
+      "lines": [
+        "Okay, that looks nice. How much is it?",
+        "All done? Thanks. What do I owe you?",
+        "That'll do, thank you. What's the total?"
+      ]
+    },
+    "unhappy": {
+      "lines": [
+        "Hmm, okay. How much is it?",
+        "It's not quite what I asked for… What do I owe you?",
+        "Well, alright. What's the total?"
+      ]
+    }
+  },
   "redo": "Hmm… actually, I'm not sure about this colour. Could we try a different one?"
 }

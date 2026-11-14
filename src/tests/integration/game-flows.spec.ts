@@ -123,6 +123,20 @@ for (const lang of LANGS) {
       await expect(page.locator('.chat-input')).toBeHidden();
       await expect(page.locator('.service-say')).toHaveText('Red, please. Is that okay?');
       await expect(page.locator('.reply-chip')).toBeVisible();
+      // 035 fixes: the colours are in plain sight (5+ swatches inside the screen, the next one cut off at the edge),
+      // tappable at once, and the chosen one is marked; the order reminder shows; nothing covers the hint line.
+      const inView = await page.locator('.station-swatch').evaluateAll((nodes) => nodes.filter((n) => { const r = n.getBoundingClientRect(); return r.left >= 0 && r.right <= window.innerWidth; }).length);
+      expect(inView).toBeGreaterThanOrEqual(5);
+      expect(await page.locator('.station-row').evaluate((row) => row.scrollWidth > row.clientWidth)).toBe(true);
+      await page.locator('.station-swatch').nth(3).click();
+      await expect(page.locator('.station-swatch').nth(3)).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.service-order')).toContainText('🎨');
+      const overlap = await page.evaluate(() => {
+        const box = (sel: string) => document.querySelector(sel)?.getBoundingClientRect();
+        const hit = (a?: DOMRect, b?: DOMRect) => !!a && !!b && a.width > 0 && b.width > 0 && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+        return { chipHint: hit(box('.reply-chip'), box('.station-status')), chipOrder: hit(box('.reply-chip'), box('.service-order')), sayOrder: hit(box('.service-say'), box('.service-order')) };
+      });
+      expect(overlap).toEqual({ chipHint: false, chipOrder: false, sayOrder: false });
       // Reply from the sheet; sending closes it and the service goes on (the AI can't end it).
       await page.locator('.reply-chip').click();
       await expect(page.locator('.reply-sheet .chat-input')).toBeVisible();
@@ -141,6 +155,9 @@ for (const lang of LANGS) {
       await page.locator('.station-done').click();
       await expect(page.locator('.chat-panel.service-mode')).toHaveCount(0, { timeout: 5_000 });
       await expect(page.locator('.chat-bubble.client').last()).toContainText(/owe|total|How much/i);
+      // At checkout the job is finished: no tools, no pill over the hand.
+      await expect(page.locator('.station-tools')).toBeHidden();
+      await expect(page.locator('.station-status')).toBeHidden();
     });
 
     test('the phrasebook has useful phrases by topic, even before any are earned', async ({ page }) => {

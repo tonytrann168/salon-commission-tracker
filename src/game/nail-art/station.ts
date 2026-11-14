@@ -242,7 +242,7 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       const free = Math.max(80, w - reserveLeft - reserveRight);
       const top = Math.max(TOP_MARGIN, topBand);
       // With a top band (the full-screen service) the hand also keeps room under it for the palm and the hint.
-      const below = topBand > 0 ? Math.min(90, h * 0.16) : 0;
+      const below = topBand > 0 ? 44 : 0;
       scale = Math.min(free / hand.box.w, (h - top - below) / hand.box.h);
       offsetX = reserveLeft + (free - hand.box.w * scale) / 2;
       offsetY = topBand > 0 ? top + Math.max(0, (h - top - below - hand.box.h * scale) / 2) : TOP_MARGIN;

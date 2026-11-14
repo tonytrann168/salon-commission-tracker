@@ -212,12 +212,16 @@ export function createNailStation(options: NailStationOptions): NailStation {
     handButton.setAttribute('aria-label', sideLabel(hand));
     say(sideLabel(hand));
   }, sideLabel(0));
-  toolbar.append(tabs, optionsRow, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []), doneButton);
+  // 035 fixes: two rows. Row 1: the selected tab's options at full width (the colours are in plain sight). Row 2: the
+  // tabs, Clean up (always at hand), the hand switch and Done.
+  const controls = el('div', 'station-controls');
+  controls.append(tabs, toolButtons.cleanup, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []), doneButton);
+  toolbar.append(optionsRow, controls);
 
   function selectTab(next: Tab): void {
     tab = next;
     if (tab === 'shape') optionsRow.replaceChildren(...shapeButtons, resetButton);
-    else if (tab === 'colour') optionsRow.replaceChildren(toolButtons.cleanup, toolButtons.gradient, ...swatches);
+    else if (tab === 'colour') optionsRow.replaceChildren(...swatches, toolButtons.gradient);
     else optionsRow.replaceChildren(toolButtons.gem, toolButtons.sticker);
     if (tab === 'colour' && tool !== 'gradient' && tool !== 'cleanup') tool = 'polish';
     if (tab === 'art' && tool !== 'gem' && tool !== 'sticker') tool = 'gem';
@@ -287,7 +291,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     const tall = r.height >= 300;
     const left = tall ? 8 : side === 'left' ? 70 : 20;
     const right = tall ? 8 : side === 'right' ? 70 : 8;
-    view.layout(r.left, r.top, r.width, r.height, left, right, tall ? 84 : 0);
+    view.layout(r.left, r.top, r.width, r.height, left, right, tall ? 138 : 0);
     view.setDesign(design);
     placeHint(r.width, r.height);
   };

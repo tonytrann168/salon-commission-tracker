@@ -13,8 +13,14 @@ export interface ServiceTalkConfig {
   ignoreSeconds: number;
   ignoreMoodDip: number;
   lines: Record<Difficulty, string[]>;
-  checkout: string[];
+  checkout: { happy: CheckoutBand; okay: CheckoutBand; unhappy: { lines: string[] } };
   redo: string;
+}
+
+export interface CheckoutBand {
+  minMatch: number;
+  minMood: number;
+  lines: string[];
 }
 
 export function parseServiceTalk(raw: unknown): ServiceTalkConfig {
@@ -36,7 +42,18 @@ export function parseServiceTalk(raw: unknown): ServiceTalkConfig {
     ignoreSeconds: positive(c.ignoreSeconds, 'ignoreSeconds'),
     ignoreMoodDip: typeof c.ignoreMoodDip === 'number' && c.ignoreMoodDip <= 0 ? c.ignoreMoodDip : fail('"ignoreMoodDip" must be 0 or less'),
     lines,
-    checkout: texts(c.checkout, 'checkout'),
+    checkout: (() => {
+      const k = (c.checkout ?? {}) as Record<string, Partial<CheckoutBand>>;
+      const band = (name: 'happy' | 'okay'): CheckoutBand => {
+        const b = k[name];
+        if (typeof b?.minMatch !== 'number' || typeof b?.minMood !== 'number') return fail(`"checkout.${name}" needs minMatch and minMood`);
+        return { minMatch: b.minMatch, minMood: b.minMood, lines: texts(b.lines, `checkout.${name}.lines`) };
+      };
+      const happy = band('happy');
+      const okay = band('okay');
+      if (okay.minMatch > happy.minMatch || okay.minMood > happy.minMood) fail('"checkout.okay" thresholds must not be above happy');
+      return { happy, okay, unhappy: { lines: texts(k.unhappy?.lines, 'checkout.unhappy.lines') } };
+    })(),
     redo: typeof c.redo === 'string' && c.redo.trim() ? c.redo : fail('"redo" needs a line'),
   };
 }
@@ -63,7 +80,21 @@ export function planServiceTalk(difficulty: Difficulty, rand: () => number = Mat
   return plan;
 }
 
-/** Only a question waits for an answer (thanks and remarks don't). */
-export const expectsAnswer = (line: string): boolean => /\?\s*["”']?\s*$/.test(line.trim());
+/** Only a line with a question in it waits for an answer ("Are you almost done? I have to go soon." counts). */
+export const expectsAnswer = (line: string): boolean => line.includes('?');
 
-export const checkoutLine = (rand: () => number = Math.random, config: ServiceTalkConfig = SERVICE_TALK): string => config.checkout[Math.floor(rand() * config.checkout.length)] as string;
+export type CheckoutMood = 'happy' | 'okay' | 'unhappy';
+
+/** Which checkout band the result earns: nail match (0-100) and mood must both reach the band's thresholds. */
+export function checkoutBand(match: number, mood: number, config: ServiceTalkConfig = SERVICE_TALK): CheckoutMood {
+  const { happy, okay } = config.checkout;
+  if (match >= happy.minMatch && mood >= happy.minMood) return 'happy';
+  if (match >= okay.minMatch && mood >= okay.minMood) return 'okay';
+  return 'unhappy';
+}
+
+/** Her line when Done leads to checkout: it fits how the nails and the visit went. */
+export function checkoutLine(match: number, mood: number, rand: () => number = Math.random, config: ServiceTalkConfig = SERVICE_TALK): string {
+  const lines = config.checkout[checkoutBand(match, mood, config)].lines;
+  return lines[Math.floor(rand() * lines.length)] as string;
+}

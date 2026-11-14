@@ -514,5 +514,8 @@
   "service.replyTitle": "Talk with {name}",
   "service.backToNails": "Back to the nails",
   "service.nudge": "{name} asked you something. Tap 💬 to answer!",
-  "service.toCheckout": "✨ Beautiful! Time to check out."
+  "service.toCheckout": "✨ Beautiful! Time to check out.",
+  "service.order.label": "Her order",
+  "service.order.few": "a few",
+  "service.order.lots": "lots"
 }
