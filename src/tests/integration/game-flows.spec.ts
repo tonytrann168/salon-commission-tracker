@@ -659,6 +659,9 @@ for (const lang of LANGS) {
       await expect(bar).toBeVisible();
       await expect(bar).toHaveClass(/unread/);
       await expect(page.locator('.chat-panel.service-mode .chat-form')).toBeHidden();
+      // The bar has its own space: clear of the station's buttons (060 review: it sat on the bottom row).
+      const clearance = () => page.evaluate(() => document.querySelector('.focus-bar .reply-chip')!.getBoundingClientRect().top - Math.max(...[...document.querySelectorAll('.station-tools button')].map((b) => b.getBoundingClientRect().bottom)));
+      expect(await clearance()).toBeGreaterThanOrEqual(10);
       // ✕: the bubble goes, the dot goes; the bar stays.
       await page.locator('.service-dismiss').click();
       await expect(page.locator('.service-say')).toBeHidden();
@@ -738,6 +741,8 @@ for (const lang of LANGS) {
       await fixNow.click();
       await expect(page.locator('.chat-panel.service-mode')).toHaveCount(1);
       await expect(page.locator('.station-controls .station-fix')).toBeVisible();
+      // 060 review: the reply bar keeps clear of the Fix it step's buttons too.
+      expect(await page.evaluate(() => document.querySelector('.focus-bar .reply-chip')!.getBoundingClientRect().top - Math.max(...[...document.querySelectorAll('.station-tools button')].map((b) => b.getBoundingClientRect().bottom)))).toBeGreaterThanOrEqual(10);
       await page.locator('.station-swatch').nth(1).click();
       await paintEverything(page);
       // Then rub the polish off her skin.

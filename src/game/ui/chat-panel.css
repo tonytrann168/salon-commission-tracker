@@ -144,11 +144,12 @@ html[data-motion='reduce'] .reply-chip.pulse { animation: none; }
 /* Story 060: focus mode while painting. The station has the screen; the chat is a slim bar at the bottom; her line
    pops as a bubble that stays until read (tap to reply, ✕ to dismiss). */
 .focus-bar { display: none; }
-.chat-panel.service-mode:not(.reply-open):not(.service-over):not(.prepping) .focus-bar { display: flex; flex: none; padding: 0 8px env(safe-area-inset-bottom); background: #fff4f8; pointer-events: auto; }
+.chat-panel.service-mode:not(.reply-open):not(.service-over):not(.prepping) .focus-bar { display: flex; flex: none; padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); border-top: 1px solid #ecd3de; background: #fff; pointer-events: auto; }
 /* The service header is slimmer so the nails keep their room above the bar. */
 .chat-panel.service-mode .chat-header { padding-top: 4px; padding-bottom: 2px; }
-.focus-bar .reply-chip { position: relative; flex: 1 1 auto; min-height: 44px; padding: 0 14px; border-radius: 14px; background: #fff; color: #a2346a; box-shadow: 0 0 0 2px #ffc4da; font: 700 16px/1 system-ui, sans-serif; text-align: left; }
-.focus-bar .reply-chip.unread { background: #ff5c9a; color: #fff; box-shadow: 0 2px 10px rgba(255, 92, 154, 0.45); }
+.focus-bar .reply-chip { position: relative; inset: auto; flex: 1 1 auto; min-height: 44px; padding: 0 14px; border-radius: 14px; background: #fff; color: #a2346a; box-shadow: 0 0 0 2px #ffc4da; font: 700 16px/1 system-ui, sans-serif; text-align: left; }
+.focus-bar .reply-chip.unread { background: #ff5c9a; color: #fff; box-shadow: none; }
+.focus-bar .reply-chip.pulse { animation: none; }
 .focus-bar .reply-chip.unread::after { content: ''; position: absolute; right: 12px; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: #fff; }
 .service-bubble { position: relative; display: flex; align-items: flex-start; gap: 4px; width: 100%; pointer-events: none; }
 .service-bubble .service-say { flex: 1 1 auto; }
