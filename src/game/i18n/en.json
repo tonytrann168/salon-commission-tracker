@@ -640,5 +640,8 @@
   "settings.companionVoice": "{name} reads tips aloud",
   "settings.companionVoiceNote": "{name}'s tips and hints are read aloud (Vietnamese tips need a Vietnamese voice on the phone).",
   "account.error.email_send_failed": "We couldn't send the code email right now. Please try again later.",
-  "account.error.already_registered": "This email already has an account. Sign in with it below."
+  "account.error.already_registered": "This email already has an account. Sign in with it below.",
+  "menu.confirm": "Confirm menu",
+  "menu.setupTitle": "Set up your salon menu",
+  "menu.setupMai": "Pick your prices. Clients will order by number, like \"Number 3, please!\" You can change it any time from the home screen."
 }

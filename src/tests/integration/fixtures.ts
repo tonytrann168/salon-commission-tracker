@@ -22,6 +22,8 @@ export interface SeedOptions {
   save?: Record<string, unknown>;
   extra?: Record<string, string>;
   whatsNewSeen?: boolean;
+  /** Story 054: the salon menu already set up (default true; false shows the first-game setup step). */
+  menuConfirmed?: boolean;
 }
 
 /** Storage for a player, written once per browser context (a reload keeps what the game saved). */
@@ -35,7 +37,9 @@ export async function seed(target: Page | BrowserContext, lang: Lang, options: S
     ...(options.level === false ? {} : { 'salon.englishLevel': 'some' }),
     ...(options.companion === false ? {} : { 'salon.companion.v1': JSON.stringify({ chosen: true, gender: 'female', name: 'Mai', equipped: {} }) }),
     ...(options.tourDone === false ? {} : { 'salon.tour.v1': JSON.stringify({ done: true, seen: [] }) }),
-    ...(options.save ? { 'salon.save': JSON.stringify({ version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0, history: {}, ...options.save }) } : {}),
+    ...(options.save || options.menuConfirmed !== false
+      ? { 'salon.save': JSON.stringify({ version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0, history: {}, ...(options.menuConfirmed === false ? {} : { menuConfirmed: true }), ...options.save }) }
+      : {}),
     ...options.extra,
   };
   await target.addInitScript((entries) => {

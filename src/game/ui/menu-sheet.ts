@@ -2,6 +2,7 @@ import { getLanguage, t } from '../i18n';
 import { orderTotal } from '../menu';
 import type { MenuItem, OrderLine } from '../menu';
 import { el } from './dom';
+import { priceBoardIcon } from './menu-icon';
 import './menu-sheet.css';
 
 /**
@@ -18,7 +19,10 @@ export function openMenuSheet(menu: { items: MenuItem[]; order: OrderLine[] }, c
   sheet.setAttribute('aria-modal', 'true');
   sheet.setAttribute('aria-label', t('menu.title'));
   const card = el('div', 'menu-card');
-  card.append(el('h2', '', `📋 ${t('menu.title')}`));
+  const heading = el('h2', 'menu-heading');
+  heading.innerHTML = priceBoardIcon(30);
+  heading.append(t('menu.title'));
+  card.append(heading);
   const ordered = new Set(checkout ? menu.order.map((line) => line.number) : []);
   const list = el('ol', 'menu-list');
   menu.items.forEach((item, i) => {

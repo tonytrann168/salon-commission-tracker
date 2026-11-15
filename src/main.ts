@@ -1,3 +1,4 @@
+import { createMenuSetupScreen } from './game/ui/menu-setup';
 import { MENU_CONFIG, menuItems, orderFor } from './game/menu';
 import type { Container, Rectangle } from 'pixi.js';
 import { GALLERY_CONFIG, addToGallery } from './game/gallery';
@@ -164,6 +165,7 @@ async function boot(): Promise<void> {
         applyDocumentLanguage();
         showTitle();
       },
+      onMenu: () => showMenuSetup(false, showTitle),
     });
     // Story 025: once, after a few appointments, the companion suggests an account.
     const account = getAccount();
@@ -240,7 +242,7 @@ async function boot(): Promise<void> {
         current: null,
         onPick: (level) => {
           if (chooseEnglishLevel(level)) applyDocumentLanguage();
-          showClientPicker();
+          toClients();
         },
       }),
       back,
@@ -297,15 +299,23 @@ async function boot(): Promise<void> {
     // Story 013: the first time, meet your bestie (female or male, and a name) before anything else.
     if (!loadCompanion().chosen) return showMeet();
     if (getEnglishLevel() === null) showLevelPicker();
-    else showClientPicker();
+    else toClients();
   };
+
+  /** Story 054: the salon menu set up once before the first client (also older saves); from home, view or edit. */
+  const showMenuSetup = (firstTime: boolean, next: () => void) => {
+    teardownDom();
+    const screen = createMenuSetupScreen(host, { firstTime, onDone: next });
+    teardownDom = () => screen.remove();
+  };
+  const toClients = () => (loadSave().menuConfirmed ? showClientPicker() : showMenuSetup(true, showClientPicker));
 
   const showMeet = () => {
     teardownDom();
     const screen = createMeetScreen(host, () => {
       applyDocumentLanguage();
       if (getEnglishLevel() === null) showLevelPicker();
-      else showClientPicker();
+      else toClients();
     });
     teardownDom = () => screen.remove();
   };

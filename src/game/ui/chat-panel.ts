@@ -17,6 +17,7 @@ import { SERVICE_TALK, checkoutLine, expectsAnswer, planServiceTalk } from '../s
 import type { PrepOverlay } from './pedicure-prep';
 import { createNailStation, nailsNote } from './nail-station-panel';
 import { openMenuSheet } from './menu-sheet';
+import { priceBoardIcon } from './menu-icon';
 import type { MenuItem, OrderLine } from '../menu';
 import { FIX_CONFIG, canFix, fixKindOf, fixOutcomes, openLine, openRequest, thanksLine, updateRequests } from '../fix-requests';
 import type { FixOutcome, FixRequest } from '../fix-requests';
@@ -150,7 +151,8 @@ export function createChatPanel(
     mood.append(speaker);
   }
   // Story 044: 📋 Menu (consultation and checkout): the numbered menu; at checkout her order and the total.
-  const menuButton = portraits.menu ? el('button', 'chat-menu-button', `📋 ${t('menu.button')}`) : null;
+  const menuButton = portraits.menu ? el('button', 'chat-menu-button') : null;
+  if (menuButton) menuButton.innerHTML = `${priceBoardIcon(24)}<span>${t('menu.button')}</span>`;
   if (menuButton && portraits.menu) {
     const menu = portraits.menu;
     menuButton.type = 'button';

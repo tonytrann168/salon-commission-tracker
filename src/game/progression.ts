@@ -169,6 +169,8 @@ export interface ProgressSave {
   history: Record<string, { visits: number; lastStars: number; lastDay: string }>;
   /** Story 044: the salon menu (a price set or the player's own); the default set when missing. */
   menu?: MenuChoice;
+  /** Story 054: the player has set up (confirmed) the salon menu: the first-game step is done. */
+  menuConfirmed?: boolean;
 }
 
 export const NEW_SAVE: ProgressSave = { version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0, history: {} };

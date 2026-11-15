@@ -640,5 +640,8 @@
   "settings.companionVoice": "{name} đọc mẹo thành tiếng",
   "settings.companionVoiceNote": "Mẹo và gợi ý của {name} được đọc thành tiếng (mẹo tiếng Việt cần giọng tiếng Việt trên điện thoại).",
   "account.error.email_send_failed": "Hiện giờ {self} chưa gửi được email có mã. {You} thử lại sau nha.",
-  "account.error.already_registered": "Email này đã có tài khoản rồi. {You} đăng nhập ở dưới nha."
+  "account.error.already_registered": "Email này đã có tài khoản rồi. {You} đăng nhập ở dưới nha.",
+  "menu.confirm": "Xác nhận bảng giá",
+  "menu.setupTitle": "Làm bảng giá cho tiệm",
+  "menu.setupMai": "{You} chọn giá cho tiệm nha. Khách sẽ gọi theo số, kiểu \"Number 3, please!\" đó. Ở màn hình chính {you} đổi lúc nào cũng được."
 }

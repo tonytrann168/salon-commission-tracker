@@ -3,6 +3,7 @@ import { MENU_CONFIG, MENU_PRESETS, MENU_TAGS, menuItems, parseItem } from '../m
 import type { MenuChoice, MenuItem, MenuTag } from '../menu';
 import { loadSave, writeSave } from '../save';
 import { el } from './dom';
+import { priceBoardIcon } from './menu-icon';
 import './menu-sheet.css';
 
 /**
@@ -11,7 +12,8 @@ import './menu-sheet.css';
  * carry it). Pretend money: it is what the client pays the salon; the wallet gets the tip.
  */
 
-export function createMenuSection(): HTMLElement {
+/** `onConfirm` (story 054): the first-game setup: a Confirm button saves the choice and marks the menu set up. */
+export function createMenuSection(options: { onConfirm?: () => void } = {}): HTMLElement {
   const section = el('section', 'results-section menu-settings');
   const limits = MENU_CONFIG.limits;
   let draft: MenuItem[] | null = null;
@@ -24,7 +26,10 @@ export function createMenuSection(): HTMLElement {
 
   function draw(): void {
     const current = loadSave().menu ?? { preset: MENU_CONFIG.default };
-    section.replaceChildren(el('h2', '', `📋 ${t('menu.sectionTitle')}`), el('p', 'setting-note', t('menu.sectionNote')));
+    const heading = el('h2', 'menu-heading');
+    heading.innerHTML = priceBoardIcon(28);
+    heading.append(t('menu.sectionTitle'));
+    section.replaceChildren(heading, el('p', 'setting-note', t('menu.sectionNote')));
     const presets = el('div', 'comfort-sizes menu-presets');
     presets.setAttribute('role', 'group');
     presets.setAttribute('aria-label', t('menu.sectionTitle'));
@@ -51,6 +56,7 @@ export function createMenuSection(): HTMLElement {
         list.append(row);
       });
       section.append(list);
+      if (options.onConfirm) section.append(confirmButton(() => true));
       return;
     }
     // The player's own menu: an editable list.
@@ -108,14 +114,30 @@ export function createMenuSection(): HTMLElement {
     status.setAttribute('aria-live', 'polite');
     const save = el('button', 'chat-button menu-save', t('menu.save'));
     save.type = 'button';
-    save.addEventListener('click', () => {
+    const saveDraft = (): boolean => {
       // Items without a name or with a price out of range are left out; at least one must stay.
       const clean = items.map((item) => parseItem(item, limits)).filter((item): item is MenuItem => item !== null);
-      if (clean.length < limits.minItems) return;
+      if (clean.length < limits.minItems) return false;
       choose({ preset: 'custom', items: clean });
       section.querySelector('.menu-status')?.replaceChildren(t('menu.saved'));
-    });
+      return true;
+    };
+    save.addEventListener('click', () => void saveDraft());
     section.append(editor, add, save, status);
+    if (options.onConfirm) section.append(confirmButton(saveDraft));
+  }
+
+  /** Story 054: Confirm (the first-game setup): keep the choice (my own menu is saved first) and go on. */
+  function confirmButton(saveFirst: () => boolean): HTMLButtonElement {
+    const b = el('button', 'chat-button menu-confirm', `✓ ${t('menu.confirm')}`);
+    b.type = 'button';
+    b.addEventListener('click', () => {
+      if (!saveFirst()) return;
+      const save = loadSave();
+      writeSave({ ...save, menu: save.menu ?? { preset: MENU_CONFIG.default }, menuConfirmed: true });
+      options.onConfirm?.();
+    });
+    return b;
   }
 
   draw();

@@ -27,3 +27,13 @@
 .menu-save { width: 100%; margin-top: 8px; }
 .menu-status:empty { display: none; }
 .chat-panel.compact .chat-menu-button { display: none; }
+
+/* Story 054: the price-board icon next to the words; the first-game setup screen; the home button. */
+.menu-heading { display: flex; align-items: center; gap: 8px; }
+.menu-heading .price-board-icon, .chat-menu-button .price-board-icon, .title-menu-board .price-board-icon { flex: none; }
+.chat-menu-button { display: inline-flex; align-items: center; gap: 6px; }
+.title-menu-board { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.menu-setup-title { display: flex; align-items: center; gap: 10px; font-size: 24px; }
+.menu-setup-mai { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+.menu-setup-mai p { margin: 0; font-size: 16px; line-height: 1.35; }
+.menu-confirm { width: 100%; min-height: 52px; margin-top: 12px; font-size: 18px; }

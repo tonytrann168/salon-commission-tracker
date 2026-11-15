@@ -28,3 +28,6 @@ html[data-contrast='high'] .account-link { color: #6b0f3c; }
 .account-sheet .account-status[data-kind='info'] { color: #1f4d33; background: #e3f6ea; border-color: #9ed6b2; }
 .account-sheet .account-status[data-kind='info']::before { content: '✉️'; }
 .account-sheet .feedback-actions .chat-button { white-space: nowrap; padding-inline: 8px; font-size: clamp(15px, 4.8vw, 18px); }
+/* The account suggestion and the season gift on the title stay inside the screen (they grew to their text's width). */
+.title-menu > .account-nudge, .title-menu > .season-gift { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
+.title-menu > .account-nudge .feedback-actions .chat-button, .title-menu > .season-gift .chat-button { min-width: 0; white-space: nowrap; padding-inline: 8px; font-size: clamp(15px, 4.8vw, 18px); }

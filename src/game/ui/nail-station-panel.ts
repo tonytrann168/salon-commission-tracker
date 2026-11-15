@@ -384,10 +384,23 @@ export function createNailStation(options: NailStationOptions): NailStation {
   // away so it never hides the paint). Moved with a transform only; off with reduced motion.
   const brush = el('div', 'station-brush');
   brush.setAttribute('aria-hidden', 'true');
-  brush.innerHTML = `<svg viewBox="0 0 40 80" width="30" height="60"><rect x="15" y="0" width="10" height="44" rx="4" fill="#3b2a33"/><rect x="14" y="40" width="12" height="12" rx="2" fill="#c9c2c6"/><path d="M14 52 H26 L22 76 Q20 80 18 76 Z" fill="var(--polish, #ff5c9a)" stroke="#5a2e43" stroke-width="1"/></svg>`;
-  const brushOn = (): boolean => (tool === 'polish' || tool === 'gradient') && design.base !== null && document.documentElement.dataset.motion !== 'reduce' && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const BRUSH_SVG = `<svg viewBox="0 0 40 80" width="30" height="60"><rect x="15" y="0" width="10" height="44" rx="4" fill="#3b2a33"/><rect x="14" y="40" width="12" height="12" rx="2" fill="#c9c2c6"/><path d="M14 52 H26 L22 76 Q20 80 18 76 Z" fill="var(--polish, #ff5c9a)" stroke="#5a2e43" stroke-width="1"/></svg>`;
+  // Story 054: clean-up shows its own tool where the finger is: a cotton pad for Rub (centred on the touch, so the
+  // player sees what is being wiped), a cotton swab for Clean edges (its tip at the touch point).
+  const PAD_SVG = `<svg viewBox="0 0 60 60" width="44" height="44"><circle cx="30" cy="30" r="26" fill="#fffdfa" stroke="#d9cfc6" stroke-width="2"/><circle cx="30" cy="30" r="19" fill="none" stroke="#efe6dd" stroke-width="2" stroke-dasharray="3 4"/><circle cx="30" cy="30" r="9" fill="none" stroke="#efe6dd" stroke-width="2" stroke-dasharray="2 4"/></svg>`;
+  const SWAB_SVG = `<svg viewBox="0 0 40 80" width="30" height="60"><rect x="18" y="4" width="4" height="60" rx="2" fill="#7ec8e3"/><ellipse cx="20" cy="70" rx="7" ry="9" fill="#fffdfa" stroke="#d9cfc6" stroke-width="1.5"/><ellipse cx="20" cy="6" rx="6" ry="7" fill="#fffdfa" stroke="#d9cfc6" stroke-width="1.5"/></svg>`;
+  let brushKind: 'brush' | 'pad' | 'swab' | null = null;
+  const brushOn = (): boolean => ((tool === 'polish' || tool === 'gradient') && design.base !== null || tool === 'cleanup' || tool === 'tidy') && document.documentElement.dataset.motion !== 'reduce' && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const setBrushKind = (): void => {
+    const kind = tool === 'cleanup' ? 'pad' : tool === 'tidy' ? 'swab' : 'brush';
+    if (kind === brushKind) return;
+    brushKind = kind;
+    brush.dataset.kind = kind;
+    brush.innerHTML = kind === 'pad' ? PAD_SVG : kind === 'swab' ? SWAB_SVG : BRUSH_SVG;
+  };
+  setBrushKind();
   const moveBrush = (x: number, y: number): void => {
-    brush.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(28deg)`;
+    brush.style.transform = brushKind === 'pad' ? `translate3d(${x}px, ${y}px, 0)` : `translate3d(${x}px, ${y}px, 0) rotate(28deg)`;
   };
   touch.append(brush);
   let strokeStart: NailDesign | null = null;
@@ -401,6 +414,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     if (tool === 'cleanup' || tool === 'remover' || tool === 'tidy') fixActed = true;
     if (brushOn()) {
       if (phase === 'down') {
+        setBrushKind();
         brush.style.setProperty('--polish', paletteColor(design.base)?.hex ?? '#ff5c9a');
         brush.classList.add('show');
       }

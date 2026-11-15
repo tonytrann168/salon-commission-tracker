@@ -1,6 +1,7 @@
 import { t } from '../i18n';
 import { createBestieGreeting } from './bestie-panel';
 import { companionName } from '../companion';
+import { priceBoardIcon } from './menu-icon';
 import './chat-panel.css';
 import './level-picker.css';
 
@@ -8,7 +9,7 @@ import './level-picker.css';
  * Story 018: the title menu is plain HTML, kept apart from the PixiJS title scene so it shows before PixiJS loads.
  */
 /** DOM menu over the title scene: Start and Settings (story 008: in the interface language). Returns the element so the caller can remove it. */
-export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void, onPhrasebook: () => void, onShop?: () => void, onProfile?: () => void, onCompanion?: () => void, cue = false, extras: { tagline?: string; language?: 'en' | 'vi'; onLanguage?: (language: 'en' | 'vi') => void } = {}): HTMLElement {
+export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettings: () => void, onPhrasebook: () => void, onShop?: () => void, onProfile?: () => void, onCompanion?: () => void, cue = false, extras: { tagline?: string; language?: 'en' | 'vi'; onLanguage?: (language: 'en' | 'vi') => void; onMenu?: () => void } = {}): HTMLElement {
   const menu = document.createElement('div');
   menu.className = 'title-menu';
   const start = document.createElement('button');
@@ -42,7 +43,17 @@ export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettin
     button.addEventListener('click', onClick);
     extra.append(button);
   }
-  menu.append(createBestieGreeting(), start, row, ...(extra.childElementCount > 0 ? [extra] : []));
+  // Story 054: the salon menu, with its price-board icon, to view or edit any time.
+  const menuRow: HTMLElement[] = [];
+  if (extras.onMenu) {
+    const menuButton = document.createElement('button');
+    menuButton.type = 'button';
+    menuButton.className = 'chat-button secondary title-menu-board';
+    menuButton.innerHTML = `${priceBoardIcon(26)}<span>${t('menu.sectionTitle')}</span>`;
+    menuButton.addEventListener('click', extras.onMenu);
+    menuRow.push(menuButton);
+  }
+  menu.append(createBestieGreeting(), start, row, ...(extra.childElementCount > 0 ? [extra] : []), ...menuRow);
   // Story 021: tap the companion (drawn on the canvas above) to spend a moment together.
   if (onCompanion) {
     const spot = document.createElement('button');

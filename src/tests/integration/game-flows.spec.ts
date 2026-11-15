@@ -407,6 +407,44 @@ for (const lang of LANGS) {
       expect(await page.evaluate(() => localStorage.getItem('salon.companionVoice'))).toBe('off');
     });
 
+    test('menu first (story 054): the salon menu is set up once before the first client; a price-board button on home; a cotton pad when cleaning', async ({ page }) => {
+      await seed(page, lang, { menuConfirmed: false, save: { xp: 100, appointments: 3, badges: ['first-client'], ...dailyWith('ana') } });
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      // The setup step: the companion's line, the numbered menu, Confirm.
+      await expect(page.locator('.menu-setup-title')).toContainText(lang === 'vi' ? 'Làm bảng giá cho tiệm' : 'Set up your salon menu');
+      await expect(page.locator('.menu-setup-title svg.price-board-icon')).toHaveCount(1);
+      await expect(page.locator('.menu-setup-mai')).toContainText('Number 3');
+      await page.locator('.menu-presets [data-preset=basic]').click();
+      await expect(page.locator('.menu-setup .menu-item')).toHaveCount(7);
+      expect(await noOverflow(page)).toBe(true);
+      await page.locator('.menu-confirm').click();
+      await expect(page.locator('.picker-daily')).toBeVisible();
+      const save = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}'));
+      expect(save).toMatchObject({ menuConfirmed: true, menu: { preset: 'basic' } });
+      // Only once: the next Start goes straight to the clients.
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await expect(page.locator('.picker-daily')).toBeVisible();
+      await expect(page.locator('.menu-setup')).toHaveCount(0);
+      // Home: the price-board button views and edits the menu any time.
+      await page.goto('/');
+      await expect(page.locator('.title-menu-board svg.price-board-icon')).toHaveCount(1);
+      await page.locator('.title-menu-board').click();
+      await expect(page.locator('.menu-setup .menu-presets [data-preset=basic]')).toHaveAttribute('aria-pressed', 'true');
+      await page.locator('.menu-setup > .chat-button.secondary').click();
+      // In the appointment: the menu button has the icon; Clean shows a cotton pad under the finger.
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await expect(page.locator('.chat-menu-button svg.price-board-icon')).toHaveCount(1);
+      await page.locator('.chat-input').fill('Hello! Please sit down.');
+      await page.locator('.chat-form button[type=submit]').click();
+      await page.locator('.station-controls .station-clean-mode').click();
+      await page.locator('.station-touch').evaluate((node) => { const b = node.getBoundingClientRect(); node.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 9, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2, buttons: 1 })); });
+      await expect(page.locator('.station-brush.show[data-kind=pad]')).toHaveCount(1);
+    });
+
     test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page, { replies: ['Hi!', 'Red, please. Oh, can you fix that edge? There is polish on my skin.'] });

@@ -126,3 +126,7 @@ html[data-motion='reduce'] .station-controls .station-fix.pulse { animation: non
 .station-row .station-tidy .tab-text, .station-row .station-tool .tab-text { display: block !important; font: 700 13px/1.15 system-ui, sans-serif; white-space: nowrap; }
 .station-row .station-tool:has(.tab-text) { flex: none; flex-direction: column; gap: 1px; min-width: 60px; min-height: 48px; padding: 3px 8px; border-radius: 14px; border: 2px solid #ecd3de; background: #fff; }
 .station-row .station-tool[aria-pressed='true'] { border-color: #ff5c9a; background: #ffe8f1; }
+
+/* Story 054: the cotton pad sits centred on the finger (the swab and the brush keep their tip at the touch point). */
+.station-brush[data-kind='pad'] { left: -22px; top: -22px; width: 44px; height: 44px; transform-origin: 22px 22px; }
+.station-brush[data-kind='pad'] svg { filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2)); }
