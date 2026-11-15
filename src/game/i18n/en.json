@@ -703,5 +703,9 @@
   "welcome.guestNote": "Your progress stays on this phone. You can make an account later and keep it all.",
   "chat.perfect": "Perfect line!",
   "chat.progress": "How far the appointment has come",
-  "welcome.hello": "Welcome to"
+  "welcome.hello": "Welcome to",
+  "progress.stars": "Stars",
+  "progress.coins": "Coins",
+  "progress.tips": "Tips",
+  "progress.streakUp": "🔥 Streak {from} → {to}!"
 }

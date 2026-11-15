@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import juiceJson from '../game/config/juice.json';
-import { JUICE_CONFIG, appointmentProgress, isPerfectLine, parseJuiceConfig } from '../game/juice';
+import { JUICE_CONFIG, appointmentProgress, countUpValue, isPerfectLine, parseJuiceConfig } from '../game/juice';
 import { MASCOT_EXPRESSIONS } from '../game/mascot/mascot';
 import { eyes, mouth, moodExtras } from '../game/mascot/shared';
 import { AUDIO_CONFIG } from '../game/audio';
@@ -56,5 +56,19 @@ describe('the companion faces', () => {
     const face = (e: (typeof MASCOT_EXPRESSIONS)[number]) => eyes(e, 50, 56, 11, 4.2) + mouth(e, 50, 72, 7) + moodExtras(e);
     expect(face('sad')).not.toBe(face('idle'));
     expect(face('sad')).not.toBe(face('thinking'));
+  });
+});
+
+describe('the results count-up (057c)', () => {
+  it('starts at 0, eases up in whole numbers, never passes the target, and is exact at the end', () => {
+    const d = JUICE_CONFIG.results.countMs;
+    expect(countUpValue(25, 0, d)).toBe(0);
+    const values = [0.1, 0.3, 0.5, 0.7, 0.9].map((f) => countUpValue(25, d * f, d));
+    expect(values.every((v) => Number.isInteger(v) && v >= 0 && v <= 25)).toBe(true);
+    expect([...values].sort((a, b) => a - b)).toEqual(values);
+    // Eased out: more than half way by half time.
+    expect(countUpValue(100, d / 2, d)).toBeGreaterThan(50);
+    expect(countUpValue(25, d, d)).toBe(25);
+    expect(countUpValue(0, d / 2, d)).toBe(0);
   });
 });

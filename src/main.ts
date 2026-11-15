@@ -80,8 +80,6 @@ import { CORNER_SEEN_KEY, shouldCue } from './game/corner';
 import { SEASON_KEY, activeSeason, giftDue, openGift, parseSeasonState, seasonOverride, seasonPalette, seasonStickers } from './game/seasons';
 import type { Season } from './game/seasons';
 
-/** Story 057b: the streak sound waits for the results' stars sound to finish. */
-const STREAK_SOUND_DELAY_MS = 900;
 
 /** 057a part 2: the welcome front page was answered on this phone (an account, or play without one). */
 const WELCOME_KEY = 'salon.welcomeDone';
@@ -653,10 +651,9 @@ async function boot(): Promise<void> {
       writeSave(pathNode === undefined ? update.save : { ...update.save, pathDone: finishNode(update.save.pathDone ?? 0, pathNode) });
       // Story 025: signed in → the appointment's progress goes to the account now.
       void getAccount()?.appointmentDone();
-      // Story 057b: the streak moved on today: its own little sound, after the stars.
-      if (update.played?.newDay) window.setTimeout(() => emitSound('streak'), STREAK_SOUND_DELAY_MS);
       const items = celebrationsFor(update);
-      const panel = createProgressPanel(update);
+      // Story 057c: the rewards card counts up at the top of the results (its streak chip has the streak sound).
+      const panel = createProgressPanel(update, score.stars);
       // Only while the results are still showing (the player may already have tapped Next).
       // Story 050: her nails' polaroid and the payment have the first moment; badges and rank-ups come once the payment
       // card is done (the results lose their "paying" class), only while the results are still showing.

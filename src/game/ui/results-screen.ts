@@ -217,11 +217,15 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
       ? [createPolaroid({ photo, band, caption: t('results.photoCaption', { name: clientName, date: new Date().toLocaleDateString(getLanguage() === 'vi' ? 'vi-VN' : 'en-US', { day: 'numeric', month: 'short' }) }), ...(band === 'tough' ? { note: t('results.photoTough') } : {}) })]
       : [];
     if (photo) options.onPhoto?.(photo, score.stars);
+    // Story 057c: an extra marked `results-top` (the rewards count-up) comes first, before the polaroid.
+    const extraNodes = extras ? extras(grading, score) : [];
+    const top = extraNodes.filter((node) => node.classList.contains('results-top'));
     show(
+      ...top,
       ...polaroid,
       payment,
       ...notes,
-      ...(extras ? extras(grading, score) : []),
+      ...extraNodes.filter((node) => !top.includes(node)),
       section(t('results.reviewTitle', { name: clientName }), translatableReview(grading.review, translations, helpLanguage === 'full')),
       section(t('results.skillsTitle'), ...SKILL_KEYS.map((key) => scoreRow(t(`results.skill.${key}`), grading.skills[key]))),
       section(

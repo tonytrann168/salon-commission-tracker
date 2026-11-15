@@ -510,6 +510,32 @@ for (const lang of LANGS) {
       await expect(page.locator('.shop-soon-tile').first()).toContainText(lang === 'vi' ? 'Sắp có' : 'Soon');
     });
 
+    test('results count up (story 057c): the rewards card comes first; a tap shows stars, XP, coins and tips; the streak moves 0 to 1', async ({ page }) => {
+      test.setTimeout(120_000);
+      await seed(page, lang, { save: { xp: 100, appointments: 3, badges: ['first-client'], ...dailyWith('ana') } });
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.path-node.current').click();
+      await finishAppointment(page);
+      const card = page.locator('.chat-results .results-rewards');
+      await expect(card).toBeVisible();
+      // First in the results, before the polaroid and the payment.
+      expect(await page.locator('.chat-results :is(.results-rewards, .polaroid, .payment-card)').first().evaluate((n) => n.classList.contains('results-rewards'))).toBe(true);
+      await card.click();
+      await expect(card).toHaveClass(/done/);
+      const save = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}'));
+      await expect(card.locator('.rewards-stars .rewards-value')).toHaveText(/^[1-5]\/5$/);
+      await expect(card.locator('.rewards-xp .rewards-value')).toHaveText(`+${save.xp - 100}`);
+      await expect(card.locator('.rewards-tips .rewards-value')).toHaveText(`+$${save.wallet}`);
+      await expect(card.locator('.rewards-coins .rewards-value')).toHaveText(`+${save.coins ?? 0}`);
+      await expect(card.locator('.rewards-streak.shown')).toHaveText(lang === 'vi' ? '🔥 Chuỗi 0 → 1 ngày!' : '🔥 Streak 0 → 1!');
+      // The four tiles fit in one row at 320 px.
+      const row = await card.locator('.rewards-tile').evaluateAll((tiles) => tiles.map((t) => t.getBoundingClientRect()).map((r) => ({ top: Math.round(r.top), right: r.right })));
+      expect(new Set(row.map((r) => r.top)).size).toBe(1);
+      expect(Math.max(...row.map((r) => r.right))).toBeLessThanOrEqual(320);
+    });
+
     test('juice (story 057b): a perfect line pops with confetti, the appointment bar fills to the end, the gift bursts coins, the compact language switch leaves a gap', async ({ page }) => {
       test.setTimeout(120_000);
       await seed(page, lang, { save: { xp: 100, appointments: 3, coins: 20, badges: ['first-client'], ...dailyWith('ana') } });

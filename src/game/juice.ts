@@ -9,6 +9,8 @@ export interface JuiceConfig {
   perfect: { minWords: number; showMs: number };
   bursts: { coins: number; confetti: number; ms: number };
   reactMs: number;
+  /** Story 057c: the results count-up. */
+  results: { countMs: number; streakDelayMs: number };
 }
 
 const fail = (message: string): never => {
@@ -24,6 +26,7 @@ export function parseJuiceConfig(raw: unknown): JuiceConfig {
     perfect: { minWords: whole(c.perfect?.minWords, 'perfect.minWords', 1, 20), showMs: whole(c.perfect?.showMs, 'perfect.showMs', 300, 10_000) },
     bursts: { coins: whole(c.bursts?.coins, 'bursts.coins', 0, 40), confetti: whole(c.bursts?.confetti, 'bursts.confetti', 0, 60), ms: whole(c.bursts?.ms, 'bursts.ms', 200, 3000) },
     reactMs: whole(c.reactMs, 'reactMs', 300, 10_000),
+    results: { countMs: whole(c.results?.countMs, 'results.countMs', 100, 5000), streakDelayMs: whole(c.results?.streakDelayMs, 'results.streakDelayMs', 0, 10_000) },
   };
 }
 
@@ -44,4 +47,12 @@ export function appointmentProgress(phaseIndex: number, phaseCount: number, line
 export function isPerfectLine(line: string, check: { needsCorrection: boolean }, helped: boolean, config: JuiceConfig = JUICE_CONFIG): boolean {
   if (helped || check.needsCorrection) return false;
   return line.trim().split(/\s+/).filter((word) => /[a-z]/i.test(word)).length >= config.perfect.minWords;
+}
+
+/** Story 057c: a number counting up to `target` over `durationMs` (eased out; whole numbers; exact at the end). */
+export function countUpValue(target: number, elapsedMs: number, durationMs: number): number {
+  if (elapsedMs >= durationMs || durationMs <= 0) return target;
+  if (elapsedMs <= 0) return 0;
+  const t = elapsedMs / durationMs;
+  return Math.min(target, Math.round(target * (1 - (1 - t) ** 3)));
 }

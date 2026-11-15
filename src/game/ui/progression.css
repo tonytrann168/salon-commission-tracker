@@ -46,3 +46,21 @@
 .shop-soon-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 2px dashed #e5cbd7; border-radius: 14px; background: #fff7fa; text-align: center; font-size: 15px; color: #5b4a53; }
 .shop-soon-icon { font-size: 30px; filter: grayscale(0.7); opacity: 0.7; }
 .shop-soon-lock { font-size: 14px; }
+
+/* Story 057c: the rewards card at the top of the results: four tiles in one row (320 px), the streak chip. */
+.results-rewards { display: flex; flex-direction: column; gap: 10px; cursor: default; }
+.results-rewards.counting { cursor: pointer; }
+.rewards-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.rewards-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 14px; background: #fff; box-shadow: 0 0 0 2px #f6d5e3; min-width: 0; }
+.rewards-icon { display: grid; place-items: center; height: 24px; font: 800 20px/1 system-ui, sans-serif; }
+.rewards-stars .rewards-icon { color: #f2b632; font-size: 24px; }
+.rewards-tips .rewards-icon { color: #2f7d4f; }
+.rewards-value { font: 800 19px/1.1 system-ui, sans-serif; color: #3b2a33; font-variant-numeric: tabular-nums; }
+.rewards-coins .rewards-value { color: #a8700a; }
+.rewards-tips .rewards-value { color: #2f7d4f; }
+.rewards-label { font-size: 13px; color: #6b5560; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rewards-streak { align-self: center; margin: 0; padding: 6px 14px; border-radius: 999px; background: #fff3e6; color: #b3470b; font: 800 17px/1.2 system-ui, sans-serif; opacity: 0; transform: scale(0.6); }
+.rewards-streak.shown { opacity: 1; transform: scale(1); transition: transform 0.35s cubic-bezier(0.34, 1.7, 0.55, 1), opacity 0.2s; }
+.rewards-skip { margin: 0; text-align: center; font-size: 14px; color: #8a7480; }
+@media (prefers-reduced-motion: reduce) { .rewards-streak.shown { transition: none; } }
+html[data-motion='reduce'] .rewards-streak.shown { transition: none; }
