@@ -631,5 +631,10 @@
   "menu.tag.gems": "Đính đá",
   "menu.tag.art": "Hình dán",
   "menu.tag.extensions": "Móng dài",
-  "menu.tag.other": "Khác"
+  "menu.tag.other": "Khác",
+  "settings.speechSpeed": "Tốc độ nói của khách",
+  "settings.speechSpeedNote": "Khách nói nhanh hay chậm, và chữ hiện ra nhanh hay chậm.",
+  "settings.speed.slow": "Chậm",
+  "settings.speed.normal": "Vừa",
+  "settings.speed.fast": "Nhanh"
 }

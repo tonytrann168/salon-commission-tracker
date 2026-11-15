@@ -1,6 +1,7 @@
 {
   "_note": "Story 044: the salon menu (pretend money, shown to the client and rung up at checkout; the wallet still gets only the tip). presets: Basic / Mid / Fancy price sets; Mid keeps the old prices. tag: what the item is, so her order can be found on any menu (manicure, fullSet = both hands, pedicure, ombre, gems, art, extensions = long nails, other). limits: the player's own menu.",
   "default": "mid",
+  "pricey": { "_note": "Story 045: a price-sensitive client (client data) may remark kindly on a total over this many dollars; prices never change mood, stars or tips.", "over": 45 },
   "limits": { "minItems": 1, "maxItems": 12, "minPrice": 1, "maxPrice": 200, "maxName": 30 },
   "presets": {
     "basic": [

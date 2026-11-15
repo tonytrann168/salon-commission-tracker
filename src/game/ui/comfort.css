@@ -17,3 +17,8 @@ html[data-contrast='high'] :focus-visible { outline: 3px solid #000 !important; 
 .comfort-section { display: flex; flex-direction: column; gap: 10px; }
 .comfort-sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .comfort-sizes .chat-button[aria-pressed='true'] { background: #ff5c9a; color: #fff; }
+
+/* Story 045: the speech speed choices sit under their label. */
+.speed-row { flex-direction: column; align-items: stretch; gap: 6px; }
+.speed-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.speed-choices .chat-button { min-height: 48px; }

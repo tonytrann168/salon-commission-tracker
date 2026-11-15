@@ -20,6 +20,8 @@ export interface MenuItem {
 
 export interface MenuConfig {
   default: MenuPreset;
+  /** Story 045: a price-sensitive client may remark on a total over this (never a mood or tip change). */
+  pricey: { over: number };
   limits: { minItems: number; maxItems: number; minPrice: number; maxPrice: number; maxName: number };
   presets: Record<MenuPreset, MenuItem[]>;
 }
@@ -65,7 +67,8 @@ export function parseMenuConfig(raw: unknown): MenuConfig {
     presets[preset] = list.map((item, i) => parseItem(item, limits) ?? fail(`"presets.${preset}[${i}]" is not a valid item`));
   }
   const def = MENU_PRESETS.find((p) => p === raw.default) ?? fail('"default" must be a preset');
-  return { default: def, limits, presets };
+  const over = isRecord(raw.pricey) && typeof raw.pricey.over === 'number' && raw.pricey.over > 0 ? raw.pricey.over : fail('"pricey.over" must be a positive number');
+  return { default: def, pricey: { over }, limits, presets };
 }
 
 export const MENU_CONFIG: MenuConfig = parseMenuConfig(menuJson);
@@ -118,8 +121,8 @@ export function orderFor(request: NailRequest | undefined, items: readonly MenuI
 export const orderTotal = (order: readonly OrderLine[]): number => order.reduce((sum, line) => sum + line.item.price, 0);
 
 /** What the AI client is told about the menu and her order (English; the names are cleaned). */
-export function menuPrompt(items: readonly MenuItem[], order: readonly OrderLine[]): string {
+export function menuPrompt(items: readonly MenuItem[], order: readonly OrderLine[], priceSensitive = false, config: MenuConfig = MENU_CONFIG): string {
   const list = items.map((item, i) => `${i + 1}. ${item.name.en}: $${item.price}`).join('\n');
   const mine = order.map((line) => `number ${line.number} (${line.item.name.en})`).join(' and ');
-  return `THE SALON MENU (on the wall; prices in dollars)\n${list}\n- Order by number, the way regulars do (for example "Number ${order[0]?.number ?? 1}, please."). Your order today: ${mine}. At checkout the total is $${orderTotal(order)} plus any tip. If the stylist rings up a different price, politely ask about it.`;
+  return `THE SALON MENU (on the wall; prices in dollars)\n${list}\n- Order by number, the way regulars do (for example "Number ${order[0]?.number ?? 1}, please."). Your order today: ${mine}. At checkout the total is $${orderTotal(order)} plus any tip. If the stylist rings up a different price, politely ask about it.${priceSensitive && orderTotal(order) > config.pricey.over ? `\n- You watch your money and $${orderTotal(order)} feels a bit high. At checkout you may say so once, kindly and in your own words (for example "Hmm, that's a bit pricey."). It does not change your mood: report moodDelta for how the stylist treats you, as usual.` : ''}`;
 }

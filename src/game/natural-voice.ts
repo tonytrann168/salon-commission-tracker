@@ -36,7 +36,7 @@ export function withNaturalVoice(io: VoiceIO, host: NaturalVoiceHost, maxCache: 
   const player = (): AudioLike => (audio ??= host.createAudio());
 
   const fetchAudio = async (text: string, options: SpeakOptions): Promise<string | null> => {
-    const key = `${options.clientId}|${options.emotion ?? 'neutral'}|${options.level}|${text}`;
+    const key = `${options.clientId}|${options.emotion ?? 'neutral'}|${options.level}|${options.speed ?? 'normal'}|${text}`;
     const cached = cache.get(key);
     if (cached) return cached;
     let response: Response;
@@ -45,7 +45,7 @@ export function withNaturalVoice(io: VoiceIO, host: NaturalVoiceHost, maxCache: 
       response = await host.fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text, clientId: options.clientId, level: options.level, ...(options.emotion ? { emotion: options.emotion } : {}) }),
+        body: JSON.stringify({ text, clientId: options.clientId, level: options.level, ...(options.emotion ? { emotion: options.emotion } : {}), ...(options.speed && options.speed !== 'normal' ? { speed: options.speed } : {}) }),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       body = (await response.json()) as typeof body;

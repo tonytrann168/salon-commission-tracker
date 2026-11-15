@@ -1,7 +1,8 @@
 import { getClient } from '../../game/clients/roster';
 import { ENGLISH_LEVELS } from '../../game/types';
 import type { EnglishLevel } from '../../game/types';
-import { VOICE_CONFIG } from '../../game/voice';
+import { SPEECH_SPEEDS, VOICE_CONFIG } from '../../game/voice';
+import type { SpeechSpeed } from '../../game/voice';
 import { VOICE_CAST, azureVoiceFor, isEmotion } from '../../game/voice-cast';
 import type { Emotion, VoiceGender } from '../../game/voice-cast';
 
@@ -22,6 +23,8 @@ export interface TtsRequest {
   lang: string;
   emotion: Emotion;
   level: EnglishLevel;
+  /** Story 045: the Speech speed setting. */
+  speed: SpeechSpeed;
 }
 
 export type TtsParse = { ok: true; value: TtsRequest } | { ok: false; message: string };
@@ -30,7 +33,8 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 
 export function parseTtsRequest(body: unknown): TtsParse {
   if (!isRecord(body)) return { ok: false, message: 'Body must be a JSON object.' };
-  const { text, clientId, companion, emotion, level } = body;
+  const { text, clientId, companion, emotion, level, speed } = body;
+  if (speed !== undefined && !SPEECH_SPEEDS.some((s) => s === speed)) return { ok: false, message: 'speed is not valid.' };
   if (typeof text !== 'string' || text.trim() === '' || text.length > VOICE_CAST.limits.maxChars) return { ok: false, message: `text must be 1-${VOICE_CAST.limits.maxChars} characters.` };
   const knownLevel = level === undefined ? 'some' : ENGLISH_LEVELS.find((l) => l === level);
   if (!knownLevel) return { ok: false, message: 'level is not valid.' };
@@ -50,7 +54,7 @@ export function parseTtsRequest(body: unknown): TtsParse {
   } else {
     return { ok: false, message: 'The speaker must be a client (clientId) or the companion.' };
   }
-  return { ok: true, value: { text: text.trim(), voice, lang, emotion: isEmotion(emotion) ? emotion : 'neutral', level: knownLevel } };
+  return { ok: true, value: { text: text.trim(), voice, lang, emotion: isEmotion(emotion) ? emotion : 'neutral', level: knownLevel, speed: (speed as SpeechSpeed | undefined) ?? 'normal' } };
 }
 
 const escapeXml = (text: string): string => text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c] as string);
@@ -58,7 +62,7 @@ const escapeXml = (text: string): string => text.replace(/[&<>"']/g, (c) => ({ '
 /** The SSML for one line. English neural voices get the emotion as an express-as style; the pace follows the level. */
 export function buildSsml(request: TtsRequest): string {
   const sound = VOICE_CAST.emotions[request.emotion];
-  const percent = Math.round((VOICE_CONFIG.rateByLevel[request.level] * sound.rate - 1) * 100);
+  const percent = Math.round((VOICE_CONFIG.rateByLevel[request.level] * sound.rate * VOICE_CONFIG.speechSpeed[request.speed] - 1) * 100);
   const prosody = `<prosody rate="${percent >= 0 ? '+' : ''}${percent}%">${escapeXml(request.text)}</prosody>`;
   const styled = request.lang === 'en-US' ? `<mstts:express-as style="${sound.style}" styledegree="${sound.degree}">${prosody}</mstts:express-as>` : prosody;
   return `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="${request.lang}"><voice name="${request.voice}">${styled}</voice></speak>`;

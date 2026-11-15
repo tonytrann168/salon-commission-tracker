@@ -146,7 +146,7 @@ export function buildSystemPrompt(regular: ClientPersona, level: EnglishLevel, s
 PERSONA
 - What ${client.name} wants: ${client.wants}
 - Personality: ${client.personality}
-- How hard you are: ${(difficultyJson as Record<string, { pushback: string }>)[client.difficulty]?.pushback ?? ''}${scenario ? `\n- Today's situation: ${scenarioPrompt(scenario, visits)} You opened with: "${scenario.openingLine}"` : ''}${client.nailRequest ? `\n- Your nails: you want ${describeRequest(client.nailRequest)}. Say what you want during the consultation when asked (or if the stylist forgets to ask, mention it).` : ''}${menu ? `\n\n${menuPrompt(menu.items, menu.order)}` : ''}
+- How hard you are: ${(difficultyJson as Record<string, { pushback: string }>)[client.difficulty]?.pushback ?? ''}${scenario ? `\n- Today's situation: ${scenarioPrompt(scenario, visits)} You opened with: "${scenario.openingLine}"` : ''}${client.nailRequest ? `\n- Your nails: you want ${describeRequest(client.nailRequest)}. Say what you want during the consultation when asked (or if the stylist forgets to ask, mention it).` : ''}${menu ? `\n\n${menuPrompt(menu.items, menu.order, client.priceSensitive === true)}` : ''}
 
 STYLE
 - Reply as ${client.name} speaking aloud: 1-3 short, natural sentences. No stage directions, no narration, no emojis.

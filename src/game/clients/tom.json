@@ -3,6 +3,7 @@
   "name": "Tom",
   "pronoun": "he",
   "difficulty": "hard",
+  "priceSensitive": true,
   "types": [
     "price-booking",
     "rude-impatient"

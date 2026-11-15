@@ -1,6 +1,6 @@
 // npm run smoke:api — calls each server function once against the real Claude API and prints pass/fail.
 // Reads ANTHROPIC_API_KEY from the environment or src/.env.local (never printed). Skips cleanly when there is no key.
-// Each run spends a little API credit (twelve short calls).
+// Each run spends a little API credit (a dozen or so short calls).
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer, loadEnv } from 'vite';
@@ -20,6 +20,8 @@ const { handleGradeAppointment } = await vite.ssrLoadModule('/server/handlers/gr
 const { DEFAULT_CLIENT } = await vite.ssrLoadModule('/game/clients/default-client.ts');
 const { handleBestie } = await vite.ssrLoadModule('/server/handlers/bestie.ts');
 const { handleCorrections } = await vite.ssrLoadModule('/server/handlers/corrections.ts');
+const { MENU_CONFIG, orderFor } = await vite.ssrLoadModule('/game/menu.ts');
+const { getClient } = await vite.ssrLoadModule('/game/clients/roster.ts');
 
 const transcript = [
   { role: 'client', content: DEFAULT_CLIENT.openingLine },
@@ -94,6 +96,20 @@ const checks = [
     (b) => typeof b.reply === 'string' && !/\b(fuck|shit|bitch|slut|retard)/i.test(b.reply),
     (b) => `"${b.reply}" mood ${b.moodDelta >= 0 ? '+' : ''}${b.moodDelta}`],
 ];
+
+// Story 045 (overseer): with a numbered menu, asked what she wants, she orders by a number that is on the menu.
+{
+  const items = MENU_CONFIG.presets.mid;
+  const ana = getClient('ana');
+  const order = orderFor(ana.nailRequest, items).map((line) => line.number);
+  const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen'];
+  const numbersIn = (text) => [...text.matchAll(/(?:number|#|no\.)\s*(\d+|[a-z]+)/gi)].map((m) => (/^\d+$/.test(m[1]) ? Number(m[1]) : words.indexOf(m[1].toLowerCase()))).filter((n) => n >= 0);
+  checks.push(['client-turn with a menu: she orders by a number on it', () => handleClientTurn({
+      transcript: [{ role: 'client', content: ana.openingLine }, { role: 'player', content: 'Hello! Here is our menu on the wall. Which number would you like today?' }],
+      phase: 'consultation', mood: 60, level: 'some', clientId: 'ana', menu: { items, order } }, env, fetch),
+    (b) => typeof b.reply === 'string' && numbersIn(b.reply).length > 0 && numbersIn(b.reply).every((n) => n >= 1 && n <= items.length),
+    (b) => `"${b.reply}" numbers ${JSON.stringify(numbersIn(b.reply))} (menu has ${items.length})`]);
+}
 
 // Story 037: natural voices, only when the Azure Speech env vars are set locally (skipped otherwise).
 if (azureConfigured(env)) {

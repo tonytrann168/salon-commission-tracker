@@ -73,6 +73,7 @@ export function parseClient(raw: unknown, file: string): ClientPersona {
     moodSensitivity: { up: factor(sensitivity.up, 'up'), down: factor(sensitivity.down, 'down') },
     openingLine: text('openingLine', 300),
     ...(nailRequest ? { nailRequest } : {}),
+    ...(raw.priceSensitive === true ? { priceSensitive: true } : raw.priceSensitive === undefined || raw.priceSensitive === false ? {} : fail('"priceSensitive" must be true or false')),
   };
 }
 

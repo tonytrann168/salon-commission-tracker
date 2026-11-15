@@ -65,3 +65,18 @@ describe('the client hears the menu', () => {
     expect(parsed.ok && parsed.value.menu?.order[0]?.item.name.en).toBe('Manicure');
   });
 });
+
+describe('a price-sensitive client (story 045, overseer on 044)', () => {
+  it('may remark kindly on a high total; prices never change her mood; others hear nothing about it', () => {
+    const big = orderFor({ ...plain, hands: 2, gems: 'few', gradient: 'yes' }, MENU_CONFIG.presets.fancy);
+    expect(orderTotal(big)).toBeGreaterThan(MENU_CONFIG.pricey.over);
+    expect(menuPrompt(MENU_CONFIG.presets.fancy, big, true)).toContain("a bit pricey");
+    expect(menuPrompt(MENU_CONFIG.presets.fancy, big, true)).toContain('It does not change your mood');
+    expect(menuPrompt(MENU_CONFIG.presets.fancy, big, false)).not.toContain('pricey');
+    const small = orderFor(plain, MENU_CONFIG.presets.basic);
+    expect(menuPrompt(MENU_CONFIG.presets.basic, small, true)).not.toContain('pricey');
+    expect(getClient('brenda')!.priceSensitive).toBe(true);
+    expect(getClient('ana')!.priceSensitive).toBeUndefined();
+    expect(buildSystemPrompt(getClient('tom')!, 'some', undefined, undefined, { items: MENU_CONFIG.presets.fancy, order: orderFor(getClient('tom')!.nailRequest, MENU_CONFIG.presets.fancy) })).toContain('pricey');
+  });
+});

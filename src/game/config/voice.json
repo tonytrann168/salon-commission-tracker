@@ -68,6 +68,7 @@
     "preferredVoices": []
   },
   "listenTimeoutMs": 12000,
+  "speechSpeed": { "_note": "Story 045: the Speech speed setting multiplies the client's voice rate (browser and Azure) and how fast her text appears.", "slow": 0.8, "normal": 1, "fast": 1.2 },
   "pronunciation": {
     "longWordLetters": 6,
     "longWordTypos": 1

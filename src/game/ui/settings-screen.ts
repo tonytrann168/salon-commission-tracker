@@ -3,7 +3,8 @@ import { applyDocumentLanguage, getLanguage, t } from '../i18n';
 import { loadAudioSettings, saveAudioSettings } from '../audio';
 import type { AudioSettings } from '../audio';
 import { LEARNING_CONFIG } from '../learning/corrections';
-import { getPlayerName, setPlayerName, PLAYER_NAME_MAX, getClientVoiceEnabled, setClientVoiceEnabled, getVoiceAutoSend, setVoiceAutoSend, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, chooseEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
+import { SPEECH_SPEEDS } from '../voice';
+import { getSpeechSpeed, setSpeechSpeed, getPlayerName, setPlayerName, PLAYER_NAME_MAX, getClientVoiceEnabled, setClientVoiceEnabled, getVoiceAutoSend, setVoiceAutoSend, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, chooseEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
 import { bilingual, el } from './dom';
 import { createLevelPicker } from './level-picker';
 import { createCompanionSettings } from './companion-screens';
@@ -105,6 +106,26 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
     voiceText.append(el('strong', '', t('settings.clientVoice')), el('span', 'setting-note', t('settings.clientVoiceNote')));
     voiceRow.append(voiceText, voiceToggle);
 
+    // Story 045: how fast the client speaks (and her text appears): Slow / Normal / Fast.
+    const speedRow = el('div', 'setting-row speed-row');
+    const speedText = el('span', 'setting-text');
+    speedText.append(el('strong', '', t('settings.speechSpeed')), el('span', 'setting-note', t('settings.speechSpeedNote')));
+    const speeds = el('div', 'comfort-sizes speed-choices');
+    speeds.setAttribute('role', 'group');
+    speeds.setAttribute('aria-label', t('settings.speechSpeed'));
+    for (const speed of SPEECH_SPEEDS) {
+      const b = el('button', 'chat-button secondary', t(`settings.speed.${speed}`));
+      b.type = 'button';
+      b.dataset.speed = speed;
+      b.setAttribute('aria-pressed', String(getSpeechSpeed() === speed));
+      b.addEventListener('click', () => {
+        setSpeechSpeed(speed);
+        speeds.querySelectorAll('button').forEach((node) => node.setAttribute('aria-pressed', String(node === b)));
+      });
+      speeds.append(b);
+    }
+    speedRow.append(speedText, speeds);
+
     // Story 046: spoken replies wait a moment so a mis-heard line can be fixed; off: they always wait for Send.
     const autoSendRow = el('label', 'setting-row');
     const autoSendToggle = el('input');
@@ -175,7 +196,7 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
       open.addEventListener('click', () => openWhatsNew(host, notes));
       versionRow.append(open);
     }
-    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, autoSendRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, createMenuSection(), comfort, backup, legalLinks(), versionRow, back);
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, speedRow, autoSendRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, createMenuSection(), comfort, backup, legalLinks(), versionRow, back);
   };
 
   render();

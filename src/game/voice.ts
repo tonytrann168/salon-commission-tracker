@@ -19,6 +19,10 @@ export interface ClientVoice {
   preferredVoices: string[];
 }
 
+/** Story 045: how fast the client speaks (and her text appears). */
+export const SPEECH_SPEEDS = ['slow', 'normal', 'fast'] as const;
+export type SpeechSpeed = (typeof SPEECH_SPEEDS)[number];
+
 export interface VoiceConfig {
   lang: string;
   /** Speaking rate per English level: slower and clearer at Beginner, natural at Fluent. */
@@ -27,6 +31,8 @@ export interface VoiceConfig {
   defaultClient: ClientVoice;
   /** Stop listening after this long with no result. */
   listenTimeoutMs: number;
+  /** Story 045: the Speech speed setting's factor on the voice rate and the text reveal. */
+  speechSpeed: Record<SpeechSpeed, number>;
   /** Words of at least `longWordLetters` letters still count as heard with up to `longWordTypos` letters off. */
   pronunciation: { longWordLetters: number; longWordTypos: number };
 }
@@ -58,6 +64,10 @@ export function parseVoiceConfig(raw: unknown): VoiceConfig {
     clients: Object.fromEntries(Object.entries(clients).map(([id, value]) => [id, clientVoice(value, `clients.${id}`)])),
     defaultClient: clientVoice(root.defaultClient, 'defaultClient'),
     listenTimeoutMs: number(root.listenTimeoutMs, 'listenTimeoutMs', 2000, 60000),
+    speechSpeed: (() => {
+      const s = object(root.speechSpeed, 'speechSpeed');
+      return Object.fromEntries(SPEECH_SPEEDS.map((id) => [id, number(s[id], `speechSpeed.${id}`, 0.5, 2)])) as Record<SpeechSpeed, number>;
+    })(),
     pronunciation: {
       longWordLetters: number(pronunciation.longWordLetters, 'pronunciation.longWordLetters', 2, 20),
       longWordTypos: number(pronunciation.longWordTypos, 'pronunciation.longWordTypos', 0, 3),
@@ -162,6 +172,8 @@ export interface SpeakOptions {
   gender?: VoiceGender;
   /** Story 038: how the line should sound (from the client turn or the mood). */
   emotion?: Emotion;
+  /** Story 045: the Speech speed setting (default normal). */
+  speed?: SpeechSpeed;
 }
 
 export interface VoiceIO {
@@ -286,7 +298,7 @@ export function createBrowserVoice(host: SpeechHost, config: VoiceConfig = VOICE
         utterance.lang = config.lang;
         // Story 038: the mood shapes the voice (rate and pitch), within the level's pace.
         const prosody = browserProsody(config.rateByLevel[options.level], voice.pitch, options.emotion ?? 'neutral');
-        utterance.rate = prosody.rate;
+        utterance.rate = Math.min(2, prosody.rate * config.speechSpeed[options.speed ?? 'normal']);
         utterance.pitch = prosody.pitch;
         // Story 037: one voice per character, kept for the appointment and across sessions.
         const key = options.clientId ?? 'default';

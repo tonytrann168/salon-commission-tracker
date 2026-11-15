@@ -3,6 +3,7 @@
   "name": "Brenda",
   "pronoun": "she",
   "difficulty": "hard",
+  "priceSensitive": true,
   "types": [
     "complaint-redo"
   ],

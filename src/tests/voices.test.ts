@@ -10,6 +10,7 @@ import { ROSTER } from '../game/clients/roster';
 import { GUARD_CONFIG, createGuard } from '../server/guard';
 import { parseModelOutput } from '../server/handlers/client-turn';
 import { azureConfigured, buildSsml, createLru, handleTts, parseTtsRequest } from '../server/handlers/tts';
+import { getSpeechSpeed, setSpeechSpeed } from '../game/settings';
 
 /** Stories 037/038: one voice per character, natural voices from the server, and the mood in the voice. */
 
@@ -200,5 +201,37 @@ describe('natural voice in the browser', () => {
     for (const line of ['1', '2', '3', '4']) await voice.speak(line, { clientId: 'tom', level: 'some' });
     expect(io.said).toEqual(['1', '2', '3', '4']);
     expect(fetchImpl).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('speech speed (story 045)', () => {
+  it('Slow, Normal, Fast change the Azure rate; anything else is refused', () => {
+    const rate = (speed?: string): number => {
+      const parsed = parseTtsRequest({ text: 'Hi there', clientId: 'tom', level: 'comfortable', ...(speed ? { speed } : {}) });
+      if (!parsed.ok) throw new Error(parsed.message);
+      return Number(/rate="([+-]\d+)%"/.exec(buildSsml(parsed.value))![1]);
+    };
+    expect(rate('slow')).toBeLessThan(rate());
+    expect(rate('fast')).toBeGreaterThan(rate('normal'));
+    expect(rate()).toBe(rate('normal'));
+    expect(parseTtsRequest({ text: 'Hi', clientId: 'tom', speed: 'turbo' }).ok).toBe(false);
+  });
+
+  it('the browser voice speaks slower when Slow is chosen, faster when Fast', async () => {
+    savePinnedVoices({});
+    const spoken: { rate: number }[] = [];
+    class Utterance { text: string; lang = ''; rate = 1; pitch = 1; volume = 1; voice?: { name: string }; onend: (() => void) | null = null; onerror: (() => void) | null = null; constructor(text: string) { this.text = text; } }
+    const host = { speechSynthesis: { getVoices: () => phone, speak: (u: Utterance) => { spoken.push(u); u.onend?.(); }, cancel: () => undefined }, SpeechSynthesisUtterance: Utterance, setTimeout, clearTimeout } as unknown as SpeechHost;
+    const io = createBrowserVoice(host);
+    for (const speed of ['slow', 'normal', 'fast'] as const) await io.speak('Hello', { clientId: 'tom', level: 'some', gender: 'male', emotion: 'neutral', speed });
+    expect(spoken[0]!.rate).toBeLessThan(spoken[1]!.rate);
+    expect(spoken[2]!.rate).toBeGreaterThan(spoken[1]!.rate);
+  });
+
+  it('the setting is Normal until changed, and remembered', () => {
+    expect(getSpeechSpeed()).toBe('normal');
+    setSpeechSpeed('slow');
+    expect(getSpeechSpeed()).toBe('slow');
+    setSpeechSpeed('normal');
   });
 });

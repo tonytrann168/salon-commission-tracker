@@ -30,7 +30,8 @@ import type { CorrectionsTransport, Phrase } from '../learning/corrections';
 import { createHelpMeSayIt } from './help-me-say-it';
 import { createMicButton } from './mic-button';
 import { createSendCountdown } from '../voice-send';
-import { getVoiceAutoSend } from '../settings';
+import { getSpeechSpeed, getVoiceAutoSend } from '../settings';
+import { VOICE_CONFIG } from '../voice';
 import { openPracticeSheet, practiceButton } from './practice-sheet';
 import type { VoiceIO } from '../voice';
 import { createPortraitZone } from './portrait-zone';
@@ -679,7 +680,7 @@ export function createChatPanel(
     line.appendChild(shown);
     announcer.textContent = t('chat.clientSaid', { name: clientName, text });
     // Stories 037/038: her own voice (by gender, pinned), in the tone of this line (her tag, else her mood).
-    if (voice && speakerOn) void voice.io.speak(text, { clientId: voice.clientId, level: portraits.level, gender: portraits.client.pronoun === 'he' ? 'male' : 'female', emotion: emotionFor(latest.mood, latest.lastEmotion) });
+    if (voice && speakerOn) void voice.io.speak(text, { clientId: voice.clientId, level: portraits.level, gender: portraits.client.pronoun === 'he' ? 'male' : 'female', emotion: emotionFor(latest.mood, latest.lastEmotion), speed: getSpeechSpeed() });
     if (reducedMotion.matches) {
       node.data = text;
       settle();
@@ -690,7 +691,8 @@ export function createChatPanel(
     const active = startTextReveal(
       node,
       text,
-      EXPRESSION_CONFIG.talking,
+      // Story 045: her text appears at the Speech speed too.
+      { ...EXPRESSION_CONFIG.talking, charsPerSecond: EXPRESSION_CONFIG.talking.charsPerSecond * VOICE_CONFIG.speechSpeed[getSpeechSpeed()] },
       () => undefined,
       () => {
         shown.removeAttribute('aria-hidden');

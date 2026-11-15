@@ -631,5 +631,10 @@
   "menu.tag.gems": "Gems",
   "menu.tag.art": "Nail art",
   "menu.tag.extensions": "Long nails",
-  "menu.tag.other": "Other"
+  "menu.tag.other": "Other",
+  "settings.speechSpeed": "Client's speech speed",
+  "settings.speechSpeedNote": "How fast the client talks, and how fast her words appear.",
+  "settings.speed.slow": "Slow",
+  "settings.speed.normal": "Normal",
+  "settings.speed.fast": "Fast"
 }

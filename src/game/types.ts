@@ -54,6 +54,8 @@ export interface ClientPersona {
   openingLine: string;
   /** Story 005: what the client wants done to her nails, as data (compared with the finished design). */
   nailRequest?: NailRequest;
+  /** Story 045 (overseer, on 044): she watches prices: a high total gets a kind remark (never a mood or tip change). */
+  priceSensitive?: boolean;
   /** Story 006: roster data. */
   /** Story 006 follow-up: the client's pronoun for English interface text (Tom is "he"). */
   pronoun: ClientPronoun;

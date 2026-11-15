@@ -1,3 +1,5 @@
+import { SPEECH_SPEEDS } from './voice';
+import type { SpeechSpeed } from './voice';
 import { helpLanguageAfterLevelChoice, parseStoredHelpLanguage, parseStoredLevel } from './english-level';
 import { readStored, writeStored } from './safe-storage';
 import type { EnglishLevel, HelpLanguage } from './types';
@@ -73,6 +75,17 @@ export function setCorrectionsEnabled(enabled: boolean): void {
 }
 
 const VOICE_AUTO_SEND_KEY = 'salon.voiceAutoSend';
+
+const SPEECH_SPEED_KEY = 'salon.speechSpeed';
+
+/** Story 045: how fast the client speaks and her text appears (Slow / Normal / Fast; Normal by default). */
+export function getSpeechSpeed(): SpeechSpeed {
+  return SPEECH_SPEEDS.find((s) => s === readStored(SPEECH_SPEED_KEY)) ?? 'normal';
+}
+
+export function setSpeechSpeed(speed: SpeechSpeed): void {
+  writeStored(SPEECH_SPEED_KEY, speed);
+}
 
 /** Story 046: spoken replies send by themselves after a short countdown (on unless the player turned it off). */
 export function getVoiceAutoSend(): boolean {

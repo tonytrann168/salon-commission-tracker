@@ -336,6 +336,45 @@ for (const lang of LANGS) {
       expect(await noOverflow(page)).toBe(true);
     });
 
+    test('speech speed (story 045): Slow / Normal / Fast in Settings, remembered; her words appear slower on Slow than on Fast', async ({ browser }) => {
+      test.setTimeout(90_000);
+      const revealMs = async (speed: 'slow' | 'fast'): Promise<number> => {
+        const context = await browser.newContext();
+        await seed(context, lang, { save: { xp: 100, appointments: 3, badges: ['first-client'], ...dailyWith('ana') }, extra: { 'salon.speechSpeed': speed } });
+        await mockApi(context, { phases: ['consultation'], replies: ['Hi!', 'Hello, I would love a classic red manicure today, with short round nails, please. Is that possible?'] });
+        const page = await context.newPage();
+        await page.goto('/');
+        await page.locator('.title-menu > .chat-button').first().click();
+        await page.locator('.picker-daily').click();
+        await page.locator('.chat-input').fill('Hello! What would you like today?');
+        await page.locator('.chat-form button[type=submit]').click();
+        await page.waitForSelector('.chat-bubble.client.revealing');
+        const ms = await page.evaluate(() => new Promise<number>((resolve) => {
+          const t0 = performance.now();
+          const check = () => (document.querySelector('.chat-bubble.client.revealing') ? requestAnimationFrame(check) : resolve(performance.now() - t0));
+          check();
+        }));
+        await context.close();
+        return ms;
+      };
+      expect(await revealMs('slow')).toBeGreaterThan(await revealMs('fast'));
+      // Settings: the choice, remembered.
+      const context = await browser.newContext();
+      await seed(context, lang);
+      await mockApi(context);
+      const page = await context.newPage();
+      await page.goto('/');
+      await page.locator('.title-menu-row').first().locator('button').first().click();
+      await expect(page.locator('.speed-choices [data-speed=normal]')).toHaveAttribute('aria-pressed', 'true');
+      await page.locator('.speed-choices [data-speed=slow]').click();
+      await page.reload();
+      await page.locator('.title-menu-row').first().locator('button').first().click();
+      await expect(page.locator('.speed-choices [data-speed=slow]')).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.speed-choices button')).toHaveText(lang === 'vi' ? ['Chậm', 'Vừa', 'Nhanh'] : ['Slow', 'Normal', 'Fast']);
+      expect(await noOverflow(page)).toBe(true);
+      await context.close();
+    });
+
     test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page, { replies: ['Hi!', 'Red, please. Oh, can you fix that edge? There is polish on my skin.'] });
