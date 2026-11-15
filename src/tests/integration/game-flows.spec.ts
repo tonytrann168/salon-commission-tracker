@@ -637,6 +637,48 @@ for (const lang of LANGS) {
       await expect(page.locator('.station-controls .station-tool .tab-text')).toHaveText(lang === 'vi' ? 'Lau' : 'Clean');
     });
 
+    test("flexible days (story 062): back on a later day, continue the day or start the next (Day 1: 2 clients); today's appointments with times and services", async ({ browser }) => {
+      test.setTimeout(90_000);
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      const yesterday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const open = async () => {
+        const context = await browser.newContext({ viewport: { width: 320, height: 568 } });
+        await seed(context, lang, { save: { xp: 100, appointments: 3, badges: ['first-client'], pathDone: 3, pathDayOn: yesterday, ...dailyWith('ana') } });
+        await mockApi(context);
+        const page = await context.newPage();
+        await page.goto('/');
+        await page.locator('.title-menu > .chat-button').first().click();
+        return { context, page };
+      };
+      // Start the next day: the old day closes with the clients served; the path moves to Day 2's first stop.
+      let { context, page } = await open();
+      await expect(page.locator('.path-choice')).toBeVisible();
+      await expect(page.locator('.path-continue')).toContainText(lang === 'vi' ? 'Ngày 1' : 'Day 1');
+      await expect(page.locator('.path-appointments')).toHaveCount(0);
+      await page.locator('.path-next-day').click();
+      await expect(page.locator('.path-choice')).toHaveCount(0);
+      await expect(page.locator('.path-summary')).toHaveText(lang === 'vi' ? 'Ngày 1: 2 khách ✓' : 'Day 1: 2 clients ✓');
+      const per = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}').pathDone);
+      await expect(page.locator('.path-node.current')).toHaveAttribute('data-index', String(per));
+      // Today's appointments: the day's booked guests, each with a time and a service from the menu.
+      const rows = page.locator('.path-appointment');
+      expect(await rows.count()).toBeGreaterThan(0);
+      await expect(rows.first().locator('.path-appointment-time')).toHaveText(/^\d\d:\d\d$/);
+      await expect(rows.first().locator('.path-appointment-service')).toContainText('#');
+      expect(await noOverflow(page)).toBe(true);
+      await context.close();
+      // Continue: the same day, where it was left; no question again today.
+      ({ context, page } = await open());
+      await page.locator('.path-continue').click();
+      await expect(page.locator('.path-choice')).toHaveCount(0);
+      await expect(page.locator('.path-node.current')).toHaveAttribute('data-index', '3');
+      await page.reload();
+      await page.locator('.title-menu > .chat-button').first().click();
+      await expect(page.locator('.path-choice')).toHaveCount(0);
+      await context.close();
+    });
+
     test('every line graded (story 061): a line with a real fix is Try this, a short line is Good, a fine long line is Perfect (only Perfect has confetti)', async ({ page }) => {
       test.setTimeout(90_000);
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily') } });
@@ -650,11 +692,24 @@ for (const lang of LANGS) {
         await page.locator('.chat-form button[type=submit]').click();
       };
       await send('Hello! Please have a seat here.');
-      await expect(page.locator('.line-grade.grade-try')).toHaveText(lang === 'vi' ? 'Thử câu này 💡' : 'Try this 💡');
+      // Pinned to the top-right corner of the line it grades, clear of its words (061 review).
+      const pinned = page.locator('.chat-bubble.player .line-grade.grade-try');
+      await expect(pinned).toHaveText(lang === 'vi' ? 'Thử câu này 💡' : 'Try this 💡');
+      const place = await pinned.evaluate((badge) => {
+        const b = badge.getBoundingClientRect();
+        const bubble = badge.parentElement!.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(badge.parentElement!.firstChild!);
+        const words = range.getBoundingClientRect();
+        return { aboveWords: b.bottom <= words.top + 1, atRight: b.right >= bubble.right - 8, onScreen: b.right <= window.innerWidth };
+      });
+      expect(place).toEqual({ aboveWords: true, atRight: true, onScreen: true });
       await expect(page.locator('.burst-confetti')).toHaveCount(0);
       await page.waitForFunction(() => !document.querySelector<HTMLButtonElement>('.chat-form button[type=submit]')?.disabled);
       await send('Okay!');
-      await expect(page.locator('.line-grade.grade-good')).toHaveText(lang === 'vi' ? 'Được đó 👍' : 'Good 👍');
+      await expect(page.locator('.chat-bubble.player .line-grade.grade-good')).toHaveText(lang === 'vi' ? 'Được đó 👍' : 'Good 👍');
+      // Each graded line keeps its own badge.
+      await expect(page.locator('.chat-bubble.player .line-grade')).toHaveCount(2);
       await expect(page.locator('.burst-confetti')).toHaveCount(0);
     });
 

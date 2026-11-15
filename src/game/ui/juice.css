@@ -37,9 +37,21 @@ html[data-motion='reduce'] .perfect-line { animation: none; }
 .chat-panel.station-open .chat-progress { display: none; }
 
 /* Story 061: the smaller grades (Try this, Good, Great) share the badge's place, smaller and calmer. */
-.line-grade:not(.perfect-line) { position: absolute; left: 50%; top: 38%; z-index: 7; padding: 7px 14px; border-radius: 999px; background: #fff; font: 800 17px/1.2 system-ui, sans-serif; white-space: nowrap; box-shadow: 0 6px 16px rgba(59, 42, 51, 0.18); pointer-events: none; transform: translate(-50%, -50%); animation: perfect-pop var(--show-ms, 1300ms) ease-out forwards; }
+.line-grade.floating:not(.perfect-line) { position: absolute; left: 50%; top: 38%; z-index: 7; padding: 7px 14px; border-radius: 999px; background: #fff; font: 800 17px/1.2 system-ui, sans-serif; white-space: nowrap; box-shadow: 0 6px 16px rgba(59, 42, 51, 0.18); pointer-events: none; transform: translate(-50%, -50%); animation: perfect-pop var(--show-ms, 1300ms) ease-out forwards; }
 .line-grade.grade-try { color: #a2346a; box-shadow: 0 0 0 3px #ffc4da, 0 6px 16px rgba(59, 42, 51, 0.18); }
 .line-grade.grade-good { color: #3b6fb0; box-shadow: 0 0 0 3px #c9dcf5, 0 6px 16px rgba(59, 42, 51, 0.18); }
 .line-grade.grade-great { color: #7a43c2; box-shadow: 0 0 0 3px #e1cdf5, 0 6px 16px rgba(59, 42, 51, 0.18); }
 @media (prefers-reduced-motion: reduce) { .line-grade { animation: none; } }
 html[data-motion='reduce'] .line-grade { animation: none; }
+
+/* 061 review: a graded line keeps a small badge pinned to its bubble's top-right corner (never over its words). */
+.chat-bubble.player.graded { position: relative; margin-top: 12px; }
+.chat-bubble .line-grade, .chat-bubble .line-grade.perfect-line { position: absolute; left: auto; right: -4px; top: -15px; z-index: 1; padding: 2px 8px; border-radius: 999px; background: #fff; font: 800 13px/1.3 system-ui, sans-serif; white-space: nowrap; transform: none; animation: none; pointer-events: none; box-shadow: 0 1px 4px rgba(59, 42, 51, 0.2); }
+.chat-bubble .line-grade.grade-perfect { color: #2f7d4f; box-shadow: 0 0 0 2px #9bd4b0; }
+.chat-bubble .line-grade.grade-great { color: #7a43c2; box-shadow: 0 0 0 2px #e1cdf5; }
+.chat-bubble .line-grade.grade-good { color: #3b6fb0; box-shadow: 0 0 0 2px #c9dcf5; }
+.chat-bubble .line-grade.grade-try { color: #a2346a; box-shadow: 0 0 0 2px #ffc4da; }
+.chat-bubble .line-grade.pop { animation: grade-pin 0.35s cubic-bezier(0.34, 1.6, 0.55, 1); }
+@keyframes grade-pin { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .chat-bubble .line-grade.pop { animation: none; } }
+html[data-motion='reduce'] .chat-bubble .line-grade.pop { animation: none; }

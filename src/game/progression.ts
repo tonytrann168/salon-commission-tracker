@@ -180,6 +180,9 @@ export interface ProgressSave {
   play?: PlayState;
   /** Story 057a: nodes finished on the salon path. */
   pathDone?: number;
+  /** Story 062: the calendar day the path was last played, and the closed days ("Day 3: 2 clients"), newest last. */
+  pathDayOn?: string;
+  pathLog?: { day: number; clients: number }[];
   /** Owner decision (two currencies): coins (gift, milestones, goal ring, level-ups); `wallet` is tips. */
   coins?: number;
   /** The one-time welcome coins were given. */
@@ -271,6 +274,8 @@ export interface AppointmentOutcome {
   /** Story 019: who it was, for the per-client history. */
   clientId?: string;
   today: string;
+  /** Story 062: a booked guest (an appointment stop on the salon path): a little extra XP. */
+  booked?: boolean;
 }
 
 export interface ProgressUpdate {
@@ -312,7 +317,7 @@ export function applyAppointment(before: ProgressSave, outcome: AppointmentOutco
   const stars = Math.max(1, Math.min(5, Math.round(outcome.stars)));
   const finishedDaily = outcome.daily && !outcome.walkedOut && before.dailyDoneDay !== outcome.today;
   const base = (config.xp.byStars[stars - 1] ?? 0) + (outcome.goalMet ? config.xp.goalBonus : 0);
-  const xpGained = Math.round(base * config.xp.difficulty[outcome.difficulty]) + (finishedDaily ? config.xp.dailyBonus : 0);
+  const xpGained = Math.round(base * config.xp.difficulty[outcome.difficulty]) + (finishedDaily ? config.xp.dailyBonus : 0) + (outcome.booked && !outcome.walkedOut ? PATH_CONFIG.booked.xp : 0);
   const tipGained = Math.max(0, Math.round(outcome.tip));
   const history = outcome.clientId
     ? { ...before.history, [outcome.clientId]: { visits: (before.history[outcome.clientId]?.visits ?? 0) + 1, lastStars: stars, lastDay: outcome.today } }

@@ -883,6 +883,12 @@ export function createChatPanel(
       const bubble = el('div', `chat-bubble ${message.role}`);
       if (message.role === 'player') {
         bubble.textContent = message.content;
+        bubble.dataset.index = String(index);
+        const grade = grades.get(index);
+        if (grade) {
+          bubble.classList.add('graded');
+          bubble.append(gradeBadge(grade));
+        }
         // The player's newest line can be practised aloud (story 004).
         const isLastPlayerLine = !snapshot.transcript.slice(index + 1).some((later) => later.role === 'player');
         if (!voice?.io.canListen || !isLastPlayerLine || snapshot.status === 'finished') return bubble;
@@ -912,7 +918,14 @@ export function createChatPanel(
       return entry;
     });
     if (snapshot.pendingPlayerMessage !== null) {
-      bubbles.push(el('div', 'chat-bubble player pending', snapshot.pendingPlayerMessage));
+      const pending = el('div', 'chat-bubble player pending', snapshot.pendingPlayerMessage);
+      pending.dataset.index = String(snapshot.transcript.length);
+      const grade = grades.get(snapshot.transcript.length);
+      if (grade) {
+        pending.classList.add('graded');
+        pending.append(gradeBadge(grade));
+      }
+      bubbles.push(pending);
     }
     if (snapshot.status === 'waiting') {
       const typing = el('div', 'chat-typing');
@@ -963,36 +976,61 @@ export function createChatPanel(
    * Story 061 (057b's "Perfect line!", graded): every line gets a badge that matches how good it was. Try this 💡
    * (a fix waits on the companion's badge), Good 👍, Great ✨, Perfect line! 🌟. Only Perfect gets confetti and a cheer.
    */
-  const showGrade = (grade: LineGrade): void => {
-    root.querySelector('.line-grade')?.remove();
-    const perfect = grade === 'perfect';
-    const badge = el('div', `line-grade grade-${grade}${perfect ? ' perfect-line' : ''}`, t(`chat.grade.${grade}`));
-    badge.setAttribute('role', 'status');
+  /** 061 review: each graded line keeps a small badge pinned to its bubble's top-right corner (by transcript index). */
+  const grades = new Map<number, LineGrade>();
+  const gradeBadge = (grade: LineGrade, tag: 'span' | 'div' = 'span'): HTMLElement => {
+    // The big floating Perfect celebration is .perfect-line; a pinned badge is only its grade.
+    const badge = el(tag, `line-grade grade-${grade}${grade === 'perfect' && tag === 'div' ? ' perfect-line' : ''}`, t(`chat.grade.${grade}`));
     badge.dataset.grade = grade;
+    return badge;
+  };
+  const showGrade = (grade: LineGrade, index: number): void => {
+    grades.set(index, grade);
+    const perfect = grade === 'perfect';
     const ms = perfect ? JUICE_CONFIG.perfect.showMs : JUICE_CONFIG.grades.showMs;
-    badge.style.setProperty('--show-ms', `${ms}ms`);
-    root.append(badge);
+    // In the chat: pinned to the corner of the line it grades. While painting (the chat is folded away): it floats.
+    const bubble = log.querySelector<HTMLElement>(`.chat-bubble.player[data-index="${index}"]`);
+    let badge: HTMLElement;
+    if (bubble) {
+      bubble.querySelector('.line-grade')?.remove();
+      bubble.classList.add('graded');
+      bubble.append(gradeBadge(grade));
+    }
+    // Perfect also gets its big moment (confetti); and while painting (the chat folded away) every grade floats.
+    if (bubble && bubble.offsetParent !== null && !perfect) {
+      badge = bubble.querySelector('.line-grade') as HTMLElement;
+      badge.classList.add('pop');
+    } else {
+      root.querySelector(':scope > .line-grade')?.remove();
+      badge = gradeBadge(grade, 'div');
+      badge.classList.add('floating');
+      badge.style.setProperty('--show-ms', `${ms}ms`);
+      root.append(badge);
+      window.setTimeout(() => badge.remove(), ms);
+    }
+    badge.setAttribute('role', 'status');
     if (perfect) {
       emitSound('correct');
       burst(centreOf(badge), 'confetti');
       mai?.react('celebrating', JUICE_CONFIG.reactMs);
     } else if (grade === 'great') mai?.react('happy', JUICE_CONFIG.reactMs);
-    window.setTimeout(() => badge.remove(), ms);
   };
   /** After the player sends a line: check it in the background and, if it needs it, queue a tip on Mai's badge. Never blocks the chat. */
   const checkLine = (line: string, helped: boolean, before: AppointmentSnapshot): void => {
     const corrections = bestie?.corrections;
     if (!corrections || !mai) return;
     // Story 061: a helped or very short line is graded Good at once (nothing to check); the rest wait for the check.
+    const index = before.transcript.length;
     if (!shouldCheckLine(line, helped, 0)) {
-      showGrade(lineGrade(line, null, helped));
+      // After the line's bubble is drawn (it is sent right after this), so the badge pins to it.
+      window.setTimeout(() => showGrade(lineGrade(line, null, helped), index), 0);
       return;
     }
     const clientLine = [...before.transcript].reverse().find((message) => message.role === 'client')?.content ?? '';
     corrections.transport
       .checkLine({ level: portraits.level, language: bestie.language, phase: before.phase, line: line.trim(), clientLine })
       .then((result) => {
-        if (latest.status !== 'finished') showGrade(lineGrade(line, result, helped));
+        if (latest.status !== 'finished') showGrade(lineGrade(line, result, helped), index);
         if (!result.needsCorrection || !result.better || latest.status === 'finished') return;
         // Checks run side by side, so the cap is checked again when each answer lands.
         if (mai.queueTip({ praise: result.praise, said: line.trim(), better: result.better, reason: result.reason, language: bestie.language })) tipsQueued++;

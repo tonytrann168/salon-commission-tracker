@@ -1,6 +1,6 @@
 import { NEW_PLAY, doneToday, liveStreak } from '../daily';
 import { getLanguage, t } from '../i18n';
-import { PATH_CONFIG, pathView } from '../path';
+import { PATH_CONFIG, askDayChoice, dayProgress, pathView, todaysAppointments } from '../path';
 import type { PathNode } from '../path';
 import { rankFor } from '../progression';
 import type { ProgressSave } from '../progression';
@@ -25,6 +25,10 @@ export interface PathScreenOptions {
   onNode: (node: PathNode) => void;
   onMore: () => void;
   onBack: () => void;
+  /** Story 062: the answer to "continue Day N, or start Day N+1?". */
+  onDayChoice?: (choice: 'continue' | 'next') => void;
+  /** Story 062: a booked guest's service from the salon menu ("#2 Gel manicure"). */
+  serviceFor?: (client: ClientPersona) => string;
 }
 
 const SWAY = [0, 62, 0, -62];
@@ -119,9 +123,53 @@ export function createPathScreen(host: HTMLElement, options: PathScreenOptions):
   const actions = el('div', 'path-actions');
   actions.append(back, more);
 
-  screen.append(bar, title, ...(options.daily ? [createDailyCard(options.daily, options.faceImage)] : []), path, actions);
+  // Story 062: a day left unfinished on an earlier calendar day: continue it, or start the next one (no penalty).
+  const done = save.pathDone ?? 0;
+  const progress = dayProgress(done);
+  const choice = options.onDayChoice && askDayChoice(done, save.pathDayOn ?? '', today) ? dayChoiceCard(progress, options.onDayChoice) : null;
+  // The last day closed early: a small note ("Day 3: 2 clients").
+  const last = save.pathLog?.at(-1);
+  const summary = last && last.day === progress.day - 1 ? el('p', 'path-summary', t(last.clients === 1 ? 'path.summaryOne' : 'path.summary', { n: last.day, clients: last.clients })) : null;
+  const booked = todaysAppointments(done, options.roster, options.unlocked);
+  const appointments = booked.length > 0 && !choice ? appointmentsCard(booked, options) : null;
+  screen.append(bar, title, ...(choice ? [choice] : []), ...(summary ? [summary] : []), ...(options.daily ? [createDailyCard(options.daily, options.faceImage)] : []), ...(appointments ? [appointments] : []), path, actions);
   host.append(screen);
   // The current node in view.
   requestAnimationFrame(() => screen.querySelector('.path-stop.current')?.scrollIntoView({ block: 'center' }));
   return screen;
+}
+
+/** Story 062: "Continue Day 3 (2 of 5 done)" or "Start Day 4". */
+function dayChoiceCard(progress: ReturnType<typeof dayProgress>, onChoice: (choice: 'continue' | 'next') => void): HTMLElement {
+  const card = el('section', 'path-choice');
+  card.setAttribute('aria-label', t('path.choiceTitle'));
+  card.append(el('h2', '', t('path.choiceTitle')));
+  const go = el('button', 'chat-button path-continue', t('path.continueDay', { n: progress.day, done: progress.doneInDay, all: progress.perDay }));
+  go.type = 'button';
+  go.addEventListener('click', () => onChoice('continue'));
+  const next = el('button', 'chat-button secondary path-next-day', t('path.nextDay', { n: progress.day + 1 }));
+  next.type = 'button';
+  next.addEventListener('click', () => onChoice('next'));
+  card.append(go, next, el('p', 'path-choice-note', t('path.choiceNote')));
+  return card;
+}
+
+/** Story 062: 📅 Today's appointments: the booked guests with their time and service. */
+function appointmentsCard(booked: { node: PathNode; time: string }[], options: PathScreenOptions): HTMLElement {
+  const card = el('section', 'path-appointments');
+  card.setAttribute('aria-labelledby', 'path-appointments-title');
+  const head = el('h2', '', t('path.appointmentsTitle'));
+  head.id = 'path-appointments-title';
+  card.append(head, el('p', 'path-appointments-count', t(booked.length === 1 ? 'path.appointmentsOne' : 'path.appointments', { n: booked.length })));
+  const list = el('ul', 'path-appointment-list');
+  for (const { node, time } of booked) {
+    if (!node.client) continue;
+    const row = el('li', 'path-appointment');
+    const words = el('span', 'path-appointment-words');
+    words.append(el('strong', '', node.client.name), ...(options.serviceFor ? [el('span', 'path-appointment-service', options.serviceFor(node.client))] : []));
+    row.append(el('span', 'path-appointment-time', time), avatar(node.client, options.faceImage), words);
+    list.append(row);
+  }
+  card.append(list, el('p', 'path-appointments-note', t('path.appointmentsNote', { xp: PATH_CONFIG.booked.xp })));
+  return card;
 }

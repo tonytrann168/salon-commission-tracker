@@ -730,5 +730,15 @@
   "chat.grade.try": "Try this 💡",
   "chat.grade.good": "Good 👍",
   "chat.grade.great": "Great ✨",
-  "chat.grade.perfect": "Perfect line! 🌟"
+  "chat.grade.perfect": "Perfect line! 🌟",
+  "path.choiceTitle": "Welcome back!",
+  "path.continueDay": "Continue Day {n} ({done} of {all} done)",
+  "path.nextDay": "Start Day {n}",
+  "path.choiceNote": "No rush: a day ends with however many clients you served.",
+  "path.summary": "Day {n}: {clients} clients ✓",
+  "path.summaryOne": "Day {n}: 1 client ✓",
+  "path.appointmentsTitle": "📅 Today's appointments",
+  "path.appointments": "You have {n} appointments today",
+  "path.appointmentsOne": "You have 1 appointment today",
+  "path.appointmentsNote": "Booked guests give +{xp} XP. Walk-ins may come in between (Other clients)."
 }

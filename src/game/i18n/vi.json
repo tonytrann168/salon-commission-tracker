@@ -730,5 +730,15 @@
   "chat.grade.try": "Thử câu này 💡",
   "chat.grade.good": "Được đó 👍",
   "chat.grade.great": "Hay lắm ✨",
-  "chat.grade.perfect": "Câu chuẩn luôn! 🌟"
+  "chat.grade.perfect": "Câu chuẩn luôn! 🌟",
+  "path.choiceTitle": "Mừng {you} quay lại!",
+  "path.continueDay": "Làm tiếp Ngày {n} (xong {done}/{all})",
+  "path.nextDay": "Bắt đầu Ngày {n}",
+  "path.choiceNote": "Không vội đâu: một ngày xong với bao nhiêu khách cũng được.",
+  "path.summary": "Ngày {n}: {clients} khách ✓",
+  "path.summaryOne": "Ngày {n}: 1 khách ✓",
+  "path.appointmentsTitle": "📅 Khách hẹn hôm nay",
+  "path.appointments": "Hôm nay {you} có {n} khách hẹn",
+  "path.appointmentsOne": "Hôm nay {you} có 1 khách hẹn",
+  "path.appointmentsNote": "Khách có hẹn được thêm +{xp} XP. Khách vãng lai có thể ghé giữa giờ (Khách khác)."
 }

@@ -62,6 +62,10 @@ export function parseSave(raw: string | null): ProgressSave {
     ...(d.play !== undefined ? { play: parsePlay(d.play) } : {}),
     ...(typeof d.coins === 'number' && Number.isInteger(d.coins) && d.coins > 0 ? { coins: Math.min(d.coins, 10_000_000) } : {}),
     ...(d.coinsWelcomed === true ? { coinsWelcomed: true } : {}),
+    ...(typeof d.pathDayOn === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.pathDayOn) ? { pathDayOn: d.pathDayOn } : {}),
+    ...(Array.isArray(d.pathLog)
+      ? { pathLog: (d.pathLog as unknown[]).filter((e): e is { day: number; clients: number } => typeof e === 'object' && e !== null && Number.isInteger((e as { day: unknown }).day) && Number.isInteger((e as { clients: unknown }).clients) && (e as { day: number }).day > 0 && (e as { clients: number }).clients >= 0).slice(-7).map((e) => ({ day: e.day, clients: e.clients })) }
+      : {}),
     ...(typeof d.pathDone === 'number' && Number.isInteger(d.pathDone) && d.pathDone > 0 ? { pathDone: Math.min(d.pathDone, 100000) } : {}),
     ...(typeof d.companionVoice === 'string' && /^[a-z0-9-]{1,20}$/.test(d.companionVoice) ? { companionVoice: d.companionVoice } : {}),
   };

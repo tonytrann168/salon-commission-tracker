@@ -49,6 +49,7 @@ Mai, the player's mascot best friend, is the main reason to play and to come bac
 - Payments of any kind. **Monetization note (owner, 2026-11-10):** v1 is free, with no purchases. Later, a cosmetic shop sells accessories and outfits for Mai (free ones are earned by playing). Never pay-to-win, and never put English help, translations or corrections behind a payment. The tips-shop items that change play (Fine brush, Clean-up pen, Comfy chair, and any later tool or station upgrade) are earned with in-game tips only and must never be sold for real money.
 - Native App Store / Google Play apps (v1 is an installable web app)
 - PolishPay integration
+- Managing the appointment book *(owner, 2026-11-15, story 062)*: the player schedules, accepts and reschedules bookings. For now the day's booked guests are given ("Today's appointments", with times and services from the menu, a small XP bonus each) and walk-ins come between them.
 
 ## Build order
 1. One client, text only, with mood meter and portraits *(built: stories 001, 009)*.

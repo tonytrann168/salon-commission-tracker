@@ -1,7 +1,7 @@
 import { DAILY_CONFIG, NEW_PLAY, liveStreak as playStreak, welcomeCoins } from './game/daily';
 import { createPathScreen } from './game/ui/path-screen';
 import { createLessonScreen } from './game/ui/lesson-screen';
-import { PATH_CONFIG, finishNode } from './game/path';
+import { PATH_CONFIG, finishNode, startNextDay } from './game/path';
 import type { PathNode } from './game/path';
 import { companionSpeech } from './game/companion-voice';
 import { ACCOUNT_EVENT, createHomeStatus } from './game/ui/home-status';
@@ -475,6 +475,20 @@ async function boot(): Promise<void> {
       },
       onMore: showClientPicker,
       onBack: showTitle,
+      // Story 062: continue an unfinished day, or close it (however many were served) and start the next.
+      onDayChoice: (choice) => {
+        const now = loadSave();
+        if (choice === 'continue') writeSave({ ...now, pathDayOn: localDay() });
+        else {
+          const next = startNextDay(now.pathDone ?? 0);
+          writeSave({ ...now, pathDone: next.done, pathDayOn: localDay(), pathLog: [...(now.pathLog ?? []), next.log].slice(-7) });
+        }
+        showPath();
+      },
+      serviceFor: (client) => {
+        const order = orderFor(client.nailRequest, menuItems(loadSave().menu ?? { preset: MENU_CONFIG.default }));
+        return order.map((line) => `#${line.number} ${line.item.name[getLanguage()]}`).join(' + ');
+      },
     });
     teardownDom = () => screen.remove();
   };
@@ -492,7 +506,7 @@ async function boot(): Promise<void> {
         const save = loadSave();
         const done = save.pathDone ?? 0;
         // A lesson finishes its node once (and gives a little XP the first time).
-        writeSave({ ...save, pathDone: finishNode(done, node.index), xp: save.xp + (node.index === done ? PATH_CONFIG.lessonXp : 0) });
+        writeSave({ ...save, pathDone: finishNode(done, node.index), pathDayOn: localDay(), xp: save.xp + (node.index === done ? PATH_CONFIG.lessonXp : 0) });
         emitSound('phraseSaved');
         showPath();
       },
@@ -646,9 +660,11 @@ async function boot(): Promise<void> {
         daily,
         clientId: persona.id,
         today: localDay(),
+        // Story 062: a booked guest (the path's next stop) gives a little extra XP.
+        ...(pathNode !== undefined && pathNode === (loadSave().pathDone ?? 0) ? { booked: true } : {}),
       });
       // Story 057a: an appointment from the salon path finishes its node.
-      writeSave(pathNode === undefined ? update.save : { ...update.save, pathDone: finishNode(update.save.pathDone ?? 0, pathNode) });
+      writeSave(pathNode === undefined ? update.save : { ...update.save, pathDone: finishNode(update.save.pathDone ?? 0, pathNode), pathDayOn: localDay() });
       // Story 025: signed in → the appointment's progress goes to the account now.
       void getAccount()?.appointmentDone();
       const items = celebrationsFor(update);
