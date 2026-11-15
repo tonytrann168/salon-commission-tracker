@@ -97,12 +97,15 @@ export function parseClientTurnRequest(body: unknown): ParseResult<ClientTurnReq
 }
 
 /** Strictly validate the model's response and extract the structured turn from the forced tool call. */
+/** Story 059: the highest agreed total that is believable for one visit. */
+const MAX_AGREED_TOTAL = 1000;
+
 export function parseModelOutput(upstream: unknown): ParseResult<ClientTurn> {
   if (!isRecord(upstream) || !Array.isArray(upstream.content)) return { ok: false, message: 'No content in model response.' };
   const block = upstream.content.find((item) => isRecord(item) && item.type === 'tool_use' && item.name === TOOL_NAME);
   if (!isRecord(block) || !isRecord(block.input)) return { ok: false, message: 'Model did not call the tool.' };
 
-  const { reply, moodDelta, phase, unclearEnglish, rude, emotion } = block.input;
+  const { reply, moodDelta, phase, unclearEnglish, rude, emotion, agreedTotal } = block.input;
   if (typeof reply !== 'string' || reply.trim() === '' || reply.length > MAX_REPLY_CHARS) {
     return { ok: false, message: 'Invalid reply.' };
   }
@@ -111,7 +114,9 @@ export function parseModelOutput(upstream: unknown): ParseResult<ClientTurn> {
   if (typeof unclearEnglish !== 'boolean') return { ok: false, message: 'Invalid unclearEnglish.' };
   if (typeof rude !== 'boolean') return { ok: false, message: 'Invalid rude.' };
   // Story 038: the tone tag is optional; anything outside the list is dropped.
-  return { ok: true, value: { reply: reply.trim(), moodDelta, phase, unclearEnglish, rude, ...(isEmotion(emotion) ? { emotion } : {}) } };
+  // Story 059: an agreed total is optional; anything that is not a sensible dollar amount is dropped.
+  const agreed = typeof agreedTotal === 'number' && Number.isFinite(agreedTotal) && agreedTotal > 0 && agreedTotal <= MAX_AGREED_TOTAL ? Math.round(agreedTotal) : undefined;
+  return { ok: true, value: { reply: reply.trim(), moodDelta, phase, unclearEnglish, rude, ...(isEmotion(emotion) ? { emotion } : {}), ...(agreed !== undefined ? { agreedTotal: agreed } : {}) } };
 }
 
 /** Mood rules for levels where English mistakes never cost mood (Beginner, Some). The game also enforces this. */
@@ -170,8 +175,11 @@ ${moodRules}
 - Set unclearEnglish to true only when her last line was hard to understand or ungrammatical. Set rude to true only when she was rude or disrespectful (broken English alone is never rude).
 - Your reply tone must match your mood: lower mood sounds colder and shorter. At very low mood you may say you are leaving.
 
+PRICE
+- If you and the stylist agree on a total price for today's visit in the chat (for example she offers $35 instead of $40 and you accept, or you settle on a price), set agreedTotal to that total in dollars, as a number. Keep setting it on later turns while that agreement stands. Leave agreedTotal out when no price has been agreed.
+
 OUTPUT
-- Always answer by calling the ${TOOL_NAME} tool with reply, moodDelta, phase, unclearEnglish and rude.`;
+- Always answer by calling the ${TOOL_NAME} tool with reply, moodDelta, phase, unclearEnglish and rude (and agreedTotal once a price is agreed).`;
 }
 
 const TOOL = {
@@ -186,6 +194,7 @@ const TOOL = {
       unclearEnglish: { type: 'boolean', description: "True when the stylist's last line was hard to understand or ungrammatical." },
       rude: { type: 'boolean', description: "True when the stylist's last line was rude or disrespectful." },
       emotion: { type: 'string', enum: [...EMOTIONS], description: 'How the client says this reply (her tone of voice).' },
+      agreedTotal: { type: 'number', description: "The total price in dollars agreed in the chat for today's visit (a discount or a price you accepted). Leave out when none was agreed." },
     },
     required: ['reply', 'moodDelta', 'phase', 'unclearEnglish', 'rude'],
   },

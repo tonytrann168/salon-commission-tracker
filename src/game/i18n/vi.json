@@ -708,5 +708,20 @@
   "progress.coins": "Xu",
   "progress.tips": "Tip",
   "progress.streakUp": "🔥 Chuỗi {from} → {to} ngày!",
-  "fix.now": "Sửa lại"
+  "fix.now": "Sửa lại",
+  "total.title": "Tổng tiền",
+  "total.menuPrice": "Giá theo bảng",
+  "total.agreed": "Đã thoả thuận trong lúc nói chuyện: ${dollars}",
+  "total.amountLabel": "Số tiền tính cho khách (đô)",
+  "total.less": "Bớt một đô",
+  "total.more": "Thêm một đô",
+  "total.discount": "Giảm −${dollars}",
+  "total.extra": "Cao hơn bảng giá ${dollars}",
+  "total.reset": "Giá bảng",
+  "total.charge": "Tính ${dollars}",
+  "total.discountLine": "Giảm giá",
+  "total.extraLine": "Thêm",
+  "total.reaction.agreed": "{name} trả đúng giá đã thoả thuận. Sòng phẳng, dễ thương!",
+  "total.reaction.discount": "{name} vui vì được bớt chút xíu.",
+  "total.reaction.over": "{name} thấy bị tính cao hơn giá đã nói, nên tip ít lại."
 }

@@ -28,6 +28,8 @@ export interface ClientTurn {
   rude: boolean;
   /** Story 038: how the client says this line (optional; the mood decides when missing). */
   emotion?: Emotion;
+  /** Story 059: a total for today's visit agreed in the chat (a discount, a price she accepted), in dollars. */
+  agreedTotal?: number;
 }
 
 /** How an appointment ended. */
@@ -39,6 +41,8 @@ export interface AppointmentResult {
   transcript: readonly Message[];
   /** Mood after every exchange, starting with the starting mood. */
   moodHistory: readonly number[];
+  /** Story 059: the last total agreed in the chat (her agreedTotal), if any. */
+  agreedTotal?: number;
 }
 
 /** Static description of a client. */

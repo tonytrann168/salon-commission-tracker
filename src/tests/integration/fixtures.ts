@@ -59,6 +59,8 @@ export async function seed(target: Page | BrowserContext, lang: Lang, options: S
 export const dailyWith = (clientId: string, scenarioId?: string): Record<string, unknown> => ({ daily: { day: localDay(), clientId, ...(scenarioId ? { scenarioId } : {}) } });
 
 export interface ApiOptions {
+  /** Story 059: from this client turn (0-based) on, she reports this agreed total. */
+  agreedTotal?: { fromTurn: number; dollars: number };
   /** Client replies in order; the phase walks consultation → service → checkout → done one step per turn. */
   replies?: string[];
   grading?: Record<string, unknown>;
@@ -83,8 +85,10 @@ export async function mockApi(target: Page | BrowserContext, options: ApiOptions
       case 'client-turn': {
         const phase = phases[Math.min(turn, phases.length - 1)];
         const reply = replies[Math.min(turn + 1, replies.length - 1)];
+        // Story 059: a total agreed in the chat from this turn on.
+        const agreed = options.agreedTotal && turn >= options.agreedTotal.fromTurn ? { agreedTotal: options.agreedTotal.dollars } : {};
         turn += 1;
-        return json({ reply, moodDelta: 3, phase, unclearEnglish: false, rude: false });
+        return json({ reply, moodDelta: 3, phase, unclearEnglish: false, rude: false, ...agreed });
       }
       case 'grade-appointment':
         return json(options.grading ?? {
@@ -117,7 +121,7 @@ export async function playToResults(page: Page, lines?: string[]): Promise<void>
 }
 
 /** Story 057a: play an appointment that is already open (from the daily card or a path node) to the results. */
-export async function finishAppointment(page: Page, lines = ['Hello! Welcome to our salon. Please have a seat.', 'Which colour would you like today?', 'Your nails are done. That is twenty-five dollars.', 'Thank you! See you next time.']): Promise<void> {
+export async function finishAppointment(page: Page, lines = ['Hello! Welcome to our salon. Please have a seat.', 'Which colour would you like today?', 'Your nails are done. That is twenty-five dollars.', 'Thank you! See you next time.'], options: { stopAtTotal?: boolean } = {}): Promise<void> {
   await page.waitForSelector('.chat-input');
   for (const line of lines) {
     if (await page.locator('.chat-results:not(.hidden)').count()) break;
@@ -130,6 +134,15 @@ export async function finishAppointment(page: Page, lines = ['Hello! Welcome to 
     await page.locator('.chat-form button[type=submit]').click();
     await page.waitForFunction(() => !document.querySelector<HTMLButtonElement>('.chat-form button[type=submit]')?.disabled || document.querySelector('.chat-results:not(.hidden)'));
   }
+  if (options.stopAtTotal) await page.waitForSelector('.chat-results:not(.hidden) .total-step', { timeout: 15_000 });
+  else await toResults(page);
+}
+
+/** Story 059: past the Total step (charge the pre-filled total) to the results. */
+export async function toResults(page: Page): Promise<void> {
+  await page.waitForSelector('.chat-results:not(.hidden) :is(.total-charge, .results-section)', { timeout: 15_000 });
+  const charge = page.locator('.chat-results .total-charge');
+  if (await charge.count()) await charge.click();
   await page.waitForSelector('.chat-results:not(.hidden) .results-section', { timeout: 15_000 });
 }
 

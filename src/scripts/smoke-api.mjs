@@ -113,6 +113,16 @@ const checks = [
     (b) => `"${b.reply}" numbers ${JSON.stringify(numbersIn(b.reply))} (menu has ${items.length})`]);
 }
 
+// Story 059: a discount agreed in the chat comes back as agreedTotal.
+checks.push(['client-turn: she accepts $35 instead of $40 → agreedTotal 35', () => handleClientTurn({
+    transcript: [
+      { role: 'client', content: 'Hi! A gel manicure, please. How much is it?' },
+      { role: 'player', content: 'It is forty dollars. But you are a regular, so today I can do it for thirty-five dollars instead of forty. Is that okay?' },
+    ],
+    phase: 'consultation', mood: 60, level: 'some', clientId: 'grace' }, env, fetch),
+  (b) => typeof b.reply === 'string' && b.agreedTotal === 35,
+  (b) => `"${b.reply}" agreedTotal ${JSON.stringify(b.agreedTotal)}`]);
+
 // Story 037: natural voices, only when the Azure Speech env vars are set locally (skipped otherwise).
 if (azureConfigured(env)) {
   checks.push(['tts (Tom, annoyed): Azure returns audio', () => handleTts({ text: 'How much longer is this going to take?', clientId: 'tom', emotion: 'annoyed', level: 'some' }, env, fetch),

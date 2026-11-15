@@ -1,3 +1,6 @@
+import { chargeReaction, tipForCharge } from '../charge';
+import type { ChargeReaction } from '../charge';
+import { createTotalStep } from './total-step';
 import { clientGrammar } from '../types';
 import type { ClientPronoun } from '../types';
 import { scoreAppointment } from '../scoring';
@@ -189,8 +192,9 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     container.classList.add('paying');
     const payment = createPaymentCard({
       serviceLabel: t(kind === 'pedicure' ? 'payment.pedicure' : 'payment.manicure'),
-      price: options.bill?.length ? options.bill.reduce((sum, line) => sum + line.price, 0) : servicePrice(kind, options.service?.hands ?? 1),
+      price: charged ?? menuPrice(),
       ...(options.bill?.length ? { bill: options.bill } : {}),
+      ...(charged !== null && charged !== menuPrice() ? { discount: menuPrice() - charged } : {}),
       parts: tipParts({ tip: score.tip, finalMood, scenario: options.scenario !== undefined, ...(options.nails ? { nailMatch: options.nails.match } : {}) }),
       tip: score.tip,
       stars: score.stars,
@@ -201,6 +205,8 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     });
 
     const notes: HTMLElement[] = [];
+    // Story 059: how she took the total.
+    if (lastReaction && lastReaction.kind !== 'menu') notes.push(el('p', `results-note charge-${lastReaction.kind} ${lastReaction.kind === 'over' ? 'bad' : 'good'}`, t(`total.reaction.${lastReaction.kind}`, { ...who, name: clientName })));
     if (score.goalMet) notes.push(el('p', 'results-note good', t('results.goalMet', who)));
     // A fix left undone (overseer, on 048): she only might come back.
     else if (grading.rebooked && !score.failed) notes.push(el('p', 'results-note', t(openFix ? 'results.rebookedMaybe' : 'results.rebooked', who)));
@@ -239,12 +245,32 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     container.scrollTop = 0;
   };
 
+  /** Story 059: the menu price of her order (the bill), or the service price. */
+  const menuPrice = (): number => (options.bill?.length ? options.bill.reduce((sum, line) => sum + line.price, 0) : servicePrice(options.service?.kind ?? 'manicure', options.service?.hands ?? 1));
+  /** Story 059: the Total step (completed visits): what the player charges. Resolves with the total. */
+  const askTotal = (): Promise<number> =>
+    new Promise((resolve) => {
+      const step = createTotalStep({ menuPrice: menuPrice(), ...(result.agreedTotal !== undefined ? { agreed: result.agreedTotal } : {}), ...(options.bill?.length ? { bill: options.bill } : {}), onCharge: resolve });
+      show(step);
+      step.querySelector<HTMLButtonElement>('.total-charge')?.focus({ preventScroll: true });
+    });
+  let charged: number | null = null;
+  let lastReaction: ChargeReaction | null = null;
+
   const run = async (): Promise<void> => {
+    // Story 059: the Total step first (grading runs meanwhile), only for a visit she pays for.
+    const rawMood = result.moodHistory[result.moodHistory.length - 1] ?? 0;
+    const grading$ = grade({ transcript: result.transcript, outcome: result.outcome, finalMood: rawMood, level, ...(options.nails ? { nails: options.nails } : {}), ...(options.clientId ? { clientId: options.clientId } : {}), ...(options.scenario ?? {}) });
+    grading$.catch(() => undefined);
+    if (charged === null && result.outcome === 'completed') charged = await askTotal();
+    if (destroyed) return;
     showLoading();
-    const finalMood = result.moodHistory[result.moodHistory.length - 1] ?? 0;
+    const reaction = charged !== null ? chargeReaction(charged, menuPrice(), result.agreedTotal) : null;
+    lastReaction = reaction;
+    const finalMood = Math.max(0, Math.min(100, rawMood + (reaction?.moodDelta ?? 0)));
     let grading: Grading;
     try {
-      grading = await grade({ transcript: result.transcript, outcome: result.outcome, finalMood, level, ...(options.nails ? { nails: options.nails } : {}), ...(options.clientId ? { clientId: options.clientId } : {}), ...(options.scenario ?? {}) });
+      grading = await grading$;
     } catch (error) {
       showError(error);
       return;
@@ -253,9 +279,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     const fixes = options.nails?.fixes ?? [];
     if (fixes.length > 0) grading = { ...grading, skills: applyFixesToSkills(grading.skills, fixes) };
     const photo = options.photo ? await options.photo.catch(() => null) : null;
-    showResults(
-      grading,
-      scoreAppointment(
+    const scored = scoreAppointment(
         {
           finalMood,
           outcome: result.outcome,
@@ -267,9 +291,9 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
           ...(options.nails ? { nailMatch: options.nails.match } : {}),
         },
         config,
-      ),
-      photo,
-    );
+      );
+    // Story 059: her tip follows what she pays (and an overcharge halves it).
+    showResults(grading, reaction && charged !== null ? { ...scored, tip: tipForCharge(scored.tip, charged, menuPrice(), reaction) } : scored, photo);
   };
 
   void run();

@@ -27,6 +27,8 @@ export interface PaymentCardOptions {
   bill?: { number: number; label: string; price: number }[];
   /** Story 050: wait this long before starting (the polaroid of the nails shows first). */
   delayMs?: number;
+  /** Story 059: dollars off (or, negative, on top of) the menu price; `price` is what she pays. */
+  discount?: number;
 }
 
 export function createPaymentCard(options: PaymentCardOptions): HTMLElement {
@@ -40,6 +42,11 @@ export function createPaymentCard(options: PaymentCardOptions): HTMLElement {
     for (const line of options.bill) {
       const row = el('p', 'payment-bill-line');
       row.append(el('span', '', `#${line.number} ${line.label}`), el('span', '', t('results.tipAmount', { dollars: line.price })));
+      priceRow.append(row);
+    }
+    if (options.discount) {
+      const row = el('p', `payment-bill-line payment-discount ${options.discount > 0 ? 'off' : 'extra'}`);
+      row.append(el('span', '', options.discount > 0 ? t('total.discountLine') : t('total.extraLine')), el('span', '', `${options.discount > 0 ? '−' : '+'}${t('results.tipAmount', { dollars: Math.abs(options.discount) })}`));
       priceRow.append(row);
     }
     const total = el('p', 'payment-bill-total');

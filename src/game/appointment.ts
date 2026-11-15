@@ -84,6 +84,8 @@ export function createAppointment(options: AppointmentOptions): Appointment {
   let result: AppointmentResult | null = null;
   let hold: Phase | null = null;
   let lastEmotion: Emotion | null = null;
+  /** Story 059: the latest total agreed in the chat. */
+  let agreedTotal: number | undefined;
 
   const getSnapshot = (): AppointmentSnapshot => ({
     lastEmotion,
@@ -123,6 +125,7 @@ export function createAppointment(options: AppointmentOptions): Appointment {
 
     transcript = [...candidate, { role: 'client', content: turn.reply }];
     lastEmotion = turn.emotion ?? null;
+    if (typeof turn.agreedTotal === 'number' && Number.isFinite(turn.agreedTotal) && turn.agreedTotal > 0) agreedTotal = Math.round(turn.agreedTotal);
     // Story 006: each client reacts more or less strongly (moodSensitivity up for raises, down for drops).
     const delta = moodDeltaAfterEnglishRule(turn, level, helped);
     mood = applyMoodDelta(mood, delta * (delta > 0 ? client.moodSensitivity.up : client.moodSensitivity.down));
@@ -135,7 +138,7 @@ export function createAppointment(options: AppointmentOptions): Appointment {
     const outcome: Outcome | null = isWalkOut(mood) ? 'walked_out' : phase === 'done' ? 'completed' : null;
     if (outcome) {
       status = 'finished';
-      result = { outcome, transcript: [...transcript], moodHistory: [...moodHistory] };
+      result = { outcome, transcript: [...transcript], moodHistory: [...moodHistory], ...(agreedTotal !== undefined ? { agreedTotal } : {}) };
       notify();
       onFinished(result);
       return;

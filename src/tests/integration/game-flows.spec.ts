@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import serviceTalk from '../../game/config/service-talk.json' with { type: 'json' };
-import { LANGS, dailyWith, finishAppointment, mockApi, noOverflow, playToResults, seed } from './fixtures';
+import { LANGS, dailyWith, finishAppointment, mockApi, noOverflow, playToResults, seed, toResults } from './fixtures';
 
 /** Story 048: paint every nail on the station: rows of strokes across the whole hand area (spill does not matter here). */
 async function paintEverything(page: Page): Promise<void> {
@@ -318,9 +318,10 @@ for (const lang of LANGS) {
         await page.locator('.chat-form button[type=submit]').click();
         await page.waitForFunction(() => !document.querySelector<HTMLButtonElement>('.chat-form button[type=submit]')?.disabled || document.querySelector('.chat-results:not(.hidden)'));
       }
+      await toResults(page);
       await page.waitForSelector('.chat-results:not(.hidden) .payment-card', { timeout: 15_000 });
-      await expect(page.locator('.payment-bill-line')).toHaveCount(1);
-      await expect(page.locator('.payment-bill-line')).toContainText('#1');
+      await expect(page.locator('.payment-card .payment-bill-line')).toHaveCount(1);
+      await expect(page.locator('.payment-card .payment-bill-line')).toContainText('#1');
       await expect(page.locator('.payment-bill-total')).toContainText('$40');
       // My own menu: change the first price, save; the save keeps it.
       await page.locator('.results-actions .chat-button.secondary').click();
@@ -636,6 +637,39 @@ for (const lang of LANGS) {
       await expect(page.locator('.station-controls .station-tool .tab-text')).toHaveText(lang === 'vi' ? 'Lau' : 'Clean');
     });
 
+    test('the agreed price (story 059): a discount agreed in the chat fills the Total step; the receipt shows the discount; she pays the agreed price', async ({ page }) => {
+      test.setTimeout(120_000);
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('ana') } });
+      // She accepts $20 for today in her first reply.
+      await mockApi(page, { agreedTotal: { fromTurn: 0, dollars: 20 } });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.path-node.current').click();
+      await finishAppointment(page, ['Hello! Today I can do it for twenty dollars instead of the menu price. Okay?', 'Which colour would you like today?', 'Your nails are done. That is twenty dollars, as we agreed.', 'Thank you! See you next time.'], { stopAtTotal: true });
+      // The Total step: the menu price, the agreed price pre-filled, the discount.
+      const step = page.locator('.chat-results .total-step');
+      await expect(step.locator('.total-agreed')).toContainText('$20');
+      await expect(step.locator('.total-amount')).toHaveValue('20');
+      const menu = Number(((await step.locator('.total-menu span').last().textContent()) ?? '').replace(/[^0-9]/g, ''));
+      expect(menu).toBeGreaterThan(20);
+      await expect(step.locator('.total-discount')).toContainText(`${menu - 20}`);
+      // − and + move the total; the menu-price chip resets it; back to the agreed price and charge.
+      await step.locator('.total-plus').click();
+      await expect(step.locator('.total-amount')).toHaveValue('21');
+      await step.locator('.total-chip-menu').click();
+      await expect(step.locator('.total-amount')).toHaveValue(String(menu));
+      await step.locator('.total-amount').fill('20');
+      await step.locator('.total-amount').blur();
+      await expect(step.locator('.total-charge')).toContainText('$20');
+      await step.locator('.total-charge').click();
+      // The receipt: the discount line and the $20 she pays; her reaction.
+      const card = page.locator('.payment-card.done');
+      await expect(card).toBeVisible({ timeout: 10_000 });
+      await expect(card.locator('.payment-discount')).toContainText(`${menu - 20}`);
+      await expect(card.locator('.payment-bill-total')).toContainText('$20');
+      await expect(page.locator('.results-note.charge-agreed')).toBeVisible();
+    });
+
     test('Fix it after Done (story 058): her checkout complaint shows Fix it; the station reopens on the Fix it step; Done → her thanks → payment', async ({ page }) => {
       test.setTimeout(120_000);
       // The owner's playtest: Grace at checkout, after a normal Done.
@@ -676,7 +710,7 @@ for (const lang of LANGS) {
       await expect(fixNow).toBeHidden();
       await page.locator('.chat-input').fill('Thank you! See you next time.');
       await page.locator('.chat-form button[type=submit]').click();
-      await page.waitForSelector('.chat-results:not(.hidden) .results-section', { timeout: 15_000 });
+      await toResults(page);
       await expect(page.locator('.results-fix.good').first()).toBeVisible();
     });
 
@@ -702,7 +736,7 @@ for (const lang of LANGS) {
         await page.locator('.chat-form button[type=submit]').click();
         await page.waitForFunction(() => !document.querySelector<HTMLButtonElement>('.chat-form button[type=submit]')?.disabled || document.querySelector('.chat-results:not(.hidden)'));
       }
-      await page.waitForSelector('.chat-results:not(.hidden) .results-section', { timeout: 15_000 });
+      await toResults(page);
       await expect(page.locator('.results-fix.bad')).toHaveCount(1);
       // The companion's cheer and the come-back line say it kindly (overseer, on 048).
       await expect(page.locator('.payment-cheer')).toContainText(lang === 'vi' ? 'sửa trước' : 'fix what the client asks');

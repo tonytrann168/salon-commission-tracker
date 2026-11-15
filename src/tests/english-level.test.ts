@@ -303,3 +303,18 @@ describe('translate handler', () => {
     expect((await handleTranslate(body, { ANTHROPIC_API_KEY: 'k' }, noTool.fetchImpl)).status).toBe(502);
   });
 });
+
+describe('the agreed total (story 059)', () => {
+  const parse = (input: unknown) => parseModelOutput({ content: [{ type: 'tool_use', name: 'client_turn', input }] });
+  const base = { reply: 'Thirty-five is great, thank you!', moodDelta: 3, phase: 'consultation', unclearEnglish: false, rude: false };
+  it('keeps a sensible agreed total (whole dollars) and drops anything else', () => {
+    expect(parse({ ...base, agreedTotal: 35 })).toMatchObject({ ok: true, value: { agreedTotal: 35 } });
+    expect(parse({ ...base, agreedTotal: 34.6 })).toMatchObject({ ok: true, value: { agreedTotal: 35 } });
+    for (const bad of [0, -5, 5000, '35', Number.NaN, null]) {
+      const out = parse({ ...base, agreedTotal: bad });
+      expect(out.ok && 'agreedTotal' in out.value).toBe(false);
+    }
+    const none = parse(base);
+    expect(none.ok && 'agreedTotal' in none.value).toBe(false);
+  });
+});

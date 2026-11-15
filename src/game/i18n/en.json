@@ -708,5 +708,20 @@
   "progress.coins": "Coins",
   "progress.tips": "Tips",
   "progress.streakUp": "🔥 Streak {from} → {to}!",
-  "fix.now": "Fix it"
+  "fix.now": "Fix it",
+  "total.title": "Total",
+  "total.menuPrice": "Menu price",
+  "total.agreed": "Agreed in the chat: ${dollars}",
+  "total.amountLabel": "The total to charge, in dollars",
+  "total.less": "One dollar less",
+  "total.more": "One dollar more",
+  "total.discount": "Discount −${dollars}",
+  "total.extra": "${dollars} over the menu price",
+  "total.reset": "Menu price",
+  "total.charge": "Charge ${dollars}",
+  "total.discountLine": "Discount",
+  "total.extraLine": "Extra",
+  "total.reaction.agreed": "{name} pays the price you agreed. Fair and friendly!",
+  "total.reaction.discount": "{name} is happy with the little discount.",
+  "total.reaction.over": "{name} noticed you charged more than you agreed, and tipped less."
 }
