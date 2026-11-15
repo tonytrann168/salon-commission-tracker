@@ -40,16 +40,16 @@
       "victoria": "en-US-AriaNeural"
     },
     "companion": {
-      "_note": "Story 055: the companion's voice, chosen by the player (Settings, the meet step); one voice for everything she says. Each choice has an English and a Vietnamese voice; a Multilingual voice speaks both (the server wraps Vietnamese in <lang xml:lang=\"vi-VN\">). The first choice is the default.",
+      "_note": "Story 055: the companion's voice, chosen by the player (Settings, the meet step); one voice for everything she says. Each choice has an English and a Vietnamese voice; a Multilingual voice speaks both (the server wraps Vietnamese in <lang xml:lang=\"vi-VN\">). The first choice is the default: a Multilingual voice, so one voice speaks both languages (055 fix); Hoài My / Nam Minh are natural Vietnamese with English in another voice.",
       "female": [
-        { "id": "hoaimy", "label": { "en": "Hoài My (warm)", "vi": "Hoài My (ấm áp)" }, "en": "en-US-SaraNeural", "vi": "vi-VN-HoaiMyNeural" },
         { "id": "ava", "label": { "en": "Ava (bright)", "vi": "Ava (trong trẻo)" }, "en": "en-US-AvaMultilingualNeural", "vi": "en-US-AvaMultilingualNeural" },
-        { "id": "emma", "label": { "en": "Emma (calm)", "vi": "Emma (dịu dàng)" }, "en": "en-US-EmmaMultilingualNeural", "vi": "en-US-EmmaMultilingualNeural" }
+        { "id": "emma", "label": { "en": "Emma (calm)", "vi": "Emma (dịu dàng)" }, "en": "en-US-EmmaMultilingualNeural", "vi": "en-US-EmmaMultilingualNeural" },
+        { "id": "hoaimy", "label": { "en": "Hoài My: natural Vietnamese (English in another voice)", "vi": "Hoài My: giọng Việt chuẩn (tiếng Anh giọng khác)" }, "en": "en-US-SaraNeural", "vi": "vi-VN-HoaiMyNeural" }
       ],
       "male": [
-        { "id": "namminh", "label": { "en": "Nam Minh (friendly)", "vi": "Nam Minh (thân thiện)" }, "en": "en-US-JasonNeural", "vi": "vi-VN-NamMinhNeural" },
         { "id": "andrew", "label": { "en": "Andrew (warm)", "vi": "Andrew (ấm áp)" }, "en": "en-US-AndrewMultilingualNeural", "vi": "en-US-AndrewMultilingualNeural" },
-        { "id": "brian", "label": { "en": "Brian (relaxed)", "vi": "Brian (thoải mái)" }, "en": "en-US-BrianMultilingualNeural", "vi": "en-US-BrianMultilingualNeural" }
+        { "id": "brian", "label": { "en": "Brian (relaxed)", "vi": "Brian (thoải mái)" }, "en": "en-US-BrianMultilingualNeural", "vi": "en-US-BrianMultilingualNeural" },
+        { "id": "namminh", "label": { "en": "Nam Minh: natural Vietnamese (English in another voice)", "vi": "Nam Minh: giọng Việt chuẩn (tiếng Anh giọng khác)" }, "en": "en-US-JasonNeural", "vi": "vi-VN-NamMinhNeural" }
       ]
     },
     "outputFormat": "audio-24khz-48kbitrate-mono-mp3"

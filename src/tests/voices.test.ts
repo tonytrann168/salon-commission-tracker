@@ -97,13 +97,13 @@ describe('/api/tts', () => {
   it('every roster client has a neural voice of their gender; the companion has en and vi voices', () => {
     const male = new Set(['en-US-GuyNeural', 'en-US-DavisNeural', 'en-US-JasonNeural', 'en-US-TonyNeural']);
     for (const client of ROSTER) expect(male.has(azureVoiceFor(client.id, client.pronoun === 'he' ? 'male' : 'female'))).toBe(client.pronoun === 'he');
-    expect(companionVoice('female').vi).toBe('vi-VN-HoaiMyNeural');
-    expect(companionVoice('male').vi).toBe('vi-VN-NamMinhNeural');
+    expect(companionVoice('female', 'hoaimy').vi).toBe('vi-VN-HoaiMyNeural');
+    expect(companionVoice('male', 'namminh').vi).toBe('vi-VN-NamMinhNeural');
   });
 
   it('only a known client or the companion can speak; text is capped', () => {
     expect(parseTtsRequest({ text: 'Hi', clientId: 'tom', emotion: 'angry' })).toMatchObject({ ok: true, value: { voice: 'en-US-GuyNeural', emotion: 'angry', lang: 'en-US' } });
-    expect(parseTtsRequest({ text: 'Chào em', companion: { gender: 'female', lang: 'vi' } })).toMatchObject({ ok: true, value: { voice: 'vi-VN-HoaiMyNeural', lang: 'vi-VN' } });
+    expect(parseTtsRequest({ text: 'Chào em', companion: { gender: 'female', lang: 'vi' } })).toMatchObject({ ok: true, value: { voice: 'en-US-AvaMultilingualNeural', lang: 'vi-VN' } });
     expect(parseTtsRequest({ text: 'Hi' }).ok).toBe(false);
     expect(parseTtsRequest({ text: 'Hi', clientId: 'player' }).ok).toBe(false);
     expect(parseTtsRequest({ text: 'Hi', clientId: 'tom', voice: 'en-US-EvilNeural' })).toMatchObject({ value: { voice: 'en-US-GuyNeural' } });
@@ -248,7 +248,7 @@ describe('the companion reads her tips aloud (story 043)', () => {
     await voice.speak('Câu này hay lắm!', { level: 'some', companion: { gender: 'female', lang: 'vi' }, speed: 'slow' });
     expect(JSON.parse((fetchImpl.mock.calls[0] as unknown as [string, { body: string }])[1].body)).toEqual({ text: 'Câu này hay lắm!', companion: { gender: 'female', lang: 'vi' }, level: 'some', speed: 'slow' });
     expect(played).toEqual(['data:audio/mpeg;base64,BBBB']);
-    expect(parseTtsRequest({ text: 'Câu này hay lắm!', companion: { gender: 'female', lang: 'vi' } })).toMatchObject({ ok: true, value: { voice: 'vi-VN-HoaiMyNeural', lang: 'vi-VN' } });
+    expect(parseTtsRequest({ text: 'Câu này hay lắm!', companion: { gender: 'female', lang: 'vi' } })).toMatchObject({ ok: true, value: { voice: 'en-US-AvaMultilingualNeural', lang: 'vi-VN' } });
 
     // The browser voice: a Vietnamese line needs a Vietnamese voice on the phone; without one she stays quiet.
     const spoken: { text: string; lang: string }[] = [];
@@ -269,11 +269,14 @@ describe('the companion reads her tips aloud (story 043)', () => {
 });
 
 describe('choosing the companion\'s voice (story 055)', () => {
-  it('3 choices per gender in config, the first is the default; an unknown id is the default', () => {
-    expect(VOICE_CAST.azure.companion.female.map((c) => c.id)).toEqual(['hoaimy', 'ava', 'emma']);
-    expect(VOICE_CAST.azure.companion.male.map((c) => c.id)).toEqual(['namminh', 'andrew', 'brian']);
-    expect(companionVoice('female', 'nope').id).toBe('hoaimy');
-    expect(companionVoice('male', 'ava').id).toBe('namminh');
+  it('3 choices per gender; the default is one voice for both languages; an unknown id is the default', () => {
+    expect(VOICE_CAST.azure.companion.female.map((c) => c.id)).toEqual(['ava', 'emma', 'hoaimy']);
+    expect(VOICE_CAST.azure.companion.male.map((c) => c.id)).toEqual(['andrew', 'brian', 'namminh']);
+    for (const gender of ['female', 'male'] as const) expect(companionVoice(gender).en).toBe(companionVoice(gender).vi);
+    expect(companionVoice('female', 'nope').id).toBe('ava');
+    expect(companionVoice('male', 'ava').id).toBe('andrew');
+    // A save that chose Hoài My keeps her.
+    expect(companionVoice('female', 'hoaimy').id).toBe('hoaimy');
   });
 
   it('the server uses the chosen voice (config ids only); a multilingual voice speaks Vietnamese inside <lang>', () => {
@@ -288,7 +291,7 @@ describe('choosing the companion\'s voice (story 055)', () => {
     if (!native.ok) throw new Error(native.message);
     expect(buildSsml(native.value)).not.toContain('<lang');
     const sneaky = parseTtsRequest({ text: 'Hi', companion: { gender: 'male', lang: 'en', voice: 'en-US-EvilNeural' } });
-    expect(sneaky.ok && sneaky.value.voice).toBe('en-US-JasonNeural');
+    expect(sneaky.ok && sneaky.value.voice).toBe('en-US-AndrewMultilingualNeural');
   });
 
   it('the natural voice sends the chosen voice, and caches each voice apart', async () => {

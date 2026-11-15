@@ -28,6 +28,13 @@ Owner playtest 3: pick Mai's voice, and one voice everywhere she speaks. The own
   runs it).
 - [x] "Long" is the default male name (Mai stays the female default; both can be renamed).
 
+- [x] 055 fix (overseer): one voice teaches in both languages by default: Ava (female) and Andrew (male) first; Hoài
+  My and Nam Minh third, labelled honestly ("natural Vietnamese, English in another voice"). Saves that chose a voice
+  keep it.
+- [x] 055 fix (overseer): the smoke pronoun checks look only at how the companion speaks of herself and the player
+  ("các chị khách", "chị ấy" and quoted or bracketed lines are left out; `game/pronoun-check.ts`, unit-tested with the
+  two real replies that failed).
+
 OWNER: please sign (voices by ear). If one of the Multilingual voices sounds wrong in Vietnamese, swap it in
 `voice-cast.json`.
 

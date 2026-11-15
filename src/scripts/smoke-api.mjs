@@ -22,6 +22,8 @@ const { handleBestie } = await vite.ssrLoadModule('/server/handlers/bestie.ts');
 const { handleCorrections } = await vite.ssrLoadModule('/server/handlers/corrections.ts');
 const { MENU_CONFIG, orderFor } = await vite.ssrLoadModule('/game/menu.ts');
 const { getClient } = await vite.ssrLoadModule('/game/clients/roster.ts');
+// 055 fix: "chị" about the clients ("các chị khách", "chị ấy") or inside a quoted/bracketed line is not the companion.
+const { saysWord } = await vite.ssrLoadModule('/game/pronoun-check.ts');
 
 const transcript = [
   { role: 'client', content: DEFAULT_CLIENT.openingLine },
@@ -55,12 +57,12 @@ const checks = [
   // Story 013: a male companion in Vietnamese calls himself "anh", never "chị" (no client in this exchange, so any "chị" would be him).
   ['male companion answer (some, vi): says "anh", never "chị"', () => handleBestie({ kind: 'answer', level: 'some', language: 'vi', memory: '',
       question: 'Em thích màu sơn nào nhất?', answer: 'Em thích màu hồng nhạt.', companion: { name: 'Minh', gender: 'male' } }, env, fetch),
-    (b) => typeof b.reply === 'string' && /(^|[^\p{L}])anh([^\p{L}]|$)/iu.test(b.reply) && !/(^|[^\p{L}])chị([^\p{L}]|$)/iu.test(b.reply),
+    (b) => typeof b.reply === 'string' && saysWord(b.reply, 'anh') && !saysWord(b.reply, 'chị'),
     (b) => `"${b.reply}"`],
   // Story 025b: a younger female companion with a player titled "anh": "em" for herself, "anh" for the player, never "chị".
   ['younger companion answer (some, vi): says "em", calls the player "anh", never "chị"', () => handleBestie({ kind: 'answer', level: 'some', language: 'vi', memory: '',
       question: 'Anh thích màu sơn nào nhất?', answer: 'Anh thích màu hồng nhạt.', companion: { name: 'Mai', gender: 'female', relation: 'younger', playerTitle: 'anh' } }, env, fetch),
-    (b) => typeof b.reply === 'string' && /(^|[^\p{L}])em([^\p{L}]|$)/iu.test(b.reply) && /(^|[^\p{L}])anh([^\p{L}]|$)/iu.test(b.reply) && !/(^|[^\p{L}])chị([^\p{L}]|$)/iu.test(b.reply),
+    (b) => typeof b.reply === 'string' && saysWord(b.reply, 'em') && saysWord(b.reply, 'anh') && !saysWord(b.reply, 'chị'),
     (b) => `"${b.reply}"`],
   // Story 036: a male client's line in Vietnamese: he says "anh", never "chị".
   ['translate Tom (male client) en→vi: says "anh", never "chị"', () => handleTranslate({ text: "I don't have much time. Can you do my nails quickly? I think you charge too much.", direction: 'en-to-vi', clientId: 'tom' }, env, fetch),
