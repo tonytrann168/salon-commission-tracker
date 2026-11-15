@@ -32,7 +32,10 @@
 .menu-heading { display: flex; align-items: center; gap: 8px; }
 .menu-heading .price-board-icon, .chat-menu-button .price-board-icon, .title-menu-board .price-board-icon { flex: none; }
 .chat-menu-button { display: inline-flex; align-items: center; gap: 6px; }
-.title-menu-board { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+/* 054 fix: Shop, Profile and the menu: an icon over its word, three across. */
+.title-menu .title-menu-row .title-icon-button { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px 4px; line-height: 1.1; }
+.title-menu .title-icon-button .title-icon { font-size: 20px; line-height: 1; display: inline-flex; }
+.title-menu .title-icon-button .title-word { font-size: 15px; white-space: nowrap; }
 .menu-setup-title { display: flex; align-items: center; gap: 10px; font-size: 24px; }
 .menu-setup-mai { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
 .menu-setup-mai p { margin: 0; font-size: 16px; line-height: 1.35; }

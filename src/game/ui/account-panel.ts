@@ -341,21 +341,28 @@ export function showSyncOutcome(host: HTMLElement, outcome: SyncOutcome): void {
 }
 
 /** The companion's one-time suggestion on the title, after a few appointments, while signed out. */
-export function accountNudge(host: HTMLElement, account: Account, appointments: number): HTMLElement | null {
+/** `onClose` (054 fix): the banner took the greeting's place; put the greeting back when it goes. */
+export function accountNudge(host: HTMLElement, account: Account, appointments: number, onClose?: () => void): HTMLElement | null {
   const memory = account.memory();
   if (account.user || memory.nudged || appointments < ACCOUNT_CONFIG.nudgeAfterAppointments) return null;
   account.markNudged();
   const box = el('div', 'bestie-bubble account-nudge');
   box.setAttribute('role', 'status');
-  const later = button(t('account.nudgeLater'));
-  const go = button(t('account.nudgeGo'), 'chat-button');
-  later.addEventListener('click', () => box.remove());
-  go.addEventListener('click', () => {
+  // 054 fix: one row the greeting's height: the line, Create account beside it, and ✕ (Later) in the corner.
+  const later = button('✕', 'account-nudge-later');
+  later.setAttribute('aria-label', t('account.nudgeLater'));
+  const go = button(t('account.nudgeGoShort'), 'chat-button');
+  const close = (): void => {
     box.remove();
+    onClose?.();
+  };
+  later.addEventListener('click', close);
+  go.addEventListener('click', () => {
+    close();
     openSignInSheet(host, account, { mode: 'signUp' });
   });
   const actions = el('div', 'feedback-actions');
   actions.append(later, go);
-  box.append(el('p', '', t('account.nudge', { name: companionName() })), actions);
+  box.append(el('p', '', t('account.nudgeShort', { name: companionName() })), actions);
   return box;
 }

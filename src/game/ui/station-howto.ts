@@ -40,7 +40,7 @@ const PICTURES: [string, string][] = [
       <path d="${FINGER}" fill="#f3c9a9" stroke="#c98f6d" stroke-width="2"/>
       <path d="${NAIL}" fill="#ff4f8b" stroke="#5a2e43" stroke-width="2"/>
       <circle cx="24" cy="70" r="4" fill="#ff4f8b"/><circle cx="20" cy="82" r="3" fill="#ff4f8b"/><circle cx="76" cy="58" r="3" fill="#ff4f8b" opacity="0.5"/>
-      <text x="84" y="64" font-size="30">🧽</text>
+      <g transform="translate(80 36)"><circle cx="15" cy="15" r="14" fill="#fffdfa" stroke="#bfb2a6" stroke-width="2"/><circle cx="15" cy="15" r="9" fill="none" stroke="#e3d6ca" stroke-width="2" stroke-dasharray="3 3"/></g>
       <circle cx="132" cy="92" r="18" fill="#2f9e5b"/>
       <path d="M123 92 L130 99 L142 85" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`,

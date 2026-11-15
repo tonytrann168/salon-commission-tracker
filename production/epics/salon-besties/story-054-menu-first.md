@@ -27,6 +27,13 @@ Owner playtest 3: "I never saw the menu during play." It was only in Settings.
 - [x] Found on the way: the account suggestion card on the home screen was wider than the phone at 320 px (text cut
   at both sides); it now fits, with one-line buttons.
 
+- [x] 054 fix (overseer): the account suggestion no longer covers the companion or the title: it is one row the
+  greeting's height, in the greeting's place (the line, Sign up / Tạo tài khoản, ✕ for later), and the greeting comes
+  back when it closes. The salon menu button joined Shop and Profile (icon over word, three across), so the home menu
+  keeps its height. Checked at 320×568 and 320×640, en and vi, with and without the banner.
+- [x] 054 fix (overseer): Clean and Rub show the drawn cotton pad, Clean edges the swab (what is under the finger);
+  the hints and the how-to say "Lau / Clean" instead of 🧽.
+
 OWNER: please sign this Visual/Feel story (the setup step, the icon, the cotton pad).
 
 ## Test Evidence

@@ -267,7 +267,7 @@ for (const lang of LANGS) {
       expect(await noOverflow(page)).toBe(true);
       // My work on the profile: one photo; tap it for the big view and Save to phone.
       await page.locator('.results-actions .chat-button.secondary').click();
-      await page.locator('.title-menu-row').nth(1).locator('button').last().click();
+      await page.locator('.title-menu-row').nth(1).locator('button').nth(1).click();
       await expect(page.locator('.my-work-tile')).toHaveCount(1);
       await page.locator('.my-work-tile').click();
       await expect(page.locator('.my-work-viewer .my-work-big')).toHaveAttribute('src', /^data:image\/jpeg/);

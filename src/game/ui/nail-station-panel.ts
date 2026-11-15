@@ -11,6 +11,7 @@ import type { MatchResult } from '../nail-art/match';
 import { SHAPES, createStationView } from '../nail-art/station';
 import { STATION_STEPS, stepChecks, wantsArt } from '../nail-art/steps';
 import { openHowTo } from './station-howto';
+import { cottonPadIcon, cottonSwabIcon } from './clean-icons';
 import type { StationTool, StationTools } from '../nail-art/station';
 import { emitSound } from '../sound-events';
 import { el } from './dom';
@@ -142,7 +143,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     window.clearTimeout(hideHint);
     if (!keep) hideHint = window.setTimeout(() => status.classList.remove('show'), HINT_MS);
   };
-  // Story 052: 'clean' is the clean-up mode (Rub, Clean edges), opened from 🧽 Clean in the bottom row.
+  // Story 052: 'clean' is the clean-up mode (Rub, Clean edges), opened from Clean (the cotton pad) in the bottom row.
   type Tab = 'shape' | 'length' | 'colour' | 'art' | 'fix' | 'clean';
   let tab: Tab = 'colour';
   let stepTab: Tab = 'colour';
@@ -223,9 +224,9 @@ export function createNailStation(options: NailStationOptions): NailStation {
     polish: button(t('station.polish'), 'station-tool', () => selectTool('polish')),
     gradient: button(`<span aria-hidden="true">🌈</span><span class="tab-text">${t('station.gradient').replace('🌈', '').trim()}</span>`, 'station-tool', () => selectTool('gradient'), t('station.gradient').replace('🌈', '').trim()),
     gem: button(t('station.gem'), 'station-tool', () => selectTool('gem')),
-    cleanup: button(labelled('🧽', t('station.rubWord')), 'station-tool', () => selectTool('cleanup'), t('station.cleanup')),
+    cleanup: button(labelled(cottonPadIcon(), t('station.rubWord')), 'station-tool', () => selectTool('cleanup'), t('station.cleanup')),
     remover: button(labelled('🧴', t('station.removerWord')), 'station-tool station-remover', () => selectTool('remover'), t('station.remover')),
-    tidy: button(labelled('✨', t('station.tidyWord')), 'station-tool station-tidy', () => selectTool('tidy'), t('station.tidyLabel')),
+    tidy: button(labelled(cottonSwabIcon(), t('station.tidyWord')), 'station-tool station-tidy', () => selectTool('tidy'), t('station.tidyLabel')),
     sticker: button(t(`station.sticker.${sticker}`), 'station-tool', () => {
       // Tapping Sticker again cycles heart → star → flower.
       if (tool === 'sticker') {
@@ -302,8 +303,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const controls = el('div', 'station-controls');
   // Story 048: while a fix is asked for, Fix it takes Clean up's place (Clean up is inside it), so the row still fits.
   const fixSlot = el('div', 'station-fix-slot');
-  // Story 052: 🧽 Clean opens the clean-up mode (Rub, Clean edges); tapped again, back to the step.
-  const cleanButton = button(labelled('🧽', t('station.cleanWord')), 'station-tool station-clean-mode', () => selectTab(tab === 'clean' ? stepTab : 'clean'), t('station.cleanup'));
+  // Story 052: Clean (the cotton pad) opens the clean-up mode (Rub, Clean edges); tapped again, back to the step.
+  const cleanButton = button(labelled(cottonPadIcon(), t('station.cleanWord')), 'station-tool station-clean-mode', () => selectTab(tab === 'clean' ? stepTab : 'clean'), t('station.cleanup'));
   fixSlot.append(cleanButton);
   // Story 052: Undo the last stroke or tap.
   const undoButton = button(labelled('↶', t('station.undoWord')), 'station-undo', () => {

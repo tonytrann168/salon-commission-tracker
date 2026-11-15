@@ -169,8 +169,14 @@ async function boot(): Promise<void> {
     });
     // Story 025: once, after a few appointments, the companion suggests an account.
     const account = getAccount();
-    const nudge = account ? accountNudge(host, account, loadSave().appointments) : null;
-    if (nudge) menu.prepend(nudge);
+    // 054 fix: the suggestion is a compact banner in the companion's greeting's place (it is her speaking), so the
+    // menu never grows over the companion or the title; the greeting comes back when it is closed.
+    const greeting = menu.querySelector('.bestie-greeting');
+    const nudge = account ? accountNudge(host, account, loadSave().appointments, () => greeting && menu.prepend(greeting)) : null;
+    if (nudge) {
+      if (greeting) greeting.replaceWith(nudge);
+      else menu.prepend(nudge);
+    }
     // Story 028: during a season, the companion's daily gift (Tết: a lì xì envelope of in-game tips; free).
     const season = activeSeason(localDay(), seasonOverride());
     const seasonState = parseSeasonState(readStored(SEASON_KEY));

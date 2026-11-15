@@ -34,26 +34,35 @@ export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettin
   // Story 007: the shop and the profile share a second row.
   const extra = document.createElement('div');
   extra.className = 'title-menu-row';
+  // 054 fix: Shop, Profile and the salon menu share this row, each an icon over its word (it fits 320 px in vi).
+  const iconWord = (label: string): [string, string] => {
+    const m = /^(\S+)\s+(.+)$/u.exec(label);
+    return m && !/[a-zA-ZÀ-ỹ]/.test(m[1] as string) ? [m[1] as string, m[2] as string] : ['', label];
+  };
   for (const [label, onClick] of [[t('title.shop'), onShop], [t('title.profile'), onProfile]] as const) {
     if (!onClick) continue;
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'chat-button secondary';
-    button.textContent = label;
+    button.className = 'chat-button secondary title-icon-button';
+    const [icon, word] = iconWord(label);
+    button.innerHTML = `<span class="title-icon" aria-hidden="true">${icon}</span><span class="title-word"></span>`;
+    (button.querySelector('.title-word') as HTMLElement).textContent = word;
+    button.setAttribute('aria-label', word);
     button.addEventListener('click', onClick);
     extra.append(button);
   }
   // Story 054: the salon menu, with its price-board icon, to view or edit any time.
-  const menuRow: HTMLElement[] = [];
   if (extras.onMenu) {
     const menuButton = document.createElement('button');
     menuButton.type = 'button';
-    menuButton.className = 'chat-button secondary title-menu-board';
-    menuButton.innerHTML = `${priceBoardIcon(26)}<span>${t('menu.sectionTitle')}</span>`;
+    menuButton.className = 'chat-button secondary title-icon-button title-menu-board';
+    menuButton.innerHTML = `<span class="title-icon" aria-hidden="true">${priceBoardIcon(24)}</span><span class="title-word"></span>`;
+    (menuButton.querySelector('.title-word') as HTMLElement).textContent = t('menu.button');
+    menuButton.setAttribute('aria-label', t('menu.sectionTitle'));
     menuButton.addEventListener('click', extras.onMenu);
-    menuRow.push(menuButton);
+    extra.append(menuButton);
   }
-  menu.append(createBestieGreeting(), start, row, ...(extra.childElementCount > 0 ? [extra] : []), ...menuRow);
+  menu.append(createBestieGreeting(), start, row, ...(extra.childElementCount > 0 ? [extra] : []));
   // Story 021: tap the companion (drawn on the canvas above) to spend a moment together.
   if (onCompanion) {
     const spot = document.createElement('button');

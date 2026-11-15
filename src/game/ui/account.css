@@ -31,3 +31,11 @@ html[data-contrast='high'] .account-link { color: #6b0f3c; }
 /* The account suggestion and the season gift on the title stay inside the screen (they grew to their text's width). */
 .title-menu > .account-nudge, .title-menu > .season-gift { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
 .title-menu > .account-nudge .feedback-actions .chat-button, .title-menu > .season-gift .chat-button { min-width: 0; white-space: nowrap; padding-inline: 8px; font-size: clamp(15px, 4.8vw, 18px); }
+
+/* 054 fix: the account suggestion is one row the greeting's height, in the greeting's place: the line, Create account
+   beside it, and a round ✕ (Later) in the corner. It never covers the companion or the title. */
+.title-menu > .account-nudge { position: relative; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; max-width: 340px; padding: 8px 30px 8px 12px; }
+.title-menu > .account-nudge p { margin: 0; font-size: 16px; line-height: 1.25; }
+.title-menu > .account-nudge .feedback-actions { display: contents; }
+.title-menu > .account-nudge .feedback-actions .chat-button { min-height: 44px; min-width: 0; }
+.title-menu > .account-nudge .account-nudge-later { position: absolute; top: -6px; right: -6px; width: 38px; height: 38px; min-height: 40px !important; padding: 0 !important; border-radius: 50%; background: #fff; color: #5b4a53; font-size: 18px; box-shadow: 0 1px 4px rgba(59, 42, 51, 0.25); }
