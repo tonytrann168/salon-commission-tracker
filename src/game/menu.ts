@@ -7,8 +7,25 @@ import type { NailRequest } from './nail-art/design';
  * the ordered items. Pretend money only: the wallet still gets the tip. Shared by the game and the server. Pure.
  */
 
-export const MENU_TAGS = ['manicure', 'fullSet', 'pedicure', 'ombre', 'gems', 'art', 'extensions', 'other'] as const;
+/** Story 063 adds the real menu's services; the older tags (fullSet, ombre, gems, extensions) still work on an own menu. */
+export const MENU_TAGS = ['manicure', 'gel', 'spa', 'fullSet', 'pedicure', 'spaPedicure', 'jellyPedicure', 'acrylic', 'fill', 'dip', 'gelX', 'extensions', 'french', 'chrome', 'art', 'gems', 'ombre', 'removal', 'paraffin', 'polishChange', 'other'] as const;
 export type MenuTag = (typeof MENU_TAGS)[number];
+
+/** Story 063: the menu's groups, in order. */
+export const MENU_CATEGORIES = ['manicure', 'pedicure', 'enhancements', 'addons'] as const;
+export type MenuCategory = (typeof MENU_CATEGORIES)[number];
+const CATEGORY_OF: Record<MenuTag, MenuCategory> = {
+  manicure: 'manicure', gel: 'manicure', spa: 'manicure', fullSet: 'manicure',
+  pedicure: 'pedicure', spaPedicure: 'pedicure', jellyPedicure: 'pedicure',
+  acrylic: 'enhancements', fill: 'enhancements', dip: 'enhancements', gelX: 'enhancements', extensions: 'enhancements',
+  french: 'addons', chrome: 'addons', art: 'addons', gems: 'addons', ombre: 'addons', removal: 'addons', paraffin: 'addons', polishChange: 'addons', other: 'addons',
+};
+export const categoryOf = (tag: MenuTag): MenuCategory => CATEGORY_OF[tag];
+
+/** Story 063: the menu in its groups (each item keeps its number on the one list). */
+export function menuGroups(items: readonly MenuItem[]): { category: MenuCategory; lines: OrderLine[] }[] {
+  return MENU_CATEGORIES.map((category) => ({ category, lines: items.map((item, i) => ({ number: i + 1, item })).filter((line) => categoryOf(line.item.tag) === category) })).filter((group) => group.lines.length > 0);
+}
 export const MENU_PRESETS = ['basic', 'mid', 'fancy'] as const;
 export type MenuPreset = (typeof MENU_PRESETS)[number];
 
@@ -94,24 +111,41 @@ export interface OrderLine {
   item: MenuItem;
 }
 
+/** A stable number for a client id (her usual service). */
+const seedOf = (text: string): number => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
+  return h;
+};
+
 /**
  * Her order on this menu, from her nail request: the base service (pedicure; both hands → the full set when the menu
  * has one; else a manicure), then ombre, gems, nail art and long nails when she wants them. Items the menu lacks are
  * left off; a menu with no base service rings up its first item.
  */
-export function orderFor(request: NailRequest | undefined, items: readonly MenuItem[]): OrderLine[] {
+export function orderFor(request: NailRequest | undefined, items: readonly MenuItem[], who = ''): OrderLine[] {
   const find = (tag: MenuTag): OrderLine | null => {
     const index = items.findIndex((item) => item.tag === tag);
     return index < 0 ? null : { number: index + 1, item: items[index] as MenuItem };
   };
   const pedicure = request?.service === 'pedicure';
-  const base = (pedicure ? find('pedicure') : request?.hands === 2 ? (find('fullSet') ?? find('manicure')) : find('manicure')) ?? (items[0] ? { number: 1, item: items[0] } : null);
+  // Story 063: long nails are an acrylic full set (the service itself) on the real menu; an older own menu adds "extensions".
+  const long = !pedicure && !!request?.lengths?.length && request.lengths.every((l) => l === 'long' || l === 'xlong');
+  // Story 063: on the real menu each client has her usual (classic, gel or spa) by a stable hash of who she is.
+  const usual = (tags: MenuTag[]): OrderLine | null => {
+    const open = tags.map(find).filter((line): line is OrderLine => line !== null);
+    return who && open.length > 0 ? (open[seedOf(who) % open.length] as OrderLine) : (open[0] ?? null);
+  };
+  const hands = request?.hands === 2 ? (find('fullSet') ?? usual(['manicure', 'gel', 'spa'])) : usual(['manicure', 'gel', 'spa']);
+  const base = (pedicure ? usual(['pedicure', 'spaPedicure', 'jellyPedicure']) : long ? (find('acrylic') ?? hands) : hands) ?? (items[0] ? { number: 1, item: items[0] } : null);
   const extras: (OrderLine | null)[] = request
     ? [
-        request.gradient === 'yes' ? find('ombre') : null,
-        request.gems !== 'none' ? find('gems') : null,
+        request.gradient === 'yes' ? (find('ombre') ?? find('art')) : null,
+        request.gems !== 'none' ? (find('gems') ?? find('art')) : null,
         request.stickers !== 'none' ? find('art') : null,
-        request.lengths?.length && request.lengths.every((l) => l === 'long' || l === 'xlong') ? find('extensions') : null,
+        long && base?.item.tag !== 'acrylic' ? find('extensions') : null,
+        // Some clients like a French tip with it.
+        who && !pedicure && seedOf(`${who}:french`) % 4 === 0 ? find('french') : null,
       ]
     : [];
   const lines = [base, ...extras].filter((line): line is OrderLine => line !== null);
@@ -120,9 +154,14 @@ export function orderFor(request: NailRequest | undefined, items: readonly MenuI
 
 export const orderTotal = (order: readonly OrderLine[]): number => order.reduce((sum, line) => sum + line.item.price, 0);
 
+const CATEGORY_TITLES: Record<MenuCategory, string> = { manicure: 'Manicure', pedicure: 'Pedicure', enhancements: 'Nail enhancements', addons: 'Add-ons' };
+
 /** What the AI client is told about the menu and her order (English; the names are cleaned). */
 export function menuPrompt(items: readonly MenuItem[], order: readonly OrderLine[], priceSensitive = false, config: MenuConfig = MENU_CONFIG): string {
-  const list = items.map((item, i) => `${i + 1}. ${item.name.en}: $${item.price}`).join('\n');
-  const mine = order.map((line) => `number ${line.number} (${line.item.name.en})`).join(' and ');
-  return `THE SALON MENU (on the wall; prices in dollars)\n${list}\n- Order by number, the way regulars do (for example "Number ${order[0]?.number ?? 1}, please."). Your order today: ${mine}. At checkout the total is $${orderTotal(order)} plus any tip. If the stylist rings up a different price, politely ask about it.${priceSensitive && orderTotal(order) > config.pricey.over ? `\n- You watch your money and $${orderTotal(order)} feels a bit high. At checkout you may say so once, kindly and in your own words (for example "Hmm, that's a bit pricey."). It does not change your mood: report moodDelta for how the stylist treats you, as usual.` : ''}`;
+  // Story 063: the menu in its groups; add-ons are asked for with a service ("number 2 with French tip").
+  const list = menuGroups(items)
+    .map((group) => `${CATEGORY_TITLES[group.category]}:\n${group.lines.map((line) => `${line.number}. ${line.item.name.en}: ${group.category === 'addons' ? '+' : ''}$${line.item.price}`).join('\n')}`)
+    .join('\n');
+  const mine = order.map((line) => `number ${line.number} (${line.item.name.en})`).join(' with ');
+  return `THE SALON MENU (on the wall; prices in dollars)\n${list}\n- Order by number, the way regulars do (for example "Number ${order[0]?.number ?? 1}, please."), and an add-on by name with it (for example "number ${order[0]?.number ?? 1} with French tip"). Your order today: ${mine}. At checkout the total is $${orderTotal(order)} plus any tip. If the stylist rings up a different price, politely ask about it.${priceSensitive && orderTotal(order) > config.pricey.over ? `\n- You watch your money and $${orderTotal(order)} feels a bit high. At checkout you may say so once, kindly and in your own words (for example "Hmm, that's a bit pricey."). It does not change your mood: report moodDelta for how the stylist treats you, as usual.` : ''}`;
 }

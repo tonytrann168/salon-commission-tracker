@@ -131,8 +131,10 @@ export function createPathScreen(host: HTMLElement, options: PathScreenOptions):
   const last = save.pathLog?.at(-1);
   const summary = last && last.day === progress.day - 1 ? el('p', 'path-summary', t(last.clients === 1 ? 'path.summaryOne' : 'path.summary', { n: last.day, clients: last.clients })) : null;
   const booked = todaysAppointments(done, options.roster, options.unlocked);
+  // 062 review: one "today" card. Today's challenge is the first row of today's appointments (⭐); alone, it keeps its card.
   const appointments = booked.length > 0 && !choice ? appointmentsCard(booked, options) : null;
-  screen.append(bar, title, ...(choice ? [choice] : []), ...(summary ? [summary] : []), ...(options.daily ? [createDailyCard(options.daily, options.faceImage)] : []), ...(appointments ? [appointments] : []), path, actions);
+  const dailyAlone = options.daily && !appointments ? [createDailyCard(options.daily, options.faceImage)] : [];
+  screen.append(bar, title, ...(choice ? [choice] : []), ...(summary ? [summary] : []), ...dailyAlone, ...(appointments ? [appointments] : []), path, actions);
   host.append(screen);
   // The current node in view.
   requestAnimationFrame(() => screen.querySelector('.path-stop.current')?.scrollIntoView({ block: 'center' }));
@@ -160,9 +162,23 @@ function appointmentsCard(booked: { node: PathNode; time: string }[], options: P
   card.setAttribute('aria-labelledby', 'path-appointments-title');
   const head = el('h2', '', t('path.appointmentsTitle'));
   head.id = 'path-appointments-title';
-  card.append(head, el('p', 'path-appointments-count', t(booked.length === 1 ? 'path.appointmentsOne' : 'path.appointments', { n: booked.length })));
+  const daily = options.daily && !options.daily.done ? options.daily : undefined;
+  // The challenge guest is listed once (her ⭐ row), even when she also has a booking today.
+  const rest = options.daily ? booked.filter((b) => b.node.client?.id !== options.daily?.client.id) : booked;
+  const count = rest.length + (daily ? 1 : 0);
+  card.append(head, el('p', 'path-appointments-count', t(count === 1 ? 'path.appointmentsOne' : 'path.appointments', { n: count })));
   const list = el('ul', 'path-appointment-list');
-  for (const { node, time } of booked) {
+  // Today's challenge first: her row is the challenge card itself (tap to start), with its streak line.
+  if (options.daily) {
+    const row = el('li', 'path-appointment path-challenge');
+    const challenge = createDailyCard(options.daily, options.faceImage);
+    const tag = el('span', 'path-challenge-tag', t('path.challengeTag'));
+    challenge.querySelector('.picker-words')?.prepend(tag);
+    if (options.serviceFor) challenge.querySelector('.picker-words strong')?.after(el('span', 'path-appointment-service', options.serviceFor(options.daily.client)));
+    row.append(challenge);
+    list.append(row);
+  }
+  for (const { node, time } of rest) {
     if (!node.client) continue;
     const row = el('li', 'path-appointment');
     const words = el('span', 'path-appointment-words');

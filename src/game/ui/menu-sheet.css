@@ -40,3 +40,11 @@
 .menu-setup-mai { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
 .menu-setup-mai p { margin: 0; font-size: 16px; line-height: 1.35; }
 .menu-confirm { width: 100%; min-height: 52px; margin-top: 12px; font-size: 18px; }
+
+/* Story 063: the menu in groups, each item with a small drawn icon. */
+.menu-groups { display: flex; flex-direction: column; }
+.menu-group-title { margin: 8px 0 4px; font-size: 16px; color: #a2346a; letter-spacing: 0.2px; }
+.menu-groups .menu-list { margin-bottom: 4px; }
+.menu-groups .menu-item { grid-template-columns: 30px 30px 1fr auto; }
+.menu-icon { display: grid; place-items: center; width: 30px; height: 30px; }
+.service-icon { display: block; }

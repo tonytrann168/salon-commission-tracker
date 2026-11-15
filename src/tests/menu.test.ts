@@ -1,29 +1,69 @@
 import { describe, expect, it } from 'vitest';
 import menuJson from '../game/config/menu.json';
-import { MENU_CONFIG, menuItems, menuPrompt, orderFor, orderTotal, parseMenuChoice, parseMenuConfig } from '../game/menu';
+import { MENU_CONFIG, menuGroups, menuItems, menuPrompt, orderFor, orderTotal, parseMenuChoice, parseMenuConfig } from '../game/menu';
 import type { MenuItem } from '../game/menu';
 import type { NailRequest } from '../game/nail-art/design';
 import { parseSave } from '../game/save';
 import { buildSystemPrompt, parseClientTurnRequest, parseMenuField } from '../server/handlers/client-turn';
-import { getClient } from '../game/clients/roster';
+import { ROSTER, getClient } from '../game/clients/roster';
 
-/** Story 044: the salon menu, her order by number, and checkout. */
+/** Story 044: the salon menu, her order by number, and checkout. Story 063: the real menu (groups, add-ons, 2026 prices). */
 
 const plain: NailRequest = { shapes: ['round'], colors: ['red'], gradient: 'no', gems: 'none', stickers: 'none' };
 const mid = MENU_CONFIG.presets.mid;
 
 describe('the salon menu', () => {
-  it('Mid keeps the old prices: a manicure is $25, both hands $35, a pedicure $35', () => {
-    expect(orderTotal(orderFor(plain, mid))).toBe(25);
-    expect(orderTotal(orderFor({ ...plain, hands: 2 }, mid))).toBe(35);
-    expect(orderTotal(orderFor({ ...plain, service: 'pedicure', hands: 2 }, mid))).toBe(35);
+  it('is a real 2026 menu: Manicure 1-3, Pedicure 4-6, Nail enhancements 7-10, Add-ons 11-16; Mid near the medians', () => {
+    expect(menuGroups(mid).map((g) => [g.category, g.lines.map((l) => l.number)])).toEqual([
+      ['manicure', [1, 2, 3]],
+      ['pedicure', [4, 5, 6]],
+      ['enhancements', [7, 8, 9, 10]],
+      ['addons', [11, 12, 13, 14, 15, 16]],
+    ]);
+    const price = (tag: string) => mid.find((i) => i.tag === tag)!.price;
+    // Zenoti / ThePricer / Boulevard 2026 ranges.
+    expect(price('manicure')).toBeGreaterThanOrEqual(25);
+    expect(price('manicure')).toBeLessThanOrEqual(45);
+    expect(price('gel')).toBeGreaterThanOrEqual(35);
+    expect(price('gel')).toBeLessThanOrEqual(70);
+    expect(price('acrylic')).toBeGreaterThanOrEqual(45);
+    expect(price('acrylic')).toBeLessThanOrEqual(75);
+    expect(price('pedicure')).toBeGreaterThanOrEqual(25);
+    // Basic < Mid < Fancy, item by item.
+    MENU_CONFIG.presets.basic.forEach((item, i) => {
+      expect(item.price).toBeLessThanOrEqual(mid[i]!.price);
+      expect(mid[i]!.price).toBeLessThanOrEqual(MENU_CONFIG.presets.fancy[i]!.price);
+    });
   });
 
-  it('her order follows her request, by number: the base service, then ombre, gems, art and long nails', () => {
+  it('her order follows her request, by number: a manicure or pedicure, long nails as an acrylic full set, art as an add-on', () => {
+    expect(orderFor(plain, mid).map((line) => line.number)).toEqual([1]);
+    expect(orderFor({ ...plain, service: 'pedicure', hands: 2 }, mid).map((line) => line.number)).toEqual([4]);
     const fancy: NailRequest = { ...plain, gradient: 'yes', gems: 'few', stickers: 'lots', lengths: ['long', 'xlong'] };
-    expect(orderFor(fancy, mid).map((line) => line.number)).toEqual([1, 4, 5, 6, 7]);
+    expect(orderFor(fancy, mid).map((line) => line.number)).toEqual([7, 13]);
     expect(orderFor({ ...plain, gradient: 'ok', lengths: ['medium', 'long'] }, mid).map((line) => line.number)).toEqual([1]);
     expect(orderTotal(orderFor(fancy, MENU_CONFIG.presets.fancy))).toBeGreaterThan(orderTotal(orderFor(fancy, MENU_CONFIG.presets.basic)));
+  });
+
+  it('each client has her usual (classic, gel or spa; some add a French tip); the same client always orders the same', () => {
+    const orders = ROSTER.map((c) => orderFor(c.nailRequest, mid, c.id));
+    const bases = new Set(orders.map((o) => o[0]!.item.tag));
+    expect(bases.size).toBeGreaterThan(2);
+    expect(orders.some((o) => o.some((line) => line.item.tag === 'french'))).toBe(true);
+    for (const c of ROSTER) expect(orderFor(c.nailRequest, mid, c.id)).toEqual(orderFor(c.nailRequest, mid, c.id));
+    // Without a client the order is the plain one (classic first).
+    expect(orderFor(plain, mid).map((l) => l.number)).toEqual([1]);
+  });
+
+  it("an older own menu still works (both hands, ombre, gems, long nails as extensions)", () => {
+    const old: MenuItem[] = [
+      { tag: 'manicure', price: 25, name: { en: 'Manicure', vi: 'Làm móng tay' } },
+      { tag: 'fullSet', price: 35, name: { en: 'Full set', vi: 'Hai tay' } },
+      { tag: 'ombre', price: 8, name: { en: 'Ombre', vi: 'Ombre' } },
+      { tag: 'gems', price: 8, name: { en: 'Gems', vi: 'Đá' } },
+      { tag: 'extensions', price: 15, name: { en: 'Long nails', vi: 'Móng dài' } },
+    ];
+    expect(orderFor({ ...plain, hands: 2, gradient: 'yes', gems: 'few', lengths: ['long'] }, old).map((line) => line.number)).toEqual([2, 3, 4, 5]);
   });
 
   it('on a menu missing an item, it is left off; with no base service the first item is rung up', () => {
@@ -50,9 +90,11 @@ describe('the client hears the menu', () => {
     const order = orderFor({ ...plain, gems: 'few' }, mid);
     const prompt = buildSystemPrompt(getClient('ana')!, 'some', undefined, undefined, { items: mid, order });
     expect(prompt).toContain('THE SALON MENU');
-    expect(prompt).toContain('1. Manicure: $25');
-    expect(prompt).toContain('Your order today: number 1 (Manicure) and number 5 (Gems)');
-    expect(menuPrompt(mid, order)).toContain('the total is $33');
+    expect(prompt).toContain('Manicure:\n1. Classic manicure: $35');
+    expect(prompt).toContain('Add-ons:\n11. French tip: +$15');
+    expect(prompt).toContain('Your order today: number 1 (Classic manicure) with number 13 (Nail art (per nail))');
+    expect(prompt).toContain('number 1 with French tip');
+    expect(menuPrompt(mid, order)).toContain('the total is $40');
   });
 
   it('the server re-checks the menu from the browser: bad items and unknown numbers are dropped', () => {
@@ -62,7 +104,7 @@ describe('the client hears the menu', () => {
     expect(menu?.order.map((line) => line.number)).toEqual([1]);
     expect(parseMenuField({ items: [], order: [1] })).toBeUndefined();
     const parsed = parseClientTurnRequest({ transcript: [{ role: 'player', content: 'Hi' }], phase: 'consultation', mood: 50, level: 'some', menu: { items: mid, order: [1] } });
-    expect(parsed.ok && parsed.value.menu?.order[0]?.item.name.en).toBe('Manicure');
+    expect(parsed.ok && parsed.value.menu?.order[0]?.item.name.en).toBe('Classic manicure');
   });
 });
 

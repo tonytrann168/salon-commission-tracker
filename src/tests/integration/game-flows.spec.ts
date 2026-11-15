@@ -45,7 +45,10 @@ for (const lang of LANGS) {
       // Story 039: the payment moment: the price, the tip in parts that add up, the stars; then the review.
       const card = page.locator('.payment-card.done');
       await expect(card).toBeVisible({ timeout: 10_000 });
-      await expect(card.locator('.payment-price')).toContainText('$25');
+      // Story 063: her order on the real menu (the total the client-turn request carried).
+      const sent = seen['client-turn']![0] as { menu: { items: { price: number }[]; order: number[] } };
+      const total = sent.menu.order.reduce((sum, n) => sum + sent.menu.items[n - 1]!.price, 0);
+      await expect(card.locator('.payment-price .payment-bill-total')).toContainText(`$${total}`);
       const sum = await card.locator('.payment-parts li strong').evaluateAll((nodes) => nodes.reduce((total, n) => total + Number((n.textContent ?? '').replace(/[^0-9]/g, '')), 0));
       const tip = Number(((await card.locator('.payment-tip-amount').textContent()) ?? '').replace(/[^0-9]/g, ''));
       expect(tip).toBeGreaterThan(0);
@@ -287,14 +290,18 @@ for (const lang of LANGS) {
       await page.locator('.title-menu-row').first().locator('button').first().click();
       await page.locator('.menu-presets [data-preset=fancy]').click();
       await expect(page.locator('.menu-presets [data-preset=fancy]')).toHaveAttribute('aria-pressed', 'true');
-      await expect(page.locator('.menu-settings .menu-item').first()).toContainText('$40');
+      // Story 063: the real menu, in groups with icons; Fancy's classic manicure is $45.
+      await expect(page.locator('.menu-settings .menu-item').first()).toContainText('$45');
+      await expect(page.locator('.menu-settings .menu-group-title')).toHaveCount(4);
+      await expect(page.locator('.menu-settings .menu-item svg.service-icon')).toHaveCount(16);
       await page.reload();
       await page.locator('.title-menu > .chat-button').first().click();
       await page.locator('.picker-daily').click();
       // Consultation: the menu button shows the numbered menu.
       await page.locator('.chat-menu-button').click();
-      await expect(page.locator('.menu-sheet .menu-item')).toHaveCount(7);
-      await expect(page.locator('.menu-sheet .menu-item').first()).toContainText('Signature manicure');
+      await expect(page.locator('.menu-sheet .menu-item')).toHaveCount(16);
+      await expect(page.locator('.menu-sheet .menu-item').first()).toContainText('Classic manicure');
+      await expect(page.locator('.menu-sheet .menu-group-title')).toHaveText(lang === 'vi' ? ['Móng tay', 'Móng chân', 'Đắp / nối móng', 'Thêm'] : ['Manicure', 'Pedicure', 'Nail enhancements', 'Add-ons']);
       await expect(page.locator('.menu-sheet .menu-item.ordered')).toHaveCount(0);
       expect(await noOverflow(page)).toBe(true);
       await page.locator('.menu-close').click();
@@ -302,15 +309,18 @@ for (const lang of LANGS) {
       await page.locator('.chat-form button[type=submit]').click();
       await expect.poll(() => seen['client-turn']?.length ?? 0).toBe(1);
       const sent = seen['client-turn']![0] as { menu: { items: { name: { en: string }; price: number }[]; order: number[] } };
-      expect(sent.menu.items[0]).toMatchObject({ name: { en: 'Signature manicure' }, price: 40 });
-      expect(sent.menu.order).toEqual([1]);
+      expect(sent.menu.items[0]).toMatchObject({ name: { en: 'Classic manicure' }, price: 45 });
+      // Her usual on this menu (a manicure of some kind, maybe with an add-on), the same as the path card shows.
+      const order = sent.menu.order;
+      expect([1, 2, 3]).toContain(order[0]);
+      const total = order.reduce((sum, n) => sum + sent.menu.items[n - 1]!.price, 0);
       // Service: no menu button. Done → checkout: her order is marked, with the total.
       await expect(page.locator('.chat-menu-button')).toBeHidden();
       await page.locator('.station-done').click();
       await page.waitForSelector('.chat-panel:not(.service-mode) .chat-input', { timeout: 6_000 });
       await page.locator('.chat-menu-button').click();
-      await expect(page.locator('.menu-sheet .menu-item.ordered')).toHaveCount(1);
-      await expect(page.locator('.menu-order')).toContainText('$40');
+      await expect(page.locator('.menu-sheet .menu-item.ordered')).toHaveCount(order.length);
+      await expect(page.locator('.menu-order')).toContainText(`$${total}`);
       await page.locator('.menu-close').click();
       for (const line of ['That is forty dollars, please.', 'Thank you! See you next time.']) {
         if (await page.locator('.chat-results:not(.hidden)').count()) break;
@@ -320,9 +330,9 @@ for (const lang of LANGS) {
       }
       await toResults(page);
       await page.waitForSelector('.chat-results:not(.hidden) .payment-card', { timeout: 15_000 });
-      await expect(page.locator('.payment-card .payment-bill-line')).toHaveCount(1);
-      await expect(page.locator('.payment-card .payment-bill-line')).toContainText('#1');
-      await expect(page.locator('.payment-bill-total')).toContainText('$40');
+      await expect(page.locator('.payment-card .payment-bill-line')).toHaveCount(order.length);
+      await expect(page.locator('.payment-card .payment-bill-line').first()).toContainText(`#${order[0]}`);
+      await expect(page.locator('.payment-bill-total')).toContainText(`$${total}`);
       // My own menu: change the first price, save; the save keeps it.
       await page.locator('.results-actions .chat-button.secondary').click();
       await page.locator('.title-menu-row').first().locator('button').first().click();
@@ -418,7 +428,7 @@ for (const lang of LANGS) {
       await expect(page.locator('.menu-setup-title svg.price-board-icon')).toHaveCount(1);
       await expect(page.locator('.menu-setup-mai')).toContainText('Number 3');
       await page.locator('.menu-presets [data-preset=basic]').click();
-      await expect(page.locator('.menu-setup .menu-item')).toHaveCount(7);
+      await expect(page.locator('.menu-setup .menu-item')).toHaveCount(16);
       expect(await noOverflow(page)).toBe(true);
       await page.locator('.menu-confirm').click();
       await expect(page.locator('.picker-daily')).toBeVisible();
@@ -662,8 +672,14 @@ for (const lang of LANGS) {
       const per = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}').pathDone);
       await expect(page.locator('.path-node.current')).toHaveAttribute('data-index', String(per));
       // Today's appointments: the day's booked guests, each with a time and a service from the menu.
-      const rows = page.locator('.path-appointment');
+      // One "today" card: today's challenge (⭐) first, then the booked guests (062 review).
+      await expect(page.locator('.path-appointments .path-challenge .picker-daily')).toHaveCount(1);
+      await expect(page.locator('.path-screen > .picker-daily')).toHaveCount(0);
+      const rows = page.locator('.path-appointment:not(.path-challenge)');
       expect(await rows.count()).toBeGreaterThan(0);
+      // Each guest once (the challenge guest is not booked again below her ⭐ row).
+      const names = await page.locator('.path-appointments strong').allTextContents();
+      expect(new Set(names).size).toBe(names.length);
       await expect(rows.first().locator('.path-appointment-time')).toHaveText(/^\d\d:\d\d$/);
       await expect(rows.first().locator('.path-appointment-service')).toContainText('#');
       expect(await noOverflow(page)).toBe(true);
@@ -759,33 +775,33 @@ for (const lang of LANGS) {
     test('the agreed price (story 059): a discount agreed in the chat fills the Total step; the receipt shows the discount; she pays the agreed price', async ({ page }) => {
       test.setTimeout(120_000);
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('ana') } });
-      // She accepts $20 for today in her first reply.
-      await mockApi(page, { agreedTotal: { fromTurn: 0, dollars: 20 } });
+      // She accepts $30 for today in her first reply.
+      await mockApi(page, { agreedTotal: { fromTurn: 0, dollars: 30 } });
       await page.goto('/');
       await page.locator('.title-menu > .chat-button').first().click();
       await page.locator('.path-node.current').click();
-      await finishAppointment(page, ['Hello! Today I can do it for twenty dollars instead of the menu price. Okay?', 'Which colour would you like today?', 'Your nails are done. That is twenty dollars, as we agreed.', 'Thank you! See you next time.'], { stopAtTotal: true });
+      await finishAppointment(page, ['Hello! Today I can do it for thirty dollars instead of the menu price. Okay?', 'Which colour would you like today?', 'Your nails are done. That is thirty dollars, as we agreed.', 'Thank you! See you next time.'], { stopAtTotal: true });
       // The Total step: the menu price, the agreed price pre-filled, the discount.
       const step = page.locator('.chat-results .total-step');
-      await expect(step.locator('.total-agreed')).toContainText('$20');
-      await expect(step.locator('.total-amount')).toHaveValue('20');
+      await expect(step.locator('.total-agreed')).toContainText('$30');
+      await expect(step.locator('.total-amount')).toHaveValue('30');
       const menu = Number(((await step.locator('.total-menu span').last().textContent()) ?? '').replace(/[^0-9]/g, ''));
-      expect(menu).toBeGreaterThan(20);
-      await expect(step.locator('.total-discount')).toContainText(`${menu - 20}`);
+      expect(menu).toBeGreaterThan(30);
+      await expect(step.locator('.total-discount')).toContainText(`${menu - 30}`);
       // − and + move the total; the menu-price chip resets it; back to the agreed price and charge.
       await step.locator('.total-plus').click();
-      await expect(step.locator('.total-amount')).toHaveValue('21');
+      await expect(step.locator('.total-amount')).toHaveValue('31');
       await step.locator('.total-chip-menu').click();
       await expect(step.locator('.total-amount')).toHaveValue(String(menu));
-      await step.locator('.total-amount').fill('20');
+      await step.locator('.total-amount').fill('30');
       await step.locator('.total-amount').blur();
-      await expect(step.locator('.total-charge')).toContainText('$20');
+      await expect(step.locator('.total-charge')).toContainText('$30');
       await step.locator('.total-charge').click();
-      // The receipt: the discount line and the $20 she pays; her reaction.
+      // The receipt: the discount line and the $30 she pays; her reaction.
       const card = page.locator('.payment-card.done');
       await expect(card).toBeVisible({ timeout: 10_000 });
-      await expect(card.locator('.payment-discount')).toContainText(`${menu - 20}`);
-      await expect(card.locator('.payment-bill-total')).toContainText('$20');
+      await expect(card.locator('.payment-discount')).toContainText(`${menu - 30}`);
+      await expect(card.locator('.payment-bill-total')).toContainText('$30');
       await expect(page.locator('.results-note.charge-agreed')).toBeVisible();
     });
 

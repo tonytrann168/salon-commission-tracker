@@ -486,8 +486,11 @@ async function boot(): Promise<void> {
         showPath();
       },
       serviceFor: (client) => {
-        const order = orderFor(client.nailRequest, menuItems(loadSave().menu ?? { preset: MENU_CONFIG.default }));
-        return order.map((line) => `#${line.number} ${line.item.name[getLanguage()]}`).join(' + ');
+        // 062 review: short names ("#2 Gel mani + French"); a player's own menu keeps its own names.
+        const choice = loadSave().menu ?? { preset: MENU_CONFIG.default };
+        const order = orderFor(client.nailRequest, menuItems(choice), client.id);
+        const short = (line: (typeof order)[number]): string => (choice.preset === 'custom' ? line.item.name[getLanguage()] : t(`menu.short.${line.item.tag}`));
+        return order.map((line, i) => (i === 0 ? `#${line.number} ${short(line)}` : short(line))).join(' + ');
       },
     });
     teardownDom = () => screen.remove();
@@ -547,7 +550,8 @@ async function boot(): Promise<void> {
     const nails: { note: string | undefined; finished: { description: string; match: number; fixes?: FixOutcome[] } | undefined; photo?: Promise<string | null> } = { note: undefined, finished: undefined };
     // Story 044: the salon menu and her order on it (she orders by number; checkout rings it up).
     const menuList = menuItems(loadSave().menu ?? { preset: MENU_CONFIG.default });
-    const order = orderFor(client.nailRequest, menuList);
+    // Story 063: her usual follows who she is (the same order the path's appointments card shows).
+    const order = orderFor(client.nailRequest, menuList, client.id);
     const appointment = createAppointment({
       client,
       takeTurn: createFetchTransport(() => level, () => nails.note, client.id, scenarioFields, { items: menuList, order: order.map((line) => line.number) }),

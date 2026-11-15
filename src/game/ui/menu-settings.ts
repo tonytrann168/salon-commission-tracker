@@ -1,3 +1,4 @@
+import { menuList } from './menu-list';
 import { getLanguage, t } from '../i18n';
 import { MENU_CONFIG, MENU_PRESETS, MENU_TAGS, menuItems, parseItem } from '../menu';
 import type { MenuChoice, MenuItem, MenuTag } from '../menu';
@@ -49,13 +50,8 @@ export function createMenuSection(options: { onConfirm?: () => void } = {}): HTM
     section.append(presets);
     if (current.preset !== 'custom' && !draft) {
       // The chosen price set, as the client sees it.
-      const list = el('ol', 'menu-list');
-      menuItems(current).forEach((item, i) => {
-        const row = el('li', 'menu-item');
-        row.append(el('span', 'menu-number', String(i + 1)), el('span', 'menu-names', item.name[getLanguage()]), el('span', 'menu-price', `$${item.price}`));
-        list.append(row);
-      });
-      section.append(list);
+      // Story 063: in its groups, with icons.
+      section.append(menuList(menuItems(current)));
       if (options.onConfirm) section.append(confirmButton(() => true));
       return;
     }

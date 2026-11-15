@@ -1,3 +1,4 @@
+import { menuList } from './menu-list';
 import { getLanguage, t } from '../i18n';
 import { orderTotal } from '../menu';
 import type { MenuItem, OrderLine } from '../menu';
@@ -24,16 +25,8 @@ export function openMenuSheet(menu: { items: MenuItem[]; order: OrderLine[] }, c
   heading.append(t('menu.title'));
   card.append(heading);
   const ordered = new Set(checkout ? menu.order.map((line) => line.number) : []);
-  const list = el('ol', 'menu-list');
-  menu.items.forEach((item, i) => {
-    const row = el('li', ordered.has(i + 1) ? 'menu-item ordered' : 'menu-item');
-    const names = el('span', 'menu-names');
-    names.append(el('strong', '', item.name.en));
-    if (getLanguage() === 'vi' && item.name.vi !== item.name.en) names.append(el('small', '', item.name.vi));
-    row.append(el('span', 'menu-number', String(i + 1)), names, el('span', 'menu-price', `$${item.price}`));
-    list.append(row);
-  });
-  card.append(list);
+  // Story 063: the menu in its groups, with icons.
+  card.append(menuList(menu.items, ordered, true));
   if (checkout && menu.order.length > 0) {
     const bill = el('p', 'menu-order');
     bill.append(el('span', '', t('menu.order', { ...grammar, numbers: menu.order.map((line) => `#${line.number}`).join(' + ') })), el('strong', '', t('menu.orderTotal', { dollars: orderTotal(menu.order) })));
