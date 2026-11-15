@@ -637,6 +637,27 @@ for (const lang of LANGS) {
       await expect(page.locator('.station-controls .station-tool .tab-text')).toHaveText(lang === 'vi' ? 'Lau' : 'Clean');
     });
 
+    test('every line graded (story 061): a line with a real fix is Try this, a short line is Good, a fine long line is Perfect (only Perfect has confetti)', async ({ page }) => {
+      test.setTimeout(90_000);
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily') } });
+      // The check finds a fix on every line (its better line shares few words with these).
+      await mockApi(page, { correct: true, phases: ['consultation', 'consultation', 'consultation', 'service'] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.path-screen .picker-daily').click();
+      const send = async (line: string) => {
+        await page.locator('.chat-input').fill(line);
+        await page.locator('.chat-form button[type=submit]').click();
+      };
+      await send('Hello! Please have a seat here.');
+      await expect(page.locator('.line-grade.grade-try')).toHaveText(lang === 'vi' ? 'Thử câu này 💡' : 'Try this 💡');
+      await expect(page.locator('.burst-confetti')).toHaveCount(0);
+      await page.waitForFunction(() => !document.querySelector<HTMLButtonElement>('.chat-form button[type=submit]')?.disabled);
+      await send('Okay!');
+      await expect(page.locator('.line-grade.grade-good')).toHaveText(lang === 'vi' ? 'Được đó 👍' : 'Good 👍');
+      await expect(page.locator('.burst-confetti')).toHaveCount(0);
+    });
+
     test('focus mode (story 060): 📋 sits in the mood row, off her face; while painting her line pops and stays until read (✕ or tap to reply); the chat is a slim bar', async ({ page }) => {
       test.setTimeout(90_000);
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily') } });

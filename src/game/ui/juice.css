@@ -35,3 +35,11 @@ html[data-motion='reduce'] .perfect-line { animation: none; }
 .chat-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #ff8ab5, #ff5c9a); transition: width 0.5s ease-out; }
 .chat-progress.done .chat-progress-fill { background: linear-gradient(90deg, #7cc297, #2f9e5b); }
 .chat-panel.station-open .chat-progress { display: none; }
+
+/* Story 061: the smaller grades (Try this, Good, Great) share the badge's place, smaller and calmer. */
+.line-grade:not(.perfect-line) { position: absolute; left: 50%; top: 38%; z-index: 7; padding: 7px 14px; border-radius: 999px; background: #fff; font: 800 17px/1.2 system-ui, sans-serif; white-space: nowrap; box-shadow: 0 6px 16px rgba(59, 42, 51, 0.18); pointer-events: none; transform: translate(-50%, -50%); animation: perfect-pop var(--show-ms, 1300ms) ease-out forwards; }
+.line-grade.grade-try { color: #a2346a; box-shadow: 0 0 0 3px #ffc4da, 0 6px 16px rgba(59, 42, 51, 0.18); }
+.line-grade.grade-good { color: #3b6fb0; box-shadow: 0 0 0 3px #c9dcf5, 0 6px 16px rgba(59, 42, 51, 0.18); }
+.line-grade.grade-great { color: #7a43c2; box-shadow: 0 0 0 3px #e1cdf5, 0 6px 16px rgba(59, 42, 51, 0.18); }
+@media (prefers-reduced-motion: reduce) { .line-grade { animation: none; } }
+html[data-motion='reduce'] .line-grade { animation: none; }

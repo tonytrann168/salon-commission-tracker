@@ -1,10 +1,9 @@
 {
-  "_note": "Story 057b: the small rewards (Salon Besties' own look and sounds). progress.linesPerPhase: player lines that fill one phase's share of the appointment bar (it never fills a phase before the phase moves on). perfect.minWords: a line this long or longer, with nothing to fix, gets \"Perfect line!\". perfect.showMs: how long the badge shows. bursts: how many coins or confetti pieces fly, and for how long. reactMs: how long the companion keeps a cheering or sad face. None of the motion plays with Reduce motion. results (story 057c): countMs, how long +XP, +coins and +$ count up on the results; streakDelayMs, when the streak chip pops after the count starts.",
+  "_note": "Story 057b: the small rewards (Salon Besties' own look and sounds). progress.linesPerPhase: player lines that fill one phase's share of the appointment bar (it never fills a phase before the phase moves on). perfect.showMs: how long the Perfect badge shows (story 061 grades decide when it shows). bursts: how many coins or confetti pieces fly, and for how long. reactMs: how long the companion keeps a cheering or sad face. None of the motion plays with Reduce motion. results (story 057c): countMs, how long +XP, +coins and +$ count up on the results; streakDelayMs, when the streak chip pops after the count starts. grades (story 061): every line gets one of four grades from the line check. A line with a real fix is 'try' (the fix waits on the companion's badge); a small fix (the better line shares at least 1 - smallFixShare of its words with hers) is still 'good'. With nothing to fix: perfectWords or more English words is 'perfect' (confetti), fewer is 'great'. A helped line, or one too short to check, is 'good'.",
   "progress": {
     "linesPerPhase": 3
   },
   "perfect": {
-    "minWords": 3,
     "showMs": 1500
   },
   "bursts": {
@@ -16,5 +15,10 @@
   "results": {
     "countMs": 900,
     "streakDelayMs": 1000
+  },
+  "grades": {
+    "perfectWords": 6,
+    "smallFixShare": 0.3,
+    "showMs": 1300
   }
 }

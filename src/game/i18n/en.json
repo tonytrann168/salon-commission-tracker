@@ -726,5 +726,9 @@
   "total.reaction.over": "{name} noticed you charged more than you agreed, and tipped less.",
   "service.replyTo": "💬 Reply to {name}",
   "service.dismiss": "Close her message",
-  "station.more": "More tools"
+  "station.more": "More tools",
+  "chat.grade.try": "Try this 💡",
+  "chat.grade.good": "Good 👍",
+  "chat.grade.great": "Great ✨",
+  "chat.grade.perfect": "Perfect line! 🌟"
 }

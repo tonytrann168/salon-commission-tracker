@@ -44,7 +44,8 @@ import { createScrollFollower, fitToVisualViewport } from './scroll-follow';
 import { startTextReveal } from './text-reveal';
 import type { TextReveal } from './text-reveal';
 import './chat-panel.css';
-import { JUICE_CONFIG, appointmentProgress, isPerfectLine } from '../juice';
+import { JUICE_CONFIG, appointmentProgress, lineGrade } from '../juice';
+import type { LineGrade } from '../juice';
 import { burst, centreOf } from './burst';
 
 /**
@@ -958,27 +959,40 @@ export function createChatPanel(
   /** Corrections queued for Mai this appointment (capped in config/learning.json). */
   let tipsQueued = 0;
   let walkOutShown = false;
-  /** Story 057b: "Perfect line!" pops over the chat for a moment, with a little confetti and a cheer. */
-  const showPerfect = (): void => {
-    root.querySelector('.perfect-line')?.remove();
-    const badge = el('div', 'perfect-line', `✨ ${t('chat.perfect')}`);
+  /**
+   * Story 061 (057b's "Perfect line!", graded): every line gets a badge that matches how good it was. Try this 💡
+   * (a fix waits on the companion's badge), Good 👍, Great ✨, Perfect line! 🌟. Only Perfect gets confetti and a cheer.
+   */
+  const showGrade = (grade: LineGrade): void => {
+    root.querySelector('.line-grade')?.remove();
+    const perfect = grade === 'perfect';
+    const badge = el('div', `line-grade grade-${grade}${perfect ? ' perfect-line' : ''}`, t(`chat.grade.${grade}`));
     badge.setAttribute('role', 'status');
-    badge.style.setProperty('--show-ms', `${JUICE_CONFIG.perfect.showMs}ms`);
+    badge.dataset.grade = grade;
+    const ms = perfect ? JUICE_CONFIG.perfect.showMs : JUICE_CONFIG.grades.showMs;
+    badge.style.setProperty('--show-ms', `${ms}ms`);
     root.append(badge);
-    emitSound('correct');
-    burst(centreOf(badge), 'confetti');
-    mai?.react('celebrating', JUICE_CONFIG.reactMs);
-    window.setTimeout(() => badge.remove(), JUICE_CONFIG.perfect.showMs);
+    if (perfect) {
+      emitSound('correct');
+      burst(centreOf(badge), 'confetti');
+      mai?.react('celebrating', JUICE_CONFIG.reactMs);
+    } else if (grade === 'great') mai?.react('happy', JUICE_CONFIG.reactMs);
+    window.setTimeout(() => badge.remove(), ms);
   };
   /** After the player sends a line: check it in the background and, if it needs it, queue a tip on Mai's badge. Never blocks the chat. */
   const checkLine = (line: string, helped: boolean, before: AppointmentSnapshot): void => {
     const corrections = bestie?.corrections;
-    if (!corrections || !mai || !shouldCheckLine(line, helped, tipsQueued)) return;
+    if (!corrections || !mai) return;
+    // Story 061: a helped or very short line is graded Good at once (nothing to check); the rest wait for the check.
+    if (!shouldCheckLine(line, helped, 0)) {
+      showGrade(lineGrade(line, null, helped));
+      return;
+    }
     const clientLine = [...before.transcript].reverse().find((message) => message.role === 'client')?.content ?? '';
     corrections.transport
       .checkLine({ level: portraits.level, language: bestie.language, phase: before.phase, line: line.trim(), clientLine })
       .then((result) => {
-        if (latest.status !== 'finished' && isPerfectLine(line, result, helped)) showPerfect();
+        if (latest.status !== 'finished') showGrade(lineGrade(line, result, helped));
         if (!result.needsCorrection || !result.better || latest.status === 'finished') return;
         // Checks run side by side, so the cap is checked again when each answer lands.
         if (mai.queueTip({ praise: result.praise, said: line.trim(), better: result.better, reason: result.reason, language: bestie.language })) tipsQueued++;

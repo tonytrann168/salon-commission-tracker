@@ -6,11 +6,13 @@ import juiceJson from './config/juice.json';
  */
 export interface JuiceConfig {
   progress: { linesPerPhase: number };
-  perfect: { minWords: number; showMs: number };
+  perfect: { showMs: number };
   bursts: { coins: number; confetti: number; ms: number };
   reactMs: number;
   /** Story 057c: the results count-up. */
   results: { countMs: number; streakDelayMs: number };
+  /** Story 061: the four line grades. */
+  grades: { perfectWords: number; smallFixShare: number; showMs: number };
 }
 
 const fail = (message: string): never => {
@@ -23,9 +25,14 @@ export function parseJuiceConfig(raw: unknown): JuiceConfig {
   const c = (raw ?? {}) as Record<string, Record<string, unknown> | undefined> & { reactMs?: unknown };
   return {
     progress: { linesPerPhase: whole(c.progress?.linesPerPhase, 'progress.linesPerPhase', 1, 20) },
-    perfect: { minWords: whole(c.perfect?.minWords, 'perfect.minWords', 1, 20), showMs: whole(c.perfect?.showMs, 'perfect.showMs', 300, 10_000) },
+    perfect: { showMs: whole(c.perfect?.showMs, 'perfect.showMs', 300, 10_000) },
     bursts: { coins: whole(c.bursts?.coins, 'bursts.coins', 0, 40), confetti: whole(c.bursts?.confetti, 'bursts.confetti', 0, 60), ms: whole(c.bursts?.ms, 'bursts.ms', 200, 3000) },
     reactMs: whole(c.reactMs, 'reactMs', 300, 10_000),
+    grades: {
+      perfectWords: whole(c.grades?.perfectWords, 'grades.perfectWords', 1, 30),
+      smallFixShare: typeof c.grades?.smallFixShare === 'number' && c.grades.smallFixShare >= 0 && c.grades.smallFixShare <= 1 ? c.grades.smallFixShare : fail('"grades.smallFixShare" must be from 0 to 1'),
+      showMs: whole(c.grades?.showMs, 'grades.showMs', 300, 10_000),
+    },
     results: { countMs: whole(c.results?.countMs, 'results.countMs', 100, 5000), streakDelayMs: whole(c.results?.streakDelayMs, 'results.streakDelayMs', 0, 10_000) },
   };
 }
@@ -43,11 +50,6 @@ export function appointmentProgress(phaseIndex: number, phaseCount: number, line
   return Math.min((Math.min(phaseIndex, phaseCount - 1) + inside) / phaseCount, 1);
 }
 
-/** "Perfect line!": the line check found nothing to fix, and the line is a real sentence (not "ok", not a helped line). */
-export function isPerfectLine(line: string, check: { needsCorrection: boolean }, helped: boolean, config: JuiceConfig = JUICE_CONFIG): boolean {
-  if (helped || check.needsCorrection) return false;
-  return line.trim().split(/\s+/).filter((word) => /[a-z]/i.test(word)).length >= config.perfect.minWords;
-}
 
 /** Story 057c: a number counting up to `target` over `durationMs` (eased out; whole numbers; exact at the end). */
 export function countUpValue(target: number, elapsedMs: number, durationMs: number): number {
@@ -55,4 +57,27 @@ export function countUpValue(target: number, elapsedMs: number, durationMs: numb
   if (elapsedMs <= 0) return 0;
   const t = elapsedMs / durationMs;
   return Math.min(target, Math.round(target * (1 - (1 - t) ** 3)));
+}
+
+/** Story 061: how good a line is, from the line check. Only 'perfect' gets confetti. */
+export type LineGrade = 'try' | 'good' | 'great' | 'perfect';
+
+const englishWords = (line: string): string[] => line.toLowerCase().match(/[a-z']+/g) ?? [];
+
+/** How much of the better line is new: 0 = the same words, 1 = all new. */
+export function fixSize(line: string, better: string): number {
+  const mine = new Set(englishWords(line));
+  const theirs = englishWords(better);
+  if (theirs.length === 0) return 0;
+  return theirs.filter((word) => !mine.has(word)).length / theirs.length;
+}
+
+/**
+ * The grade of one line. `check` is the line check's answer, or null when it was not checked (a helped line, a very
+ * short line). A helped line is never more than 'good' (the words were given); a small fix is still 'good'.
+ */
+export function lineGrade(line: string, check: { needsCorrection: boolean; better: { en: string } | null } | null, helped: boolean, config: JuiceConfig = JUICE_CONFIG): LineGrade {
+  if (helped || !check) return 'good';
+  if (check.needsCorrection && check.better) return fixSize(line, check.better.en) <= config.grades.smallFixShare ? 'good' : 'try';
+  return englishWords(line).length >= config.grades.perfectWords ? 'perfect' : 'great';
 }

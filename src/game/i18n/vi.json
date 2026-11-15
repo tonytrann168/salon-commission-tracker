@@ -726,5 +726,9 @@
   "total.reaction.over": "{name} thấy bị tính cao hơn giá đã nói, nên tip ít lại.",
   "service.replyTo": "💬 Trả lời {name}",
   "service.dismiss": "Đóng tin nhắn của khách",
-  "station.more": "Thêm dụng cụ"
+  "station.more": "Thêm dụng cụ",
+  "chat.grade.try": "Thử câu này 💡",
+  "chat.grade.good": "Được đó 👍",
+  "chat.grade.great": "Hay lắm ✨",
+  "chat.grade.perfect": "Câu chuẩn luôn! 🌟"
 }

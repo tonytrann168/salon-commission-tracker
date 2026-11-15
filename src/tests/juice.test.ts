@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import juiceJson from '../game/config/juice.json';
-import { JUICE_CONFIG, appointmentProgress, countUpValue, isPerfectLine, parseJuiceConfig } from '../game/juice';
+import { JUICE_CONFIG, appointmentProgress, countUpValue, fixSize, lineGrade, parseJuiceConfig } from '../game/juice';
 import { MASCOT_EXPRESSIONS } from '../game/mascot/mascot';
 import { eyes, mouth, moodExtras } from '../game/mascot/shared';
 import { AUDIO_CONFIG } from '../game/audio';
@@ -25,13 +25,28 @@ describe('the appointment progress bar', () => {
   });
 });
 
-describe('"Perfect line!"', () => {
-  it('is a real sentence with nothing to fix, never a helped line', () => {
-    expect(isPerfectLine('Which colour would you like today?', { needsCorrection: false }, false)).toBe(true);
-    expect(isPerfectLine('Which colour would you like today?', { needsCorrection: true }, false)).toBe(false);
-    expect(isPerfectLine('Which colour would you like today?', { needsCorrection: false }, true)).toBe(false);
-    expect(isPerfectLine('ok sure', { needsCorrection: false }, false)).toBe(false);
-    expect(isPerfectLine(' ok   sure  thanks ', { needsCorrection: false }, false)).toBe(JUICE_CONFIG.perfect.minWords <= 3);
+describe('every line graded (story 061)', () => {
+  const ok = { needsCorrection: false, better: null };
+  it('a long line with nothing to fix is Perfect; a shorter one is Great', () => {
+    expect(lineGrade('Which colour would you like for your nails today?', ok, false)).toBe('perfect');
+    expect(lineGrade('Which colour do you like?', ok, false)).toBe('great');
+  });
+
+  it('a real fix is Try this; a small fix is still Good', () => {
+    const big = { needsCorrection: true, better: { en: 'Would you like me to file them a little shorter?' } };
+    expect(lineGrade('You want short?', big, false)).toBe('try');
+    const small = { needsCorrection: true, better: { en: 'Which colour would you like today?' } };
+    expect(lineGrade('Which colour you would like today?', small, false)).toBe('good');
+  });
+
+  it('a helped line, or one too short to check, is Good (never more)', () => {
+    expect(lineGrade('Which colour would you like for your nails today?', ok, true)).toBe('good');
+    expect(lineGrade('Okay!', null, false)).toBe('good');
+  });
+
+  it('measures a fix by the share of new words in the better line', () => {
+    expect(fixSize('Which colour you would like today?', 'Which colour would you like today?')).toBe(0);
+    expect(fixSize('You want short?', 'Would you like me to file them a little shorter?')).toBeGreaterThan(JUICE_CONFIG.grades.smallFixShare);
   });
 });
 
@@ -40,6 +55,7 @@ describe('config', () => {
     expect(parseJuiceConfig(juiceJson)).toEqual(JUICE_CONFIG);
     expect(() => parseJuiceConfig({ ...juiceJson, progress: { linesPerPhase: 0 } })).toThrow('juice.json: "progress.linesPerPhase"');
     expect(() => parseJuiceConfig({ ...juiceJson, bursts: { ...juiceJson.bursts, confetti: 500 } })).toThrow('"bursts.confetti"');
+    expect(() => parseJuiceConfig({ ...juiceJson, grades: { ...juiceJson.grades, smallFixShare: 2 } })).toThrow('"grades.smallFixShare"');
   });
 
   it('has a short sound for tap, correct, coin and streak', () => {
