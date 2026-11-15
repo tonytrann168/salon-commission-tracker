@@ -1,3 +1,5 @@
+import { NEW_PLAY, recordPlayDay } from './daily';
+import type { PlayState } from './daily';
 import type { MenuChoice } from './menu';
 import progressionJson from './config/progression.json';
 import { NAIL_ART_CONFIG } from './nail-art/design';
@@ -173,6 +175,8 @@ export interface ProgressSave {
   menuConfirmed?: boolean;
   /** Story 055: the companion's voice (a choice id from voice-cast.json). */
   companionVoice?: string;
+  /** Story 056: the play streak, the weekly freeze and the daily gift. */
+  play?: PlayState;
 }
 
 export const NEW_SAVE: ProgressSave = { version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0, history: {} };
@@ -273,6 +277,8 @@ export interface ProgressUpdate {
   badges: BadgeConfig[];
   /** The streak after a finished daily (null when this wasn't one), and whether it hit a milestone. */
   streak: { days: number; milestone: boolean } | null;
+  /** Story 056: the play streak after this appointment (newDay: the streak moved on today; a freeze covered a gap). */
+  played: { streak: number; newDay: boolean; freezeUsed: boolean } | null;
 }
 
 function earns(rule: BadgeRule, outcome: AppointmentOutcome, save: ProgressSave): boolean {
@@ -318,7 +324,14 @@ export function applyAppointment(before: ProgressSave, outcome: AppointmentOutco
 
   const badges = config.badges.filter((badge) => !save.badges.includes(badge.id) && earns(badge.rule, outcome, save));
   if (badges.length > 0) save = { ...save, badges: [...save.badges, ...badges.map((b) => b.id)] };
-  return { save, xpGained, tipGained, rankUp, unlocked, badges, streak };
+  // Story 056: a finished appointment (not a walk-out) counts the day for the play streak.
+  let played: ProgressUpdate['played'] = null;
+  if (!outcome.walkedOut) {
+    const day = recordPlayDay(save.play ?? NEW_PLAY, outcome.today);
+    save = { ...save, play: day.play };
+    played = { streak: day.play.streak, newDay: day.newDay, freezeUsed: day.freezeUsed };
+  }
+  return { save, xpGained, tipGained, rankUp, unlocked, badges, streak, played };
 }
 
 // ---- The shop ----

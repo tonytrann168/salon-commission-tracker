@@ -1,0 +1,11 @@
+{
+  "_note": "Story 056: come back every day. Pretend money only (in-game tips, the same wallet the tips go to): never real money, never pay-to-win, English help is never sold. streak: a day counts when at least one appointment is finished that local day (a walk-out does not count). freeze: one free streak freeze a week, earned by playing that week (never bought); it covers exactly one missed day; at most maxHeld are kept. gift: the daily free gift, opened once a day: min-max dollars, sometimes a bonus. milestones: a bigger gift the first time the streak reaches each day count (again after a streak starts over).",
+  "freeze": { "perWeek": 1, "maxHeld": 1 },
+  "gift": { "min": 3, "max": 6, "bonusChance": 0.2, "bonus": 5 },
+  "milestones": [
+    { "days": 3, "gift": 15 },
+    { "days": 7, "gift": 30 },
+    { "days": 14, "gift": 50 },
+    { "days": 30, "gift": 100 }
+  ]
+}

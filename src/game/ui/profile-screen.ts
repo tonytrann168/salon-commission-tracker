@@ -1,6 +1,7 @@
 import { companionName } from '../companion';
 import { getLanguage, t } from '../i18n';
-import { PROGRESSION_CONFIG, liveStreak, rankFor } from '../progression';
+import { PROGRESSION_CONFIG, rankFor } from '../progression';
+import { NEW_PLAY, liveStreak as playStreak } from '../daily';
 import type { ProgressSave } from '../progression';
 import { el } from './dom';
 import { createMyWork } from './my-work';
@@ -43,7 +44,8 @@ export function createProfileScreen(host: HTMLElement, options: { save: Progress
     stat(String(save.appointments), t('profile.appointments')),
     stat(`$${save.wallet}`, t('profile.wallet')),
     stat(`$${save.tipsEarned}`, t('profile.tipsEarned')),
-    stat(`🔥 ${liveStreak(save, options.today)}`, t('profile.streak')),
+    // Story 056: the play streak (a day with a finished appointment).
+    stat(`🔥 ${playStreak(save.play ?? NEW_PLAY, options.today)}`, t('profile.streak')),
   );
   const badges = el('section', 'results-section');
   const earned = PROGRESSION_CONFIG.badges.filter((b) => save.badges.includes(b.id)).length;

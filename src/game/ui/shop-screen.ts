@@ -1,3 +1,4 @@
+import { companionName } from '../companion';
 import { getLanguage, t } from '../i18n';
 import { NAIL_ART_CONFIG, paletteColor } from '../nail-art/design';
 import { buy, shopItems } from '../progression';
@@ -67,7 +68,19 @@ export function createShopScreen(host: HTMLElement, options: { load: () => Progr
   }
   draw();
 
-  screen.append(title, wallet, el('p', 'learning-reason', t('shop.earnNote')), polishes, upgrades, back);
+  // Story 056: what comes next, locked (no art yet): outfits for the companion and salon decorations. Never for sale
+  // with real money.
+  const soon = el('section', 'results-section shop-soon');
+  soon.append(el('h2', '', t('shop.soonTitle')), el('p', 'learning-reason', t('shop.soonNote', { name: companionName() })));
+  const tiles = el('div', 'shop-soon-tiles');
+  for (const [icon, key] of [['👗', 'shop.soonOutfits'], ['🪴', 'shop.soonDecor'], ['💡', 'shop.soonLights'], ['🖼️', 'shop.soonWalls']] as const) {
+    const tile = el('div', 'shop-soon-tile');
+    tile.setAttribute('aria-label', `${t(key, { name: companionName() })}: ${t('shop.soonLocked')}`);
+    tile.append(el('span', 'shop-soon-icon', icon), el('strong', '', t(key, { name: companionName() })), el('span', 'shop-soon-lock', `🔒 ${t('shop.soonLocked')}`));
+    tiles.append(tile);
+  }
+  soon.append(tiles);
+  screen.append(title, wallet, el('p', 'learning-reason', t('shop.earnNote')), polishes, upgrades, soon, back);
   host.appendChild(screen);
   return screen;
 }

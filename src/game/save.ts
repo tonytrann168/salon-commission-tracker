@@ -1,3 +1,4 @@
+import { parsePlay } from './daily';
 import { parseMenuChoice } from './menu';
 import { NEW_SAVE } from './progression';
 import type { ProgressSave } from './progression';
@@ -58,6 +59,7 @@ export function parseSave(raw: string | null): ProgressSave {
     // Story 044: the salon menu, kept only when one was chosen.
     ...(d.menu !== undefined ? { menu: parseMenuChoice(d.menu) } : {}),
     ...(d.menuConfirmed === true ? { menuConfirmed: true } : {}),
+    ...(d.play !== undefined ? { play: parsePlay(d.play) } : {}),
     ...(typeof d.companionVoice === 'string' && /^[a-z0-9-]{1,20}$/.test(d.companionVoice) ? { companionVoice: d.companionVoice } : {}),
   };
 }

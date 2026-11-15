@@ -1,3 +1,4 @@
+import { createHomeStatus } from './game/ui/home-status';
 import { createMenuSetupScreen } from './game/ui/menu-setup';
 import { MENU_CONFIG, menuItems, orderFor } from './game/menu';
 import type { Container, Rectangle } from 'pixi.js';
@@ -189,6 +190,8 @@ async function boot(): Promise<void> {
     const firstRun = !loadCompanion().chosen;
     if (shouldShowWhatsNew(APP_VERSION, whatsNewSeen(), firstRun)) openWhatsNew(appHost, notesFor(APP_VERSION)!);
     if (whatsNewSeen() !== APP_VERSION) markWhatsNewSeen(APP_VERSION);
+    // Story 056: the streak flame, the wallet and today's free gift, top left (re-read on every visit to home).
+    menu.append(createHomeStatus(appHost, { load: loadSave, save: writeSave, today: localDay() }));
     teardownDom = () => menu.remove();
   };
 

@@ -476,6 +476,36 @@ for (const lang of LANGS) {
       expect(await noOverflow(page)).toBe(true);
     });
 
+    test('come back every day (story 056): the gift opens once into the wallet; a finished appointment lights the streak; the shop shows Coming soon', async ({ page }) => {
+      test.setTimeout(90_000);
+      await seed(page, lang, { save: { wallet: 10, xp: 100, appointments: 1, badges: ['first-client'], ...dailyWith('ana') } });
+      await mockApi(page);
+      await page.goto('/');
+      // Home: the streak is 0 (not lit), the wallet $10, the gift waiting.
+      await expect(page.locator('.home-streak strong')).toHaveText('0');
+      await expect(page.locator('.home-streak')).not.toHaveClass(/lit/);
+      await expect(page.locator('.home-wallet')).toContainText('$10');
+      await page.locator('.home-gift.ready').click();
+      await expect(page.locator('.gift-sheet .gift-amount')).toHaveText(/^\+\$\d+$/);
+      await page.locator('.gift-collect').click();
+      const wallet = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}').wallet);
+      expect(wallet).toBeGreaterThanOrEqual(13);
+      await expect(page.locator('.home-wallet')).toContainText(`$${wallet}`);
+      await expect(page.locator('.home-gift')).toBeDisabled();
+      // Once a day: after a reload it is still opened.
+      await page.reload();
+      await expect(page.locator('.home-gift')).toBeDisabled();
+      expect(await noOverflow(page)).toBe(true);
+      // A finished appointment: the streak is 1 and lit.
+      await playToResults(page);
+      await page.locator('.results-actions .chat-button.secondary').click();
+      await expect(page.locator('.home-streak.lit strong')).toHaveText('1');
+      // The shop: four locked "Coming soon" tiles.
+      await page.locator('.title-menu-row').nth(1).locator('button').first().click();
+      await expect(page.locator('.shop-soon-tile')).toHaveCount(4);
+      await expect(page.locator('.shop-soon-tile').first()).toContainText(lang === 'vi' ? 'Sắp có' : 'Soon');
+    });
+
     test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page, { replies: ['Hi!', 'Red, please. Oh, can you fix that edge? There is polish on my skin.'] });
