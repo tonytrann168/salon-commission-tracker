@@ -174,6 +174,8 @@ export interface SpeakOptions {
   emotion?: Emotion;
   /** Story 045: the Speech speed setting (default normal). */
   speed?: SpeechSpeed;
+  /** Story 043: the companion speaking (her tips): her gender and the language of the line. */
+  companion?: { gender: VoiceGender; lang: 'en' | 'vi' };
 }
 
 export interface VoiceIO {
@@ -292,6 +294,22 @@ export function createBrowserVoice(host: SpeechHost, config: VoiceConfig = VOICE
 
     speak(text, options) {
       if (!synth || !Utterance) return Promise.resolve();
+      // Story 043: the companion in Vietnamese needs a Vietnamese voice; without one she stays quiet (an English voice
+      // reading Vietnamese would be worse than silence).
+      if (options.companion?.lang === 'vi') {
+        const vi = synth.getVoices().find((v) => v.lang.toLowerCase().startsWith('vi'));
+        if (!vi) return Promise.resolve();
+        return new Promise<void>((resolve) => {
+          const utterance = new Utterance(text);
+          utterance.lang = 'vi-VN';
+          utterance.voice = vi;
+          utterance.rate = Math.min(2, config.speechSpeed[options.speed ?? 'normal']);
+          utterance.onend = () => resolve();
+          utterance.onerror = () => resolve();
+          synth.cancel();
+          synth.speak(utterance);
+        });
+      }
       const voice = clientVoiceFor(options.clientId ?? '', config);
       return new Promise<void>((resolve) => {
         const utterance = new Utterance(text);
@@ -301,7 +319,7 @@ export function createBrowserVoice(host: SpeechHost, config: VoiceConfig = VOICE
         utterance.rate = Math.min(2, prosody.rate * config.speechSpeed[options.speed ?? 'normal']);
         utterance.pitch = prosody.pitch;
         // Story 037: one voice per character, kept for the appointment and across sessions.
-        const key = options.clientId ?? 'default';
+        const key = options.companion ? 'companion' : (options.clientId ?? 'default');
         const pinned = loadPinnedVoices();
         const picked = pinVoice(synth.getVoices(), key, options.gender ?? 'female', pinned, voice.preferredVoices);
         if (picked) {

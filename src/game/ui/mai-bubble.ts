@@ -42,6 +42,8 @@ export interface MaiBubbleOptions {
   onHelpMeSayIt: () => void;
   /** A tip was shown in the panel: its better line goes into the phrasebook. */
   onTipSeen: (tip: Tip) => void;
+  /** Story 043: read a line aloud in her voice (only when the setting is on). */
+  speak?: (text: string, lang: 'en' | 'vi') => void;
 }
 
 export interface MaiBubble {
@@ -156,6 +158,8 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
       const opened = openTips(queue);
       queue = opened.queue;
       opened.fresh.forEach(options.onTipSeen);
+      // Story 043: she reads her new tips aloud (what was good, and why the better line is better).
+      if (options.speak && opened.fresh.length > 0) options.speak(opened.fresh.map((tip) => [tip.praise, tip.reason].filter(Boolean).join(' ')).join(' '), options.language);
       hintBox.replaceChildren();
       drawPanel();
       emitSound('whisper');
@@ -181,6 +185,7 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
           text.lang = options.language;
           hintBox.replaceChildren(text);
           setExpression('talking');
+          options.speak?.(hint, options.language);
         },
         (error: unknown) => {
           if (mine !== hintRequest) return;

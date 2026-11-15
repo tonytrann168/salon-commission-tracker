@@ -30,7 +30,8 @@ import type { CorrectionsTransport, Phrase } from '../learning/corrections';
 import { createHelpMeSayIt } from './help-me-say-it';
 import { createMicButton } from './mic-button';
 import { createSendCountdown } from '../voice-send';
-import { getSpeechSpeed, getVoiceAutoSend } from '../settings';
+import { getCompanionVoiceEnabled, getSpeechSpeed, getVoiceAutoSend } from '../settings';
+import { loadCompanion } from '../companion';
 import { VOICE_CONFIG } from '../voice';
 import { openPracticeSheet, practiceButton } from './practice-sheet';
 import type { VoiceIO } from '../voice';
@@ -218,6 +219,10 @@ export function createChatPanel(
         current: () => ({ phase: latest.phase, mood: latest.mood, transcript: latest.transcript }),
         onHelpMeSayIt: () => helpButton.click(),
         onTipSeen: (tip) => bestie.corrections?.onPhrase(tip.better),
+        // Story 043: her tips aloud, in her voice, at the Speech speed (only when the setting is on).
+        ...(voice?.io.canSpeak && getCompanionVoiceEnabled()
+          ? { speak: (text: string, lang: 'en' | 'vi') => void voice.io.speak(text, { level: portraits.level, companion: { gender: loadCompanion().gender, lang }, speed: getSpeechSpeed() }) }
+          : {}),
       })
     : null;
 

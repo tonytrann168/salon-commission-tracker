@@ -636,5 +636,7 @@
   "settings.speechSpeedNote": "Khách nói nhanh hay chậm, và chữ hiện ra nhanh hay chậm.",
   "settings.speed.slow": "Chậm",
   "settings.speed.normal": "Vừa",
-  "settings.speed.fast": "Nhanh"
+  "settings.speed.fast": "Nhanh",
+  "settings.companionVoice": "{name} đọc mẹo thành tiếng",
+  "settings.companionVoiceNote": "Mẹo và gợi ý của {name} được đọc thành tiếng (mẹo tiếng Việt cần giọng tiếng Việt trên điện thoại)."
 }

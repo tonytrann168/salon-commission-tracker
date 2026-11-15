@@ -4,7 +4,7 @@ import { loadAudioSettings, saveAudioSettings } from '../audio';
 import type { AudioSettings } from '../audio';
 import { LEARNING_CONFIG } from '../learning/corrections';
 import { SPEECH_SPEEDS } from '../voice';
-import { getSpeechSpeed, setSpeechSpeed, getPlayerName, setPlayerName, PLAYER_NAME_MAX, getClientVoiceEnabled, setClientVoiceEnabled, getVoiceAutoSend, setVoiceAutoSend, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, chooseEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
+import { getCompanionVoiceEnabled, setCompanionVoiceEnabled, getSpeechSpeed, setSpeechSpeed, getPlayerName, setPlayerName, PLAYER_NAME_MAX, getClientVoiceEnabled, setClientVoiceEnabled, getVoiceAutoSend, setVoiceAutoSend, getCorrectionsEnabled, getEnglishLevel, getHelpLanguage, getHintsEnabled, setCorrectionsEnabled, chooseEnglishLevel, setHelpLanguage, setHintsEnabled } from '../settings';
 import { bilingual, el } from './dom';
 import { createLevelPicker } from './level-picker';
 import { createCompanionSettings } from './companion-screens';
@@ -106,6 +106,17 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
     voiceText.append(el('strong', '', t('settings.clientVoice')), el('span', 'setting-note', t('settings.clientVoiceNote')));
     voiceRow.append(voiceText, voiceToggle);
 
+    // Story 043: the companion reads her tips aloud (off by default).
+    const maiVoiceRow = el('label', 'setting-row');
+    const maiVoiceToggle = el('input');
+    maiVoiceToggle.type = 'checkbox';
+    maiVoiceToggle.className = 'companion-voice-toggle';
+    maiVoiceToggle.checked = getCompanionVoiceEnabled();
+    maiVoiceToggle.addEventListener('change', () => setCompanionVoiceEnabled(maiVoiceToggle.checked));
+    const maiVoiceText = el('span', 'setting-text');
+    maiVoiceText.append(el('strong', '', t('settings.companionVoice', { name: companionName() })), el('span', 'setting-note', t('settings.companionVoiceNote', { name: companionName() })));
+    maiVoiceRow.append(maiVoiceText, maiVoiceToggle);
+
     // Story 045: how fast the client speaks (and her text appears): Slow / Normal / Fast.
     const speedRow = el('div', 'setting-row speed-row');
     const speedText = el('span', 'setting-text');
@@ -196,7 +207,7 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
       open.addEventListener('click', () => openWhatsNew(host, notes));
       versionRow.append(open);
     }
-    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, speedRow, autoSendRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, createMenuSection(), comfort, backup, legalLinks(), versionRow, back);
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, speedRow, maiVoiceRow, autoSendRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, createMenuSection(), comfort, backup, legalLinks(), versionRow, back);
   };
 
   render();

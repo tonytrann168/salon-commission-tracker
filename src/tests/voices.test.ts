@@ -10,7 +10,7 @@ import { ROSTER } from '../game/clients/roster';
 import { GUARD_CONFIG, createGuard } from '../server/guard';
 import { parseModelOutput } from '../server/handlers/client-turn';
 import { azureConfigured, buildSsml, createLru, handleTts, parseTtsRequest } from '../server/handlers/tts';
-import { getSpeechSpeed, setSpeechSpeed } from '../game/settings';
+import { getCompanionVoiceEnabled, getSpeechSpeed, setCompanionVoiceEnabled, setSpeechSpeed } from '../game/settings';
 
 /** Stories 037/038: one voice per character, natural voices from the server, and the mood in the voice. */
 
@@ -233,5 +233,36 @@ describe('speech speed (story 045)', () => {
     setSpeechSpeed('slow');
     expect(getSpeechSpeed()).toBe('slow');
     setSpeechSpeed('normal');
+  });
+});
+
+describe('the companion reads her tips aloud (story 043)', () => {
+  it('goes to the server with her own voice (no client), and in Vietnamese uses a Vietnamese browser voice or none', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ audio: 'BBBB', mime: 'audio/mpeg' }), { status: 200 }));
+    const played: string[] = [];
+    const a = { src: '', onended: null as (() => void) | null, onerror: null as (() => void) | null, play: async () => { played.push(a.src); queueMicrotask(() => a.onended?.()); }, pause: () => undefined };
+    const said: string[] = [];
+    const io = { canListen: false, canSpeak: true, listen: () => ({ result: Promise.reject(new Error('no')), stop: () => undefined }), speak: async (text: string) => void said.push(text), cancelSpeech: () => undefined, unlock: () => undefined } as unknown as VoiceIO;
+    const voice = withNaturalVoice(io, { fetch: fetchImpl as unknown as typeof fetch, createAudio: () => a });
+    await voice.speak('Câu này hay lắm!', { level: 'some', companion: { gender: 'female', lang: 'vi' }, speed: 'slow' });
+    expect(JSON.parse((fetchImpl.mock.calls[0] as unknown as [string, { body: string }])[1].body)).toEqual({ text: 'Câu này hay lắm!', companion: { gender: 'female', lang: 'vi' }, level: 'some', speed: 'slow' });
+    expect(played).toEqual(['data:audio/mpeg;base64,BBBB']);
+    expect(parseTtsRequest({ text: 'Câu này hay lắm!', companion: { gender: 'female', lang: 'vi' } })).toMatchObject({ ok: true, value: { voice: 'vi-VN-HoaiMyNeural', lang: 'vi-VN' } });
+
+    // The browser voice: a Vietnamese line needs a Vietnamese voice on the phone; without one she stays quiet.
+    const spoken: { text: string; lang: string }[] = [];
+    class Utterance { text: string; lang = ''; rate = 1; pitch = 1; volume = 1; voice?: { name: string }; onend: (() => void) | null = null; onerror: (() => void) | null = null; constructor(text: string) { this.text = text; } }
+    const host = (voices: { name: string; lang: string }[]) => ({ speechSynthesis: { getVoices: () => voices, speak: (u: Utterance) => { spoken.push({ text: u.text, lang: u.lang }); u.onend?.(); }, cancel: () => undefined }, SpeechSynthesisUtterance: Utterance, setTimeout, clearTimeout }) as unknown as SpeechHost;
+    await createBrowserVoice(host(phone.filter((v) => !v.lang.startsWith('vi')))).speak('Câu này hay lắm!', { level: 'some', companion: { gender: 'female', lang: 'vi' } });
+    expect(spoken).toEqual([]);
+    await createBrowserVoice(host([...phone, { name: 'Linh', lang: 'vi-VN' }])).speak('Câu này hay lắm!', { level: 'some', companion: { gender: 'female', lang: 'vi' } });
+    expect(spoken).toEqual([{ text: 'Câu này hay lắm!', lang: 'vi-VN' }]);
+  });
+
+  it('is off until turned on', () => {
+    expect(getCompanionVoiceEnabled()).toBe(false);
+    setCompanionVoiceEnabled(true);
+    expect(getCompanionVoiceEnabled()).toBe(true);
+    setCompanionVoiceEnabled(false);
   });
 });

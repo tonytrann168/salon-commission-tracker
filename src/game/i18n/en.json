@@ -636,5 +636,7 @@
   "settings.speechSpeedNote": "How fast the client talks, and how fast her words appear.",
   "settings.speed.slow": "Slow",
   "settings.speed.normal": "Normal",
-  "settings.speed.fast": "Fast"
+  "settings.speed.fast": "Fast",
+  "settings.companionVoice": "{name} reads tips aloud",
+  "settings.companionVoiceNote": "{name}'s tips and hints are read aloud (Vietnamese tips need a Vietnamese voice on the phone)."
 }

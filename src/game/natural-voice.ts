@@ -36,7 +36,7 @@ export function withNaturalVoice(io: VoiceIO, host: NaturalVoiceHost, maxCache: 
   const player = (): AudioLike => (audio ??= host.createAudio());
 
   const fetchAudio = async (text: string, options: SpeakOptions): Promise<string | null> => {
-    const key = `${options.clientId}|${options.emotion ?? 'neutral'}|${options.level}|${options.speed ?? 'normal'}|${text}`;
+    const key = `${options.companion ? `companion-${options.companion.gender}-${options.companion.lang}` : options.clientId}|${options.emotion ?? 'neutral'}|${options.level}|${options.speed ?? 'normal'}|${text}`;
     const cached = cache.get(key);
     if (cached) return cached;
     let response: Response;
@@ -45,7 +45,8 @@ export function withNaturalVoice(io: VoiceIO, host: NaturalVoiceHost, maxCache: 
       response = await host.fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text, clientId: options.clientId, level: options.level, ...(options.emotion ? { emotion: options.emotion } : {}), ...(options.speed && options.speed !== 'normal' ? { speed: options.speed } : {}) }),
+        // Story 043: the companion has her own voices (voice-cast.json), Vietnamese for her tips.
+        body: JSON.stringify({ text, ...(options.companion ? { companion: options.companion } : { clientId: options.clientId }), level: options.level, ...(options.emotion ? { emotion: options.emotion } : {}), ...(options.speed && options.speed !== 'normal' ? { speed: options.speed } : {}) }),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       body = (await response.json()) as typeof body;
@@ -78,7 +79,8 @@ export function withNaturalVoice(io: VoiceIO, host: NaturalVoiceHost, maxCache: 
     canSpeak: io.canSpeak,
     listen: (onPartial) => io.listen(onPartial),
     async speak(text, options) {
-      if (!enabled || !options.clientId) return io.speak(text, options);
+      // Story 043: the companion's lines go to the server too (her own voices).
+      if (!enabled || (!options.clientId && !options.companion)) return io.speak(text, options);
       const mine = ++turn;
       stopAudio();
       io.cancelSpeech();

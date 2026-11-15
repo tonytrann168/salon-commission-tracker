@@ -76,6 +76,17 @@ export function setCorrectionsEnabled(enabled: boolean): void {
 
 const VOICE_AUTO_SEND_KEY = 'salon.voiceAutoSend';
 
+const COMPANION_VOICE_KEY = 'salon.companionVoice';
+
+/** Story 043: the companion reads her tips and hints aloud (off by default). */
+export function getCompanionVoiceEnabled(): boolean {
+  return readStored(COMPANION_VOICE_KEY) === 'on';
+}
+
+export function setCompanionVoiceEnabled(enabled: boolean): void {
+  writeStored(COMPANION_VOICE_KEY, enabled ? 'on' : 'off');
+}
+
 const SPEECH_SPEED_KEY = 'salon.speechSpeed';
 
 /** Story 045: how fast the client speaks and her text appears (Slow / Normal / Fast; Normal by default). */

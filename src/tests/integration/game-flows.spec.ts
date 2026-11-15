@@ -375,6 +375,38 @@ for (const lang of LANGS) {
       await context.close();
     });
 
+    test('the companion reads her tips aloud (story 043): off by default; when on, opening a tip reads it in her voice', async ({ page }) => {
+      // A stand-in speech engine with an English and a Vietnamese voice; it records what is said.
+      await page.addInitScript(() => {
+        const w = window as unknown as { __spoken: { text: string; lang: string; rate: number }[] };
+        w.__spoken = [];
+        class Utterance { text: string; lang = ''; rate = 1; pitch = 1; volume = 1; voice: unknown = null; onend: (() => void) | null = null; onerror: (() => void) | null = null; constructor(text: string) { this.text = text; } }
+        const synth = { getVoices: () => [{ name: 'Samantha', lang: 'en-US' }, { name: 'Linh', lang: 'vi-VN' }], speak: (u: Utterance) => { w.__spoken.push({ text: u.text, lang: u.lang, rate: u.rate }); setTimeout(() => u.onend?.(), 10); }, cancel: () => undefined, addEventListener: () => undefined, onvoiceschanged: null };
+        Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true });
+        Object.defineProperty(window, 'SpeechSynthesisUtterance', { value: Utterance, configurable: true, writable: true });
+      });
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('ana') }, extra: { 'salon.companionVoice': 'on', 'salon.speechSpeed': 'fast' } });
+      await mockApi(page, { correct: true, phases: ['consultation'], replies: ['Hi!', 'Hello! Pink, please.'] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('What color you want today?');
+      await page.locator('.chat-form button[type=submit]').click();
+      await expect(page.locator('.mai-bubble.has-tip')).toBeVisible();
+      const spokenBefore = await page.evaluate(() => (window as unknown as { __spoken: { text: string }[] }).__spoken.length);
+      await page.locator('.mai-bubble').click();
+      await expect.poll(() => page.evaluate(() => (window as unknown as { __spoken: { text: string }[] }).__spoken.length)).toBeGreaterThan(spokenBefore);
+      const said = await page.evaluate(() => (window as unknown as { __spoken: { text: string; lang: string; rate: number }[] }).__spoken.at(-1)!);
+      expect(said.text).toContain('Nice and friendly!');
+      expect(said.lang).toBe(lang === 'vi' ? 'vi-VN' : 'en-US');
+      // Settings: the switch is there and on; turned off, it stays off.
+      await page.goto('/');
+      await page.locator('.title-menu-row').first().locator('button').first().click();
+      await expect(page.locator('.companion-voice-toggle')).toBeChecked();
+      await page.locator('.companion-voice-toggle').uncheck();
+      expect(await page.evaluate(() => localStorage.getItem('salon.companionVoice'))).toBe('off');
+    });
+
     test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page, { replies: ['Hi!', 'Red, please. Oh, can you fix that edge? There is polish on my skin.'] });
