@@ -1,4 +1,4 @@
-import { haptic } from '../comfort';
+import { haptic, prefersReducedMotion } from '../comfort';
 import { clientGrammar } from '../types';
 import type { ClientPronoun } from '../types';
 import type { Container, Rectangle } from 'pixi.js';
@@ -318,7 +318,19 @@ export function createNailStation(options: NailStationOptions): NailStation {
   // Story 049: "?" opens a 3-picture how-to.
   const howButton = button(labelled('?', t('station.howWord')), 'station-how', () => openHowTo(), t('station.howLabel'));
   controls.append(fixSlot, undoButton, howButton, doneButton);
-  toolbar.append(tabs, optionsRow, controls);
+  // 060: the row in a wrapper with a › while more is hidden to the right.
+  const rowWrap = el('div', 'station-row-wrap');
+  const more = el('button', 'station-row-more', '›');
+  more.type = 'button';
+  more.setAttribute('aria-label', t('station.more'));
+  more.addEventListener('click', () => optionsRow.scrollBy({ left: optionsRow.clientWidth * 0.7, behavior: prefersReducedMotion() ? 'auto' : 'smooth' }));
+  rowWrap.append(optionsRow, more);
+  const checkMore = (): void => {
+    rowWrap.classList.toggle('more', optionsRow.scrollWidth - optionsRow.clientWidth - optionsRow.scrollLeft > 6);
+  };
+  optionsRow.addEventListener('scroll', checkMore, { passive: true });
+  new ResizeObserver(checkMore).observe(optionsRow);
+  toolbar.append(tabs, rowWrap, controls);
 
   function selectTab(next: Tab): void {
     tab = next;
@@ -337,6 +349,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     if (tab === 'fix' && tool !== 'cleanup' && tool !== 'remover' && tool !== 'polish') tool = fixKind === 'edge' ? 'cleanup' : fixKind === 'colour' ? 'remover' : 'polish';
     instruction.textContent = tab === 'fix' ? t('station.step.fix') : tab === 'clean' ? t('station.step.clean') : t(`station.step.${tab}`, { n: STATION_STEPS.indexOf(tab) + 1 });
     optionsRow.scrollLeft = 0;
+    requestAnimationFrame(checkMore);
     refresh();
   }
 

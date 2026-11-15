@@ -22,7 +22,7 @@ const settings = { music: 0.5, sfx: 1, musicMuted: false, sfxMuted: false };
 describe('audio config and settings', () => {
   it('loads audio.json and names the problem in a bad one', () => {
     expect(AUDIO_CONFIG.music.chords.length).toBeGreaterThan(0);
-    expect(Object.keys(AUDIO_CONFIG.sfx).sort()).toEqual(['coin', 'correct', 'levelUp', 'moodDown', 'moodUp', 'phraseSaved', 'send', 'stars', 'streak', 'tap', 'tip', 'whisper']);
+    expect(Object.keys(AUDIO_CONFIG.sfx).sort()).toEqual(['coin', 'correct', 'ding', 'levelUp', 'moodDown', 'moodUp', 'phraseSaved', 'send', 'stars', 'streak', 'tap', 'tip', 'whisper']);
     const bad = structuredClone(AUDIO_CONFIG) as Record<string, any>;
     bad.sfx.send.wave = 'kazoo';
     expect(() => parseAudioConfig(bad)).toThrow(/sfx\.send\.wave/);

@@ -538,8 +538,8 @@
   "station.removeAll": "Remove all",
   "station.removeAllLabel": "Wipe the polish off every nail",
   "station.removerOn": "Tap a nail to wipe it back to bare.",
-  "station.fixAsk.edge": "🔧 {CShe} asked you to fix the edge. Tap Fix it, then rub the polish off the skin.",
-  "station.fixAsk.colour": "🔧 {CShe} wants a different colour. Tap Fix it: Remove all, then paint a new colour.",
+  "station.fixAsk.edge": "🔧 {CShe} asked you to fix the edge: rub the polish off the skin.",
+  "station.fixAsk.colour": "🔧 {CShe} wants a different colour: tap Remove all, then paint a new colour.",
   "station.fixed": "✓ Fixed! {CShe} is happy.",
   "results.fix.fixed.edge": "You fixed the edge {cShe} asked about.",
   "results.fix.open.edge": "{CShe} asked you to fix the edge, and it wasn't fixed.",
@@ -580,7 +580,7 @@
   "station.length.xlong": "Extra long",
   "station.lengthLabel": "Nail length: {length}",
   "station.step.length": "Step {n}: Pick the client's length.",
-  "station.fixAsk.length": "🔧 {CShe} wants a different length. Tap Fix it, then pick a length.",
+  "station.fixAsk.length": "🔧 {CShe} wants a different length: pick a length.",
   "results.fix.fixed.length": "You changed the length when {cShe} asked.",
   "results.fix.open.length": "{CShe} asked for a different length, and it wasn't changed.",
   "bestie.fix.fixed.length": "{CShe} asked for another length and you changed it right away. Great problem handling!",
@@ -723,5 +723,8 @@
   "total.extraLine": "Extra",
   "total.reaction.agreed": "{name} pays the price you agreed. Fair and friendly!",
   "total.reaction.discount": "{name} is happy with the little discount.",
-  "total.reaction.over": "{name} noticed you charged more than you agreed, and tipped less."
+  "total.reaction.over": "{name} noticed you charged more than you agreed, and tipped less.",
+  "service.replyTo": "💬 Reply to {name}",
+  "service.dismiss": "Close her message",
+  "station.more": "More tools"
 }

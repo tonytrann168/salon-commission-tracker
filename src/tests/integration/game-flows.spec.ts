@@ -637,6 +637,46 @@ for (const lang of LANGS) {
       await expect(page.locator('.station-controls .station-tool .tab-text')).toHaveText(lang === 'vi' ? 'Lau' : 'Clean');
     });
 
+    test('focus mode (story 060): 📋 sits in the mood row, off her face; while painting her line pops and stays until read (✕ or tap to reply); the chat is a slim bar', async ({ page }) => {
+      test.setTimeout(90_000);
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily') } });
+      await mockApi(page, { replies: ['Hi!', 'Coral, please. Do you have any plans for the weekend?', 'Lovely, thank you!'] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.path-screen .picker-daily').click();
+      // Consultation: the menu button is a small icon in the mood row, above the portraits (never over her face).
+      const menu = page.locator('.mood .chat-menu-button');
+      await expect(menu).toBeVisible();
+      const apart = await page.evaluate(() => document.querySelector('.mood .chat-menu-button')!.getBoundingClientRect().bottom <= document.querySelector('.portrait-zone')!.getBoundingClientRect().top + 1);
+      expect(apart).toBe(true);
+      // The service: her line pops with ✕; the slim bar shows an unread dot.
+      await page.locator('.chat-input').fill('Hello! What colour would you like?');
+      await page.locator('.chat-form button[type=submit]').click();
+      await page.waitForSelector('.chat-panel.service-mode');
+      await expect(page.locator('.service-say')).toHaveText('Coral, please. Do you have any plans for the weekend?');
+      await expect(page.locator('.service-dismiss')).toBeVisible();
+      const bar = page.locator('.focus-bar .reply-chip');
+      await expect(bar).toBeVisible();
+      await expect(bar).toHaveClass(/unread/);
+      await expect(page.locator('.chat-panel.service-mode .chat-form')).toBeHidden();
+      // ✕: the bubble goes, the dot goes; the bar stays.
+      await page.locator('.service-dismiss').click();
+      await expect(page.locator('.service-say')).toBeHidden();
+      await expect(bar).not.toHaveClass(/unread/);
+      await expect(bar).toBeVisible();
+      // The bar opens the reply sheet; replying brings back the nails.
+      await bar.click();
+      await expect(page.locator('.chat-panel.reply-open')).toHaveCount(1);
+      await page.locator('.reply-sheet .chat-input').fill('I am going to the beach!');
+      await page.locator('.reply-sheet .chat-form button[type=submit]').click();
+      await expect(page.locator('.chat-panel.reply-open')).toHaveCount(0);
+      await expect(page.locator('.service-say')).toHaveText('Lovely, thank you!');
+      // Tapping her bubble opens the reply sheet too (and marks it read).
+      await page.locator('.service-say').click();
+      await expect(page.locator('.chat-panel.reply-open')).toHaveCount(1);
+      await expect(bar).not.toHaveClass(/unread/);
+    });
+
     test('the agreed price (story 059): a discount agreed in the chat fills the Total step; the receipt shows the discount; she pays the agreed price', async ({ page }) => {
       test.setTimeout(120_000);
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('ana') } });

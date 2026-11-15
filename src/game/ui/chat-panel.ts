@@ -1,4 +1,4 @@
-import { prefersReducedMotion } from '../comfort';
+import { haptic, prefersReducedMotion } from '../comfort';
 import type { Container, Rectangle } from 'pixi.js';
 import type { Appointment, AppointmentSnapshot } from '../appointment';
 import { MOOD_MAX } from '../mood';
@@ -176,7 +176,11 @@ export function createChatPanel(
   const initial = appointment.getSnapshot();
   const zone = createPortraitZone(host, portraits.layer, portraits.client, poseFor(initial.mood, initial.result?.outcome ?? null), !portraits.bestie);
   // Story 044: the menu button sits at the top left of the face area (Mai is at the right), never squeezing the mood.
-  if (menuButton) zone.element.append(menuButton);
+  // Story 060: 📋 sits in the mood row as a small icon button, so it never covers her face while she talks.
+  if (menuButton) {
+    menuButton.setAttribute('aria-label', t('menu.sectionTitle'));
+    mood.insertBefore(menuButton, mood.querySelector('.speaker-button'));
+  }
 
   const log = el('div', 'chat-log');
   const errorBox = el('div', 'chat-error');
@@ -372,8 +376,15 @@ export function createChatPanel(
   // her lines pop from her face, a few data lines of her own, and an unanswered question costs a little mood, once.
   const say = el('button', 'service-say hidden');
   say.type = 'button';
-  const chip = el('button', 'reply-chip hidden', t('service.reply'));
+  // Story 060 (focus mode): the chat is a slim bar at the bottom (💬 Reply, with a dot while she has an unread line);
+  // her line pops as a bubble that stays until it is read: tap it to reply, or ✕.
+  const chip = el('button', 'reply-chip', t('service.replyTo', { name: clientName }));
   chip.type = 'button';
+  const focusBar = el('div', 'focus-bar');
+  focusBar.append(chip);
+  const dismiss = el('button', 'service-dismiss hidden', '✕');
+  dismiss.type = 'button';
+  dismiss.setAttribute('aria-label', t('service.dismiss'));
   const nudge = el('p', 'service-nudge hidden');
   nudge.setAttribute('role', 'status');
   const doneBanner = el('p', 'service-done hidden', t('service.toCheckout'));
@@ -390,7 +401,17 @@ export function createChatPanel(
   // 035 fixes: her bubble and the Reply chip sit together beside her face (nothing covers the hint line), and a small
   // order reminder stays under them the whole service.
   const talk = el('div', 'service-talk');
-  talk.append(say, chip);
+  const bubble = el('div', 'service-bubble');
+  bubble.append(say, dismiss);
+  talk.append(bubble);
+  root.insertBefore(focusBar, announcer);
+  /** Her line was read (replied to, or ✕): the bubble goes, the bar's dot goes. */
+  const markRead = (): void => {
+    say.classList.add('hidden');
+    dismiss.classList.add('hidden');
+    chip.classList.remove('unread', 'pulse');
+  };
+  dismiss.addEventListener('click', markRead);
   const order = el('p', 'service-order');
   if (nailArt) {
     const lang = getLanguage();
@@ -467,8 +488,7 @@ export function createChatPanel(
       // Opening the sheet is paying attention: no penalty for this question, and her later lines can come.
       window.clearTimeout(ignoreTimer);
       awaitingAnswer = false;
-      chip.classList.add('hidden');
-      say.classList.add('hidden');
+      markRead();
       sheet.append(logWrap, voiceStatus, form);
       root.append(sheet);
       requestAnimationFrame(() => log.scrollTo({ top: log.scrollHeight }));
@@ -500,11 +520,17 @@ export function createChatPanel(
     // Story 048: a line asking for a fix (her set lines or an AI reply) shows the Fix it step.
     askFix(text);
     say.textContent = text.length > 140 ? `${text.slice(0, 137)}…` : text;
-    say.classList.remove('hidden');
-    chip.classList.remove('hidden');
+    say.classList.remove('hidden', 'pop');
+    dismiss.classList.remove('hidden');
+    void say.offsetWidth;
+    say.classList.add('pop');
+    chip.classList.add('unread');
     chip.classList.remove('pulse');
     void chip.offsetWidth;
     chip.classList.add('pulse');
+    // A soft ding (and a short buzz where the phone can) so a line is never missed while painting.
+    emitSound('ding');
+    haptic(25);
     window.clearTimeout(ignoreTimer);
     awaitingAnswer = expectsAnswer(text);
     if (!awaitingAnswer) return;
@@ -625,8 +651,7 @@ export function createChatPanel(
     talkTimers.forEach((id) => window.clearTimeout(id));
     window.clearTimeout(ignoreTimer);
     setReplyOpen(false);
-    chip.classList.add('hidden');
-    say.classList.add('hidden');
+    markRead();
     doneBanner.classList.remove('hidden');
     window.setTimeout(() => {
       doneBanner.classList.add('hidden');
@@ -654,7 +679,8 @@ export function createChatPanel(
         else lastSeenClient = lastIndex;
       } else {
         setReplyOpen(false);
-        [say, chip, nudge].forEach((node) => node.classList.add('hidden'));
+        markRead();
+        nudge.classList.add('hidden');
         window.clearTimeout(ignoreTimer);
         if (stationOpen && !ending) setStationOpen(false);
       }

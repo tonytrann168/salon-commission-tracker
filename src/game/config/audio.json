@@ -256,6 +256,16 @@
       "stepSeconds": 0.06,
       "durationSeconds": 0.2,
       "gain": 0.26
+    },
+    "ding": {
+      "wave": "sine",
+      "notes": [
+        88,
+        93
+      ],
+      "stepSeconds": 0.09,
+      "durationSeconds": 0.3,
+      "gain": 0.16
     }
   }
 }

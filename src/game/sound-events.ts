@@ -5,7 +5,7 @@
  */
 
 /** Story 057b adds tap (any button), correct (a perfect line), coin (coins collected) and streak (the streak moves on). */
-export const SOUND_EVENTS = ['send', 'moodUp', 'moodDown', 'stars', 'tip', 'levelUp', 'whisper', 'phraseSaved', 'tap', 'correct', 'coin', 'streak'] as const;
+export const SOUND_EVENTS = ['send', 'moodUp', 'moodDown', 'stars', 'tip', 'levelUp', 'whisper', 'phraseSaved', 'tap', 'correct', 'coin', 'streak', 'ding'] as const;
 export type SoundEvent = (typeof SOUND_EVENTS)[number];
 
 export const SOUND_EVENT_NAME = 'salon:sound';

@@ -538,8 +538,8 @@
   "station.removeAll": "Tẩy hết",
   "station.removeAllLabel": "Tẩy sơn trên tất cả các móng",
   "station.removerOn": "Chạm vào một móng để tẩy sạch sơn.",
-  "station.fixAsk.edge": "🔧 Khách nhờ sửa viền móng. Bấm Sửa lại, rồi lau sơn dính trên da.",
-  "station.fixAsk.colour": "🔧 Khách muốn màu khác. Bấm Sửa lại: Tẩy hết, rồi sơn màu mới.",
+  "station.fixAsk.edge": "🔧 Khách nhờ sửa viền móng: lau sơn dính trên da nha.",
+  "station.fixAsk.colour": "🔧 Khách muốn màu khác: bấm Tẩy hết, rồi sơn màu mới.",
   "station.fixed": "✓ Sửa xong! Khách vui lắm.",
   "results.fix.fixed.edge": "{You} đã sửa viền móng như khách nhờ.",
   "results.fix.open.edge": "Khách nhờ sửa viền móng, nhưng chưa được sửa.",
@@ -580,7 +580,7 @@
   "station.length.xlong": "Rất dài",
   "station.lengthLabel": "Độ dài móng: {length}",
   "station.step.length": "Bước {n}: Chọn độ dài móng.",
-  "station.fixAsk.length": "🔧 Khách muốn đổi độ dài. Bấm Sửa lại, rồi chọn độ dài.",
+  "station.fixAsk.length": "🔧 Khách muốn đổi độ dài: chọn độ dài mới.",
   "results.fix.fixed.length": "{You} đã đổi độ dài khi khách nhờ.",
   "results.fix.open.length": "Khách muốn đổi độ dài, nhưng chưa được đổi.",
   "bestie.fix.fixed.length": "Khách nhờ đổi độ dài là {you} đổi liền. Xử lý tình huống giỏi lắm!",
@@ -723,5 +723,8 @@
   "total.extraLine": "Thêm",
   "total.reaction.agreed": "{name} trả đúng giá đã thoả thuận. Sòng phẳng, dễ thương!",
   "total.reaction.discount": "{name} vui vì được bớt chút xíu.",
-  "total.reaction.over": "{name} thấy bị tính cao hơn giá đã nói, nên tip ít lại."
+  "total.reaction.over": "{name} thấy bị tính cao hơn giá đã nói, nên tip ít lại.",
+  "service.replyTo": "💬 Trả lời {name}",
+  "service.dismiss": "Đóng tin nhắn của khách",
+  "station.more": "Thêm dụng cụ"
 }

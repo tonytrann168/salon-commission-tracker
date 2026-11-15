@@ -3,7 +3,8 @@
 .station-touch { position: absolute; left: 0; right: 0; z-index: 1; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 /* The hint/status: small, inside the hand area, never blocking touch. */
 /* Bottom-right, under the ring and pinky fingers (no nails there; the thumb is bottom-left, Mai top-right). */
-.station-status { position: absolute; left: 96px; right: 6px; bottom: 3px; margin: 0; padding: 3px 8px; border-radius: 10px; background: rgba(255, 255, 255, 0.88); font-size: 16px; line-height: 1.25; font-weight: 600; color: #5b4a53; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+/* 060 (overseer): the hint uses the step instruction's own strip at the bottom edge: full width, two lines at most. */
+.station-status { position: absolute; left: 6px; right: 6px; bottom: 3px; margin: 0; padding: 3px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.95); font-size: 15px; line-height: 1.25; font-weight: 600; color: #3b2a33; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.3s; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .station-status.show { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .station-status { transition: none; } }
 /* One row: tabs | options (scroll, faded edges) | Done. */
@@ -130,3 +131,9 @@ html[data-motion='reduce'] .station-controls .station-fix.pulse { animation: non
 /* Story 054: the cotton pad sits centred on the finger (the swab and the brush keep their tip at the touch point). */
 .station-brush[data-kind='pad'] { left: -22px; top: -22px; width: 44px; height: 44px; transform-origin: 22px 22px; }
 .station-brush[data-kind='pad'] svg { filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2)); }
+
+/* 060 (overseer): when the tool row has more to the right, a › says so (tap or swipe to see it). */
+.station-row-wrap { display: flex; flex: 1 1 auto; min-width: 0; align-items: center; }
+.station-row-wrap .station-row { flex: 1 1 auto; min-width: 0; }
+.station-row-more { flex: none; display: none; place-items: center; width: 28px; height: 40px; padding: 0; border: 0; border-radius: 12px; background: #fff; color: #a2346a; font: 800 22px/1 system-ui, sans-serif; box-shadow: 0 0 0 2px #ffc4da; cursor: pointer; }
+.station-row-wrap.more .station-row-more { display: grid; }
