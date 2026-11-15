@@ -36,7 +36,7 @@ export function withNaturalVoice(io: VoiceIO, host: NaturalVoiceHost, maxCache: 
   const player = (): AudioLike => (audio ??= host.createAudio());
 
   const fetchAudio = async (text: string, options: SpeakOptions): Promise<string | null> => {
-    const key = `${options.companion ? `companion-${options.companion.gender}-${options.companion.lang}` : options.clientId}|${options.emotion ?? 'neutral'}|${options.level}|${options.speed ?? 'normal'}|${text}`;
+    const key = `${options.companion ? `companion-${options.companion.gender}-${options.companion.lang}-${options.companion.voice ?? ''}` : options.clientId}|${options.emotion ?? 'neutral'}|${options.level}|${options.speed ?? 'normal'}|${text}`;
     const cached = cache.get(key);
     if (cached) return cached;
     let response: Response;

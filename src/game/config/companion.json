@@ -2,7 +2,7 @@
   "_note": "Story 013: the companion's look and name. The player picks female or male at the first meeting (changeable in Settings) and may rename them. Names: 1-12 letters and spaces (Vietnamese diacritics fine); the blocklist is matched without accents: entries of 5+ letters anywhere in the name, shorter or multi-word entries only as whole words (so Long, Điền, Edith are fine).",
   "defaultName": {
     "female": "Mai",
-    "male": "Minh"
+    "male": "Long"
   },
   "maxNameLength": 12,
   "skins": {

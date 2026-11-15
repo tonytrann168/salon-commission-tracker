@@ -645,5 +645,10 @@
   "menu.setupTitle": "Làm bảng giá cho tiệm",
   "menu.setupMai": "{You} chọn giá cho tiệm nha. Khách sẽ gọi theo số, kiểu \"Number 3, please!\" đó. Ở màn hình chính {you} đổi lúc nào cũng được.",
   "account.nudgeShort": "{name} nè: giữ tiến độ an toàn nha?",
-  "account.nudgeGoShort": "Tạo tài khoản"
+  "account.nudgeGoShort": "Tạo tài khoản",
+  "voicePick.title": "Giọng của {name}",
+  "voicePick.note": "Một giọng cho mọi lời {name} nói. Bấm ▶ để nghe thử.",
+  "voicePick.sample": "Nghe thử {voice}",
+  "voicePick.sampleLine": "Chào {you}! {Self} là {name} nè. Mình cùng tập tiếng Anh nha!",
+  "help.listen": "Nghe"
 }

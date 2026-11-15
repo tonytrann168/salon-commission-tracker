@@ -116,6 +116,10 @@ if (azureConfigured(env)) {
   checks.push(['tts (Tom, annoyed): Azure returns audio', () => handleTts({ text: 'How much longer is this going to take?', clientId: 'tom', emotion: 'annoyed', level: 'some' }, env, fetch),
     (b) => typeof b.audio === 'string' && b.audio.length > 1000 && b.mime === 'audio/mpeg',
     (b) => `${Math.round((b.audio.length * 3) / 4 / 1024)} KB of audio`]);
+  // Story 055: the companion with a chosen voice (a multilingual voice speaking Vietnamese).
+  checks.push(['tts (companion, chosen voice "ava", Vietnamese): Azure returns audio', () => handleTts({ text: 'Câu này em nói hay lắm đó!', companion: { gender: 'female', lang: 'vi', voice: 'ava' }, level: 'some' }, env, fetch),
+    (b) => typeof b.audio === 'string' && b.audio.length > 1000 && b.mime === 'audio/mpeg',
+    (b) => `${Math.round((b.audio.length * 3) / 4 / 1024)} KB of audio`]);
 } else {
   console.log('SKIP  tts (Azure Speech): AZURE_SPEECH_KEY / AZURE_SPEECH_REGION are not set');
 }

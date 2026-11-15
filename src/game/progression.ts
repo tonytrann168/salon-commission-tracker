@@ -171,6 +171,8 @@ export interface ProgressSave {
   menu?: MenuChoice;
   /** Story 054: the player has set up (confirmed) the salon menu: the first-game step is done. */
   menuConfirmed?: boolean;
+  /** Story 055: the companion's voice (a choice id from voice-cast.json). */
+  companionVoice?: string;
 }
 
 export const NEW_SAVE: ProgressSave = { version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0, history: {} };

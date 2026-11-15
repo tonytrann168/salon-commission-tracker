@@ -5,12 +5,13 @@ import type { AudioLike } from '../game/natural-voice';
 import type { ClientPersona, ClientTurn } from '../game/types';
 import { createBrowserVoice, loadPinnedVoices, savePinnedVoices } from '../game/voice';
 import type { SpeechHost, VoiceIO } from '../game/voice';
-import { VOICE_CAST, azureVoiceFor, browserProsody, emotionFor, parseVoiceCast, pinVoice } from '../game/voice-cast';
+import { VOICE_CAST, azureVoiceFor, browserProsody, companionVoice, emotionFor, parseVoiceCast, pinVoice } from '../game/voice-cast';
 import { ROSTER } from '../game/clients/roster';
 import { GUARD_CONFIG, createGuard } from '../server/guard';
 import { parseModelOutput } from '../server/handlers/client-turn';
 import { azureConfigured, buildSsml, createLru, handleTts, parseTtsRequest } from '../server/handlers/tts';
 import { getCompanionVoiceEnabled, getSpeechSpeed, setCompanionVoiceEnabled, setSpeechSpeed } from '../game/settings';
+import { parseSave } from '../game/save';
 
 /** Stories 037/038: one voice per character, natural voices from the server, and the mood in the voice. */
 
@@ -96,8 +97,8 @@ describe('/api/tts', () => {
   it('every roster client has a neural voice of their gender; the companion has en and vi voices', () => {
     const male = new Set(['en-US-GuyNeural', 'en-US-DavisNeural', 'en-US-JasonNeural', 'en-US-TonyNeural']);
     for (const client of ROSTER) expect(male.has(azureVoiceFor(client.id, client.pronoun === 'he' ? 'male' : 'female'))).toBe(client.pronoun === 'he');
-    expect(VOICE_CAST.azure.companion.female.vi).toBe('vi-VN-HoaiMyNeural');
-    expect(VOICE_CAST.azure.companion.male.vi).toBe('vi-VN-NamMinhNeural');
+    expect(companionVoice('female').vi).toBe('vi-VN-HoaiMyNeural');
+    expect(companionVoice('male').vi).toBe('vi-VN-NamMinhNeural');
   });
 
   it('only a known client or the companion can speak; text is capped', () => {
@@ -264,5 +265,45 @@ describe('the companion reads her tips aloud (story 043)', () => {
     setCompanionVoiceEnabled(true);
     expect(getCompanionVoiceEnabled()).toBe(true);
     setCompanionVoiceEnabled(false);
+  });
+});
+
+describe('choosing the companion\'s voice (story 055)', () => {
+  it('3 choices per gender in config, the first is the default; an unknown id is the default', () => {
+    expect(VOICE_CAST.azure.companion.female.map((c) => c.id)).toEqual(['hoaimy', 'ava', 'emma']);
+    expect(VOICE_CAST.azure.companion.male.map((c) => c.id)).toEqual(['namminh', 'andrew', 'brian']);
+    expect(companionVoice('female', 'nope').id).toBe('hoaimy');
+    expect(companionVoice('male', 'ava').id).toBe('namminh');
+  });
+
+  it('the server uses the chosen voice (config ids only); a multilingual voice speaks Vietnamese inside <lang>', () => {
+    const vi = parseTtsRequest({ text: 'Câu này hay lắm!', companion: { gender: 'female', lang: 'vi', voice: 'ava' } });
+    if (!vi.ok) throw new Error(vi.message);
+    expect(vi.value.voice).toBe('en-US-AvaMultilingualNeural');
+    const ssml = buildSsml(vi.value);
+    expect(ssml).toContain('<lang xml:lang="vi-VN">');
+    expect(ssml).toContain('xml:lang="en-US"><voice name="en-US-AvaMultilingualNeural">');
+    expect(ssml).not.toContain('express-as');
+    const native = parseTtsRequest({ text: 'Chào em', companion: { gender: 'female', lang: 'vi', voice: 'hoaimy' } });
+    if (!native.ok) throw new Error(native.message);
+    expect(buildSsml(native.value)).not.toContain('<lang');
+    const sneaky = parseTtsRequest({ text: 'Hi', companion: { gender: 'male', lang: 'en', voice: 'en-US-EvilNeural' } });
+    expect(sneaky.ok && sneaky.value.voice).toBe('en-US-JasonNeural');
+  });
+
+  it('the natural voice sends the chosen voice, and caches each voice apart', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ audio: 'CCCC', mime: 'audio/mpeg' }), { status: 200 }));
+    const a = { src: '', onended: null as (() => void) | null, onerror: null as (() => void) | null, play: async () => queueMicrotask(() => a.onended?.()), pause: () => undefined };
+    const io = { canListen: false, canSpeak: true, listen: () => ({ result: Promise.reject(new Error('no')), stop: () => undefined }), speak: async () => undefined, cancelSpeech: () => undefined, unlock: () => undefined } as unknown as VoiceIO;
+    const voice = withNaturalVoice(io, { fetch: fetchImpl as unknown as typeof fetch, createAudio: () => a });
+    await voice.speak('Hello!', { level: 'some', companion: { gender: 'female', lang: 'en', voice: 'emma' } });
+    await voice.speak('Hello!', { level: 'some', companion: { gender: 'female', lang: 'en', voice: 'ava' } });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(JSON.parse((fetchImpl.mock.calls[0] as unknown as [string, { body: string }])[1].body).companion).toEqual({ gender: 'female', lang: 'en', voice: 'emma' });
+  });
+
+  it('the save keeps the choice (plain ids only)', () => {
+    expect(parseSave(JSON.stringify({ version: 1, companionVoice: 'ava' })).companionVoice).toBe('ava');
+    expect(parseSave(JSON.stringify({ version: 1, companionVoice: '<script>' })).companionVoice).toBeUndefined();
   });
 });

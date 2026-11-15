@@ -3,7 +3,7 @@ import { ENGLISH_LEVELS } from '../../game/types';
 import type { EnglishLevel } from '../../game/types';
 import { SPEECH_SPEEDS, VOICE_CONFIG } from '../../game/voice';
 import type { SpeechSpeed } from '../../game/voice';
-import { VOICE_CAST, azureVoiceFor, isEmotion } from '../../game/voice-cast';
+import { VOICE_CAST, azureVoiceFor, companionVoice, isEmotion } from '../../game/voice-cast';
 import type { Emotion, VoiceGender } from '../../game/voice-cast';
 
 /**
@@ -49,7 +49,8 @@ export function parseTtsRequest(body: unknown): TtsParse {
     const gender: VoiceGender | undefined = companion.gender === 'female' || companion.gender === 'male' ? companion.gender : undefined;
     const language = companion.lang === 'en' || companion.lang === 'vi' ? companion.lang : undefined;
     if (!gender || !language) return { ok: false, message: 'companion needs gender (female, male) and lang (en, vi).' };
-    voice = VOICE_CAST.azure.companion[gender][language];
+    // Story 055: the player's chosen voice for the companion (only ids from the config; else the default).
+    voice = companionVoice(gender, typeof companion.voice === 'string' ? companion.voice : undefined)[language];
     lang = language === 'vi' ? 'vi-VN' : 'en-US';
   } else {
     return { ok: false, message: 'The speaker must be a client (clientId) or the companion.' };
@@ -64,8 +65,11 @@ export function buildSsml(request: TtsRequest): string {
   const sound = VOICE_CAST.emotions[request.emotion];
   const percent = Math.round((VOICE_CONFIG.rateByLevel[request.level] * sound.rate * VOICE_CONFIG.speechSpeed[request.speed] - 1) * 100);
   const prosody = `<prosody rate="${percent >= 0 ? '+' : ''}${percent}%">${escapeXml(request.text)}</prosody>`;
-  const styled = request.lang === 'en-US' ? `<mstts:express-as style="${sound.style}" styledegree="${sound.degree}">${prosody}</mstts:express-as>` : prosody;
-  return `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="${request.lang}"><voice name="${request.voice}">${styled}</voice></speak>`;
+  // Story 055: a multilingual (en-US) voice speaking Vietnamese gets the line in <lang xml:lang="vi-VN">.
+  const voiceLang = request.voice.slice(0, 5);
+  const crossLanguage = voiceLang !== request.lang;
+  const styled = crossLanguage ? `<lang xml:lang="${request.lang}">${prosody}</lang>` : request.lang === 'en-US' ? `<mstts:express-as style="${sound.style}" styledegree="${sound.degree}">${prosody}</mstts:express-as>` : prosody;
+  return `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="${voiceLang}"><voice name="${request.voice}">${styled}</voice></speak>`;
 }
 
 /** A small least-recently-used cache: the same line in the same voice and tone is made once. */

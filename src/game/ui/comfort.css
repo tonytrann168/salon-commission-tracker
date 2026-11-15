@@ -22,3 +22,6 @@ html[data-contrast='high'] :focus-visible { outline: 3px solid #000 !important; 
 .speed-row { flex-direction: column; align-items: stretch; gap: 6px; }
 .speed-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .speed-choices .chat-button { min-height: 48px; }
+
+/* Story 055: the voice picker row stacks under its title. */
+.voice-pick-row { flex-direction: column; align-items: stretch; }

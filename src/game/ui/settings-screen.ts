@@ -13,6 +13,7 @@ import { feedbackButton } from './feedback-sheet';
 import { createBackupSection } from './backup-panel';
 import { createComfortSection } from './comfort-section';
 import { createMenuSection } from './menu-settings';
+import { createVoicePicker } from './voice-picker';
 import { createAccountSection } from './account-panel';
 import { getAccount } from '../account/account';
 import { legalLinks } from './legal-links';
@@ -117,6 +118,10 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
     maiVoiceText.append(el('strong', '', t('settings.companionVoice', { name: companionName() })), el('span', 'setting-note', t('settings.companionVoiceNote', { name: companionName() })));
     maiVoiceRow.append(maiVoiceText, maiVoiceToggle);
 
+    // Story 055: the companion's voice (one voice everywhere she speaks), with samples.
+    const voicePickRow = el('div', 'setting-row voice-pick-row');
+    voicePickRow.append(createVoicePicker());
+
     // Story 045: how fast the client speaks (and her text appears): Slow / Normal / Fast.
     const speedRow = el('div', 'setting-row speed-row');
     const speedText = el('span', 'setting-text');
@@ -207,7 +212,7 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
       open.addEventListener('click', () => openWhatsNew(host, notes));
       versionRow.append(open);
     }
-    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, speedRow, maiVoiceRow, autoSendRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, createMenuSection(), comfort, backup, legalLinks(), versionRow, back);
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, speedRow, maiVoiceRow, voicePickRow, autoSendRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, createMenuSection(), comfort, backup, legalLinks(), versionRow, back);
   };
 
   render();

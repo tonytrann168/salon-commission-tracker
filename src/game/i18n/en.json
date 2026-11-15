@@ -645,5 +645,10 @@
   "menu.setupTitle": "Set up your salon menu",
   "menu.setupMai": "Pick your prices. Clients will order by number, like \"Number 3, please!\" You can change it any time from the home screen.",
   "account.nudgeShort": "{name}: keep your progress safe?",
-  "account.nudgeGoShort": "Sign up"
+  "account.nudgeGoShort": "Sign up",
+  "voicePick.title": "{name}'s voice",
+  "voicePick.note": "One voice for everything {name} says. Tap ▶ to hear it.",
+  "voicePick.sample": "Hear {voice}",
+  "voicePick.sampleLine": "Hi! I'm {name}. Let's practise English together!",
+  "help.listen": "Listen"
 }

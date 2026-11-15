@@ -1,4 +1,4 @@
-import { getSpeechSpeed } from '../settings';
+import { companionSpeech } from '../companion-voice';
 import { afterPractice } from '../bestie-memory';
 import { gainFriendship } from './friendship';
 import { t } from '../i18n';
@@ -59,7 +59,7 @@ export function openPracticeSheet(host: HTMLElement, options: { voice: VoiceIO; 
   overlay.appendChild(dialog);
 
   let session: { stop: () => void } | null = null;
-  listen.addEventListener('click', () => void voice.speak(line, { level, speed: getSpeechSpeed() }));
+  listen.addEventListener('click', () => void voice.speak(line, companionSpeech('en', level)));
   say.addEventListener('click', () => {
     if (session) {
       session.stop();

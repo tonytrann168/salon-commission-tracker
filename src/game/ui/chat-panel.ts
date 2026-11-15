@@ -32,7 +32,7 @@ import { createHelpMeSayIt } from './help-me-say-it';
 import { createMicButton } from './mic-button';
 import { createSendCountdown } from '../voice-send';
 import { getCompanionVoiceEnabled, getSpeechSpeed, getVoiceAutoSend } from '../settings';
-import { loadCompanion } from '../companion';
+import { companionSpeech } from '../companion-voice';
 import { VOICE_CONFIG } from '../voice';
 import { openPracticeSheet, practiceButton } from './practice-sheet';
 import type { VoiceIO } from '../voice';
@@ -223,7 +223,7 @@ export function createChatPanel(
         onTipSeen: (tip) => bestie.corrections?.onPhrase(tip.better),
         // Story 043: her tips aloud, in her voice, at the Speech speed (only when the setting is on).
         ...(voice?.io.canSpeak && getCompanionVoiceEnabled()
-          ? { speak: (text: string, lang: 'en' | 'vi') => void voice.io.speak(text, { level: portraits.level, companion: { gender: loadCompanion().gender, lang }, speed: getSpeechSpeed() }) }
+          ? { speak: (text: string, lang: 'en' | 'vi') => void voice.io.speak(text, companionSpeech(lang, portraits.level)) }
           : {}),
       })
     : null;
@@ -911,6 +911,8 @@ export function createChatPanel(
         closeHelp();
         sendLine(text, true);
       },
+      // Story 055: the companion says the English line, in her chosen voice.
+      ...(voice?.io.canSpeak ? { speak: (english: string) => void voice.io.speak(english, companionSpeech('en', portraits.level)) } : {}),
     });
     helpSheet = sheet.element;
     root.appendChild(sheet.element);

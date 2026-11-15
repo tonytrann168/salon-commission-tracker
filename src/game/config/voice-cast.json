@@ -40,8 +40,17 @@
       "victoria": "en-US-AriaNeural"
     },
     "companion": {
-      "female": { "en": "en-US-SaraNeural", "vi": "vi-VN-HoaiMyNeural" },
-      "male": { "en": "en-US-JasonNeural", "vi": "vi-VN-NamMinhNeural" }
+      "_note": "Story 055: the companion's voice, chosen by the player (Settings, the meet step); one voice for everything she says. Each choice has an English and a Vietnamese voice; a Multilingual voice speaks both (the server wraps Vietnamese in <lang xml:lang=\"vi-VN\">). The first choice is the default.",
+      "female": [
+        { "id": "hoaimy", "label": { "en": "Hoài My (warm)", "vi": "Hoài My (ấm áp)" }, "en": "en-US-SaraNeural", "vi": "vi-VN-HoaiMyNeural" },
+        { "id": "ava", "label": { "en": "Ava (bright)", "vi": "Ava (trong trẻo)" }, "en": "en-US-AvaMultilingualNeural", "vi": "en-US-AvaMultilingualNeural" },
+        { "id": "emma", "label": { "en": "Emma (calm)", "vi": "Emma (dịu dàng)" }, "en": "en-US-EmmaMultilingualNeural", "vi": "en-US-EmmaMultilingualNeural" }
+      ],
+      "male": [
+        { "id": "namminh", "label": { "en": "Nam Minh (friendly)", "vi": "Nam Minh (thân thiện)" }, "en": "en-US-JasonNeural", "vi": "vi-VN-NamMinhNeural" },
+        { "id": "andrew", "label": { "en": "Andrew (warm)", "vi": "Andrew (ấm áp)" }, "en": "en-US-AndrewMultilingualNeural", "vi": "en-US-AndrewMultilingualNeural" },
+        { "id": "brian", "label": { "en": "Brian (relaxed)", "vi": "Brian (thoải mái)" }, "en": "en-US-BrianMultilingualNeural", "vi": "en-US-BrianMultilingualNeural" }
+      ]
     },
     "outputFormat": "audio-24khz-48kbitrate-mono-mp3"
   },

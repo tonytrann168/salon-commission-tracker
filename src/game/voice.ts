@@ -175,7 +175,7 @@ export interface SpeakOptions {
   /** Story 045: the Speech speed setting (default normal). */
   speed?: SpeechSpeed;
   /** Story 043: the companion speaking (her tips): her gender and the language of the line. */
-  companion?: { gender: VoiceGender; lang: 'en' | 'vi' };
+  companion?: { gender: VoiceGender; lang: 'en' | 'vi'; voice?: string };
 }
 
 export interface VoiceIO {

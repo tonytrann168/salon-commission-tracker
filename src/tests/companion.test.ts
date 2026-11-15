@@ -39,10 +39,10 @@ describe('companion names', () => {
     expect(checkCompanionName('Lồn')).toEqual({ ok: false, problem: 'blocked' });
   });
 
-  it('falls back to Mai for bad input; a male companion with no name is Minh', () => {
+  it('falls back to Mai for bad input; a male companion with no name is Long (story 055)', () => {
     const older = { relation: 'older', playerTitle: 'chi' };
     expect(companionFrom(null)).toEqual({ name: 'Mai', gender: 'female', ...older });
-    expect(companionFrom({ gender: 'male' })).toEqual({ name: 'Minh', gender: 'male', ...older });
+    expect(companionFrom({ gender: 'male' })).toEqual({ name: 'Long', gender: 'male', ...older });
     expect(companionFrom({ gender: 'robot', name: '<script>', relation: 'boss', playerTitle: 'sir' })).toEqual({ name: 'Mai', gender: 'female', ...older });
     expect(companionFrom({ relation: 'younger', playerTitle: 'anh' })).toMatchObject({ relation: 'younger', playerTitle: 'anh' });
   });
@@ -157,12 +157,12 @@ describe('the companion on the device', () => {
     expect(parseCompanion(null)).toMatchObject({ chosen: false, gender: 'female', name: 'Mai' });
     expect(parseCompanion('{bad')).toMatchObject({ chosen: false, name: 'Mai' });
     const saved = parseCompanion(JSON.stringify({ chosen: true, gender: 'male', name: 'x1', equipped: { head: 'bow-pink', face: 'bow-pink', neck: 'nope' } }));
-    expect(saved).toMatchObject({ chosen: true, gender: 'male', name: 'Minh', equipped: { head: 'bow-pink' } });
+    expect(saved).toMatchObject({ chosen: true, gender: 'male', name: 'Long', equipped: { head: 'bow-pink' } });
   });
 
   it('switching gender keeps a typed name but swaps a default one; renaming validates', () => {
     const start = parseCompanion(null);
-    expect(withGender(start, 'male').name).toBe('Minh');
+    expect(withGender(start, 'male').name).toBe('Long');
     const named = withName(start, 'Nhung');
     expect(named.ok && withGender(named.settings, 'male').name).toBe('Nhung');
     expect(withName(start, '')).toEqual({ ok: false, problem: 'empty' });

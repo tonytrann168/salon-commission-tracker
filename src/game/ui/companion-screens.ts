@@ -1,3 +1,4 @@
+import { createVoicePicker } from './voice-picker';
 import { isUnlocked, loadCompanion, saveCompanion, unlockFacts, wear, withGender, withName, companionLook } from '../companion';
 import type { CompanionSettings } from '../companion';
 import { COMPANION_CONFIG, COMPANION_GENDERS } from '../companion-core';
@@ -108,7 +109,7 @@ export function createMeetScreen(host: HTMLElement, onDone: () => void): HTMLEle
   const draw = (): void => {
     const title = el('h1', '', t('companion.meetTitle'));
     title.id = 'meet-title';
-    const go = el('button', 'chat-button', t('companion.letsGo'));
+    const go = el('button', 'chat-button meet-go', t('companion.letsGo'));
     go.type = 'button';
     const field = nameField(settings.name, (name) => {
       validName = name;
@@ -135,7 +136,9 @@ export function createMeetScreen(host: HTMLElement, onDone: () => void): HTMLEle
     const restore = el('button', 'meet-restore', t('backup.firstRun'));
     restore.type = 'button';
     restore.addEventListener('click', () => openRestoreSheet(host));
-    screen.replaceChildren(title, el('p', 'setting-note', t('companion.meetNote')), choice, field.root, relation, el('p', 'setting-note', t('companion.changeLater')), go, restore);
+    // Story 055: pick the companion's voice here too (▶ samples), for her gender.
+    const voice = createVoicePicker({ gender: () => settings.gender, name: () => validName ?? settings.name });
+    screen.replaceChildren(title, el('p', 'setting-note', t('companion.meetNote')), choice, field.root, relation, voice, el('p', 'setting-note', t('companion.changeLater')), go, restore);
   };
   draw();
   host.append(screen);

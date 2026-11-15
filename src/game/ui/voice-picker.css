@@ -1,0 +1,8 @@
+/* Story 055: the companion's voice choices: a big button with the voice's name, and a ▶ sample beside it. */
+.voice-picker { display: flex; flex-direction: column; gap: 6px; }
+.voice-choices { display: grid; gap: 8px; margin-top: 4px; }
+.voice-choice { display: grid; grid-template-columns: 1fr 52px; gap: 8px; }
+.voice-choice-pick { min-height: 48px; font-size: 16px; text-align: left; padding-inline: 14px; }
+.voice-picker .voice-choice-pick[aria-checked='true'] { background: #ff5c9a; color: #fff; }
+.voice-picker .voice-choice-pick[aria-checked='true']::before { content: '✓ '; }
+.voice-choice-play { min-height: 48px; padding: 0; font-size: 18px; }

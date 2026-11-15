@@ -27,7 +27,7 @@ for (const lang of LANGS) {
       await page.goto('/');
       await page.locator('.title-menu > .chat-button').first().click();
       await expect(page.locator('.companion-meet')).toBeVisible();
-      await page.locator('.companion-meet .chat-button').first().click();
+      await page.locator('.companion-meet .meet-go').click();
       await page.locator('.level-card').nth(1).click();
       await page.locator('.picker-daily').click();
       await expect(page.locator('.chat-input')).toBeVisible();
@@ -443,6 +443,37 @@ for (const lang of LANGS) {
       await page.locator('.station-controls .station-clean-mode').click();
       await page.locator('.station-touch').evaluate((node) => { const b = node.getBoundingClientRect(); node.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 9, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2, buttons: 1 })); });
       await expect(page.locator('.station-brush.show[data-kind=pad]')).toHaveCount(1);
+    });
+
+    test('the companion\'s voice (story 055): Help me say it plays the line in her chosen voice; Settings picks a voice with a sample', async ({ page }) => {
+      await seed(page, lang, { save: { xp: 100, appointments: 3, badges: ['first-client'], ...dailyWith('ana'), companionVoice: 'ava' } });
+      const seen = await mockApi(page, { phases: ['consultation'] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      // Help me say it: ▶ Listen says the English line in the companion's chosen voice.
+      await page.locator('.help-button').click();
+      await page.locator('.help-input').fill('Chị muốn làm móng màu gì?');
+      await page.locator('.help-sheet .chat-button').filter({ hasText: lang === 'vi' ? 'Dịch' : 'Translate' }).first().click();
+      const listen = page.locator('.help-listen');
+      await expect(listen).toHaveText(lang === 'vi' ? '▶ Nghe' : '▶ Listen');
+      await listen.click();
+      await expect.poll(() => seen['tts']?.length ?? 0).toBeGreaterThan(0);
+      expect((seen['tts']![0] as { companion: unknown }).companion).toEqual({ gender: 'female', lang: 'en', voice: 'ava' });
+      // Settings: 3 voices for her, the chosen one marked; another is picked and saved; ▶ plays a sample in it.
+      await page.goto('/');
+      await page.locator('.title-menu-row').first().locator('button').first().click();
+      const choices = page.locator('.voice-pick-row .voice-choice-pick');
+      await expect(choices).toHaveCount(3);
+      await expect(page.locator('.voice-choice-pick[data-voice=ava]')).toHaveAttribute('aria-checked', 'true');
+      await page.locator('.voice-choice-pick[data-voice=emma]').click();
+      await expect(page.locator('.voice-choice-pick[data-voice=emma]')).toHaveAttribute('aria-checked', 'true');
+      expect(await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}').companionVoice)).toBe('emma');
+      const before = seen['tts']?.length ?? 0;
+      await page.locator('.voice-choice-play[data-voice=emma]').click();
+      await expect.poll(() => seen['tts']?.length ?? 0).toBeGreaterThan(before);
+      expect((seen['tts']!.at(-1) as { companion: { voice: string; lang: string } }).companion).toMatchObject({ voice: 'emma', lang });
+      expect(await noOverflow(page)).toBe(true);
     });
 
     test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {

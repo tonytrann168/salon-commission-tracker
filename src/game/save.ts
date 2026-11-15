@@ -58,6 +58,7 @@ export function parseSave(raw: string | null): ProgressSave {
     // Story 044: the salon menu, kept only when one was chosen.
     ...(d.menu !== undefined ? { menu: parseMenuChoice(d.menu) } : {}),
     ...(d.menuConfirmed === true ? { menuConfirmed: true } : {}),
+    ...(typeof d.companionVoice === 'string' && /^[a-z0-9-]{1,20}$/.test(d.companionVoice) ? { companionVoice: d.companionVoice } : {}),
   };
 }
 

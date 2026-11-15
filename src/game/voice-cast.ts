@@ -22,6 +22,14 @@ export interface EmotionSound {
   pitch: number;
 }
 
+/** Story 055: one voice the player can pick for the companion: an English and a Vietnamese Azure voice. */
+export interface CompanionVoiceChoice {
+  id: string;
+  label: { en: string; vi: string };
+  en: string;
+  vi: string;
+}
+
 export interface VoiceCast {
   emotions: Record<Emotion, EmotionSound>;
   moodBands: { below: number; emotion: Emotion }[];
@@ -30,7 +38,8 @@ export interface VoiceCast {
     female: string;
     male: string;
     clients: Record<string, string>;
-    companion: Record<VoiceGender, { en: string; vi: string }>;
+    /** Story 055: the companion's voice choices per gender (the first is the default). */
+    companion: Record<VoiceGender, CompanionVoiceChoice[]>;
     outputFormat: string;
   };
   limits: { maxChars: number; serverCacheEntries: number; browserCacheEntries: number };
@@ -54,7 +63,19 @@ export function parseVoiceCast(raw: unknown): VoiceCast {
   const names = (list: unknown, name: string): string[] => (Array.isArray(list) && list.length > 0 && list.every((n) => typeof n === 'string' && n) ? (list as string[]) : fail(`"${name}" needs voice names`));
   const azureName = (value: unknown, name: string): string => (typeof value === 'string' && VOICE_NAME.test(value) ? value : fail(`"${name}" must be an Azure neural voice name`));
   const a = c.azure ?? fail('"azure" is missing');
-  const companion = (g: VoiceGender) => ({ en: azureName(a.companion?.[g]?.en, `azure.companion.${g}.en`), vi: azureName(a.companion?.[g]?.vi, `azure.companion.${g}.vi`) });
+  const companion = (g: VoiceGender): CompanionVoiceChoice[] => {
+    const list = (a.companion as unknown as Record<string, unknown> | undefined)?.[g];
+    if (!Array.isArray(list) || list.length < 1 || list.length > 6) return fail(`"azure.companion.${g}" needs 1-6 voice choices`);
+    const choices = list.map((raw, i): CompanionVoiceChoice => {
+      const c = raw as Partial<CompanionVoiceChoice>;
+      const at = `azure.companion.${g}[${i}]`;
+      if (typeof c.id !== 'string' || !/^[a-z0-9-]+$/.test(c.id)) return fail(`"${at}.id" must be a short id`);
+      if (typeof c.label?.en !== 'string' || typeof c.label?.vi !== 'string') return fail(`"${at}.label" needs en and vi`);
+      return { id: c.id, label: { en: c.label.en, vi: c.label.vi }, en: azureName(c.en, `${at}.en`), vi: azureName(c.vi, `${at}.vi`) };
+    });
+    if (new Set(choices.map((c) => c.id)).size !== choices.length) fail(`"azure.companion.${g}" ids must be unique`);
+    return choices;
+  };
   const limit = (n: unknown, name: string): number => (typeof n === 'number' && Number.isInteger(n) && n > 0 ? n : fail(`"limits.${name}" must be a whole number`));
   return {
     emotions,
@@ -72,6 +93,12 @@ export function parseVoiceCast(raw: unknown): VoiceCast {
 }
 
 export const VOICE_CAST: VoiceCast = parseVoiceCast(castJson);
+
+/** Story 055: the companion's chosen voice (an unknown or missing id is the first choice for that gender). */
+export function companionVoice(gender: VoiceGender, id?: string, cast: VoiceCast = VOICE_CAST): CompanionVoiceChoice {
+  const list = cast.azure.companion[gender];
+  return list.find((c) => c.id === id) ?? (list[0] as CompanionVoiceChoice);
+}
 
 /** How this line should sound: the client turn's own tag when it gave one, else the mood band. */
 export function emotionFor(mood: number, tag: Emotion | undefined | null, cast: VoiceCast = VOICE_CAST): Emotion {

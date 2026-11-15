@@ -16,6 +16,8 @@ export interface HelpMeSayItOptions {
   /** The finished English line. The caller sends it with `helped: true`. */
   onSend: (text: string) => void;
   onClose: () => void;
+  /** Story 055: hear the English line in the companion's voice (▶ Listen). */
+  speak?: (english: string) => void;
 }
 
 interface Tile {
@@ -191,6 +193,13 @@ export function createHelpMeSayIt(options: HelpMeSayItOptions): { element: HTMLE
     status.replaceChildren();
     if (mode === 'tiles') showTiles(english);
     else showRetype(english);
+    if (options.speak) {
+      const line = english;
+      const listen = el('button', 'chat-button secondary help-listen', `▶ ${t('help.listen')}`);
+      listen.type = 'button';
+      listen.addEventListener('click', () => options.speak?.(line));
+      stage.prepend(listen);
+    }
   };
 
   viInput.addEventListener('input', () => {
