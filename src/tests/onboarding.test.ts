@@ -7,14 +7,14 @@ import { FRESH_TOUR, TOUR_STEPS, afterStep, loadTour, nextStep, parseOnboardingC
 
 describe('the first-appointment tour', () => {
   it('goes through the steps in order: reply, help, mood, the station steps (story 049), results', () => {
-    expect(TOUR_STEPS.map((s) => s.id)).toEqual(['reply', 'help', 'mood', 'stepShape', 'stepColour', 'stepArt', 'stepDone', 'results']);
+    expect(TOUR_STEPS.map((s) => s.id)).toEqual(['reply', 'help', 'mood', 'stepShape', 'stepLength', 'stepColour', 'stepArt', 'stepDone', 'results']);
     let state = FRESH_TOUR;
     const order: string[] = [];
     for (let step = nextStep(state); step; step = nextStep(state)) {
       order.push(step.id);
       state = afterStep(state, step.id);
     }
-    expect(order).toEqual(['reply', 'help', 'mood', 'stepShape', 'stepColour', 'stepArt', 'stepDone', 'results']);
+    expect(order).toEqual(['reply', 'help', 'mood', 'stepShape', 'stepLength', 'stepColour', 'stepArt', 'stepDone', 'results']);
     expect(state.done).toBe(true);
   });
 

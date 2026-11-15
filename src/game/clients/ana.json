@@ -25,6 +25,10 @@
     "shapes": [
       "round"
     ],
+    "lengths": [
+      "short",
+      "medium"
+    ],
     "colors": [
       "red",
       "coral"

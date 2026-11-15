@@ -10,6 +10,9 @@ import nailJson from '../config/nail-art.json';
 export type NailShape = 'square' | 'round' | 'oval' | 'almond' | 'stiletto';
 export type StickerKind = 'heart' | 'star' | 'flower' | 'hoa-mai';
 export type DecorationLevel = 'none' | 'few' | 'lots';
+/** Story 051: nail length, shortest first. */
+export type NailLength = 'short' | 'medium' | 'long' | 'xlong';
+export const NAIL_LENGTHS: NailLength[] = ['short', 'medium', 'long', 'xlong'];
 
 export interface PaletteColor {
   id: string;
@@ -38,6 +41,8 @@ export interface HandConfig {
 
 export interface NailArtConfig {
   shapes: NailShape[];
+  /** Story 051: how long each length is drawn, against a short nail (1). */
+  lengths: Record<NailLength, number>;
   palette: PaletteColor[];
   stickers: StickerKind[];
   /** Polish coverage is tracked on this grid per nail. */
@@ -54,7 +59,7 @@ export interface NailArtConfig {
   maxDecorationsPerNail: number;
   /** Coverage that counts as fully painted (0-1). */
   fullCoverage: number;
-  matchWeights: { shape: number; color: number; coverage: number; extras: number; neatness: number };
+  matchWeights: { shape: number; length: number; color: number; coverage: number; extras: number; neatness: number };
   /** Decoration counts on the whole hand that count as "few" and "lots" ([min, max]). */
   decorationLevels: { few: [number, number]; lots: [number, number] };
   /** Mood change for a finished design, by match score (first band whose min the score reaches). */
@@ -73,6 +78,8 @@ export interface Decoration {
 
 export interface NailDesign {
   shape: NailShape;
+  /** Story 051: how long the nails are. */
+  length: NailLength;
   /** Palette id of the polish, or null before any polish is chosen. */
   base: string | null;
   /** Palette id the polish fades to at the tip, or null. */
@@ -87,6 +94,8 @@ export interface NailDesign {
 /** What the client asked for (story 005). Part of the client's data. */
 export interface NailRequest {
   shapes: NailShape[];
+  /** Story 051: the lengths she would be happy with (any length when missing). */
+  lengths?: NailLength[];
   /** Palette ids the client would be happy with. */
   colors: string[];
   gradient: 'no' | 'ok' | 'yes';
@@ -151,6 +160,12 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
   if (foot.fingers.length !== hand.fingers.length) fail('"foot" needs as many toes as the hand has fingers');
   const spill = isRecord(raw.spill) ? raw.spill : fail('"spill" must be an object');
   return {
+    lengths: (() => {
+      const l = isRecord(raw.lengths) ? raw.lengths : fail('"lengths" must be an object');
+      const parsed = Object.fromEntries(NAIL_LENGTHS.map((id) => [id, num(l[id], `lengths.${id}`, 0.5, 3)])) as Record<NailLength, number>;
+      NAIL_LENGTHS.slice(1).forEach((id, i) => parsed[id] > parsed[NAIL_LENGTHS[i] as NailLength] || fail(`"lengths.${id}" must be longer than the length before it`));
+      return parsed;
+    })(),
     shapes: (Array.isArray(raw.shapes) ? raw.shapes : fail('"shapes" must be a list')).map((shape, index) =>
       ['square', 'round', 'oval', 'almond', 'stiletto'].includes(shape as string) ? (shape as NailShape) : fail(`"shapes[${index}]" is not a shape`),
     ),
@@ -166,7 +181,7 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
     cleanupRadius: num(raw.cleanupRadius, 'cleanupRadius', 0.5, 30),
     maxDecorationsPerNail: num(raw.maxDecorationsPerNail, 'maxDecorationsPerNail', 0, 10),
     fullCoverage: num(raw.fullCoverage, 'fullCoverage', 0.5, 1),
-    matchWeights: { shape: num(weights.shape, 'matchWeights.shape', 0, 100), color: num(weights.color, 'matchWeights.color', 0, 100), coverage: num(weights.coverage, 'matchWeights.coverage', 0, 100), extras: num(weights.extras, 'matchWeights.extras', 0, 100), neatness: num(weights.neatness, 'matchWeights.neatness', 0, 100) },
+    matchWeights: { shape: num(weights.shape, 'matchWeights.shape', 0, 100), length: num(weights.length, 'matchWeights.length', 0, 100), color: num(weights.color, 'matchWeights.color', 0, 100), coverage: num(weights.coverage, 'matchWeights.coverage', 0, 100), extras: num(weights.extras, 'matchWeights.extras', 0, 100), neatness: num(weights.neatness, 'matchWeights.neatness', 0, 100) },
     decorationLevels: { few: range(levels.few, 'decorationLevels.few'), lots: range(levels.lots, 'decorationLevels.lots') },
     moodByMatch: [...parsedBands].sort((a, b) => b.min - a.min),
     fps: { target: num(fps.target, 'fps.target', 30, 120) },
@@ -182,7 +197,7 @@ export const NAIL_COUNT = NAIL_ART_CONFIG.hand.fingers.length;
 export const nailsFor = (request?: { hands?: 1 | 2 }): number => NAIL_COUNT * (request?.hands ?? 1);
 
 const empties = (count: number): number[][] => Array.from({ length: count }, () => []);
-export const emptyDesign = (shape: NailShape = 'round', nails: number = NAIL_COUNT): NailDesign => ({ shape, base: null, gradient: null, painted: empties(nails), spill: empties(nails), decorations: [] });
+export const emptyDesign = (shape: NailShape = 'round', nails: number = NAIL_COUNT, length: NailLength = 'short'): NailDesign => ({ shape, length, base: null, gradient: null, painted: empties(nails), spill: empties(nails), decorations: [] });
 
 /** The hand or foot a request needs (story 024). */
 export const limbFor = (request?: { service?: 'manicure' | 'pedicure' }, config: NailArtConfig = NAIL_ART_CONFIG): HandConfig => (request?.service === 'pedicure' ? config.foot : config.hand);
@@ -369,3 +384,23 @@ export function removeNail(design: NailDesign, nail: number): NailDesign {
 export function removeAll(design: NailDesign): NailDesign {
   return { ...design, gradient: null, painted: design.painted.map(() => []), spill: design.spill.map(() => []), decorations: [] };
 }
+
+/** Story 051: a finger with its nail drawn at a length: the nail grows past the fingertip, the cuticle stays put. */
+export function withLength(finger: FingerConfig, factor: number): FingerConfig {
+  if (factor === 1) return finger;
+  const grow = finger.nail.h * (factor - 1);
+  const a = (finger.angle * Math.PI) / 180;
+  return { ...finger, x: finger.x + (Math.sin(a) * grow) / 2, y: finger.y - (Math.cos(a) * grow) / 2, nail: { w: finger.nail.w, h: finger.nail.h * factor } };
+}
+
+/** Story 051: how far (hand units) the longest nail reaches above the hand box at this length factor. */
+export function lengthReach(hand: HandConfig, factor: number): number {
+  return Math.max(0, ...hand.fingers.map((f) => {
+    const g = withLength(f, factor);
+    const a = (g.angle * Math.PI) / 180;
+    return -(g.y - (Math.cos(a) * g.nail.h) / 2) + 0;
+  }));
+}
+
+/** Story 051: steps between two lengths (0 = the same). */
+export const lengthSteps = (a: NailLength, b: NailLength): number => Math.abs(NAIL_LENGTHS.indexOf(a) - NAIL_LENGTHS.indexOf(b));

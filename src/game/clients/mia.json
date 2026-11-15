@@ -25,6 +25,10 @@
     "shapes": [
       "almond"
     ],
+    "lengths": [
+      "medium",
+      "long"
+    ],
     "colors": [
       "lavender"
     ],

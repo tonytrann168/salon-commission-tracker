@@ -2,7 +2,9 @@
   "id": "grace",
   "name": "Grace",
   "pronoun": "she",
-  "vi": {"self": "cô"},
+  "vi": {
+    "self": "cô"
+  },
   "difficulty": "easy",
   "types": [],
   "description": {
@@ -25,6 +27,10 @@
   "nailRequest": {
     "shapes": [
       "round"
+    ],
+    "lengths": [
+      "short",
+      "medium"
     ],
     "colors": [
       "coral"

@@ -1,6 +1,6 @@
 import oddsJson from '../config/scenario-odds.json';
-import { NAIL_ART_CONFIG } from '../nail-art/design';
-import type { NailRequest } from '../nail-art/design';
+import { NAIL_ART_CONFIG, NAIL_LENGTHS } from '../nail-art/design';
+import type { NailLength, NailRequest } from '../nail-art/design';
 import { DIFFICULTIES } from '../types';
 import type { ClientPersona, Difficulty } from '../types';
 
@@ -61,6 +61,7 @@ export function parseScenario(raw: unknown, file: string, clientIds: readonly st
     const level = (v: unknown, key: string) => (v === undefined ? undefined : ['none', 'few', 'lots'].includes(v as string) ? (v as 'none' | 'few' | 'lots') : fail(`"nailRequest.${key}" must be none, few or lots`));
     nailRequest = {
       ...(n.shapes !== undefined ? { shapes: (Array.isArray(n.shapes) && n.shapes.length > 0 ? n.shapes : fail('"nailRequest.shapes" must be a list')).map((s) => (NAIL_ART_CONFIG.shapes.includes(s) ? s : fail(`unknown shape "${String(s)}"`))) } : {}),
+      ...(n.lengths !== undefined ? { lengths: (Array.isArray(n.lengths) && n.lengths.length > 0 ? n.lengths : fail('"nailRequest.lengths" must be a list')).map((l) => (NAIL_LENGTHS.includes(l) ? (l as NailLength) : fail(`unknown length "${String(l)}"`))) } : {}),
       ...(n.colors !== undefined ? { colors: (Array.isArray(n.colors) && n.colors.length > 0 ? n.colors : fail('"nailRequest.colors" must be a list')).map((c) => (NAIL_ART_CONFIG.palette.some((p) => p.id === c && !p.shop) ? (c as string) : fail(`"nailRequest.colors": "${String(c)}" is not a free palette colour`))) } : {}),
       ...(n.gradient !== undefined ? { gradient: ['no', 'ok', 'yes'].includes(n.gradient as string) ? (n.gradient as 'no' | 'ok' | 'yes') : fail('"nailRequest.gradient" must be no, ok or yes') } : {}),
       ...(level(n.gems, 'gems') ? { gems: level(n.gems, 'gems') as 'none' | 'few' | 'lots' } : {}),

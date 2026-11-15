@@ -143,7 +143,7 @@ for (const lang of LANGS) {
       await expect(page.locator('.chat-input')).toBeVisible();
     });
 
-    test('clear steps (story 049): 1 Shape › 2 Colour › 3 Art with an instruction; a ✓ when a step matches her order; ? shows a 3-picture how-to', async ({ page }) => {
+    test('clear steps (story 049): 1 Shape › 2 Length › 3 Colour › 4 Art with an instruction; a ✓ when a step matches her order; ? shows a 3-picture how-to', async ({ page }) => {
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page);
       await page.goto('/');
@@ -152,15 +152,15 @@ for (const lang of LANGS) {
       await page.locator('.chat-input').fill('Hello! What colour would you like?');
       await page.locator('.chat-form button[type=submit]').click();
       const steps = page.locator('.station-steps .station-step');
-      await expect(steps).toHaveCount(3);
-      await expect(steps.locator('.step-num')).toHaveText(['1', '2', '3']);
-      const words = lang === 'vi' ? ['Dáng', 'Màu', 'Trang trí'] : ['Shape', 'Colour', 'Art'];
+      await expect(steps).toHaveCount(4);
+      await expect(steps.locator('.step-num')).toHaveText(['1', '2', '3', '4']);
+      const words = lang === 'vi' ? ['Dáng', 'Độ dài', 'Màu', 'Trang trí'] : ['Shape', 'Length', 'Colour', 'Art'];
       for (const [i, word] of words.entries()) await expect(steps.nth(i).locator('.tab-text')).toContainText(word);
       // Every step's word is whole at 320 px, and the path stays inside the screen.
       const fits = await steps.evaluateAll((nodes) => nodes.every((n) => { const text = n.querySelector<HTMLElement>('.tab-text')!; const r = n.getBoundingClientRect(); return text.scrollWidth <= text.clientWidth + 1 && r.left >= 0 && r.right <= window.innerWidth; }));
       expect(fits).toBe(true);
       await expect(page.locator('.station-step[data-step=colour]')).toHaveAttribute('aria-selected', 'true');
-      await expect(page.locator('.station-instruction')).toContainText('2');
+      await expect(page.locator('.station-instruction')).toContainText('3');
       // Step 1: her shape gets a ✓ (she asked for almond).
       await page.locator('.station-step[data-step=shape]').click();
       await expect(page.locator('.station-instruction')).toContainText('1');
@@ -174,6 +174,34 @@ for (const lang of LANGS) {
       expect(await noOverflow(page)).toBe(true);
       await page.locator('.station-howto-close').click();
       await expect(page.locator('.station-howto')).toHaveCount(0);
+    });
+
+    test('nail length (story 051): a Length step with her length on the order; a ✓ when it matches; "a little shorter" is a length fix', async ({ page }) => {
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
+      await mockApi(page, { replies: ['Hi!', 'Long almond nails, please!', 'Hmm, can you make them a little shorter, please?'] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('Hello! How long would you like them?');
+      await page.locator('.chat-form button[type=submit]').click();
+      await expect(page.locator('.service-order')).toContainText(lang === 'vi' ? 'Dài' : 'Long');
+      await expect(page.locator('.station-steps .station-step .tab-text')).toHaveText(lang === 'vi' ? ['Dáng', 'Độ dài', 'Màu', 'Trang trí'] : ['Shape', 'Length', 'Colour', 'Art']);
+      const lengthStep = page.locator('.station-step[data-step=length]');
+      await lengthStep.click();
+      await expect(page.locator('.station-length')).toHaveCount(4);
+      await expect(lengthStep).not.toHaveClass(/matched/);
+      await page.locator('.station-length').nth(2).click();
+      await expect(lengthStep).toHaveClass(/matched/);
+      // She asks for shorter (her reply): Fix it, with the lengths right there; Medium fixes it.
+      await page.locator('.reply-chip').click();
+      await page.locator('.chat-input').fill('Of course!');
+      await page.locator('.chat-form button[type=submit]').click();
+      const fix = page.locator('.station-controls .station-fix');
+      await expect(fix).toBeVisible();
+      await expect(page.locator('.station-row .station-length')).toHaveCount(4);
+      await page.locator('.station-row .station-length').nth(1).click();
+      await expect(page.locator('.service-say')).toContainText(/length/, { timeout: 5_000 });
+      await expect(fix).toHaveCount(0);
     });
 
     test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {

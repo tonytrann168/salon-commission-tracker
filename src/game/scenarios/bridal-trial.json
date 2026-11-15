@@ -28,6 +28,7 @@
   "constraints": "You are nervous and want it perfect: soft nude or pale pink with white tips, like a French manicure, on both hands. You ask the stylist to check every nail, and you worry about chips before the big day. You relax when the stylist is calm, careful and explains how it will last.",
   "openingLine": "Hi! I'm getting married in two weeks and this is my nail trial. I'm so nervous. I want it to look perfect.",
   "nailRequest": {
+    "lengths": ["medium", "long"],
     "shapes": [
       "oval",
       "almond"

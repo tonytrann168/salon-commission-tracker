@@ -71,7 +71,7 @@ describe('difficulty in play', () => {
     const prompt = buildSystemPrompt(tom, 'some');
     expect(prompt).toContain('roleplaying Tom');
     expect(prompt).toContain('You are a hard client');
-    expect(prompt).toContain('Your nails: you want both hands: square shape, nude');
+    expect(prompt).toContain('Your nails: you want both hands: square shape, short nails, nude');
     const body = { transcript: [{ role: 'client', content: tom.openingLine }, { role: 'player', content: 'Hello!' }], phase: 'consultation', mood: 40, level: 'some' };
     expect(parseClientTurnRequest({ ...body, clientId: 'nobody' })).toMatchObject({ ok: false });
     expect(parseClientTurnRequest({ ...body, clientId: 'tom' })).toMatchObject({ ok: true, value: { clientId: 'tom' } });
@@ -114,6 +114,6 @@ describe('roster expansion (story 022)', () => {
   it('the new clients reach the AI with their own persona', () => {
     const prompt = buildSystemPrompt(getClient('hana')!, 'some');
     expect(prompt).toContain('roleplaying Hana');
-    expect(prompt).toContain('Your nails: you want oval shape, red');
+    expect(prompt).toContain('Your nails: you want oval shape, long nails, red');
   });
 });

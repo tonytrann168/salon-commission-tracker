@@ -1,5 +1,5 @@
-import { NAIL_ART_CONFIG } from '../nail-art/design';
-import type { NailRequest } from '../nail-art/design';
+import { NAIL_ART_CONFIG, NAIL_LENGTHS } from '../nail-art/design';
+import type { NailLength, NailRequest } from '../nail-art/design';
 import { CLIENT_PRONOUNS, CLIENT_TYPES, DIFFICULTIES, VI_SELF_WORDS, VI_YOU_WORDS } from '../types';
 import type { ClientPersona, ClientType, Difficulty } from '../types';
 
@@ -44,7 +44,8 @@ export function parseClient(raw: unknown, file: string): ClientPersona {
     const gradient = ['no', 'ok', 'yes'].includes(n.gradient as string) ? (n.gradient as 'no' | 'ok' | 'yes') : fail('"nailRequest.gradient" must be no, ok or yes');
     const hands = n.hands === undefined || n.hands === 1 ? 1 : n.hands === 2 ? 2 : fail('"nailRequest.hands" must be 1 or 2');
     const service = n.service === undefined || n.service === 'manicure' ? undefined : n.service === 'pedicure' ? ('pedicure' as const) : fail('"nailRequest.service" must be manicure or pedicure');
-    nailRequest = { shapes, colors, gradient, gems: level(n.gems, 'gems'), stickers: level(n.stickers, 'stickers'), ...(hands === 2 ? { hands: 2 as const } : {}), ...(service ? { service } : {}) };
+    const lengths = n.lengths === undefined ? undefined : (Array.isArray(n.lengths) && n.lengths.length > 0 ? n.lengths : fail('"nailRequest.lengths" must be a non-empty list')).map((l) => (NAIL_LENGTHS.includes(l) ? (l as NailLength) : fail(`"nailRequest.lengths" has an unknown length "${String(l)}"`)));
+    nailRequest = { shapes, ...(lengths ? { lengths } : {}), colors, gradient, gems: level(n.gems, 'gems'), stickers: level(n.stickers, 'stickers'), ...(hands === 2 ? { hands: 2 as const } : {}), ...(service ? { service } : {}) };
   }
   const pronoun = CLIENT_PRONOUNS.find((p) => p === raw.pronoun) ?? fail('"pronoun" must be she, he or they');
   // Story 036: optional Vietnamese address (default: male → anh, female → chị; the stylist is em).

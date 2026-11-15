@@ -174,7 +174,7 @@ export interface GradingRequest {
   level: EnglishLevel;
   /** Story 005: the finished nails and their match with the request (0-100), so the review mentions them. */
   /** Story 048: `fixes`: the fixes she asked for during the service and whether each was done. */
-  nails?: { description: string; match: number; fixes?: { kind: 'edge' | 'colour'; fixed: boolean }[] };
+  nails?: { description: string; match: number; fixes?: { kind: 'edge' | 'colour' | 'length'; fixed: boolean }[] };
   /** Story 019: the situation (optional), and the visit facts for a returning client. */
   scenarioId?: string;
   visits?: { visits: number; lastStars: number; lastDay: string };

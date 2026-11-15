@@ -3,9 +3,9 @@ import { clientGrammar } from '../types';
 import type { ClientPronoun } from '../types';
 import type { Container } from 'pixi.js';
 import { getLanguage, t } from '../i18n';
-import { NAIL_ART_CONFIG, emptyDesign, limbFor, nailsFor, removeAll } from '../nail-art/design';
+import { NAIL_ART_CONFIG, NAIL_LENGTHS, emptyDesign, limbFor, nailsFor, removeAll } from '../nail-art/design';
 import type { FixKind } from '../fix-requests';
-import type { NailDesign, NailRequest, NailShape, PaletteColor, StickerKind } from '../nail-art/design';
+import type { NailDesign, NailLength, NailRequest, NailShape, PaletteColor, StickerKind } from '../nail-art/design';
 import { describeDesign, matchDesign } from '../nail-art/match';
 import type { MatchResult } from '../nail-art/match';
 import { SHAPES, createStationView } from '../nail-art/station';
@@ -43,12 +43,16 @@ export interface NailStationOptions {
   /** Story 028: the sticker cycle (seasonal stickers while their season runs). */
   stickers?: StickerKind[];
   tools?: StationTools;
+  /** Story 051: the lengths on offer (Extra long for hard clients). Default short, medium, long. */
+  lengths?: NailLength[];
   /** The client's pronoun for the Done message ("her request" / "his request"). */
   clientPronoun?: ClientPronoun;
 }
 
 export interface NailStation {
   readonly canRedo: boolean;
+  /** Story 051: the lengths on offer. */
+  readonly lengths: readonly NailLength[];
   /**
    * Story 048: she asked for a fix. The Fix it step shows (in Clean up's place) with the Remover, Remove all and the
    * right tool for the request; after Done (the colour redo) the station reopens for it.
@@ -84,6 +88,13 @@ function shapeIcon(shape: NailShape): string {
   return `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="${paths[shape]}" fill="#ffd1e3" stroke="#5a2e43" stroke-width="1.6"/></svg>`;
 }
 
+/** Story 051: a fingertip with its nail at a length (taller nail = longer). */
+function lengthIcon(length: NailLength): string {
+  const grow = { short: 0, medium: 3, long: 6, xlong: 9 }[length];
+  const top = 10 - grow;
+  return `<svg viewBox="0 0 24 26" width="22" height="24" aria-hidden="true"><rect x="5" y="11" width="14" height="15" rx="7" fill="#f3c9a9" stroke="#c98f6d" stroke-width="1.2"/><path d="M7.5 19 V${top + 4} Q7.5 ${top} 12 ${top} Q16.5 ${top} 16.5 ${top + 4} V19 Z" fill="#ffd1e3" stroke="#5a2e43" stroke-width="1.4"/></svg>`;
+}
+
 const HINT_MS = 3000;
 
 /** Story 047: an icon with its word under it (the audience reads words more easily than icons). */
@@ -93,7 +104,10 @@ export function createNailStation(options: NailStationOptions): NailStation {
   // Story 017: both hands (10 nails) when the client asks for it.
   const nails = nailsFor(options.request);
   // Story 024: a pedicure shows the foot (toes as fingers).
-  const view = createStationView(emptyDesign(SHAPES[1] ?? 'round', nails), options.tools, limbFor(options.request));
+  // Story 051: the lengths on offer; the hand keeps room for the longest so it never jumps.
+  const lengths = options.lengths ?? NAIL_LENGTHS.filter((l) => l !== 'xlong');
+  const longest = Math.max(...lengths.map((l) => NAIL_ART_CONFIG.lengths[l]));
+  const view = createStationView(emptyDesign(SHAPES[1] ?? 'round', nails), options.tools, limbFor(options.request), longest);
   const palette = options.palette ?? NAIL_ART_CONFIG.palette.filter((colour) => !colour.shop);
   options.layer.addChild(view.container);
   view.container.visible = false;
@@ -125,7 +139,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     window.clearTimeout(hideHint);
     if (!keep) hideHint = window.setTimeout(() => status.classList.remove('show'), HINT_MS);
   };
-  type Tab = 'shape' | 'colour' | 'art' | 'fix';
+  type Tab = 'shape' | 'length' | 'colour' | 'art' | 'fix';
   let tab: Tab = 'colour';
 
   const button = (label: string, className: string, onClick: () => void, aria?: string): HTMLButtonElement => {
@@ -165,6 +179,13 @@ export function createNailStation(options: NailStationOptions): NailStation {
       setDesign({ ...design, shape });
       refresh();
     }, t('station.shapeLabel', { shape: t(`station.shape.${shape}`) })),
+  );
+  const lengthButtons = lengths.map((length) =>
+    button(labelled(lengthIcon(length), t(`station.length.${length}`)), 'station-length', () => {
+      setDesign({ ...design, length });
+      flushChange();
+      refresh();
+    }, t('station.lengthLabel', { length: t(`station.length.${length}`) })),
   );
   // Story 033: a redo scenario lets the client ask once more after Done; story 048: the station then reopens on the
   // Fix it step (the latest design is the one that counts).
@@ -212,11 +233,12 @@ export function createNailStation(options: NailStationOptions): NailStation {
     // Story 049: a numbered step: its number, its word, and a ✓ once it matches her order (Art says "optional" when
     // she asked for no art).
     shape: stepButton('shape'),
+    length: stepButton('length'),
     colour: stepButton('colour'),
     art: stepButton('art'),
     fix: button(labelled('🔧', t('station.fixWord')), 'station-tab station-fix', () => selectTab('fix'), t('station.fixLabel')),
   };
-  function stepButton(step: 'shape' | 'colour' | 'art'): HTMLButtonElement {
+  function stepButton(step: 'shape' | 'length' | 'colour' | 'art'): HTMLButtonElement {
     const n = STATION_STEPS.indexOf(step) + 1;
     const optional = step === 'art' && !wantsArt(options.request);
     const node = button(
@@ -235,7 +257,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     refresh();
   }, t('station.removeAllLabel'));
   Object.values(tabButtons).forEach((node) => node.setAttribute('role', 'tab'));
-  tabs.append(tabButtons.shape, tabButtons.colour, tabButtons.art);
+  tabs.append(tabButtons.shape, tabButtons.length, tabButtons.colour, tabButtons.art);
   // Story 017: the hand switch, only for two-hand clients (one hand on the station at a time keeps the chat space).
   let hand: 0 | 1 = 0;
   // Story 024: feet for a pedicure.
@@ -267,13 +289,14 @@ export function createNailStation(options: NailStationOptions): NailStation {
   function selectTab(next: Tab): void {
     tab = next;
     if (tab === 'shape') optionsRow.replaceChildren(...shapeButtons, resetButton);
+    else if (tab === 'length') optionsRow.replaceChildren(...lengthButtons);
     else if (tab === 'colour') optionsRow.replaceChildren(...swatches, toolButtons.gradient);
     else if (tab === 'art') optionsRow.replaceChildren(toolButtons.gem, toolButtons.sticker);
     // Story 048: the fix tools; a colour fix also has the colours right there.
-    else optionsRow.replaceChildren(toolButtons.remover, removeAllButton, toolButtons.cleanup, ...(fixKind === 'colour' ? swatches : []));
+    else optionsRow.replaceChildren(...(fixKind === 'length' ? lengthButtons : []), toolButtons.remover, removeAllButton, toolButtons.cleanup, ...(fixKind === 'colour' ? swatches : []));
     if (tab === 'colour' && tool !== 'gradient' && tool !== 'cleanup') tool = 'polish';
     if (tab === 'art' && tool !== 'gem' && tool !== 'sticker') tool = 'gem';
-    if (tab === 'fix' && tool !== 'cleanup' && tool !== 'remover' && tool !== 'polish') tool = fixKind === 'edge' ? 'cleanup' : 'remover';
+    if (tab === 'fix' && tool !== 'cleanup' && tool !== 'remover' && tool !== 'polish') tool = fixKind === 'edge' ? 'cleanup' : fixKind === 'colour' ? 'remover' : 'polish';
     instruction.textContent = tab === 'fix' ? t('station.step.fix') : t(`station.step.${tab}`, { n: STATION_STEPS.indexOf(tab) + 1 });
     optionsRow.scrollLeft = 0;
     refresh();
@@ -297,6 +320,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     updateChecks();
     (Object.keys(tabButtons) as Tab[]).forEach((key) => tabButtons[key].setAttribute('aria-selected', String(key === tab)));
     shapeButtons.forEach((node, index) => node.setAttribute('aria-pressed', String(SHAPES[index] === design.shape)));
+    lengthButtons.forEach((node, index) => node.setAttribute('aria-pressed', String(lengths[index] === design.length)));
     (Object.keys(toolButtons) as StationTool[]).forEach((key) => toolButtons[key].setAttribute('aria-pressed', String(key === tool)));
     swatches.forEach((node, index) => {
       const id = palette[index]?.id;
@@ -415,6 +439,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
       }
     },
     relayout,
+    lengths,
     design: () => design,
     openFix(kind) {
       if (done) {
@@ -427,7 +452,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
       tabButtons.fix.classList.remove('pulse');
       void tabButtons.fix.offsetWidth;
       tabButtons.fix.classList.add('pulse');
-      tool = kind === 'edge' ? 'cleanup' : 'remover';
+      tool = kind === 'edge' ? 'cleanup' : kind === 'colour' ? 'remover' : 'polish';
       selectTab('fix');
       say(t(`station.fixAsk.${kind}`, clientGrammar(options.clientPronoun)), true);
     },

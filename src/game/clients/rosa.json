@@ -25,6 +25,10 @@
     "shapes": [
       "oval"
     ],
+    "lengths": [
+      "short",
+      "medium"
+    ],
     "colors": [
       "red"
     ],

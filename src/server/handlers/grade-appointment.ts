@@ -87,7 +87,7 @@ export function parseGradingRequest(body: unknown): ParseResult<GradingRequest> 
           match: Math.round(rawNails.match),
           // Story 048: the fixes she asked for during the service (known kinds only, at most 6).
           ...(Array.isArray(rawNails.fixes)
-            ? { fixes: rawNails.fixes.filter((f): f is { kind: 'edge' | 'colour'; fixed: boolean } => isRecord(f) && (f.kind === 'edge' || f.kind === 'colour') && typeof f.fixed === 'boolean').slice(0, 6).map((f) => ({ kind: f.kind, fixed: f.fixed })) }
+            ? { fixes: rawNails.fixes.filter((f): f is { kind: 'edge' | 'colour' | 'length'; fixed: boolean } => isRecord(f) && (f.kind === 'edge' || f.kind === 'colour' || f.kind === 'length') && typeof f.fixed === 'boolean').slice(0, 6).map((f) => ({ kind: f.kind, fixed: f.fixed })) }
             : {}),
         }
       : undefined;
@@ -210,7 +210,7 @@ function toUserMessage(client: ClientPersona, { transcript, outcome, finalMood, 
   // Story 005: the finished nails, so the review can mention them.
   const nailLine = nails ? `\nNails: ${nails.description}. Match with what ${client.name} asked for: ${nails.match}/100. The review must mention the nails: warmly when they match, honestly but kindly when they don't (never harsh).` : '';
   // Story 048: fixes she asked for. Fixed counts as good problem handling; one left open is mentioned in the review.
-  const fixWhat = { edge: 'to fix an uneven edge', colour: 'for a different colour' } as const;
+  const fixWhat = { edge: 'to fix an uneven edge', colour: 'for a different colour', length: 'for a different nail length' } as const;
   const fixLine = nails?.fixes?.length
     ? `\nFix requests during the service: ${nails.fixes.map((f) => `${client.name} asked ${fixWhat[f.kind]}: ${f.fixed ? 'the stylist fixed it' : 'it was NOT fixed'}`).join('; ')}. A fix that was done is good problem handling; one left undone must be mentioned in the review (kindly) and lowers problem handling.`
     : '';

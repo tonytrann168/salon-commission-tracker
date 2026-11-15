@@ -1,5 +1,5 @@
 import { Container, Graphics } from 'pixi.js';
-import { NAIL_ART_CONFIG, mirroredFingers, addSpill, cleanUp, dab, removeNail, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid, wipeCells } from './design';
+import { NAIL_ART_CONFIG, lengthReach, mirroredFingers, withLength, addSpill, cleanUp, dab, removeNail, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid, wipeCells } from './design';
 import type { Decoration, FingerConfig, HandConfig, NailDesign, NailShape, StickerKind } from './design';
 
 /**
@@ -63,7 +63,8 @@ export interface StationTools {
   cleanupRadius: number;
 }
 
-export function createStationView(initial: NailDesign = emptyDesign(), tools: StationTools = { brushRadius: NAIL_ART_CONFIG.brushRadius, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius }, limb: HandConfig = NAIL_ART_CONFIG.hand): StationView {
+/** `longest` (story 051): the longest nail length offered, so the hand keeps room above it and never jumps. */
+export function createStationView(initial: NailDesign = emptyDesign(), tools: StationTools = { brushRadius: NAIL_ART_CONFIG.brushRadius, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius }, limb: HandConfig = NAIL_ART_CONFIG.hand, longest = 1): StationView {
   const container = new Container();
   container.label = 'nail-station';
   const fingersLayer = new Container();
@@ -194,18 +195,21 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
     const line = 1.4 / scale;
     view.bed.clear().poly(flat).fill({ color: BED }).stroke({ width: line, color: INK, alpha: 0.7 });
     // The free edge at the tip is paler than the nail bed.
-    view.bed.poly(nailOutline(design.shape, w, h).filter(([, y]) => y <= h * 0.3).flat()).fill({ color: FREE_EDGE, alpha: 0.8 });
+    // Story 051: a longer nail has a longer free edge (the part past the fingertip).
+    const hs = h / NAIL_ART_CONFIG.lengths[design.length];
+    const bedLength = hs * 0.7;
+    view.bed.poly(nailOutline(design.shape, w, h).filter(([, y]) => y <= h - bedLength).flat()).fill({ color: FREE_EDGE, alpha: 0.8 });
     view.mask.clear().poly(flat).fill({ color: 0xffffff });
     // Cuticle: a soft skin fold hugging the base of the nail, and the side walls.
     view.cuticle
       .clear()
-      .moveTo(-w * 0.04, h * 0.84)
-      .quadraticCurveTo(w * 0.5, h * 1.12, w * 1.04, h * 0.84)
+      .moveTo(-w * 0.04, h - hs * 0.16)
+      .quadraticCurveTo(w * 0.5, h + hs * 0.12, w * 1.04, h - hs * 0.16)
       .stroke({ width: line * 1.3, color: SKIN_LINE, alpha: 0.8, cap: 'round' })
-      .moveTo(-w * 0.06, h * 0.35)
-      .lineTo(-w * 0.06, h * 0.8)
-      .moveTo(w * 1.06, h * 0.35)
-      .lineTo(w * 1.06, h * 0.8)
+      .moveTo(-w * 0.06, h - hs * 0.65)
+      .lineTo(-w * 0.06, h - hs * 0.2)
+      .moveTo(w * 1.06, h - hs * 0.65)
+      .lineTo(w * 1.06, h - hs * 0.2)
       .stroke({ width: line, color: SKIN_LINE, alpha: 0.45, cap: 'round' });
     drawSpill(index);
     drawPaint(index);
@@ -249,9 +253,12 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       const top = Math.max(TOP_MARGIN, topBand);
       // With a top band (the full-screen service) the hand also keeps room under it for the palm and the hint.
       const below = topBand > 0 ? 44 : 0;
-      scale = Math.min(free / hand.box.w, (h - top - below) / hand.box.h);
+      // Story 051: room above the box for the longest nail on offer.
+      const reach = lengthReach(hand, longest);
+      const boxH = hand.box.h + reach;
+      scale = Math.min(free / hand.box.w, (h - top - below) / boxH);
       offsetX = reserveLeft + (free - hand.box.w * scale) / 2;
-      offsetY = topBand > 0 ? top + Math.max(0, (h - top - below - hand.box.h * scale) / 2) : TOP_MARGIN;
+      offsetY = (topBand > 0 ? top + Math.max(0, (h - top - below - boxH * scale) / 2) : TOP_MARGIN) + reach * scale;
       for (const layer of [fingersLayer, palm, nailsLayer]) {
         layer.position.set(offsetX, offsetY);
         layer.scale.set(scale);
@@ -263,8 +270,11 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       palm.clear().ellipse(hand.box.w * 0.52, palmY, hand.box.w * 0.42, hand.box.h * 0.2).fill({ color: SKIN });
       palm.ellipse(hand.box.w * 0.3, palmY - hand.box.h * 0.04, hand.box.w * 0.16, hand.box.h * 0.12).fill({ color: SKIN_SHADE, alpha: 0.35 });
       lastLayout = [x, y, w, h, reserveLeft, reserveRight, topBand];
-      for (const finger of handIndex === 1 ? mirroredFingers(hand) : hand.fingers) {
-        fingersLayer.addChild(drawFinger(finger));
+      const factor = NAIL_ART_CONFIG.lengths[design.length];
+      for (const fingerAtShort of handIndex === 1 ? mirroredFingers(hand) : hand.fingers) {
+        fingersLayer.addChild(drawFinger(fingerAtShort));
+        // Story 051: the nail at the design's length (longer nails reach past the fingertip).
+        const finger = withLength(fingerAtShort, factor);
         const root = new Container();
         root.position.set(finger.x, finger.y);
         root.pivot.set(finger.nail.w / 2, finger.nail.h / 2);
@@ -285,6 +295,11 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       views.forEach((_, index) => drawNail(index));
     },
     setDesign(next) {
+      if (next.length !== design.length) {
+        design = next;
+        if (lastLayout) view.layout(...lastLayout);
+        return;
+      }
       const shapeChanged = next.shape !== design.shape;
       const colorChanged = next.base !== design.base || next.gradient !== design.gradient;
       const previous = design;

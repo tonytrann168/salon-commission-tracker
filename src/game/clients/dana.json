@@ -27,6 +27,9 @@
     "shapes": [
       "square"
     ],
+    "lengths": [
+      "short"
+    ],
     "colors": [
       "nude",
       "pale-pink"

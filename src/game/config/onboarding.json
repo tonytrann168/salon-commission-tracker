@@ -1,5 +1,5 @@
 {
-  "_note": "Story 015: the first-appointment tour. Each step points at a control (CSS selector) and shows once that control is on screen and the step before it is done. Text: i18n tour.<id> and tour.<id>Simple (Beginner). Story 049: the nails part walks the station's numbered steps (Shape, Colour, Art, Done).",
+  "_note": "Story 015: the first-appointment tour. Each step points at a control (CSS selector) and shows once that control is on screen and the step before it is done. Text: i18n tour.<id> and tour.<id>Simple (Beginner). Story 049: the nails part walks the station's numbered steps (Shape, Length, Colour, Art, Done).",
   "steps": [
     {
       "id": "reply",
@@ -16,6 +16,10 @@
     {
       "id": "stepShape",
       "target": ".station-step[data-step=shape]"
+    },
+    {
+      "id": "stepLength",
+      "target": ".station-step[data-step=length]"
     },
     {
       "id": "stepColour",

@@ -27,6 +27,9 @@
     "shapes": [
       "round"
     ],
+    "lengths": [
+      "xlong"
+    ],
     "colors": [
       "hot-pink"
     ],

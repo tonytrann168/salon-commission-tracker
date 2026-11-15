@@ -18,6 +18,7 @@
   "constraints": "You speak slowly, in short sentences. Your hands are a little sore today, so you ask for a gentle touch, and you want your nails short and round. You really appreciate patience and a kind word.",
   "openingLine": "Hello, dear. My hands are a bit sore today, so please be gentle. Short and round, like always.",
   "nailRequest": {
+    "lengths": ["short"],
     "shapes": [
       "round"
     ],

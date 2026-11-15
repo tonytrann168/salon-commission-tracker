@@ -13,16 +13,18 @@ const full = (design: NailDesign): NailDesign => {
 };
 
 describe('station steps', () => {
-  it('are in order: shape, colour, art', () => {
-    expect(STATION_STEPS).toEqual(['shape', 'colour', 'art']);
+  it('are in order: shape, length (story 051), colour, art', () => {
+    expect(STATION_STEPS).toEqual(['shape', 'length', 'colour', 'art']);
   });
 
   it('tick shape for her shape, colour only for her colour fully painted', () => {
-    expect(stepChecks(emptyDesign('round'), request)).toEqual({ shape: false, colour: false, art: true });
+    expect(stepChecks(emptyDesign('round'), request)).toEqual({ shape: false, length: true, colour: false, art: true });
     expect(stepChecks(emptyDesign('oval'), request).shape).toBe(true);
     expect(stepChecks({ ...emptyDesign('oval'), base: 'red' }, request).colour).toBe(false);
     expect(stepChecks(full({ ...emptyDesign('oval'), base: 'red' }), request).colour).toBe(true);
     expect(stepChecks(full({ ...emptyDesign('oval'), base: 'coral' }), request).colour).toBe(false);
+    expect(stepChecks(emptyDesign('oval'), { ...request, lengths: ['long'] }).length).toBe(false);
+    expect(stepChecks({ ...emptyDesign('oval'), length: 'long' }, { ...request, lengths: ['long'] }).length).toBe(true);
   });
 
   it('tick art when the extras match; art is optional only when she asked for none', () => {

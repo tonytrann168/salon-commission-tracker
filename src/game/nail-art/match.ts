@@ -1,5 +1,5 @@
-import { NAIL_ART_CONFIG, coverage, neatness, paletteColor } from './design';
-import type { DecorationLevel, NailArtConfig, NailDesign, NailRequest } from './design';
+import { NAIL_ART_CONFIG, coverage, lengthSteps, neatness, paletteColor } from './design';
+import type { DecorationLevel, NailArtConfig, NailDesign, NailLength, NailRequest } from './design';
 
 /**
  * Compare the finished design with what the client asked for (story 005). Pure: 0-100 overall plus the four parts
@@ -9,7 +9,7 @@ import type { DecorationLevel, NailArtConfig, NailDesign, NailRequest } from './
 
 export interface MatchResult {
   score: number;
-  parts: { shape: number; color: number; coverage: number; extras: number; neatness: number };
+  parts: { shape: number; length: number; color: number; coverage: number; extras: number; neatness: number };
   /** Average polish coverage across all the nails (5, or 10 for both hands), 0-1. */
   covered: number;
   moodDelta: number;
@@ -30,6 +30,8 @@ function levelScore(count: number, wanted: DecorationLevel, config: NailArtConfi
 
 export function matchDesign(design: NailDesign, request: NailRequest, config: NailArtConfig = NAIL_ART_CONFIG): MatchResult {
   const shape = request.shapes.includes(design.shape) ? 100 : 30;
+  // Story 051: her length scores 100; each step away loses 45 (any length is fine when she named none).
+  const length = !request.lengths || request.lengths.length === 0 ? 100 : Math.max(0, 100 - 45 * Math.min(...request.lengths.map((l) => lengthSteps(l, design.length))));
 
   const base = paletteColor(design.base, config);
   const wantedHexes = request.colors.map((id) => paletteColor(id, config)?.hex).filter((hex): hex is string => hex !== undefined);
@@ -55,11 +57,14 @@ export function matchDesign(design: NailDesign, request: NailRequest, config: Na
   const neat = Math.round((perNailNeat.reduce((sum, value) => sum + value, 0) / perNailNeat.length) * 100);
 
   const w = config.matchWeights;
-  const total = w.shape + w.color + w.coverage + w.extras + w.neatness;
-  const score = Math.round((shape * w.shape + color * w.color + coverageScore * w.coverage + extras * w.extras + neat * w.neatness) / total);
+  const total = w.shape + w.length + w.color + w.coverage + w.extras + w.neatness;
+  const score = Math.round((shape * w.shape + length * w.length + color * w.color + coverageScore * w.coverage + extras * w.extras + neat * w.neatness) / total);
   const moodDelta = (config.moodByMatch.find((band) => score >= band.min) ?? { delta: 0 }).delta;
-  return { score, parts: { shape, color, coverage: coverageScore, extras, neatness: neat }, covered, moodDelta };
+  return { score, parts: { shape, length, color, coverage: coverageScore, extras, neatness: neat }, covered, moodDelta };
 }
+
+/** Story 051: lengths in plain English for the AI. */
+const LENGTH_WORDS: Record<NailLength, string> = { short: 'short nails', medium: 'medium nails', long: 'long nails', xlong: 'extra long nails' };
 
 /** One English line about the nails for the AI client and the review, e.g. "square, pale pink, 2 gems; 96% painted". */
 /** `service` (story 024): a pedicure says so ("pedicure, both feet: …"). */
@@ -75,7 +80,7 @@ export function describeDesign(design: NailDesign, config: NailArtConfig = NAIL_
   const edges = messy === 0 ? 'clean edges' : `polish on the skin around ${messy} nail${messy === 1 ? '' : 's'}`;
   const both = design.painted.length > NAIL_ART_CONFIG.hand.fingers.length;
   const hands = service === 'pedicure' ? (both ? 'pedicure, both feet: ' : 'pedicure: ') : both ? 'both hands: ' : '';
-  return `${hands}${design.shape} shape, ${base}${fade}${extras ? `, ${extras}` : ', no gems or stickers'}; ${covered}% painted, ${edges}`;
+  return `${hands}${design.shape} shape, ${LENGTH_WORDS[design.length]}, ${base}${fade}${extras ? `, ${extras}` : ', no gems or stickers'}; ${covered}% painted, ${edges}`;
 }
 
 /** The request in plain English, for the client's prompt. */
@@ -83,5 +88,6 @@ export function describeRequest(request: NailRequest, config: NailArtConfig = NA
   const colors = request.colors.map((id) => paletteColor(id, config)?.name.en.toLowerCase() ?? id).join(' or ');
   const art = [request.gems !== 'none' ? `${request.gems} gems` : 'no gems', request.stickers !== 'none' ? `${request.stickers} stickers` : 'no stickers', request.gradient === 'yes' ? 'a gradient' : request.gradient === 'no' ? 'no gradient' : 'a gradient is fine'].join(', ');
   const where = request.service === 'pedicure' ? (request.hands === 2 ? 'pedicure, both feet: ' : 'pedicure: ') : request.hands === 2 ? 'both hands: ' : '';
-  return `${where}${request.shapes.join(' or ')} shape, ${colors}, ${art}`;
+  const lengths = request.lengths?.length ? `${request.lengths.map((l) => LENGTH_WORDS[l].replace(' nails', '')).join(' or ')} nails, ` : '';
+  return `${where}${request.shapes.join(' or ')} shape, ${lengths}${colors}, ${art}`;
 }

@@ -1,5 +1,5 @@
 {
-  "_note": "Story 048: when the client asks for a fix during the service. asks: her service-talk lines (and the redo line) that open a request of that kind. patterns: case-insensitive regular expressions that catch the same ask in her AI replies during the service. A request is fixed once the player has used a fix tool (Clean up, Remover) after she asked and the nails then meet the kind's test: edge = every nail's neatness at least edge.minNeatness; colour = a different base colour than when she asked, painted to at least colour.minCoverage on average. fixedMood / openMood: her mood change when it is fixed, or still open at Done. skills: problem handling is at least fixedFloor when every request was fixed, at most openCap when one was left open. lines: what she says (thanks when fixed, open when still not fixed at Done).",
+  "_note": "Story 048: when the client asks for a fix during the service. asks: her service-talk lines (and the redo line) that open a request of that kind. patterns: case-insensitive regular expressions that catch the same ask in her AI replies during the service. A request is fixed once the player has used a fix tool (Clean up, Remover) after she asked and the nails then meet the kind's test: edge = every nail's neatness at least edge.minNeatness; length = shorter (or longer, if she asked for longer) than when she asked; colour = a different base colour than when she asked, painted to at least colour.minCoverage on average. fixedMood / openMood: her mood change when it is fixed, or still open at Done. skills: problem handling is at least fixedFloor when every request was fixed, at most openCap when one was left open. lines: what she says (thanks when fixed, open when still not fixed at Done).",
   "asks": {
     "edge": [
       "Can you fix that edge? It doesn't look even.",
@@ -7,6 +7,9 @@
     ],
     "colour": [
       "Hmm… actually, I'm not sure about this colour. Could we try a different one?"
+    ],
+    "length": [
+      "Can you make them a little shorter, please?"
     ]
   },
   "patterns": {
@@ -18,6 +21,11 @@
     "colour": [
       "\\b(different|another|new)\\b.{0,15}\\bcolou?r\\b",
       "\\bchange\\b.{0,20}\\bcolou?r\\b"
+    ],
+    "length": [
+      "\\b(make|cut|file|do) (them|it|my nails|the nails)( a (little|bit))? (shorter|longer)\\b",
+      "\\b(nails|they|they're|them) (are |look )?too (long|short)\\b",
+      "\\ba (little|bit) (shorter|longer)\\b"
     ]
   },
   "edge": {
@@ -51,6 +59,16 @@
       "open": [
         "So… we're keeping the old colour? Okay, I guess.",
         "I did ask for a different colour… never mind."
+      ]
+    },
+    "length": {
+      "thanks": [
+        "Oh yes, that length is much better. Thank you!",
+        "Perfect, that's just the length I wanted. Thanks!"
+      ],
+      "open": [
+        "Hmm, they're still the same length… okay.",
+        "I did ask about the length… never mind."
       ]
     }
   }

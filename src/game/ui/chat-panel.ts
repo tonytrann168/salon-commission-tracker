@@ -16,9 +16,9 @@ import { emotionFor } from '../voice-cast';
 import { SERVICE_TALK, checkoutLine, expectsAnswer, planServiceTalk } from '../service-talk';
 import type { PrepOverlay } from './pedicure-prep';
 import { createNailStation, nailsNote } from './nail-station-panel';
-import { FIX_CONFIG, fixKindOf, fixOutcomes, openLine, openRequest, thanksLine, updateRequests } from '../fix-requests';
+import { FIX_CONFIG, canFix, fixKindOf, fixOutcomes, openLine, openRequest, thanksLine, updateRequests } from '../fix-requests';
 import type { FixOutcome, FixRequest } from '../fix-requests';
-import { NAIL_ART_CONFIG } from '../nail-art/design';
+import { NAIL_ART_CONFIG, NAIL_LENGTHS } from '../nail-art/design';
 import type { NailDesign, NailRequest, PaletteColor, StickerKind } from '../nail-art/design';
 import type { StationTools } from '../nail-art/station';
 import type { MatchResult } from '../nail-art/match';
@@ -219,6 +219,8 @@ export function createChatPanel(
         ...(nailArt.stickers ? { stickers: nailArt.stickers } : {}),
         ...(nailArt.redos ? { redos: nailArt.redos } : {}),
         ...(nailArt.tools ? { tools: nailArt.tools } : {}),
+        // Story 051: Extra long is offered to hard clients (or when she asks for it).
+        lengths: NAIL_LENGTHS.filter((l) => l !== 'xlong' || portraits.client.difficulty === 'hard' || nailArt.request.lengths?.includes('xlong')),
         topBand: () => serviceTop.offsetHeight + 6,
         maiSide: () => (mai ? ((mai.element.dataset.side as 'left' | 'right' | undefined) ?? 'right') : null),
         onChange: (design) => {
@@ -358,9 +360,11 @@ export function createChatPanel(
     const r = nailArt.request;
     const colours = r.colors.map((id) => NAIL_ART_CONFIG.palette.find((c) => c.id === id)?.name[lang] ?? id).join(' / ');
     const shapes = r.shapes.map((shape) => t(`station.shape.${shape}`)).join(' / ');
+    // Story 051: her length goes with the shape on the order.
+    const lengthWords = r.lengths?.length ? ` · ${r.lengths.map((l) => t(`station.length.${l}`)).join(' / ')}` : '';
     const extras = [r.gradient === 'yes' ? '🌈' : '', r.gems !== 'none' ? `💎 ${t(`service.order.${r.gems}`)}` : '', r.stickers !== 'none' ? `⭐ ${t(`service.order.${r.stickers}`)}` : ''].filter(Boolean);
     // Colours on the first line, shape and extras on the second (never cut; a tap shows it all if it is longer).
-    order.textContent = `🎨 ${colours}\n${[shapes, ...extras].join(' · ')}`;
+    order.textContent = `🎨 ${colours}\n${[`${shapes}${lengthWords}`, ...extras].join(" · ")}`;
     order.setAttribute('aria-label', `${t('service.order.label')}: ${order.textContent}`);
   }
   // Her bubble grows to fit the whole sentence (this is an English-practice game) and the order is never cut: the block
@@ -389,7 +393,10 @@ export function createChatPanel(
     if (!kind || !station || ending) return;
     // The same ask again (or heard twice) while it is still open is one request.
     if (fixes.some((f) => f.kind === kind && f.status === 'open')) return;
-    fixes = [...fixes, openRequest(kind, station.design())];
+    const request = openRequest(kind, station.design(), text);
+    // Story 051: "a little shorter" on the shortest nails is just a line (nothing to fix).
+    if (!canFix(request, station.lengths)) return;
+    fixes = [...fixes, request];
     station.openFix(kind);
   };
   /** After a change on the nails: a request now met is fixed; she thanks the player (a mood lift). */
@@ -476,6 +483,9 @@ export function createChatPanel(
       talkTimers.push(window.setTimeout(() => sayWhenFree(text, tries + 1), 5000));
       return;
     }
+    // Story 051: she never asks for a fix that can't be done (shorter than the shortest nails).
+    const kind = fixKindOf(text);
+    if (kind && station && !canFix(openRequest(kind, station.design(), text), station.lengths)) return;
     appointment.clientSays(text);
   };
   const startService = (): void => {

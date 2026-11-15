@@ -1,6 +1,6 @@
 import fixJson from './config/fix-requests.json';
-import { NAIL_ART_CONFIG, coverage, neatness } from './nail-art/design';
-import type { NailArtConfig, NailDesign } from './nail-art/design';
+import { NAIL_ART_CONFIG, NAIL_LENGTHS, coverage, neatness } from './nail-art/design';
+import type { NailArtConfig, NailDesign, NailLength } from './nail-art/design';
 import type { SkillKey } from './types';
 
 /**
@@ -10,8 +10,8 @@ import type { SkillKey } from './types';
  * Pure: the chat panel says the lines and the station runs the tools. Config: config/fix-requests.json.
  */
 
-export type FixKind = 'edge' | 'colour';
-export const FIX_KINDS: FixKind[] = ['edge', 'colour'];
+export type FixKind = 'edge' | 'colour' | 'length';
+export const FIX_KINDS: FixKind[] = ['edge', 'colour', 'length'];
 
 export interface FixConfig {
   asks: Record<FixKind, string[]>;
@@ -73,6 +73,9 @@ export interface FixRequest {
   fromBase: string | null;
   /** The player used a fix tool (Clean up, Remover) since she asked: a fix never happens by itself. */
   acted: boolean;
+  /** Story 051: the length when she asked, and which way she wants it. */
+  fromLength?: NailLength;
+  direction?: 'shorter' | 'longer';
 }
 
 /** The kind of fix a client line asks for (one of her set lines, or the same ask in her own words), or null. */
@@ -80,10 +83,27 @@ export function fixKindOf(line: string, config: FixConfig = FIX_CONFIG): FixKind
   return FIX_KINDS.find((kind) => config.asks[kind].includes(line)) ?? FIX_KINDS.find((kind) => config.patterns[kind].some((re) => re.test(line))) ?? null;
 }
 
-export const openRequest = (kind: FixKind, design: NailDesign): FixRequest => ({ kind, status: 'open', fromBase: design.base, acted: false });
+/** A new open request. `line` (story 051): what she said, so a length fix knows if she wants them shorter or longer. */
+export function openRequest(kind: FixKind, design: NailDesign, line = ''): FixRequest {
+  const request: FixRequest = { kind, status: 'open', fromBase: design.base, acted: false };
+  if (kind !== 'length') return request;
+  return { ...request, fromLength: design.length, direction: /\blonger\b|too short/i.test(line) ? 'longer' : 'shorter' };
+}
+
+/** Story 051: can the player do this fix at all (no shorter than short, no longer than the longest on offer)? */
+export function canFix(request: FixRequest, offered: readonly NailLength[] = NAIL_LENGTHS): boolean {
+  if (request.kind !== 'length' || !request.fromLength) return true;
+  const at = NAIL_LENGTHS.indexOf(request.fromLength);
+  return offered.some((l) => (request.direction === 'longer' ? NAIL_LENGTHS.indexOf(l) > at : NAIL_LENGTHS.indexOf(l) < at));
+}
 
 /** Does the design now answer the request? (Before the player acted, never.) */
 export function meetsRequest(request: FixRequest, design: NailDesign, config: FixConfig = FIX_CONFIG, nailConfig: NailArtConfig = NAIL_ART_CONFIG): boolean {
+  if (request.kind === 'length') {
+    const from = NAIL_LENGTHS.indexOf(request.fromLength ?? 'short');
+    const now = NAIL_LENGTHS.indexOf(design.length);
+    return request.direction === 'longer' ? now > from : now < from;
+  }
   if (request.kind === 'colour') {
     if (design.base === null || design.base === request.fromBase) return false;
     const perNail = coverage(design, nailConfig);

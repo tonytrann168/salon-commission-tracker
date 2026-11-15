@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fixJson from '../game/config/fix-requests.json';
-import { FIX_CONFIG, FIX_KINDS, applyFixesToSkills, fixKindOf, fixOutcomes, meetsRequest, openLine, openRequest, parseFixConfig, thanksLine, updateRequests } from '../game/fix-requests';
+import { FIX_CONFIG, FIX_KINDS, applyFixesToSkills, canFix, fixKindOf, fixOutcomes, meetsRequest, openLine, openRequest, parseFixConfig, thanksLine, updateRequests } from '../game/fix-requests';
 import { NAIL_COUNT, addSpill, emptyDesign, paint, paintableCells, removeAll, removeNail, decorate } from '../game/nail-art/design';
 import type { NailDesign } from '../game/nail-art/design';
 import { SERVICE_TALK } from '../game/service-talk';
@@ -32,6 +32,11 @@ describe('fix requests config', () => {
     expect(fixKindOf('Can you change the color, please?')).toBe('colour');
     for (const line of ['Is this colour going to last a few weeks?', 'Hmm, is that the same shade I picked?', 'Will it be dry before I leave?', 'They look great! How much do I owe you?']) expect(fixKindOf(line)).toBeNull();
     expect(() => parseFixConfig({ ...fixJson, patterns: { ...fixJson.patterns, edge: ['('] } })).toThrow('bad pattern');
+    // Story 051: length asks, and lines that only sound like them.
+    expect(fixKindOf('Can you make them a little shorter, please?')).toBe('length');
+    expect(fixKindOf('Hmm, they are too long for work.')).toBe('length');
+    expect(fixKindOf('Could you do them a bit longer?')).toBe('length');
+    for (const line of ['How much longer is this going to take?', 'Will this colour last longer?', 'How long have you been doing nails?']) expect(fixKindOf(line)).toBeNull();
   });
 
   it('rejects a bad file with a clear message', () => {
@@ -113,3 +118,21 @@ describe('problem handling and the grader', () => {
     expect(sent).not.toContain('hack');
   });
 });
+
+describe('a length fix (story 051)', () => {
+  it('knows the way she wants it, needs the length to move that way, and is impossible past the ends', () => {
+    const medium = { ...painted('red'), length: 'medium' as const };
+    const shorter = openRequest('length', medium, 'Can you make them a little shorter, please?');
+    expect(shorter).toMatchObject({ fromLength: 'medium', direction: 'shorter' });
+    expect(meetsRequest(shorter, medium)).toBe(false);
+    expect(meetsRequest(shorter, { ...medium, length: 'long' })).toBe(false);
+    expect(meetsRequest(shorter, { ...medium, length: 'short' })).toBe(true);
+    const longer = openRequest('length', medium, 'Could you do them a bit longer?');
+    expect(longer.direction).toBe('longer');
+    expect(meetsRequest(longer, { ...medium, length: 'long' })).toBe(true);
+    expect(canFix(openRequest('length', painted('red'), 'a little shorter'))).toBe(false);
+    expect(canFix(openRequest('length', { ...medium, length: 'long' }, 'a bit longer'), ['short', 'medium', 'long'])).toBe(false);
+    expect(canFix(openRequest('edge', medium))).toBe(true);
+  });
+});
+

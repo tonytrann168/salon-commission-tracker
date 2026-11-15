@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NAIL_ART_CONFIG, NAIL_COUNT, addSpill, cleanUp, coverage, dab, decorate, emptyDesign, insidePolygon, nailOutline, neatness, paint, paintableCells, parseNailArtConfig, wipeCells } from '../game/nail-art/design';
+import { NAIL_ART_CONFIG, NAIL_COUNT, lengthReach, withLength, addSpill, cleanUp, coverage, dab, decorate, emptyDesign, insidePolygon, nailOutline, neatness, paint, paintableCells, parseNailArtConfig, wipeCells } from '../game/nail-art/design';
 import type { NailDesign, NailRequest } from '../game/nail-art/design';
 import { describeDesign, describeRequest, matchDesign } from '../game/nail-art/match';
 
@@ -71,13 +71,14 @@ describe('matching the client request', () => {
   });
 
   it('turns a poor match into a mood drop (bands from config)', () => {
-    expect(matchDesign({ ...emptyDesign('stiletto'), base: 'black' }, DANA).moodDelta).toBe(-10);
+    expect(matchDesign({ ...emptyDesign('stiletto'), base: 'black' }, { ...DANA, lengths: ['xlong'] }).moodDelta).toBe(-10);
   });
 
   it('describes the design and the request in plain English for the AI', () => {
     const design = decorate(fullyPainted({ ...emptyDesign('square'), base: 'pale-pink', gradient: 'white' }), { nail: 1, x: 0.5, y: 0.5, kind: 'heart' });
-    expect(describeDesign(design)).toBe('square shape, pale pink fading to white at the tips, 1 heart; 100% painted, clean edges');
+    expect(describeDesign(design)).toBe('square shape, short nails, pale pink fading to white at the tips, 1 heart; 100% painted, clean edges');
     expect(describeRequest(DANA)).toBe('square shape, nude or pale pink, no gems, no stickers, no gradient');
+    expect(describeRequest({ ...DANA, lengths: ['short', 'medium'] })).toBe('square shape, short or medium nails, nude or pale pink, no gems, no stickers, no gradient');
   });
 
   it('refuses a bad config', () => {
@@ -221,7 +222,7 @@ describe('harder nail requests (story 017)', async () => {
     expect(matchDesign(oneHand, twoHands).covered).toBeCloseTo(0.5);
     expect(matchDesign(both, twoHands).score).toBe(100);
     expect(matchDesign(oneHand, twoHands).score).toBeLessThan(matchDesign(both, twoHands).score);
-    expect(describeDesign(both)).toMatch(/^both hands: square shape, pale pink/);
+    expect(describeDesign(both)).toMatch(/^both hands: square shape, short nails, pale pink/);
     expect(describeRequest(twoHands)).toMatch(/^both hands: square shape/);
   });
 });
@@ -245,8 +246,38 @@ describe('pedicure (story 024)', async () => {
     expect(limbFor(undefined)).toBe(NAIL_ART_CONFIG.hand);
     const ped = applyScenario(getClient('grace')!, getScenario('pedicure-day'));
     expect(ped.nailRequest).toMatchObject({ service: 'pedicure', hands: 2 });
-    expect(describeRequest(ped.nailRequest!)).toMatch(/^pedicure, both feet: square or round shape, coral or hot pink or red/);
+    expect(describeRequest(ped.nailRequest!)).toMatch(/^pedicure, both feet: square or round shape, short nails, coral or hot pink or red/);
     expect(describeRequest(getClient('grace')!.nailRequest!)).not.toMatch(/pedicure/);
-    expect(describeDesign({ ...emptyDesign('square', 10), base: 'coral' }, undefined, 'pedicure')).toMatch(/^pedicure, both feet: square shape, coral/);
+    expect(describeDesign({ ...emptyDesign('square', 10), base: 'coral' }, undefined, 'pedicure')).toMatch(/^pedicure, both feet: square shape, short nails, coral/);
   });
 });
+
+describe('nail length (story 051)', () => {
+  it('scores her length 100 and loses 45 a step away; no length named means any length is fine', () => {
+    const painted = fullyPainted({ ...emptyDesign('square'), base: 'nude' });
+    expect(matchDesign(painted, { ...DANA, lengths: ['short'] }).parts.length).toBe(100);
+    expect(matchDesign({ ...painted, length: 'medium' }, { ...DANA, lengths: ['short'] }).parts.length).toBe(55);
+    expect(matchDesign({ ...painted, length: 'xlong' }, { ...DANA, lengths: ['short'] }).parts.length).toBe(0);
+    expect(matchDesign({ ...painted, length: 'long' }, DANA).parts.length).toBe(100);
+    expect(matchDesign({ ...painted, length: 'long' }, { ...DANA, lengths: ['short'] }).score).toBeLessThan(matchDesign(painted, { ...DANA, lengths: ['short'] }).score);
+  });
+
+  it('draws a longer nail past the fingertip: the cuticle stays where it was', () => {
+    for (const finger of NAIL_ART_CONFIG.hand.fingers) {
+      const long = withLength(finger, NAIL_ART_CONFIG.lengths.long);
+      const cuticle = (f: typeof finger) => {
+        const a = (f.angle * Math.PI) / 180;
+        return [f.x - (Math.sin(a) * f.nail.h) / 2, f.y + (Math.cos(a) * f.nail.h) / 2];
+      };
+      expect(long.nail.h).toBeCloseTo(finger.nail.h * NAIL_ART_CONFIG.lengths.long);
+      expect(cuticle(long)[0]).toBeCloseTo(cuticle(finger)[0]!);
+      expect(cuticle(long)[1]).toBeCloseTo(cuticle(finger)[1]!);
+    }
+    expect(lengthReach(NAIL_ART_CONFIG.hand, NAIL_ART_CONFIG.lengths.xlong)).toBeGreaterThan(lengthReach(NAIL_ART_CONFIG.hand, NAIL_ART_CONFIG.lengths.long));
+  });
+
+  it('refuses lengths that do not grow', () => {
+    expect(() => parseNailArtConfig({ ...structuredClone(NAIL_ART_CONFIG), lengths: { short: 1, medium: 1, long: 1.4, xlong: 1.6 } })).toThrow(/lengths.medium/);
+  });
+});
+
