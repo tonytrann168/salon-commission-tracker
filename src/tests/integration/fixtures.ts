@@ -135,7 +135,11 @@ export interface FakeSupabase {
   users: Map<string, { id: string; password: string; confirmed: boolean }>;
 }
 
-export function fakeSupabase(): FakeSupabase {
+/**
+ * Story 053: `confirmEmail: false` answers sign-up with a session (the project's "Confirm email" off); `emailFails`
+ * answers every email-sending step with Supabase's 500 (the SMTP sender refused).
+ */
+export function fakeSupabase(options: { confirmEmail?: boolean; emailFails?: boolean } = {}): FakeSupabase {
   const users = new Map<string, { id: string; password: string; confirmed: boolean }>();
   const saves = new Map<string, { data: string; version: number; updated_at: string }>();
   const codes = new Map<string, string>();
@@ -159,7 +163,10 @@ export function fakeSupabase(): FakeSupabase {
     const path = url.pathname;
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
     if (path === '/auth/v1/signup') {
-      if (!users.has(body.email!)) users.set(body.email!, { id: `00000000-0000-4000-8000-${String(++n).padStart(12, '0')}`, password: body.password!, confirmed: false });
+      if (options.emailFails) return fail(route, 500, 'unexpected_failure', 'Error sending confirmation email');
+      if (users.has(body.email!) && options.confirmEmail === false) return fail(route, 422, 'user_already_exists', 'User already registered');
+      if (!users.has(body.email!)) users.set(body.email!, { id: `00000000-0000-4000-8000-${String(++n).padStart(12, '0')}`, password: body.password!, confirmed: options.confirmEmail === false });
+      if (options.confirmEmail === false) return route.fulfill({ json: session(body.email!) });
       sendCode(body.email!);
       return route.fulfill({ json: user(body.email!) });
     }
@@ -179,6 +186,7 @@ export function fakeSupabase(): FakeSupabase {
       return route.fulfill({ json: session(body.email!) });
     }
     if (path === '/auth/v1/recover') {
+      if (options.emailFails) return fail(route, 500, 'unexpected_failure', 'Error sending recovery email');
       if (users.has(body.email!)) sendCode(body.email!);
       return route.fulfill({ json: {} });
     }

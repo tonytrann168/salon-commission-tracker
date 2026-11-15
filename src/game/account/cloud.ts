@@ -16,7 +16,8 @@ export interface CloudSave {
   updatedAt: string;
 }
 
-export type CloudError = 'invalid_email' | 'weak_password' | 'wrong_login' | 'not_confirmed' | 'wrong_code' | 'rate_limited' | 'network' | 'not_signed_in' | 'unknown';
+/** Story 053: `email_send_failed` (the code email could not be sent), `already_registered` (sign-up with a known email). */
+export type CloudError = 'invalid_email' | 'weak_password' | 'wrong_login' | 'not_confirmed' | 'wrong_code' | 'rate_limited' | 'network' | 'not_signed_in' | 'email_send_failed' | 'already_registered' | 'unknown';
 export type CloudResult<T> = { ok: true; value: T } | { ok: false; error: CloudError };
 
 /**
@@ -24,8 +25,11 @@ export type CloudResult<T> = { ok: true; value: T } | { ok: false; error: CloudE
  * instead of the home-screen app. Sign-up confirms the email with a code; "Forgot password?" sends a recovery code.
  */
 export interface Cloud {
-  /** Create the account; Supabase emails a 6-digit confirmation code. */
-  signUp(email: string, password: string): Promise<CloudResult<null>>;
+  /**
+   * Create the account. With "Confirm email" on, Supabase emails a 6-digit code (value null: the code screen follows);
+   * with it off, the player is signed in at once (story 053: value is the user).
+   */
+  signUp(email: string, password: string): Promise<CloudResult<CloudUser | null>>;
   confirmSignUp(email: string, code: string): Promise<CloudResult<CloudUser>>;
   resendSignUpCode(email: string): Promise<CloudResult<null>>;
   signIn(email: string, password: string): Promise<CloudResult<CloudUser>>;
@@ -51,14 +55,19 @@ export const cloudConfigured = (env: Record<string, unknown> = import.meta.env a
 /**
  * Map library errors to friendly kinds. Sign-in failures never say whether the email exists: "wrong_login" for both.
  */
-export function mapError(error: { status?: number; message?: string; code?: string } | null | undefined, step: 'signIn' | 'code' | 'other' = 'other'): CloudResult<never> {
+export function mapError(error: { status?: number; message?: string; code?: string } | null | undefined, step: 'signIn' | 'signUp' | 'email' | 'code' | 'other' = 'other', online: boolean = typeof navigator === 'undefined' || navigator.onLine !== false): CloudResult<never> {
   const message = error?.message ?? '';
   const code = error?.code ?? '';
+  // Story 053: offline first (the library's own message varies), then the email that could not be sent (Supabase
+  // answers 500 when its SMTP sender is refused), then an email already registered at sign-up.
+  if (!online) return { ok: false, error: 'network' };
+  if (/error sending|sending (confirmation|recovery|magic link)|smtp|email.*(could not|couldn't) be sent/i.test(message) || ((step === 'signUp' || step === 'email') && (error?.status === 500 || code === 'unexpected_failure'))) return { ok: false, error: 'email_send_failed' };
+  if (step === 'signUp' && /already registered|user_already_exists|email_exists|already been registered/i.test(`${message} ${code}`)) return { ok: false, error: 'already_registered' };
   if (error?.status === 429 || /rate limit|too many|over_email_send_rate_limit|over_request_rate_limit/i.test(`${message} ${code}`)) return { ok: false, error: 'rate_limited' };
   if (/failed to fetch|network|load failed/i.test(message)) return { ok: false, error: 'network' };
   if (/email not confirmed|email_not_confirmed/i.test(`${message} ${code}`)) return { ok: false, error: 'not_confirmed' };
   if (step === 'signIn') return { ok: false, error: 'wrong_login' };
-  if (/weak_password|password should be/i.test(`${message} ${code}`)) return { ok: false, error: 'weak_password' };
+  if (/weak_password|password should be|password is too|password.*(short|weak)/i.test(`${message} ${code}`)) return { ok: false, error: 'weak_password' };
   if (/invalid.*email|email_address_invalid/i.test(`${message} ${code}`)) return { ok: false, error: 'invalid_email' };
   if (step === 'code' || /token|otp|expired/i.test(message)) return { ok: false, error: 'wrong_code' };
   return { ok: false, error: 'unknown' };
@@ -113,8 +122,10 @@ export function createSupabaseCloud(url: string, anonKey: string, remember: () =
   };
   return {
     async signUp(email, password) {
-      const { error } = await (await get()).auth.signUp({ email, password });
-      return error ? mapError(error) : { ok: true, value: null };
+      const { data, error } = await (await get()).auth.signUp({ email, password });
+      if (error) return mapError(error, 'signUp');
+      // Story 053: "Confirm email" off → a session now: signed in, no code screen.
+      return { ok: true, value: data?.session ? user(data.session.user ?? data.user) : null };
     },
     async confirmSignUp(email, code) {
       const { data, error } = await (await get()).auth.verifyOtp({ email, token: code, type: 'signup' });
@@ -122,7 +133,7 @@ export function createSupabaseCloud(url: string, anonKey: string, remember: () =
     },
     async resendSignUpCode(email) {
       const { error } = await (await get()).auth.resend({ type: 'signup', email });
-      return error ? mapError(error) : { ok: true, value: null };
+      return error ? mapError(error, 'email') : { ok: true, value: null };
     },
     async signIn(email, password) {
       const { data, error } = await (await get()).auth.signInWithPassword({ email, password });
@@ -130,7 +141,7 @@ export function createSupabaseCloud(url: string, anonKey: string, remember: () =
     },
     async sendRecoveryCode(email) {
       const { error } = await (await get()).auth.resetPasswordForEmail(email);
-      return error ? mapError(error) : { ok: true, value: null };
+      return error ? mapError(error, 'email') : { ok: true, value: null };
     },
     async resetPassword(email, code, newPassword) {
       const c = await get();

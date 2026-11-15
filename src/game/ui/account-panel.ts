@@ -227,7 +227,14 @@ export function openSignInSheet(host: HTMLElement, account: Account, options: { 
             return true;
           });
         } else {
-          void busy(main, status, () => account.signUp(email, pass.input.value), () => show('confirm'));
+          // Story 053: signed in at once when the project does not confirm emails; else the code screen. An email
+          // already registered goes to Sign in, with the email kept.
+          void busy(main, status, () => account.signUp(email, pass.input.value), (outcome) => (outcome ? finish(outcome) : show('confirm')), (error) => {
+            if (error !== 'already_registered') return false;
+            show('signIn');
+            sheet.querySelector('.feedback-status')!.textContent = errorText('already_registered');
+            return true;
+          });
         }
       });
       const hint = el('p', 'setting-note account-hint');

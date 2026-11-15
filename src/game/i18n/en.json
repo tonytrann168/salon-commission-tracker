@@ -445,9 +445,9 @@
   "account.error.not_confirmed": "Please confirm your email first. Type the code we sent, or send a new one.",
   "account.error.wrong_code": "That code didn't work. Check it, or send a new one.",
   "account.error.rate_limited": "Too many tries. Please wait a minute, then try again.",
-  "account.error.network": "No connection. Please try again when you're online.",
-  "account.error.weak_password": "Please choose a different password.",
-  "account.error.invalid_email": "Please check the email address.",
+  "account.error.network": "No internet connection. Please check your internet and try again.",
+  "account.error.weak_password": "Please choose a stronger password: at least 8 characters, with letters and numbers.",
+  "account.error.invalid_email": "Please check the email address (like name@example.com).",
   "account.error.not_signed_in": "Please sign in again.",
   "account.error.unknown": "Something went wrong. Please try again.",
   "account.syncError": "Couldn't reach your account. Your progress is safe on this phone; we'll try again later.",
@@ -638,5 +638,7 @@
   "settings.speed.normal": "Normal",
   "settings.speed.fast": "Fast",
   "settings.companionVoice": "{name} reads tips aloud",
-  "settings.companionVoiceNote": "{name}'s tips and hints are read aloud (Vietnamese tips need a Vietnamese voice on the phone)."
+  "settings.companionVoiceNote": "{name}'s tips and hints are read aloud (Vietnamese tips need a Vietnamese voice on the phone).",
+  "account.error.email_send_failed": "We couldn't send the code email right now. Please try again later.",
+  "account.error.already_registered": "This email already has an account. Sign in with it below."
 }

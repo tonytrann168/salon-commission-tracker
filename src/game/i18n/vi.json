@@ -445,9 +445,9 @@
   "account.error.not_confirmed": "{You} xác nhận email trước nha: nhập mã {self} đã gửi, hoặc gửi mã mới.",
   "account.error.wrong_code": "Mã chưa đúng rồi. {You} xem lại, hoặc gửi mã mới nha.",
   "account.error.rate_limited": "Thử nhiều quá rồi. {You} đợi một phút rồi thử lại nha.",
-  "account.error.network": "Đang mất mạng. Có mạng rồi {you} thử lại nha.",
-  "account.error.weak_password": "{You} chọn mật khẩu khác nha.",
-  "account.error.invalid_email": "{You} xem lại email giúp {self} nha.",
+  "account.error.network": "Đang mất mạng. {You} kiểm tra mạng rồi thử lại nha.",
+  "account.error.weak_password": "{You} chọn mật khẩu mạnh hơn nha: ít nhất 8 ký tự, có chữ và số.",
+  "account.error.invalid_email": "{You} xem lại email giúp {self} nha (ví dụ ten@example.com).",
   "account.error.not_signed_in": "{You} đăng nhập lại nha.",
   "account.error.unknown": "Có lỗi rồi. {You} thử lại nha.",
   "account.syncError": "{Self} chưa kết nối được tài khoản. Tiến độ vẫn an toàn trên máy này, lát {self} thử lại nha.",
@@ -638,5 +638,7 @@
   "settings.speed.normal": "Vừa",
   "settings.speed.fast": "Nhanh",
   "settings.companionVoice": "{name} đọc mẹo thành tiếng",
-  "settings.companionVoiceNote": "Mẹo và gợi ý của {name} được đọc thành tiếng (mẹo tiếng Việt cần giọng tiếng Việt trên điện thoại)."
+  "settings.companionVoiceNote": "Mẹo và gợi ý của {name} được đọc thành tiếng (mẹo tiếng Việt cần giọng tiếng Việt trên điện thoại).",
+  "account.error.email_send_failed": "Hiện giờ {self} chưa gửi được email có mã. {You} thử lại sau nha.",
+  "account.error.already_registered": "Email này đã có tài khoản rồi. {You} đăng nhập ở dưới nha."
 }

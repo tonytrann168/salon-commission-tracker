@@ -99,6 +99,60 @@ for (const lang of LANGS) {
       await b.close();
     });
 
+    test('sign-up errors (story 053): "Confirm email" off signs in at once and syncs; a failing email is a gentle message, never a raw error', async ({ browser }) => {
+      // "Confirm email" off: a session straight away, no code screen, the save uploads.
+      const off = fakeSupabase({ confirmEmail: false });
+      const a = await browser.newContext();
+      await off.route(a);
+      await seed(a, lang, { save: { wallet: 9, xp: 120, appointments: 5 } });
+      await mockApi(a);
+      const pa = await a.newPage();
+      await pa.goto('/');
+      await openSettings(pa);
+      await pa.locator('.account-section .chat-button').first().click();
+      await pa.locator('.account-link').first().click();
+      await pa.locator('.account-email').fill(`now.${lang}@example.com`);
+      await pa.locator('.account-password-input').fill('polish123');
+      await pa.locator('.feedback-actions .chat-button').last().click();
+      await expect(pa.locator('.account-section')).toContainText(`now.${lang}@example.com`);
+      await expect(pa.locator('.account-code')).toHaveCount(0);
+      await expect.poll(() => off.saves.size).toBe(1);
+      // The same email again: it already has an account → Sign in, with the email kept.
+      await pa.locator('.account-section .chat-button').filter({ hasText: lang === 'vi' ? 'Đăng xuất' : 'Sign out' }).click();
+      await pa.locator('.account-section .chat-button').first().click();
+      await pa.locator('.account-link').first().click();
+      await pa.locator('.account-email').fill(`now.${lang}@example.com`);
+      await pa.locator('.account-password-input').fill('polish123');
+      await pa.locator('.feedback-actions .chat-button').last().click();
+      await expect(pa.locator('.feedback-status')).toContainText(lang === 'vi' ? 'đã có tài khoản' : 'already has an account');
+      await expect(pa.locator('#account-title')).toHaveText(lang === 'vi' ? 'Đăng nhập' : 'Sign in');
+      await a.close();
+
+      // The email cannot be sent (Supabase 500): the friendly line, for sign-up and for Forgot password.
+      const broken = fakeSupabase({ emailFails: true });
+      const b = await browser.newContext();
+      await broken.route(b);
+      await seed(b, lang);
+      await mockApi(b);
+      const pb = await b.newPage();
+      await pb.goto('/');
+      await openSettings(pb);
+      await pb.locator('.account-section .chat-button').first().click();
+      await pb.locator('.account-link').first().click();
+      await pb.locator('.account-email').fill('lan@example.com');
+      await pb.locator('.account-password-input').fill('polish123');
+      await pb.locator('.feedback-actions .chat-button').last().click();
+      const gentle = lang === 'vi' ? 'chưa gửi được email' : "couldn't send the code email";
+      await expect(pb.locator('.feedback-status')).toContainText(gentle);
+      await expect(pb.locator('.feedback-status')).not.toContainText(/500|unexpected|Error sending/i);
+      await pb.locator('.account-link').first().click();
+      await pb.locator('.account-link').nth(1).click();
+      await pb.locator('.account-email').fill('lan@example.com');
+      await pb.locator('.feedback-actions .chat-button').last().click();
+      await expect(pb.locator('.feedback-status')).toContainText(gentle);
+      await b.close();
+    });
+
     test('offline after one visit: the title still opens and Start explains a connection is needed', async ({ browser }) => {
       const context = await browser.newContext({ serviceWorkers: 'allow' });
       await seed(context, lang);

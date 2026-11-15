@@ -350,3 +350,44 @@ describe('the account on a device', () => {
     expect(phone.session.getItem('sb-x-auth-token')).toBeNull();
   });
 });
+
+describe('sign-up errors and "Confirm email" off (story 053)', () => {
+  it('maps every Supabase sign-up failure to a friendly error', () => {
+    // The live cause: the SMTP sender was refused, every /signup answered 500.
+    expect(mapError({ status: 500, message: 'Error sending confirmation email', code: 'unexpected_failure' }, 'signUp')).toEqual({ ok: false, error: 'email_send_failed' });
+    expect(mapError({ status: 500, message: 'Internal Server Error' }, 'signUp')).toEqual({ ok: false, error: 'email_send_failed' });
+    expect(mapError({ status: 500, message: 'Error sending recovery email' }, 'email')).toEqual({ ok: false, error: 'email_send_failed' });
+    expect(mapError({ status: 422, message: 'User already registered', code: 'user_already_exists' }, 'signUp')).toEqual({ ok: false, error: 'already_registered' });
+    expect(mapError({ status: 422, message: 'Password should be at least 8 characters.', code: 'weak_password' }, 'signUp')).toEqual({ ok: false, error: 'weak_password' });
+    expect(mapError({ status: 400, message: 'Unable to validate email address: invalid format', code: 'email_address_invalid' }, 'signUp')).toEqual({ ok: false, error: 'invalid_email' });
+    expect(mapError({ status: 429, message: 'email rate limit exceeded', code: 'over_email_send_rate_limit' }, 'signUp')).toEqual({ ok: false, error: 'rate_limited' });
+    expect(mapError({ message: 'Load failed' }, 'signUp', false)).toEqual({ ok: false, error: 'network' });
+    expect(mapError({ message: 'anything at all' }, 'signUp', false)).toEqual({ ok: false, error: 'network' });
+  });
+
+  it('sign-in never says whether an email exists, even with the new errors', () => {
+    expect(mapError({ status: 400, message: 'User already registered' }, 'signIn')).toEqual({ ok: false, error: 'wrong_login' });
+    expect(mapError({ status: 500, message: 'Internal Server Error' }, 'signIn')).toEqual({ ok: false, error: 'wrong_login' });
+  });
+
+  it('with a session from sign-up the player is signed in and the save uploads, with no code screen', async () => {
+    const fake = fakeCloud();
+    // "Confirm email" off: Supabase answers sign-up with a session (the user is signed in at once).
+    fake.cloud.signUp = async (email, password) => {
+      fake.users.set(email, { id: 'u-now', password, confirmed: true });
+      return fake.cloud.signIn(email, password);
+    };
+    const phone = device(progress(3));
+    const account = phone.make(fake.cloud);
+    expect(await account.signUp('mai@example.com', 'polish123')).toEqual({ ok: true, value: { kind: 'ok' } });
+    expect(account.user?.email).toBe('mai@example.com');
+    expect(fake.saves.get('u-now')?.data).toMatch(/^SB1-/);
+  });
+
+  it('without a session the code screen follows, as before', async () => {
+    const fake = fakeCloud();
+    const account = device(progress(1)).make(fake.cloud);
+    expect(await account.signUp('lan@example.com', 'polish123')).toEqual({ ok: true, value: null });
+    expect(account.user).toBeNull();
+  });
+});

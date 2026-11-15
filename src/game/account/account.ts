@@ -27,7 +27,8 @@ export interface Account {
   markNudged(): void;
   /** On boot: a remembered session → match with the cloud. */
   start(): Promise<SyncOutcome>;
-  signUp(email: string, password: string): Promise<CloudResult<null>>;
+  /** Story 053: null → the code screen; an outcome → signed in at once ("Confirm email" off) and matched. */
+  signUp(email: string, password: string): Promise<CloudResult<SyncOutcome | null>>;
   confirmSignUp(email: string, code: string): Promise<CloudResult<SyncOutcome>>;
   resendSignUpCode(email: string): Promise<CloudResult<null>>;
   signIn(email: string, password: string): Promise<CloudResult<SyncOutcome>>;
@@ -140,7 +141,11 @@ export function createAccount(deps: AccountDeps): Account {
       notify();
       return match().catch((): SyncOutcome => ({ kind: 'error', error: 'network' }));
     },
-    signUp: (email, password) => deps.cloud.signUp(email.trim(), password),
+    async signUp(email, password) {
+      const result = await deps.cloud.signUp(email.trim(), password);
+      if (!result.ok) return result;
+      return result.value ? signedIn({ ok: true, value: result.value }, email.trim()) : { ok: true, value: null };
+    },
     confirmSignUp: async (email, code) => signedIn(await deps.cloud.confirmSignUp(email.trim(), code.trim()), email.trim()),
     resendSignUpCode: (email) => deps.cloud.resendSignUpCode(email.trim()),
     signIn: async (email, password) => signedIn(await deps.cloud.signIn(email.trim(), password), email.trim()),
