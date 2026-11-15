@@ -1,3 +1,4 @@
+import { createHangnailOverlay } from './hangnail-overlay';
 import { haptic, prefersReducedMotion } from '../comfort';
 import { clientGrammar } from '../types';
 import type { ClientPronoun } from '../types';
@@ -48,6 +49,8 @@ export interface NailStationOptions {
   lengths?: NailLength[];
   /** The client's pronoun for the Done message ("her request" / "his request"). */
   clientPronoun?: ClientPronoun;
+  /** Story 064 (hard clients): a hangnail on this nail (0-based over all nails), trimmed with the Nipper. */
+  hangnail?: { nail: number; onTrim: (outcome: 'clean' | 'slip') => void; onFirstAid: () => void };
 }
 
 export interface NailStation {
@@ -65,6 +68,8 @@ export interface NailStation {
   closeFix(fixed?: boolean): void;
   /** Story 048: whether a fix tool (Clean up, Remover, Remove all) changed the nails since the last call. */
   takeFixAction(): boolean;
+  /** Story 064: the hangnail is still there (never trimmed). */
+  hangnailLeft(): boolean;
   /** The toolbar (mount right under the zone). */
   toolbar: HTMLElement;
   /** The touch layer (mount over the zone, in the same positioned parent). */
@@ -339,7 +344,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     else if (tab === 'length') optionsRow.replaceChildren(...lengthButtons);
     else if (tab === 'colour') optionsRow.replaceChildren(...swatches, toolButtons.gradient);
     else if (tab === 'art') optionsRow.replaceChildren(toolButtons.gem, toolButtons.sticker);
-    else if (tab === 'clean') optionsRow.replaceChildren(toolButtons.cleanup, toolButtons.tidy);
+    else if (tab === 'clean') optionsRow.replaceChildren(toolButtons.cleanup, toolButtons.tidy, ...(nipperButton && hangnail?.left ? [nipperButton] : []));
     // Story 048: the fix tools; a colour fix also has the colours right there.
     else optionsRow.replaceChildren(...(fixKind === 'length' ? lengthButtons : []), toolButtons.remover, removeAllButton, toolButtons.cleanup, ...(fixKind === 'colour' ? swatches : []));
     if (tab === 'clean' && tool !== 'cleanup' && tool !== 'tidy') tool = 'cleanup';
@@ -348,12 +353,14 @@ export function createNailStation(options: NailStationOptions): NailStation {
     if (tab === 'art' && tool !== 'gem' && tool !== 'sticker') tool = 'gem';
     if (tab === 'fix' && tool !== 'cleanup' && tool !== 'remover' && tool !== 'polish') tool = fixKind === 'edge' ? 'cleanup' : fixKind === 'colour' ? 'remover' : 'polish';
     instruction.textContent = tab === 'fix' ? t('station.step.fix') : tab === 'clean' ? t('station.step.clean') : t(`station.step.${tab}`, { n: STATION_STEPS.indexOf(tab) + 1 });
+    if (aidButtons) optionsRow.replaceChildren(...aidButtons);
     optionsRow.scrollLeft = 0;
     requestAnimationFrame(checkMore);
     refresh();
   }
 
   function selectTool(next: StationTool): void {
+    setNipper(false);
     // Gradient and Clean up toggle back to plain polish when tapped again.
     // In the clean-up mode, Rub and Clean edges stay chosen (one of them is always on).
     tool = (next === 'gradient' || next === 'remover' || (next === 'cleanup' && tab !== 'clean' && tab !== 'fix')) && tool === next ? 'polish' : next;
@@ -379,7 +386,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
       node.setAttribute('aria-pressed', String(tool === 'gradient' ? id === design.gradient : id === design.base));
     });
     toolbar.querySelectorAll('button').forEach((node) => {
-      (node as HTMLButtonElement).disabled = done;
+      // Story 064: a first-aid step waiting for the one before stays off.
+      (node as HTMLButtonElement).disabled = done || (node as HTMLElement).dataset.wait === '1';
     });
     cleanButton.setAttribute('aria-pressed', String(tab === 'clean'));
     undoButton.disabled = done || history.length === 0;
@@ -391,6 +399,36 @@ export function createNailStation(options: NailStationOptions): NailStation {
   // Story 049: the step's instruction sits over the empty palm (no toolbar height taken); a short message (spill, a
   // tool) takes its place for a few seconds.
   touch.append(status, instruction, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []));
+  // Story 064 (hard clients): the hangnail and the Nipper (in the Clean row). With the Nipper on, the hand isn't painted.
+  let nipper = false;
+  /** Story 064: while first aid is on, its two steps are the tool row. */
+  let aidButtons: HTMLElement[] | null = null;
+  const nipperButton = options.hangnail ? button(labelled('✂️', t('hangnail.nipperWord')), 'station-tool station-nipper', () => setNipper(!nipper), t('hangnail.nipperLabel')) : null;
+  function setNipper(on: boolean): void {
+    nipper = on && !!hangnail?.left;
+    touch.classList.toggle('nipping', nipper);
+    nipperButton?.setAttribute('aria-pressed', String(nipper));
+    if (nipper) say(t('hangnail.nipperOn'));
+  }
+  const perHand = NAIL_ART_CONFIG.hand.fingers.length;
+  const hangnail = options.hangnail
+    ? createHangnailOverlay({
+        touch,
+        box: () => (Math.floor((options.hangnail?.nail ?? 0) / perHand) === hand ? (view.nailBoxes()[(options.hangnail?.nail ?? 0) % perHand] ?? null) : null),
+        nipperOn: () => nipper,
+        hint: (text, keep) => say(text, keep),
+        firstAid: (buttons) => {
+          aidButtons = buttons;
+          selectTab(tab);
+        },
+        onTrim: (outcome) => {
+          setNipper(false);
+          if (tab === 'clean') selectTab('clean');
+          options.hangnail?.onTrim(outcome);
+        },
+        onFirstAid: () => options.hangnail?.onFirstAid(),
+      })
+    : null;
   let drawing = false;
   // Story 047: the layer's position is read once per stroke (not on every finger movement).
   let box: DOMRect | null = null;
@@ -419,7 +457,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
   touch.append(brush);
   let strokeStart: NailDesign | null = null;
   const forward = (event: PointerEvent, phase: 'down' | 'move'): void => {
-    if (done || busy) return;
+    if (done || busy || nipper) return;
     if (phase === 'down' || !box) box = touch.getBoundingClientRect();
     const x = event.clientX - box.left;
     const y = event.clientY - box.top;
@@ -508,6 +546,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     handButton.style.top = `${band + 4}px`;
     view.setDesign(design);
     placeHint(r.width, r.height);
+    hangnail?.place();
   };
 
   /**
@@ -548,6 +587,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
   return {
     toolbar,
     touch,
+    hangnailLeft: () => hangnail?.left ?? false,
     setOpen(next) {
       open = next;
       toolbar.classList.toggle('hidden', !open);
@@ -601,6 +641,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
       return done && redosLeft > 0;
     },
     destroy() {
+      hangnail?.destroy();
       window.clearTimeout(hideHint);
       view.destroy();
       toolbar.remove();

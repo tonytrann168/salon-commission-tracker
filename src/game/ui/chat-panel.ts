@@ -1,3 +1,4 @@
+import { HANGNAIL_CONFIG, saysSorry } from '../hangnail';
 import { haptic, prefersReducedMotion } from '../comfort';
 import type { Container, Rectangle } from 'pixi.js';
 import type { Appointment, AppointmentSnapshot } from '../appointment';
@@ -108,6 +109,8 @@ export function createChatPanel(
       /** Story 007: bought polishes and upgraded tools. */
       palette?: PaletteColor[];
       tools?: StationTools;
+      /** Story 064 (hard clients): a hangnail on this nail (0-based), or none. */
+      hangnail?: number;
     };
     /** Voice in and out (story 004): the mic button, the client speaking aloud, and practising the last line. */
     voice?: { io: VoiceIO; clientId: string; speakReplies: boolean; onSpeakerChange: (on: boolean) => void };
@@ -256,6 +259,28 @@ export function createChatPanel(
         layer: portraits.layer,
         request: nailArt.request,
         clientPronoun: portraits.client.pronoun,
+        // Story 064: her hangnail: a clean trim earns her thanks; a slip is her ouch, then first aid and a sorry.
+        ...(nailArt.hangnail !== undefined
+          ? {
+              hangnail: {
+                nail: nailArt.hangnail,
+                onTrim: (outcome: 'clean' | 'slip') => {
+                  if (outcome === 'clean') {
+                    appointment.adjustMood(HANGNAIL_CONFIG.trimmedMood);
+                    sayWhenFree(HANGNAIL_CONFIG.lines.thanks);
+                  } else {
+                    appointment.adjustMood(HANGNAIL_CONFIG.slipMood);
+                    apologyDue = true;
+                    appointment.clientSays(HANGNAIL_CONFIG.lines.ouch);
+                  }
+                },
+                onFirstAid: () => {
+                  appointment.adjustMood(HANGNAIL_CONFIG.aidMood);
+                  sayWhenFree(HANGNAIL_CONFIG.lines.afterAid);
+                },
+              },
+            }
+          : {}),
         ...(nailArt.palette ? { palette: nailArt.palette } : {}),
         ...(nailArt.stickers ? { stickers: nailArt.stickers } : {}),
         ...(nailArt.redos ? { redos: nailArt.redos } : {}),
@@ -567,6 +592,11 @@ export function createChatPanel(
   const startService = (): void => {
     serviceStarted = true;
     appointment.holdPhase('service');
+    // Story 064: she mentions her hangnail first (and the station says how to trim it).
+    if (nailArt?.hangnail !== undefined) {
+      sayWhenFree(HANGNAIL_CONFIG.lines.notice);
+      showNudge(t('hangnail.notice', clientGrammar(portraits.client.pronoun)));
+    }
     for (const line of planServiceTalk(portraits.client.difficulty)) talkTimers.push(window.setTimeout(() => sayWhenFree(line.text), line.at * 1000));
   };
   // Story 058: after Done (checkout), her complaint ("polish on my skin… more red than coral") or the player offering a
@@ -634,6 +664,12 @@ export function createChatPanel(
       appointment.clientSays(SERVICE_TALK.redo);
       askFix(SERVICE_TALK.redo);
       return;
+    }
+    // Story 064: a hangnail left at Done costs a little (once).
+    if (station.hangnailLeft() && !hangnailNoted) {
+      hangnailNoted = true;
+      appointment.adjustMood(HANGNAIL_CONFIG.leftMood);
+      appointment.clientSays(HANGNAIL_CONFIG.lines.left);
     }
     // Story 048: a fix still open at Done: her reaction and a mood dip; the results and the debrief say so.
     checkFixes(station.design());
@@ -972,6 +1008,9 @@ export function createChatPanel(
   /** Corrections queued for Mai this appointment (capped in config/learning.json). */
   let tipsQueued = 0;
   let walkOutShown = false;
+  /** Story 064: a slip waits for a sorry; a hangnail left at Done is said once. */
+  let apologyDue = false;
+  let hangnailNoted = false;
   /**
    * Story 061 (057b's "Perfect line!", graded): every line gets a badge that matches how good it was. Try this 💡
    * (a fix waits on the companion's badge), Good 👍, Great ✨, Perfect line! 🌟. Only Perfect gets confetti and a cheer.
@@ -1044,6 +1083,11 @@ export function createChatPanel(
   /** Send a typed or spoken line. */
   function sendLine(text: string, helped: boolean): void {
     if (text.trim() === '') return;
+    // Story 064: saying sorry after a slip wins back a little.
+    if (apologyDue && saysSorry(text)) {
+      apologyDue = false;
+      appointment.adjustMood(HANGNAIL_CONFIG.sorryMood);
+    }
     emitSound('send');
     reveal?.finish();
     voice?.io.cancelSpeech();

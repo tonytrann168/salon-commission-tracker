@@ -779,5 +779,18 @@
   "menu.short.paraffin": "Ủ sáp",
   "menu.short.polishChange": "Đổi màu",
   "menu.short.other": "Khác",
-  "path.challengeTag": "⭐ Thử thách hôm nay"
+  "path.challengeTag": "⭐ Thử thách hôm nay",
+  "hangnail.label": "Xước măng rô ở ngón này",
+  "hangnail.nickLabel": "Một vết xước nhỏ",
+  "hangnail.nipperWord": "Kềm",
+  "hangnail.nipperLabel": "Kềm: cắt xước măng rô",
+  "hangnail.nipperOn": "✂️ Giữ nhẹ tay trên chỗ xước tới khi vòng đầy.",
+  "hangnail.holdLonger": "Giữ thêm chút nữa, nhẹ tay nha.",
+  "hangnail.trimmed": "✓ Cắt xước măng rô xong. Gọn gàng!",
+  "hangnail.firstAid": "Sơ cứu",
+  "hangnail.styptic": "Cầm máu",
+  "hangnail.bandage": "Dán băng",
+  "hangnail.saySorry": "Xong rồi. Giờ nói một câu xin lỗi nha 💬",
+  "hangnail.notice": "✂️ Khách bị xước măng rô: bấm Lau, rồi Kềm, và giữ nhẹ tay trên đó.",
+  "hangnail.firstAidHint": "Sơ cứu: bôi thuốc cầm máu, rồi dán băng."
 }

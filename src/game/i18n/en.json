@@ -779,5 +779,18 @@
   "menu.short.paraffin": "Paraffin",
   "menu.short.polishChange": "Polish change",
   "menu.short.other": "Other",
-  "path.challengeTag": "⭐ Today's challenge"
+  "path.challengeTag": "⭐ Today's challenge",
+  "hangnail.label": "A hangnail on this finger",
+  "hangnail.nickLabel": "A tiny nick",
+  "hangnail.nipperWord": "Nipper",
+  "hangnail.nipperLabel": "Nipper: trim the hangnail",
+  "hangnail.nipperOn": "✂️ Hold on the hangnail gently until the ring fills.",
+  "hangnail.holdLonger": "Hold a little longer, gently.",
+  "hangnail.trimmed": "✓ Hangnail trimmed. Neat!",
+  "hangnail.firstAid": "First aid",
+  "hangnail.styptic": "Apply styptic",
+  "hangnail.bandage": "Bandage",
+  "hangnail.saySorry": "All cared for. Now say sorry in the chat 💬",
+  "hangnail.notice": "✂️ {CShe} has a hangnail: tap Clean, then Nipper, and hold on it gently.",
+  "hangnail.firstAidHint": "First aid: apply styptic, then a bandage."
 }

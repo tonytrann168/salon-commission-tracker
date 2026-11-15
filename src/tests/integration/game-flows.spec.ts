@@ -695,6 +695,71 @@ for (const lang of LANGS) {
       await context.close();
     });
 
+    test('hard level (story 064): a hangnail; a quick snip slips (a tiny dot), first aid and a sorry win back mood; a steady hold trims it clean', async ({ browser }) => {
+      test.setTimeout(120_000);
+      // Hana (hard, one hand): with 10 appointments her visit has a hangnail on the pinky; with 11, on the index finger.
+      const open = async (appointments: number) => {
+        const context = await browser.newContext({ viewport: { width: 320, height: 568 } });
+        await seed(context, lang, { save: { xp: 2000, appointments, badges: ['first-client'], ...dailyWith('hana') } });
+        await mockApi(context, { replies: ['Hi!', 'Red, short oval, please.', 'Okay.', 'Thanks!'] });
+        const page = await context.newPage();
+        await page.goto('/');
+        await page.locator('.title-menu > .chat-button').first().click();
+        await page.locator('.path-screen .picker-daily').click();
+        await page.locator('.chat-input').fill('Hello! Please have a seat.');
+        await page.locator('.chat-form button[type=submit]').click();
+        await page.waitForSelector('.chat-panel.service-mode');
+        await expect(page.locator('.service-nudge')).toContainText(lang === 'vi' ? 'Kềm' : 'Nipper');
+        await page.locator('.station-clean-mode').click();
+        await page.locator('.station-nipper').click();
+        await expect(page.locator('.station-touch.nipping .hangnail')).toBeVisible();
+        return { context, page };
+      };
+      const mood = async (page: import('@playwright/test').Page) => Number(await page.locator('.mood-value').textContent());
+
+      // A quick snip: it slips (a tiny dot), her ouch, a mood dip; first aid (styptic, then a bandage); then a sorry.
+      let { context, page } = await open(10);
+      const before = await mood(page);
+      await page.locator('.hangnail').evaluate((spot) => {
+        spot.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 3, pointerType: 'touch', pressure: 0.4 }));
+        spot.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 3, pointerType: 'touch', pressure: 0.4 }));
+      });
+      await expect(page.locator('.hangnail.nicked')).toHaveCount(1);
+      // First aid's two steps are the tool row (nothing covers the hand or the nick).
+      await expect(page.locator('.station-row .first-aid-styptic')).toBeVisible();
+      expect(await page.evaluate(() => document.querySelector('.station-tools')!.getBoundingClientRect().top >= document.querySelector('.hangnail')!.getBoundingClientRect().bottom)).toBe(true);
+      await expect.poll(() => mood(page)).toBeLessThan(before);
+      const dipped = await mood(page);
+      await expect(page.locator('.first-aid-bandage')).toBeDisabled();
+      await page.locator('.first-aid-styptic').click();
+      await page.locator('.first-aid-bandage').click();
+      await expect(page.locator('.hangnail.bandaged')).toHaveCount(1);
+      await expect(page.locator('.station-status')).toContainText(lang === 'vi' ? 'xin lỗi' : 'say sorry');
+      await expect(page.locator('.station-row .first-aid-bandage')).toHaveCount(0);
+      await expect.poll(() => mood(page)).toBeGreaterThan(dipped);
+      const cared = await mood(page);
+      await page.locator('.focus-bar .reply-chip').click();
+      await page.locator('.reply-sheet .chat-input').fill(lang === 'vi' ? 'Em xin lỗi chị nha!' : "I'm so sorry!");
+      await page.locator('.reply-sheet .chat-form button[type=submit]').click();
+      // The sorry (+3) and her reply (+3 in this mock) both lift her mood.
+      await expect.poll(() => mood(page)).toBeGreaterThan(cared + 3);
+      await context.close();
+
+      // A steady hold: trimmed clean; Done brings no "hangnail still bugging me".
+      ({ context, page } = await open(11));
+      const box = (await page.locator('.hangnail').boundingBox())!;
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(1100);
+      await page.mouse.up();
+      await expect(page.locator('.hangnail')).toHaveCount(0, { timeout: 3000 });
+      await expect(page.locator('.station-nipper')).toHaveCount(0);
+      await page.locator('.station-done').click();
+      await page.waitForSelector('.chat-panel:not(.service-mode) .chat-input', { timeout: 6_000 });
+      await expect(page.locator('.chat-log')).not.toContainText('still bugging me');
+      await context.close();
+    });
+
     test('every line graded (story 061): a line with a real fix is Try this, a short line is Good, a fine long line is Perfect (only Perfect has confetti)', async ({ page }) => {
       test.setTimeout(90_000);
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily') } });

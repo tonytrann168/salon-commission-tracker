@@ -51,6 +51,20 @@ Mai, the player's mascot best friend, is the main reason to play and to come bac
 - PolishPay integration
 - Managing the appointment book *(owner, 2026-11-15, story 062)*: the player schedules, accepts and reschedules bookings. For now the day's booked guests are given ("Today's appointments", with times and services from the menu, a small XP bonus each) and walk-ins come between them.
 
+## Later (v2+): owner vision *(owner, 2026-11-15; documentation only, not being built)*
+- Career ladder: Junior tech → Tech → Senior tech → Manager → Salon owner → several salons; the XP levels and titles feed it, with the big steps at level milestones.
+- Boss mode (owner rank): hire nail techs, each with skill, speed, personality and English level.
+- Boss mode money: earn by commission on their work (e.g. 60/40), minus supply costs and rent; spend on decorations and upgrades with small buffs.
+- Boss mode problems: a client complains about a tech, a tech is late, two techs argue, a raise request, a supply runs out.
+- Every boss problem is an English (or vi↔en) conversation the player handles, so learning stays at the centre.
+- Mai/Long have their own bond level, separate from the player's, earned by daily practice, lessons and streaks (never money).
+- Each bond level unlocks outfits or poses, new lesson types (phone calls, complaints, staff talk) and more expressive reactions.
+- Phase 1: single-player is solid and published.
+- Phase 2: async social: visit other players' salons and leave a gift or a review (no live chat).
+- Phase 3: contests and leaderboards.
+- Phase 4: a shared map of player-owned salons in different locations.
+- Constraint: no free text between players without moderation and safety work in place first.
+
 ## Build order
 1. One client, text only, with mood meter and portraits *(built: stories 001, 009)*.
 2. Scoring with the English score (002).

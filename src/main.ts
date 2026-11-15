@@ -1,3 +1,4 @@
+import { planHangnail } from './game/hangnail';
 import { DAILY_CONFIG, NEW_PLAY, liveStreak as playStreak, welcomeCoins } from './game/daily';
 import { createPathScreen } from './game/ui/path-screen';
 import { createLessonScreen } from './game/ui/lesson-screen';
@@ -577,6 +578,11 @@ async function boot(): Promise<void> {
               // Story 033: the "Colour redo" scenario lets the client ask for one redo after Done.
               ...(scenario?.redo ? { redos: 1 } : {}),
               tools: { brushRadius: NAIL_ART_CONFIG.brushRadius * effects.brushScale, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius * effects.cleanupScale },
+              // Story 064 (hard clients): maybe a hangnail (stable for this visit).
+              ...(() => {
+                const nail = planHangnail(client.difficulty, `${client.id}:${loadSave().appointments}`, client.nailRequest?.hands === 2 ? 10 : 5);
+                return nail === null || client.nailRequest?.service === 'pedicure' ? {} : { hangnail: nail };
+              })(),
               onNote: (note: string | undefined) => {
                 nails.note = note;
               },

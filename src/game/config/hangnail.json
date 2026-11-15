@@ -1,0 +1,20 @@
+{
+  "_note": "Story 064 (hard clients only): some hard clients have a hangnail on one finger. The Nipper (in the Clean row) trims it: hold on it steadily for trimMs. A quick snip (released before slipMs) or a hard press (pressure above roughPressure, touch or pen) slips: a tiny red dot (never gory), her ouch line and slipMood. First aid then shows: apply styptic, then a bandage (aidMood once both are done); saying sorry in the chat (sorryPattern) adds sorryMood. A hangnail still there at Done costs leftMood. trimmedMood: her thanks for a clean trim. chance: the share of hard clients with a hangnail (by a stable hash of the visit).",
+  "chance": 0.5,
+  "trimMs": 900,
+  "slipMs": 300,
+  "roughPressure": 0.85,
+  "trimmedMood": 2,
+  "leftMood": -4,
+  "slipMood": -12,
+  "aidMood": 6,
+  "sorryMood": 3,
+  "sorryPattern": "\\b(sorry|apologi[sz]e|my apologies|my bad)\\b|xin lỗi",
+  "lines": {
+    "notice": "Oh, I have a little hangnail on this finger. Could you take care of it?",
+    "thanks": "Ah, that feels so much better. Thank you!",
+    "ouch": "Ouch! That pinched a little.",
+    "afterAid": "Thank you for taking care of it. It's okay.",
+    "left": "That hangnail is still bugging me, though."
+  }
+}
