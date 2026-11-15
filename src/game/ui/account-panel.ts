@@ -157,6 +157,8 @@ export function openSignInSheet(host: HTMLElement, account: Account, options: { 
       b.disabled = true;
       const result = await send();
       status.textContent = result.ok ? t('account.codeResent') : errorText(result.error);
+      // 053 fix: a sent code is good news (a green box); anything else is an error (a red box).
+      status.dataset.kind = result.ok ? 'info' : 'error';
       left = ACCOUNT_CONFIG.resendSeconds;
       window.clearInterval(timer);
       tick();
@@ -184,6 +186,7 @@ export function openSignInSheet(host: HTMLElement, account: Account, options: { 
   const busy = async <T>(main: HTMLButtonElement, status: HTMLElement, run: () => Promise<CloudResult<T>>, ok: (value: T) => void, onError?: (error: CloudError) => boolean): Promise<void> => {
     main.disabled = true;
     status.textContent = '';
+    status.dataset.kind = 'error';
     let result: CloudResult<T>;
     try {
       result = await run();
@@ -199,7 +202,9 @@ export function openSignInSheet(host: HTMLElement, account: Account, options: { 
     window.clearInterval(timer);
     const title = el('h2', '', t(`account.${mode}Title` as StringKey));
     title.id = 'account-title';
-    const status = el('p', 'setting-note feedback-status');
+    // 053 fix: errors and notes show as a clear box right above the buttons (16 px, an icon), announced as an alert.
+    const status = el('p', 'feedback-status account-status');
+    status.dataset.kind = 'error';
     status.setAttribute('role', 'alert');
     const cancel = button(t('common.back'));
     cancel.addEventListener('click', close);

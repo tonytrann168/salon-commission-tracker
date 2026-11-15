@@ -19,3 +19,12 @@ html[data-contrast='high'] .account-link { color: #6b0f3c; }
 /* Story 028: the Tết lì xì card (red envelope colours). */
 .season-gift { background: #fff1ec; border: 2px solid #d1141f; }
 .season-gift > strong { color: #b3101a; }
+
+/* 053 fix (overseer): the status as a clear box above the buttons: soft red with ⚠️ for errors, soft green with ✉️
+   for good news; 16 px. The action buttons keep their words on one line at 320 px (Tạo tài khoản). */
+.account-sheet .account-status:empty { display: none; }
+.account-sheet .account-status { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 0; padding: 10px 12px; border-radius: 12px; font-size: 16px; line-height: 1.35; color: #5c1a2b; background: #ffe3e6; border: 2px solid #f4a7b2; }
+.account-sheet .account-status::before { content: '⚠️'; flex: none; }
+.account-sheet .account-status[data-kind='info'] { color: #1f4d33; background: #e3f6ea; border-color: #9ed6b2; }
+.account-sheet .account-status[data-kind='info']::before { content: '✉️'; }
+.account-sheet .feedback-actions .chat-button { white-space: nowrap; padding-inline: 8px; font-size: clamp(15px, 4.8vw, 18px); }
