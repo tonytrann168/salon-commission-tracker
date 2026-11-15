@@ -177,6 +177,8 @@ export interface ProgressSave {
   companionVoice?: string;
   /** Story 056: the play streak, the weekly freeze and the daily gift. */
   play?: PlayState;
+  /** Story 057a: nodes finished on the salon path. */
+  pathDone?: number;
 }
 
 export const NEW_SAVE: ProgressSave = { version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0, history: {} };

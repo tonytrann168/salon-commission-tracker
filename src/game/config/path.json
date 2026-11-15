@@ -1,0 +1,8 @@
+{
+  "_note": "Story 057a: home is a path of salon days. Each day has nodesPerDay nodes in this pattern (appointment = a client in the chair; lesson = a short phrase lesson). Clients get harder day by day, within the difficulties the player's rank has opened. lessonPhrases: phrases in a lesson. lessonXp: XP for finishing one. goal: the daily goal ring (clients finished today). showDays: days drawn ahead of the current one.",
+  "pattern": ["appointment", "appointment", "lesson", "appointment", "appointment"],
+  "lessonPhrases": 3,
+  "lessonXp": 5,
+  "goal": 3,
+  "showDays": 1
+}

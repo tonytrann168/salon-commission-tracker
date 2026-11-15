@@ -60,6 +60,7 @@ export function parseSave(raw: string | null): ProgressSave {
     ...(d.menu !== undefined ? { menu: parseMenuChoice(d.menu) } : {}),
     ...(d.menuConfirmed === true ? { menuConfirmed: true } : {}),
     ...(d.play !== undefined ? { play: parsePlay(d.play) } : {}),
+    ...(typeof d.pathDone === 'number' && Number.isInteger(d.pathDone) && d.pathDone > 0 ? { pathDone: Math.min(d.pathDone, 100000) } : {}),
     ...(typeof d.companionVoice === 'string' && /^[a-z0-9-]{1,20}$/.test(d.companionVoice) ? { companionVoice: d.companionVoice } : {}),
   };
 }

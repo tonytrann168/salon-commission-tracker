@@ -1,3 +1,8 @@
+import { createPathScreen } from './game/ui/path-screen';
+import { createLessonScreen } from './game/ui/lesson-screen';
+import { PATH_CONFIG, finishNode } from './game/path';
+import type { PathNode } from './game/path';
+import { companionSpeech } from './game/companion-voice';
 import { createHomeStatus } from './game/ui/home-status';
 import { createMenuSetupScreen } from './game/ui/menu-setup';
 import { MENU_CONFIG, menuItems, orderFor } from './game/menu';
@@ -317,7 +322,7 @@ async function boot(): Promise<void> {
     const screen = createMenuSetupScreen(host, { firstTime, onDone: next });
     teardownDom = () => screen.remove();
   };
-  const toClients = () => (loadSave().menuConfirmed ? showClientPicker() : showMenuSetup(true, showClientPicker));
+  const toClients = () => (loadSave().menuConfirmed ? showPath() : showMenuSetup(true, showPath));
 
   const showMeet = () => {
     teardownDom();
@@ -347,27 +352,29 @@ async function boot(): Promise<void> {
   };
 
   /** Story 006: choose a difficulty, then a client, a random one, or a shift. */
+  /** Story 019: scenarios this client can have now (unlocked, fits, "returning" only after a real visit). */
+  const scenariosFor = (client: ClientPersona) => eligibleScenarios(client, SCENARIOS, { unlocked: unlockAll ? [...DIFFICULTIES] : unlockedDifficulties(loadSave().xp), visits: loadSave().history[client.id] ?? null });
+  /** Story 007: today's challenge (fixed in the save once offered); story 057a: shown on the path and in the picker. */
+  const dailyOffer = (begin: (client: ClientPersona, daily: boolean, scenario?: Scenario) => void) => {
+    const today = localDay();
+    const offered = dailyChallenge(loadSave(), today, ROSTER, undefined, (client) => pickScenario(hashDay(`${today}:${client.id}`), scenariosFor(client), SCENARIO_ODDS.dailyChance)?.id ?? null);
+    if (!offered) return undefined;
+    writeSave(offered.save);
+    const save = loadSave();
+    const scenario = getScenario(offered.scenarioId);
+    return { client: offered.client, done: dailyDoneToday(save, today), streak: liveStreak(save, today), onPick: () => begin(offered.client, true, scenario), ...(scenario ? { tag: scenario.tag[getLanguage()] } : {}) };
+  };
+
   const showClientPicker = () => {
     teardownDom();
     shift = { queue: [], total: 0 };
     const begin = (client: ClientPersona, daily = false, scenario?: Scenario) => beginAppointment(getEnglishLevel() ?? 'beginner', client, daily, scenario);
-    // Story 007: harder clients open with rank; today's challenge is fixed in the save once offered.
-    const today = localDay();
-    const openDifficulties = unlockAll ? [...DIFFICULTIES] : unlockedDifficulties(loadSave().xp);
-    /** Story 019: scenarios this client can have now (unlocked, fits, "returning" only after a real visit). */
-    const scenariosFor = (client: ClientPersona) => eligibleScenarios(client, SCENARIOS, { unlocked: openDifficulties, visits: loadSave().history[client.id] ?? null });
-    const offered = dailyChallenge(loadSave(), today, ROSTER, undefined, (client) => pickScenario(hashDay(`${today}:${client.id}`), scenariosFor(client), SCENARIO_ODDS.dailyChance)?.id ?? null);
-    if (offered) writeSave(offered.save);
+    const daily = dailyOffer(begin);
     const save = loadSave();
     const screen = createClientPicker(host, {
       unlocked: unlockAll ? DIFFICULTIES : unlockedDifficulties(save.xp),
       lockedLine: (difficulty) => t('picker.locked', { rank: `${rankUnlocking(difficulty).name[getLanguage()]} ${rankUnlocking(difficulty).icon}` }),
-      ...(offered
-        ? (() => {
-            const scenario = getScenario(offered.scenarioId);
-            return { daily: { client: offered.client, done: dailyDoneToday(save, today), streak: liveStreak(save, today), onPick: () => begin(offered.client, true, scenario), ...(scenario ? { tag: scenario.tag[getLanguage()] } : {}) } };
-          })()
-        : {}),
+      ...(daily ? { daily } : {}),
       shiftSize: SHIFT_SIZE,
       onPick: begin,
       onRandom: (difficulty) => {
@@ -380,8 +387,53 @@ async function boot(): Promise<void> {
         shift = { queue: clients.slice(1), total: clients.length };
         begin(clients[0] ?? DEFAULT_CLIENT);
       },
-      onBack: showTitle,
+      onBack: showPath,
       faceImage,
+    });
+    teardownDom = () => screen.remove();
+  };
+
+  /** Story 057a: the salon path, the hub after Start: a top bar, today's challenge, the day's nodes. */
+  const showPath = () => {
+    teardownDom();
+    shift = { queue: [], total: 0 };
+    const level = getEnglishLevel() ?? 'beginner';
+    const daily = dailyOffer((client, isDaily, scenario) => beginAppointment(level, client, isDaily, scenario));
+    const screen = createPathScreen(host, {
+      save: loadSave(),
+      today: localDay(),
+      roster: ROSTER,
+      unlocked: unlockAll ? DIFFICULTIES : unlockedDifficulties(loadSave().xp),
+      ...(daily ? { daily } : {}),
+      faceImage,
+      onNode: (node) => {
+        if (node.kind === 'lesson' && node.lesson) showLesson(node);
+        else if (node.client) beginAppointment(level, node.client, false, undefined, node.index);
+      },
+      onMore: showClientPicker,
+      onBack: showTitle,
+    });
+    teardownDom = () => screen.remove();
+  };
+
+  /** Story 057a: a short lesson node: phrases with ▶ Listen (the companion's voice) and 🎤 Say it. */
+  const showLesson = (node: PathNode) => {
+    teardownDom();
+    const level = getEnglishLevel() ?? 'beginner';
+    const screen = createLessonScreen(host, {
+      title: t(`path.lesson.${node.lesson?.topic ?? 'greeting'}`),
+      phrases: node.lesson?.phrases ?? [],
+      ...(voice.canSpeak ? { speak: (english: string) => void voice.speak(english, companionSpeech('en', level)) } : {}),
+      ...(practice ? { practice } : {}),
+      onDone: () => {
+        const save = loadSave();
+        const done = save.pathDone ?? 0;
+        // A lesson finishes its node once (and gives a little XP the first time).
+        writeSave({ ...save, pathDone: finishNode(done, node.index), xp: save.xp + (node.index === done ? PATH_CONFIG.lessonXp : 0) });
+        emitSound('phraseSaved');
+        showPath();
+      },
+      onBack: showPath,
     });
     teardownDom = () => screen.remove();
   };
@@ -391,10 +443,11 @@ async function boot(): Promise<void> {
     voice.unlock();
     const next = shift.queue.shift();
     if (next) beginAppointment(getEnglishLevel() ?? 'beginner', next);
-    else showClientPicker();
+    else showPath();
   };
 
-  const beginAppointment = async (level: EnglishLevel, persona: ClientPersona, daily = false, scenario?: Scenario) => {
+  /** `pathNode` (story 057a): the salon path's node this appointment is (it finishes the node). */
+  const beginAppointment = async (level: EnglishLevel, persona: ClientPersona, daily = false, scenario?: Scenario, pathNode?: number) => {
     // Story 018: the appointment needs the PixiJS stage (usually loaded by now) and a connection.
     let stage: Stage;
     try {
@@ -531,7 +584,8 @@ async function boot(): Promise<void> {
         clientId: persona.id,
         today: localDay(),
       });
-      writeSave(update.save);
+      // Story 057a: an appointment from the salon path finishes its node.
+      writeSave(pathNode === undefined ? update.save : { ...update.save, pathDone: finishNode(update.save.pathDone ?? 0, pathNode) });
       // Story 025: signed in → the appointment's progress goes to the account now.
       void getAccount()?.appointmentDone();
       const items = celebrationsFor(update);

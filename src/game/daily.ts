@@ -42,9 +42,11 @@ export interface PlayState {
   giftDay: string;
   /** Milestones (days) already rewarded in this streak run. */
   milestones: number[];
+  /** Story 057a: appointments finished on `lastDay` (the daily goal ring). */
+  dayCount: number;
 }
 
-export const NEW_PLAY: PlayState = { streak: 0, best: 0, lastDay: '', freezes: 0, freezeWeek: '', giftDay: '', milestones: [] };
+export const NEW_PLAY: PlayState = { streak: 0, best: 0, lastDay: '', freezes: 0, freezeWeek: '', giftDay: '', milestones: [], dayCount: 0 };
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const toUtc = (day: string): number => Date.UTC(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1, Number(day.slice(8, 10)));
@@ -70,6 +72,7 @@ export function parsePlay(raw: unknown): PlayState {
     freezeWeek: day(r.freezeWeek),
     giftDay: day(r.giftDay),
     milestones: Array.isArray(r.milestones) ? r.milestones.filter((n): n is number => typeof n === 'number' && Number.isInteger(n)).slice(0, 20) : [],
+    dayCount: whole(r.dayCount),
   };
 }
 
@@ -82,7 +85,7 @@ export function liveStreak(play: PlayState, today: string): number {
 
 /** A finished appointment today: the streak moves on (once a day); a missed single day uses a freeze if there is one. */
 export function recordPlayDay(play: PlayState, today: string, config: DailyConfig = DAILY_CONFIG): { play: PlayState; newDay: boolean; freezeUsed: boolean } {
-  if (play.lastDay === today) return { play, newDay: false, freezeUsed: false };
+  if (play.lastDay === today) return { play: { ...play, dayCount: play.dayCount + 1 }, newDay: false, freezeUsed: false };
   // Playing in a new week earns that week's freeze.
   const week = weekOf(today);
   const freezes = week !== play.freezeWeek ? Math.min(config.freeze.maxHeld, play.freezes + config.freeze.perWeek) : play.freezes;
@@ -94,7 +97,7 @@ export function recordPlayDay(play: PlayState, today: string, config: DailyConfi
     next = { ...play, streak: play.streak + 1 };
     freezeUsed = true;
   } else next = { ...play, streak: 1, milestones: [] };
-  next = { ...next, lastDay: today, freezeWeek: week, freezes: freezeUsed ? freezes - 1 : freezes };
+  next = { ...next, lastDay: today, freezeWeek: week, freezes: freezeUsed ? freezes - 1 : freezes, dayCount: 1 };
   return { play: { ...next, best: Math.max(next.best, next.streak) }, newDay: true, freezeUsed };
 }
 
@@ -126,3 +129,6 @@ export function openDailyGift(play: PlayState, today: string, rand: () => number
 }
 
 export const giftReady = (play: PlayState, today: string): boolean => play.giftDay !== today;
+
+/** Story 057a: appointments finished today (the daily goal ring). */
+export const doneToday = (play: PlayState, today: string): number => (play.lastDay === today ? play.dayCount : 0);

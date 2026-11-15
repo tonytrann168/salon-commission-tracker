@@ -54,6 +54,12 @@ export function createHomeStatus(host: HTMLElement, options: HomeStatusOptions):
       openGiftSheet(host, result.coins, result.bonus, result.milestone, result.total, draw);
     });
     box.replaceChildren(streak, wallet, gift);
+    // 057a: one row that never spills: drop the gift's word, then the freeze, if the wallet is long.
+    box.classList.remove('tight', 'tighter');
+    requestAnimationFrame(() => {
+      if (box.scrollWidth > box.clientWidth + 1) box.classList.add('tight');
+      if (box.scrollWidth > box.clientWidth + 1) box.classList.add('tighter');
+    });
   };
   draw();
   return box;

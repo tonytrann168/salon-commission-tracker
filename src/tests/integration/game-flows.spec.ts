@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import serviceTalk from '../../game/config/service-talk.json' with { type: 'json' };
-import { LANGS, dailyWith, mockApi, noOverflow, playToResults, seed } from './fixtures';
+import { LANGS, dailyWith, finishAppointment, mockApi, noOverflow, playToResults, seed } from './fixtures';
 
 /** Story 048: paint every nail on the station: rows of strokes across the whole hand area (spill does not matter here). */
 async function paintEverything(page: Page): Promise<void> {
@@ -504,6 +504,51 @@ for (const lang of LANGS) {
       await page.locator('.title-menu-row').nth(1).locator('button').first().click();
       await expect(page.locator('.shop-soon-tile')).toHaveCount(4);
       await expect(page.locator('.shop-soon-tile').first()).toContainText(lang === 'vi' ? 'Sắp có' : 'Soon');
+    });
+
+    test('the salon path (story 057a): a top bar with streak, level and the goal ring; the current node seats its client; a lesson node; one home bar', async ({ page }) => {
+      test.setTimeout(120_000);
+      await seed(page, lang, { save: { xp: 100, appointments: 3, badges: ['first-client'], ...dailyWith('ana') } });
+      await mockApi(page);
+      await page.goto('/');
+      // Home: streak, wallet and gift in one bar that overlaps nothing.
+      const bar = await page.evaluate(() => {
+        const b = document.querySelector('.home-status')!.getBoundingClientRect();
+        const toggle = document.querySelector('.language-toggle')!.getBoundingClientRect();
+        const kids = [...document.querySelectorAll('.home-status > *')].map((n) => n.getBoundingClientRect());
+        return { oneRow: kids.every((k) => Math.abs(k.top - kids[0]!.top) < 4), clearOfToggle: b.right <= toggle.left, inside: kids.every((k) => k.right <= b.right + 1) };
+      });
+      expect(bar).toEqual({ oneRow: true, clearOfToggle: true, inside: true });
+      // Start → the path: the bar, today's challenge, the day's nodes.
+      await page.locator('.title-menu > .chat-button').first().click();
+      await expect(page.locator('.path-bar .path-level')).toContainText(lang === 'vi' ? 'Cấp' : 'Level');
+      await expect(page.locator('.path-goal-count')).toHaveText('0/3');
+      await expect(page.locator('.path-screen .picker-daily')).toBeVisible();
+      await expect(page.locator('.path-node.current')).toHaveCount(1);
+      await expect(page.locator('.path-node.current')).toHaveAttribute('data-index', '0');
+      await expect(page.locator('.path-node.locked').first()).toBeDisabled();
+      expect(await noOverflow(page)).toBe(true);
+      // The current node: an appointment with its client, played to the results; Next client → back on the path.
+      await page.locator('.path-node.current').click();
+      await finishAppointment(page);
+      await page.locator('.results-actions .chat-button').first().click();
+      await expect(page.locator('.path-node.done[data-index="0"]')).toHaveCount(1);
+      await expect(page.locator('.path-node.current')).toHaveAttribute('data-index', '1');
+      await expect(page.locator('.path-goal-count')).toHaveText('1/3');
+      // A lesson node: three phrases, Listen, "I've got it" → the node is done and a little XP.
+      await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('salon.save') ?? '{}'); s.pathDone = 2; localStorage.setItem('salon.save', JSON.stringify(s)); });
+      await page.reload();
+      await page.locator('.title-menu > .chat-button').first().click();
+      const xpBefore = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}').xp);
+      await page.locator('.path-node.current.lesson').click();
+      await expect(page.locator('.lesson-phrase')).toHaveCount(3);
+      await expect(page.locator('.lesson-phrase .lesson-en').first()).not.toBeEmpty();
+      await page.locator('.lesson-done').click();
+      await expect(page.locator('.path-node.done[data-index="2"]')).toHaveCount(1);
+      expect(await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}').xp)).toBe(xpBefore + 5);
+      // Other clients: the full picker, and Back returns to the path.
+      await page.locator('.path-more').click();
+      await expect(page.locator('.client-picker')).toBeVisible();
     });
 
     test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {

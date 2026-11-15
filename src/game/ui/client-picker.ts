@@ -28,7 +28,7 @@ export interface ClientPickerOptions {
 const DIFFICULTY_KEY = 'salon.pickerDifficulty';
 
 /** A small face: the look colours at once, then the client's real portrait face when it has been drawn. */
-function avatar(client: ClientPersona, faceImage?: ClientPickerOptions['faceImage']): HTMLElement {
+export function avatar(client: ClientPersona, faceImage?: ClientPickerOptions['faceImage']): HTMLElement {
   const face = el('span', client.look.hairStyle === 'short' ? 'picker-avatar short' : 'picker-avatar');
   face.style.setProperty('--hair', client.look.hair);
   face.style.setProperty('--skin', client.look.skin);
@@ -42,6 +42,25 @@ function avatar(client: ClientPersona, faceImage?: ClientPickerOptions['faceImag
     })
     .catch(() => undefined);
   return face;
+}
+
+/** Today's challenge card (story 007; also on the salon path, story 057a). */
+export function createDailyCard(daily: NonNullable<ClientPickerOptions['daily']>, faceImage?: ClientPickerOptions['faceImage']): HTMLButtonElement {
+  const { client, done, streak } = daily;
+  const card = el('button', done ? 'picker-daily done' : 'picker-daily');
+  card.type = 'button';
+  const words = el('span', 'picker-words');
+  words.append(
+    el('span', 'picker-daily-label', done ? t('daily.doneLabel') : t('daily.label')),
+    el('strong', '', client.name),
+    ...(daily.tag ? [el('span', 'picker-tag', daily.tag)] : []),
+    el('span', 'picker-line', streak > 0 ? t('daily.streak', { days: streak }) : t('daily.start')),
+  );
+  card.append(avatar(client, faceImage), words);
+  card.setAttribute('aria-label', done ? t('daily.doneAria', { name: client.name }) : t('daily.aria', { name: client.name }));
+  card.disabled = done;
+  card.addEventListener('click', () => daily.onPick());
+  return card;
 }
 
 export function createClientPicker(host: HTMLElement, options: ClientPickerOptions): HTMLElement {
@@ -76,22 +95,7 @@ export function createClientPicker(host: HTMLElement, options: ClientPickerOptio
   const isOpen = (d: Difficulty): boolean => !options.unlocked || options.unlocked.includes(d);
 
   // Today's challenge (story 007): one client a day; finishing it keeps the streak going.
-  const daily = options.daily ? el('button', options.daily.done ? 'picker-daily done' : 'picker-daily') : null;
-  if (daily && options.daily) {
-    const { client, done, streak } = options.daily;
-    daily.type = 'button';
-    const words = el('span', 'picker-words');
-    words.append(
-      el('span', 'picker-daily-label', done ? t('daily.doneLabel') : t('daily.label')),
-      el('strong', '', client.name),
-      ...(options.daily.tag ? [el('span', 'picker-tag', options.daily.tag)] : []),
-      el('span', 'picker-line', streak > 0 ? t('daily.streak', { days: streak }) : t('daily.start')),
-    );
-    daily.append(avatar(client, options.faceImage), words);
-    daily.setAttribute('aria-label', done ? t('daily.doneAria', { name: client.name }) : t('daily.aria', { name: client.name }));
-    daily.disabled = done;
-    daily.addEventListener('click', () => options.daily?.onPick());
-  }
+  const daily = options.daily ? createDailyCard(options.daily, options.faceImage) : null;
 
   const tabButtons = DIFFICULTIES.map((d) => {
     const tab = el('button', isOpen(d) ? `picker-tab ${d}` : `picker-tab ${d} locked`, t(`picker.${d}`));

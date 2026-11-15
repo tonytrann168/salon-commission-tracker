@@ -105,9 +105,14 @@ export async function mockApi(target: Page | BrowserContext, options: ApiOptions
 }
 
 /** Start an appointment from today's daily card and send lines until the results show. */
-export async function playToResults(page: Page, lines = ['Hello! Welcome to our salon. Please have a seat.', 'Which colour would you like today?', 'Your nails are done. That is twenty-five dollars.', 'Thank you! See you next time.']): Promise<void> {
+export async function playToResults(page: Page, lines?: string[]): Promise<void> {
   await page.locator('.title-menu > .chat-button').first().click();
   await page.locator('.picker-daily').click();
+  await finishAppointment(page, lines);
+}
+
+/** Story 057a: play an appointment that is already open (from the daily card or a path node) to the results. */
+export async function finishAppointment(page: Page, lines = ['Hello! Welcome to our salon. Please have a seat.', 'Which colour would you like today?', 'Your nails are done. That is twenty-five dollars.', 'Thank you! See you next time.']): Promise<void> {
   await page.waitForSelector('.chat-input');
   for (const line of lines) {
     if (await page.locator('.chat-results:not(.hidden)').count()) break;
