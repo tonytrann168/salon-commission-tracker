@@ -309,7 +309,8 @@
     "forgiveRing": 1,
     "zeroNeatnessAt": 0.35
   },
-  "cleanupRadius": 4.5,
+  "cleanupRadius": 6.5,
+  "tidy": { "_note": "Story 052: Clean edges tidies one nail's skin spill in one tap; it takes this long (the station waits), so it is never free perfection.", "seconds": 1.2 },
   "maxDecorationsPerNail": 3,
   "fullCoverage": 0.92,
   "matchWeights": {

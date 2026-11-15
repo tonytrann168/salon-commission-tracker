@@ -476,6 +476,7 @@ export function createChatPanel(
     }, SERVICE_TALK.ignoreSeconds * 1000);
   };
   /** Her own line, when she can say it (not over a reply, a turn in flight, or the pedicure prep). */
+  const saidInService = new Set<string>();
   const sayWhenFree = (text: string, tries = 0): void => {
     if (!serviceMode || ending || tries > 12) return;
     // She doesn't pile up questions: her next line waits while one is still unanswered (until its wait runs out).
@@ -483,9 +484,16 @@ export function createChatPanel(
       talkTimers.push(window.setTimeout(() => sayWhenFree(text, tries + 1), 5000));
       return;
     }
-    // Story 051: she never asks for a fix that can't be done (shorter than the shortest nails).
+    // Story 051: she never asks for a fix that can't be done (shorter than the shortest nails): another of her lines.
     const kind = fixKindOf(text);
-    if (kind && station && !canFix(openRequest(kind, station.design(), text), station.lengths)) return;
+    if (kind && station && !canFix(openRequest(kind, station.design(), text), station.lengths)) {
+      const other = SERVICE_TALK.lines[portraits.client.difficulty].find((line) => !saidInService.has(line) && !fixKindOf(line));
+      if (other) sayWhenFree(other, tries);
+      return;
+    }
+    // No line twice (a stand-in line may have been one she had planned for later).
+    if (saidInService.has(text) && SERVICE_TALK.lines[portraits.client.difficulty].includes(text)) return;
+    saidInService.add(text);
     appointment.clientSays(text);
   };
   const startService = (): void => {

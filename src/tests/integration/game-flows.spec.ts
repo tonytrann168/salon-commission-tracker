@@ -204,6 +204,53 @@ for (const lang of LANGS) {
       await expect(fix).toHaveCount(0);
     });
 
+    test('brush and clean-up (story 052): a brush under the finger, Undo the last stroke, Clean edges tidies a nail after a short wait', async ({ page }) => {
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('Hello! What colour would you like?');
+      await page.locator('.chat-form button[type=submit]').click();
+      const undo = page.locator('.station-undo');
+      await expect(undo).toBeDisabled();
+      await page.locator('.station-swatch').nth(3).click();
+      // The brush shows while the finger is down, and goes when it lifts.
+      const touch = page.locator('.station-touch');
+      const at = async (type: string, fx: number, fy: number) => touch.evaluate((node, [t, x, y]) => { const b = node.getBoundingClientRect(); node.dispatchEvent(new PointerEvent(t as string, { bubbles: true, cancelable: true, pointerId: 3, clientX: b.left + b.width * (x as number), clientY: b.top + b.height * (y as number), buttons: 1 })); }, [type, fx, fy] as const);
+      await at('pointerdown', 0.5, 0.5);
+      await expect(page.locator('.station-brush.show')).toHaveCount(1);
+      await at('pointerup', 0.5, 0.5);
+      await expect(page.locator('.station-brush.show')).toHaveCount(0);
+      // Undo: the swatch tap is a step; Undo takes it back.
+      await expect(undo).toBeEnabled();
+      await page.locator('.station-step[data-step=shape]').click();
+      await page.locator('.station-shape').nth(3).click();
+      await expect(page.locator('.station-step[data-step=shape]')).toHaveClass(/matched/);
+      await undo.click();
+      await expect(page.locator('.station-step[data-step=shape]')).not.toHaveClass(/matched/);
+      // Paint everything (spill on the skin), then 🧽 Clean → Clean edges → tap a nail: a short wait, then tidy.
+      await page.locator('.station-step[data-step=colour]').click();
+      await paintEverything(page);
+      await page.locator('.station-controls .station-clean-mode').click();
+      await expect(page.locator('.station-controls .station-clean-mode')).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.station-row .station-tidy')).toBeVisible();
+      await page.locator('.station-row .station-tidy').click();
+      const busy = await touch.evaluate((node) => {
+        const b = node.getBoundingClientRect();
+        for (let y = b.top + 4; y < b.bottom; y += 4) {
+          node.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 4, clientX: b.left + b.width / 2, clientY: y, buttons: 1 }));
+          node.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 4, clientX: b.left + b.width / 2, clientY: y }));
+          if (document.querySelector('.station-tools.busy')) return true;
+        }
+        return false;
+      });
+      expect(busy).toBe(true);
+      await expect(page.locator('.station-status')).toContainText('✨');
+      await expect(page.locator('.station-tools.busy')).toHaveCount(0, { timeout: 4_000 });
+      await expect(page.locator('.station-status')).toContainText(lang === 'vi' ? 'Viền sạch' : 'Edges clean');
+    });
+
     test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page, { replies: ['Hi!', 'Red, please. Oh, can you fix that edge? There is polish on my skin.'] });
@@ -214,7 +261,7 @@ for (const lang of LANGS) {
       await page.locator('.chat-form button[type=submit]').click();
       const fix = page.locator('.station-controls .station-fix');
       await expect(fix).toBeVisible();
-      await expect(page.locator('.station-row .station-tool[aria-pressed=true] .tab-text')).toHaveText(lang === 'vi' ? 'Lau' : 'Clean');
+      await expect(page.locator('.station-row .station-tool[aria-pressed=true] .tab-text')).toHaveText(lang === 'vi' ? 'Chà' : 'Rub');
       await expect(page.locator('.station-remove-all')).toBeVisible();
       await paintEverything(page);
       await expect(page.locator('.service-say')).toContainText(/much better|edge looks clean/, { timeout: 5_000 });

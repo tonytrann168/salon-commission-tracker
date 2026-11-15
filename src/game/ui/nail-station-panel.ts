@@ -3,7 +3,7 @@ import { clientGrammar } from '../types';
 import type { ClientPronoun } from '../types';
 import type { Container } from 'pixi.js';
 import { getLanguage, t } from '../i18n';
-import { NAIL_ART_CONFIG, NAIL_LENGTHS, emptyDesign, limbFor, nailsFor, removeAll } from '../nail-art/design';
+import { NAIL_ART_CONFIG, NAIL_LENGTHS, emptyDesign, limbFor, nailsFor, paletteColor, removeAll } from '../nail-art/design';
 import type { FixKind } from '../fix-requests';
 import type { NailDesign, NailLength, NailRequest, NailShape, PaletteColor, StickerKind } from '../nail-art/design';
 import { describeDesign, matchDesign } from '../nail-art/match';
@@ -106,7 +106,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
   // Story 024: a pedicure shows the foot (toes as fingers).
   // Story 051: the lengths on offer; the hand keeps room for the longest so it never jumps.
   const lengths = options.lengths ?? NAIL_LENGTHS.filter((l) => l !== 'xlong');
-  const longest = Math.max(...lengths.map((l) => NAIL_ART_CONFIG.lengths[l]));
+  // Overseer (051): the hand stays as big as it can: room only for the longest length she ordered (or the one picked).
+  const longest = Math.max(1, ...(options.request.lengths ?? []).map((l) => NAIL_ART_CONFIG.lengths[l]));
   const view = createStationView(emptyDesign(SHAPES[1] ?? 'round', nails), options.tools, limbFor(options.request), longest);
   const palette = options.palette ?? NAIL_ART_CONFIG.palette.filter((colour) => !colour.shop);
   options.layer.addChild(view.container);
@@ -139,8 +140,10 @@ export function createNailStation(options: NailStationOptions): NailStation {
     window.clearTimeout(hideHint);
     if (!keep) hideHint = window.setTimeout(() => status.classList.remove('show'), HINT_MS);
   };
-  type Tab = 'shape' | 'length' | 'colour' | 'art' | 'fix';
+  // Story 052: 'clean' is the clean-up mode (Rub, Clean edges), opened from 🧽 Clean in the bottom row.
+  type Tab = 'shape' | 'length' | 'colour' | 'art' | 'fix' | 'clean';
   let tab: Tab = 'colour';
+  let stepTab: Tab = 'colour';
 
   const button = (label: string, className: string, onClick: () => void, aria?: string): HTMLButtonElement => {
     const node = el('button', `station-button ${className}`);
@@ -163,6 +166,13 @@ export function createNailStation(options: NailStationOptions): NailStation {
     updateChecks();
     options.onChange(design);
   };
+  // Story 052: Undo: the design before each stroke or tap (the last 20).
+  const history: NailDesign[] = [];
+  const remember = (): void => {
+    history.push(design);
+    if (history.length > 20) history.shift();
+  };
+  let busy = false;
   const setDesign = (next: NailDesign): void => {
     if (next === design) return;
     // Polish landed on the skin: say so once per slip, and point at Clean up (owner, 2026-11-10).
@@ -176,12 +186,14 @@ export function createNailStation(options: NailStationOptions): NailStation {
 
   const shapeButtons = SHAPES.map((shape) =>
     button(shapeIcon(shape), 'station-shape', () => {
+      if (design.shape !== shape) remember();
       setDesign({ ...design, shape });
       refresh();
     }, t('station.shapeLabel', { shape: t(`station.shape.${shape}`) })),
   );
   const lengthButtons = lengths.map((length) =>
     button(labelled(lengthIcon(length), t(`station.length.${length}`)), 'station-length', () => {
+      if (design.length !== length) remember();
       setDesign({ ...design, length });
       flushChange();
       refresh();
@@ -199,14 +211,19 @@ export function createNailStation(options: NailStationOptions): NailStation {
     options.onDone(design, result);
   });
   doneButton.setAttribute('aria-label', t('station.doneLabel'));
-  const resetButton = button(t('station.reset'), 'station-reset', () => setDesign(emptyDesign(design.shape, nails)), t('station.resetLabel'));
+  const resetButton = button(t('station.reset'), 'station-reset', () => {
+    remember();
+    setDesign(emptyDesign(design.shape, nails, design.length));
+    refresh();
+  }, t('station.resetLabel'));
 
   const toolButtons: Record<StationTool, HTMLButtonElement> = {
     polish: button(t('station.polish'), 'station-tool', () => selectTool('polish')),
     gradient: button(`<span aria-hidden="true">🌈</span><span class="tab-text">${t('station.gradient').replace('🌈', '').trim()}</span>`, 'station-tool', () => selectTool('gradient'), t('station.gradient').replace('🌈', '').trim()),
     gem: button(t('station.gem'), 'station-tool', () => selectTool('gem')),
-    cleanup: button(labelled('🧽', t('station.cleanWord')), 'station-tool', () => selectTool('cleanup'), t('station.cleanup')),
+    cleanup: button(labelled('🧽', t('station.rubWord')), 'station-tool', () => selectTool('cleanup'), t('station.cleanup')),
     remover: button(labelled('🧴', t('station.removerWord')), 'station-tool station-remover', () => selectTool('remover'), t('station.remover')),
+    tidy: button(labelled('✨', t('station.tidyWord')), 'station-tool station-tidy', () => selectTool('tidy'), t('station.tidyLabel')),
     sticker: button(t(`station.sticker.${sticker}`), 'station-tool', () => {
       // Tapping Sticker again cycles heart → star → flower.
       if (tool === 'sticker') {
@@ -219,6 +236,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
   };
   const swatches = palette.map((color) => {
     const swatch = button('', 'station-swatch', () => {
+      remember();
       if (tool === 'gradient') setDesign({ ...design, gradient: design.gradient === color.id ? null : color.id });
       else {
         if (tool !== 'polish') selectTool('polish');
@@ -229,7 +247,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     swatch.style.background = color.hex;
     return swatch;
   });
-  const tabButtons: Record<Tab, HTMLButtonElement> = {
+  const tabButtons: Record<Exclude<Tab, 'clean'>, HTMLButtonElement> = {
     // Story 049: a numbered step: its number, its word, and a ✓ once it matches her order (Art says "optional" when
     // she asked for no art).
     shape: stepButton('shape'),
@@ -252,6 +270,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
   }
   const removeAllButton = button(labelled('🫧', t('station.removeAll')), 'station-remove-all', () => {
     fixActed = true;
+    remember();
     setDesign(removeAll(design));
     flushChange();
     refresh();
@@ -265,7 +284,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const icon = foot ? '🦶' : '✋';
   const sideLabel = (side: 0 | 1): string => t(foot ? (side === 0 ? 'station.footRight' : 'station.footLeft') : side === 0 ? 'station.handRight' : 'station.handLeft');
   const handWord = (): string => t(foot ? 'station.footWord' : 'station.handWord');
-  const handButton = button(labelled(`${icon}1`, handWord()), 'station-hand', () => {
+  // Story 052: the hand switch floats over the hand (top left, where no nail is), so the bottom row keeps its room.
+  const handButton = button(labelled(`${icon}1`, handWord()), 'station-hand station-hand-float', () => {
     hand = hand === 0 ? 1 : 0;
     view.setHand(hand);
     view.setDesign(design);
@@ -280,32 +300,48 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const controls = el('div', 'station-controls');
   // Story 048: while a fix is asked for, Fix it takes Clean up's place (Clean up is inside it), so the row still fits.
   const fixSlot = el('div', 'station-fix-slot');
-  fixSlot.append(toolButtons.cleanup);
+  // Story 052: 🧽 Clean opens the clean-up mode (Rub, Clean edges); tapped again, back to the step.
+  const cleanButton = button(labelled('🧽', t('station.cleanWord')), 'station-tool station-clean-mode', () => selectTab(tab === 'clean' ? stepTab : 'clean'), t('station.cleanup'));
+  fixSlot.append(cleanButton);
+  // Story 052: Undo the last stroke or tap.
+  const undoButton = button(labelled('↶', t('station.undoWord')), 'station-undo', () => {
+    const previous = history.pop();
+    if (!previous || busy) return;
+    setDesign(previous);
+    flushChange();
+    say(t('station.undone'));
+    refresh();
+  }, t('station.undoLabel'));
   // Story 049: "?" opens a 3-picture how-to.
   const howButton = button(labelled('?', t('station.howWord')), 'station-how', () => openHowTo(), t('station.howLabel'));
-  controls.append(fixSlot, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []), howButton, doneButton);
+  controls.append(fixSlot, undoButton, howButton, doneButton);
   toolbar.append(tabs, optionsRow, controls);
 
   function selectTab(next: Tab): void {
     tab = next;
+    if (next !== 'clean' && next !== 'fix') stepTab = next;
     if (tab === 'shape') optionsRow.replaceChildren(...shapeButtons, resetButton);
     else if (tab === 'length') optionsRow.replaceChildren(...lengthButtons);
     else if (tab === 'colour') optionsRow.replaceChildren(...swatches, toolButtons.gradient);
     else if (tab === 'art') optionsRow.replaceChildren(toolButtons.gem, toolButtons.sticker);
+    else if (tab === 'clean') optionsRow.replaceChildren(toolButtons.cleanup, toolButtons.tidy);
     // Story 048: the fix tools; a colour fix also has the colours right there.
     else optionsRow.replaceChildren(...(fixKind === 'length' ? lengthButtons : []), toolButtons.remover, removeAllButton, toolButtons.cleanup, ...(fixKind === 'colour' ? swatches : []));
-    if (tab === 'colour' && tool !== 'gradient' && tool !== 'cleanup') tool = 'polish';
+    if (tab === 'clean' && tool !== 'cleanup' && tool !== 'tidy') tool = 'cleanup';
+    if ((tab === 'shape' || tab === 'length' || tab === 'colour') && (tool === 'cleanup' || tool === 'tidy' || tool === 'remover')) tool = 'polish';
+    if (tab === 'colour' && tool !== 'gradient') tool = 'polish';
     if (tab === 'art' && tool !== 'gem' && tool !== 'sticker') tool = 'gem';
     if (tab === 'fix' && tool !== 'cleanup' && tool !== 'remover' && tool !== 'polish') tool = fixKind === 'edge' ? 'cleanup' : fixKind === 'colour' ? 'remover' : 'polish';
-    instruction.textContent = tab === 'fix' ? t('station.step.fix') : t(`station.step.${tab}`, { n: STATION_STEPS.indexOf(tab) + 1 });
+    instruction.textContent = tab === 'fix' ? t('station.step.fix') : tab === 'clean' ? t('station.step.clean') : t(`station.step.${tab}`, { n: STATION_STEPS.indexOf(tab) + 1 });
     optionsRow.scrollLeft = 0;
     refresh();
   }
 
   function selectTool(next: StationTool): void {
     // Gradient and Clean up toggle back to plain polish when tapped again.
-    tool = (next === 'gradient' || next === 'cleanup' || next === 'remover') && tool === next ? 'polish' : next;
-    if (tool === 'gradient' || tool === 'cleanup' || tool === 'remover') say(t(tool === 'gradient' ? 'station.gradientOn' : tool === 'cleanup' ? 'station.cleanupOn' : 'station.removerOn'));
+    // In the clean-up mode, Rub and Clean edges stay chosen (one of them is always on).
+    tool = (next === 'gradient' || next === 'remover' || (next === 'cleanup' && tab !== 'clean' && tab !== 'fix')) && tool === next ? 'polish' : next;
+    if (tool === 'gradient' || tool === 'cleanup' || tool === 'remover' || tool === 'tidy') say(t(tool === 'gradient' ? 'station.gradientOn' : tool === 'cleanup' ? 'station.cleanupOn' : tool === 'tidy' ? 'station.tidyOn' : 'station.removerOn'));
     else status.classList.remove('show');
     refresh();
   }
@@ -318,7 +354,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
 
   function refresh(): void {
     updateChecks();
-    (Object.keys(tabButtons) as Tab[]).forEach((key) => tabButtons[key].setAttribute('aria-selected', String(key === tab)));
+    (Object.keys(tabButtons) as Exclude<Tab, 'clean'>[]).forEach((key) => tabButtons[key].setAttribute('aria-selected', String(key === tab)));
     shapeButtons.forEach((node, index) => node.setAttribute('aria-pressed', String(SHAPES[index] === design.shape)));
     lengthButtons.forEach((node, index) => node.setAttribute('aria-pressed', String(lengths[index] === design.length)));
     (Object.keys(toolButtons) as StationTool[]).forEach((key) => toolButtons[key].setAttribute('aria-pressed', String(key === tool)));
@@ -329,24 +365,67 @@ export function createNailStation(options: NailStationOptions): NailStation {
     toolbar.querySelectorAll('button').forEach((node) => {
       (node as HTMLButtonElement).disabled = done;
     });
+    cleanButton.setAttribute('aria-pressed', String(tab === 'clean'));
+    undoButton.disabled = done || history.length === 0;
+    handButton.disabled = done;
   }
 
   // Touch layer: forwards pointer positions to the station (relative to the zone).
   const touch = el('div', 'station-touch hidden');
   // Story 049: the step's instruction sits over the empty palm (no toolbar height taken); a short message (spill, a
   // tool) takes its place for a few seconds.
-  touch.append(status, instruction);
+  touch.append(status, instruction, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []));
   let drawing = false;
   // Story 047: the layer's position is read once per stroke (not on every finger movement).
   let box: DOMRect | null = null;
+  // Story 052: a polish brush under the finger while painting (its tip at the touch point, the handle leaning up and
+  // away so it never hides the paint). Moved with a transform only; off with reduced motion.
+  const brush = el('div', 'station-brush');
+  brush.setAttribute('aria-hidden', 'true');
+  brush.innerHTML = `<svg viewBox="0 0 40 80" width="30" height="60"><rect x="15" y="0" width="10" height="44" rx="4" fill="#3b2a33"/><rect x="14" y="40" width="12" height="12" rx="2" fill="#c9c2c6"/><path d="M14 52 H26 L22 76 Q20 80 18 76 Z" fill="var(--polish, #ff5c9a)" stroke="#5a2e43" stroke-width="1"/></svg>`;
+  const brushOn = (): boolean => (tool === 'polish' || tool === 'gradient') && design.base !== null && document.documentElement.dataset.motion !== 'reduce' && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const moveBrush = (x: number, y: number): void => {
+    brush.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(28deg)`;
+  };
+  touch.append(brush);
+  let strokeStart: NailDesign | null = null;
   const forward = (event: PointerEvent, phase: 'down' | 'move'): void => {
-    if (done) return;
+    if (done || busy) return;
     if (phase === 'down' || !box) box = touch.getBoundingClientRect();
+    const x = event.clientX - box.left;
+    const y = event.clientY - box.top;
+    if (phase === 'down') strokeStart = design;
     // Story 048: a clean-up or remover stroke is the player acting on her fix (even where the skin is already clean).
-    if (tool === 'cleanup' || tool === 'remover') fixActed = true;
-    setDesign(view.pointer(event.clientX - box.left, event.clientY - box.top, phase, tool, sticker));
+    if (tool === 'cleanup' || tool === 'remover' || tool === 'tidy') fixActed = true;
+    if (brushOn()) {
+      if (phase === 'down') {
+        brush.style.setProperty('--polish', paletteColor(design.base)?.hex ?? '#ff5c9a');
+        brush.classList.add('show');
+      }
+      moveBrush(x, y);
+    }
+    const next = view.pointer(x, y, phase, tool, sticker);
+    if (tool === 'tidy' && next !== design) {
+      // Story 052: Clean edges takes a moment (never free perfection): the station waits, then the nail is tidy.
+      busy = true;
+      toolbar.classList.add('busy');
+      say(t('station.tidying'), true);
+      window.setTimeout(() => {
+        busy = false;
+        toolbar.classList.remove('busy');
+        remember();
+        setDesign(next);
+        flushChange();
+        say(t('station.tidied'));
+        refresh();
+      }, NAIL_ART_CONFIG.tidy.seconds * 1000);
+      return;
+    }
+    setDesign(next);
   };
   touch.addEventListener('pointerdown', (event) => {
+    // Story 052: the floating hand switch is a button over the hand, not paint.
+    if ((event.target as Element | null)?.closest?.('button')) return;
     // No text selection or native drag from a mouse stroke (either cancels the stroke part-way).
     event.preventDefault();
     drawing = true;
@@ -368,6 +447,14 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const stop = (): void => {
     drawing = false;
     box = null;
+    brush.classList.remove('show');
+    // Story 052: the stroke (or tap) is one Undo step.
+    if (strokeStart && strokeStart !== design) {
+      history.push(strokeStart);
+      if (history.length > 20) history.shift();
+      refresh();
+    }
+    strokeStart = null;
     document.documentElement.classList.remove('painting');
     flushChange();
   };
@@ -385,7 +472,10 @@ export function createNailStation(options: NailStationOptions): NailStation {
     const tall = r.height >= 220;
     const left = tall ? 8 : side === 'left' ? 70 : 20;
     const right = tall ? 8 : side === 'right' ? 70 : 8;
-    view.layout(r.left, r.top, r.width, r.height, left, right, tall ? Math.max(84, options.topBand?.() ?? 138) : 0);
+    const band = tall ? Math.max(84, options.topBand?.() ?? 138) : 0;
+    view.layout(r.left, r.top, r.width, r.height, left, right, band);
+    // Story 052: the hand switch sits just under her bubble and the order, at the left (no nail there).
+    handButton.style.top = `${band + 4}px`;
     view.setDesign(design);
     placeHint(r.width, r.height);
   };
@@ -460,7 +550,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
       if (fixKind === null) return;
       fixKind = null;
       toolbar.classList.remove('fixing');
-      fixSlot.replaceChildren(toolButtons.cleanup);
+      fixSlot.replaceChildren(cleanButton);
       if (tool === 'remover') tool = 'polish';
       if (tab === 'fix') selectTab('colour');
       else refresh();

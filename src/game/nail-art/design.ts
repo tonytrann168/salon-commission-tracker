@@ -56,6 +56,8 @@ export interface NailArtConfig {
   spill: { marginCells: number; forgiveRing: number; zeroNeatnessAt: number };
   /** The Clean up tool's radius, in hand units. */
   cleanupRadius: number;
+  /** Story 052: Clean edges (one nail's spill in one tap) takes this long. */
+  tidy: { seconds: number };
   maxDecorationsPerNail: number;
   /** Coverage that counts as fully painted (0-1). */
   fullCoverage: number;
@@ -179,6 +181,7 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
     brushRadius: num(raw.brushRadius, 'brushRadius', 0.5, 20),
     spill: { marginCells: num(spill.marginCells, 'spill.marginCells', 0, 6), forgiveRing: num(spill.forgiveRing, 'spill.forgiveRing', 0, 3), zeroNeatnessAt: num(spill.zeroNeatnessAt, 'spill.zeroNeatnessAt', 0.05, 2) },
     cleanupRadius: num(raw.cleanupRadius, 'cleanupRadius', 0.5, 30),
+    tidy: { seconds: num(isRecord(raw.tidy) ? raw.tidy.seconds : undefined, 'tidy.seconds', 0, 10) },
     maxDecorationsPerNail: num(raw.maxDecorationsPerNail, 'maxDecorationsPerNail', 0, 10),
     fullCoverage: num(raw.fullCoverage, 'fullCoverage', 0.5, 1),
     matchWeights: { shape: num(weights.shape, 'matchWeights.shape', 0, 100), length: num(weights.length, 'matchWeights.length', 0, 100), color: num(weights.color, 'matchWeights.color', 0, 100), coverage: num(weights.coverage, 'matchWeights.coverage', 0, 100), extras: num(weights.extras, 'matchWeights.extras', 0, 100), neatness: num(weights.neatness, 'matchWeights.neatness', 0, 100) },
@@ -404,3 +407,9 @@ export function lengthReach(hand: HandConfig, factor: number): number {
 
 /** Story 051: steps between two lengths (0 = the same). */
 export const lengthSteps = (a: NailLength, b: NailLength): number => Math.abs(NAIL_LENGTHS.indexOf(a) - NAIL_LENGTHS.indexOf(b));
+
+/** Story 052: Clean edges: one nail's skin spill wiped in one tap. */
+export function tidyNail(design: NailDesign, nail: number): NailDesign {
+  if ((design.spill[nail]?.length ?? 0) === 0) return design;
+  return { ...design, spill: design.spill.map((list, index) => (index === nail ? [] : list)) };
+}

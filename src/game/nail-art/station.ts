@@ -1,5 +1,5 @@
 import { Container, Graphics } from 'pixi.js';
-import { NAIL_ART_CONFIG, lengthReach, mirroredFingers, withLength, addSpill, cleanUp, dab, removeNail, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid, wipeCells } from './design';
+import { NAIL_ART_CONFIG, lengthReach, mirroredFingers, withLength, addSpill, cleanUp, dab, removeNail, tidyNail, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid, wipeCells } from './design';
 import type { Decoration, FingerConfig, HandConfig, NailDesign, NailShape, StickerKind } from './design';
 
 /**
@@ -10,7 +10,7 @@ import type { Decoration, FingerConfig, HandConfig, NailDesign, NailShape, Stick
  */
 
 /** Story 048: `remover` wipes a tapped nail back to bare. */
-export type StationTool = 'polish' | 'gradient' | 'gem' | 'sticker' | 'cleanup' | 'remover';
+export type StationTool = 'polish' | 'gradient' | 'gem' | 'sticker' | 'cleanup' | 'remover' | 'tidy';
 
 interface NailView {
   finger: FingerConfig;
@@ -63,7 +63,7 @@ export interface StationTools {
   cleanupRadius: number;
 }
 
-/** `longest` (story 051): the longest nail length offered, so the hand keeps room above it and never jumps. */
+/** `longest` (story 051): the longest length she ordered: the hand keeps room for it (or for a longer one picked). */
 export function createStationView(initial: NailDesign = emptyDesign(), tools: StationTools = { brushRadius: NAIL_ART_CONFIG.brushRadius, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius }, limb: HandConfig = NAIL_ART_CONFIG.hand, longest = 1): StationView {
   const container = new Container();
   container.label = 'nail-station';
@@ -137,11 +137,14 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
     const grid = spillGrid();
     const cw = view.finger.nail.w / NAIL_ART_CONFIG.grid.cols;
     const ch = view.finger.nail.h / NAIL_ART_CONFIG.grid.rows;
-    for (const cell of cells) {
-      const col = (cell % grid.cols) - grid.margin;
-      const row = Math.floor(cell / grid.cols) - grid.margin;
-      view.spillLayer.ellipse((col + 0.5) * cw, (row + 0.5) * ch, cw * 0.62, ch * 0.62).fill({ color: hex(base.hex), alpha: 0.9 }).stroke({ width: 0.7 / scale, color: mix(hex(base.hex), INK, 0.35), alpha: 0.6 });
-    }
+    // Story 052 (overseer): a smudge of polish on the skin, not beads: overlapping soft blobs in two passes, the outer
+    // one closer to skin colour (it reads as thin, slightly see-through polish), opaque so overlaps never darken.
+    const centres = cells.map((cell) => [((cell % grid.cols) - grid.margin + 0.5) * cw, (Math.floor(cell / grid.cols) - grid.margin + 0.5) * ch] as const);
+    const polish = hex(base.hex);
+    for (const [x, y] of centres) view.spillLayer.ellipse(x, y, cw * 1.05, ch * 1.05);
+    view.spillLayer.fill({ color: mix(polish, SKIN, 0.55) });
+    for (const [x, y] of centres) view.spillLayer.ellipse(x, y, cw * 0.72, ch * 0.72);
+    view.spillLayer.fill({ color: mix(polish, SKIN, 0.3) });
   };
 
   const drawDecorations = (index: number): void => {
@@ -254,7 +257,7 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       // With a top band (the full-screen service) the hand also keeps room under it for the palm and the hint.
       const below = topBand > 0 ? 44 : 0;
       // Story 051: room above the box for the longest nail on offer.
-      const reach = lengthReach(hand, longest);
+      const reach = lengthReach(hand, Math.max(longest, NAIL_ART_CONFIG.lengths[design.length]));
       const boxH = hand.box.h + reach;
       scale = Math.min(free / hand.box.w, (h - top - below) / boxH);
       offsetX = reserveLeft + (free - hand.box.w * scale) / 2;
@@ -318,7 +321,7 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       // Browsers merge fast moves into one event per frame: fill the gap in half-brush steps so a quick stroke has no holes.
       const from = phase === 'move' ? last : null;
       last = { x, y };
-      if (!from || tool === 'gem' || tool === 'sticker' || tool === 'remover') return applyAt(x, y, phase, tool, sticker);
+      if (!from || tool === 'gem' || tool === 'sticker' || tool === 'remover' || tool === 'tidy') return applyAt(x, y, phase, tool, sticker);
       const step = Math.max(1, tools.brushRadius * scale * 0.5);
       const steps = Math.min(64, Math.ceil(Math.hypot(x - from.x, y - from.y) / step));
       // applyAt reads `design`; step it through the in-between points, then put the stored design back for setDesign.
@@ -368,6 +371,12 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       const my = (margin * v.finger.nail.h) / NAIL_ART_CONFIG.grid.rows;
       return p.x >= -mx && p.x <= v.finger.nail.w + mx && p.y >= -my && p.y <= v.finger.nail.h + my;
     };
+    if (tool === 'tidy') {
+      // Story 052: one tap on (or right around) a nail; the station panel times it.
+      if (phase !== 'down') return design;
+      const target = onNail >= 0 ? onNail : views.findIndex((_, i) => near(i));
+      return target < 0 ? design : tidyNail(design, firstNail() + target);
+    }
     if (tool === 'remover') {
       // One tap per nail: on the nail or the skin right around it.
       if (phase !== 'down') return design;
