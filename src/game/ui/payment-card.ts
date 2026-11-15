@@ -20,6 +20,8 @@ export interface PaymentCardOptions {
   tip: number;
   stars: number;
   walkedOut: boolean;
+  /** Story 049 (overseer, on 048): a fix she asked for was left undone: the cheer says so, kindly. */
+  openFix?: boolean;
   onDone: () => void;
 }
 
@@ -50,7 +52,7 @@ export function createPaymentCard(options: PaymentCardOptions): HTMLElement {
     stars.append(star);
     return star;
   });
-  const cheer = el('p', 'payment-cheer bestie-bubble pay-wait', t(`payment.cheer.${cheerFor(options.stars, options.walkedOut)}` as StringKey));
+  const cheer = el('p', 'payment-cheer bestie-bubble pay-wait', t(options.openFix && !options.walkedOut ? 'payment.cheer.openFix' : (`payment.cheer.${cheerFor(options.stars, options.walkedOut)}` as StringKey)));
   const skip = el('p', 'payment-skip', t('payment.skip'));
   card.append(...(options.walkedOut ? [] : [priceRow]), stars, partsList, tipRow, cheer, skip);
 

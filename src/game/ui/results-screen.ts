@@ -178,6 +178,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     // the scorecard appear when it is done (a tap skips; reduced motion shows the totals at once).
     const finalMood = result.moodHistory[result.moodHistory.length - 1] ?? 0;
     const kind = options.service?.kind ?? 'manicure';
+    const openFix = (options.nails?.fixes ?? []).some((fix) => !fix.fixed);
     container.classList.add('paying');
     const payment = createPaymentCard({
       serviceLabel: t(kind === 'pedicure' ? 'payment.pedicure' : 'payment.manicure'),
@@ -186,12 +187,14 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
       tip: score.tip,
       stars: score.stars,
       walkedOut: result.outcome === 'walked_out',
+      ...(openFix ? { openFix: true } : {}),
       onDone: () => container.classList.remove('paying'),
     });
 
     const notes: HTMLElement[] = [];
     if (score.goalMet) notes.push(el('p', 'results-note good', t('results.goalMet', who)));
-    else if (grading.rebooked && !score.failed) notes.push(el('p', 'results-note', t('results.rebooked', who)));
+    // A fix left undone (overseer, on 048): she only might come back.
+    else if (grading.rebooked && !score.failed) notes.push(el('p', 'results-note', t(openFix ? 'results.rebookedMaybe' : 'results.rebooked', who)));
     score.failReasons.forEach((reason) => notes.push(el('p', 'results-note bad', t(`results.fail.${reason}`, who))));
     // Story 048: each fix she asked for, done or not.
     (options.nails?.fixes ?? []).forEach((fix) => notes.push(el('p', `results-note results-fix ${fix.fixed ? 'good' : 'bad'}`, t(`results.fix.${fix.fixed ? 'fixed' : 'open'}.${fix.kind}`, who))));

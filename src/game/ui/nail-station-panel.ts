@@ -9,6 +9,8 @@ import type { NailDesign, NailRequest, NailShape, PaletteColor, StickerKind } fr
 import { describeDesign, matchDesign } from '../nail-art/match';
 import type { MatchResult } from '../nail-art/match';
 import { SHAPES, createStationView } from '../nail-art/station';
+import { STATION_STEPS, stepChecks, wantsArt } from '../nail-art/steps';
+import { openHowTo } from './station-howto';
 import type { StationTool, StationTools } from '../nail-art/station';
 import { emitSound } from '../sound-events';
 import { el } from './dom';
@@ -106,10 +108,14 @@ export function createNailStation(options: NailStationOptions): NailStation {
   // One compact row (overseer, 320 px review): Shape | Colour | Art tabs, the active tab's options (scrolling, with
   // faded edges so it's clear there is more), and Done. The hint/status sits inside the hand area, not under it.
   const toolbar = el('div', 'station-tools hidden');
-  const tabs = el('div', 'station-tabs');
+  // Story 049: the steps as a numbered path at the top of the toolbar (they are the tabs), with a ✓ on each step that
+  // matches her order, and a one-line instruction for the current step under them.
+  const tabs = el('div', 'station-tabs station-steps');
   tabs.setAttribute('role', 'tablist');
+  const instruction = el('p', 'station-instruction');
   const optionsRow = el('div', 'station-row');
-  const status = el('p', 'station-status show', t('station.hint'));
+  // Story 049: the step's instruction is always in the toolbar, so the floating hint only shows short messages.
+  const status = el('p', 'station-status');
   status.setAttribute('aria-live', 'polite');
   // The hint floats over the hand (it would cover the thumb), so it shows for a few seconds after each change.
   let hideHint = 0;
@@ -140,6 +146,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const flushChange = (): void => {
     window.clearTimeout(changeTimer);
     changeTimer = 0;
+    updateChecks();
     options.onChange(design);
   };
   const setDesign = (next: NailDesign): void => {
@@ -202,12 +209,25 @@ export function createNailStation(options: NailStationOptions): NailStation {
     return swatch;
   });
   const tabButtons: Record<Tab, HTMLButtonElement> = {
-    // Icon + word; narrow phones show the icon only (the word stays as the accessible name).
-    shape: button(`<span class="tab-icon" aria-hidden="true">▢</span><span class="tab-text">${t('station.tab.shape')}</span>`, 'station-tab', () => selectTab('shape'), t('station.tab.shape')),
-    colour: button(`<span class="tab-icon" aria-hidden="true">🎨</span><span class="tab-text">${t('station.tab.colour')}</span>`, 'station-tab', () => selectTab('colour'), t('station.tab.colour')),
-    art: button(`<span class="tab-icon" aria-hidden="true">✨</span><span class="tab-text">${t('station.tab.art')}</span>`, 'station-tab', () => selectTab('art'), t('station.tab.art')),
+    // Story 049: a numbered step: its number, its word, and a ✓ once it matches her order (Art says "optional" when
+    // she asked for no art).
+    shape: stepButton('shape'),
+    colour: stepButton('colour'),
+    art: stepButton('art'),
     fix: button(labelled('🔧', t('station.fixWord')), 'station-tab station-fix', () => selectTab('fix'), t('station.fixLabel')),
   };
+  function stepButton(step: 'shape' | 'colour' | 'art'): HTMLButtonElement {
+    const n = STATION_STEPS.indexOf(step) + 1;
+    const optional = step === 'art' && !wantsArt(options.request);
+    const node = button(
+      `<span class="step-num" aria-hidden="true">${n}</span><span class="tab-text">${t(`station.tab.${step}`)}${optional ? `<small class="step-optional">${t('station.stepOptional')}</small>` : ''}</span><span class="step-check" aria-hidden="true">✓</span>`,
+      'station-tab station-step',
+      () => selectTab(step),
+      t('station.stepLabel', { n, step: t(`station.tab.${step}`) }),
+    );
+    node.dataset.step = step;
+    return node;
+  }
   const removeAllButton = button(labelled('🫧', t('station.removeAll')), 'station-remove-all', () => {
     fixActed = true;
     setDesign(removeAll(design));
@@ -239,8 +259,10 @@ export function createNailStation(options: NailStationOptions): NailStation {
   // Story 048: while a fix is asked for, Fix it takes Clean up's place (Clean up is inside it), so the row still fits.
   const fixSlot = el('div', 'station-fix-slot');
   fixSlot.append(toolButtons.cleanup);
-  controls.append(tabs, fixSlot, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []), doneButton);
-  toolbar.append(optionsRow, controls);
+  // Story 049: "?" opens a 3-picture how-to.
+  const howButton = button(labelled('?', t('station.howWord')), 'station-how', () => openHowTo(), t('station.howLabel'));
+  controls.append(fixSlot, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []), howButton, doneButton);
+  toolbar.append(tabs, optionsRow, controls);
 
   function selectTab(next: Tab): void {
     tab = next;
@@ -252,6 +274,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     if (tab === 'colour' && tool !== 'gradient' && tool !== 'cleanup') tool = 'polish';
     if (tab === 'art' && tool !== 'gem' && tool !== 'sticker') tool = 'gem';
     if (tab === 'fix' && tool !== 'cleanup' && tool !== 'remover' && tool !== 'polish') tool = fixKind === 'edge' ? 'cleanup' : 'remover';
+    instruction.textContent = tab === 'fix' ? t('station.step.fix') : t(`station.step.${tab}`, { n: STATION_STEPS.indexOf(tab) + 1 });
     optionsRow.scrollLeft = 0;
     refresh();
   }
@@ -259,11 +282,19 @@ export function createNailStation(options: NailStationOptions): NailStation {
   function selectTool(next: StationTool): void {
     // Gradient and Clean up toggle back to plain polish when tapped again.
     tool = (next === 'gradient' || next === 'cleanup' || next === 'remover') && tool === next ? 'polish' : next;
-    say(tool === 'gradient' ? t('station.gradientOn') : tool === 'cleanup' ? t('station.cleanupOn') : tool === 'remover' ? t('station.removerOn') : t('station.hint'));
+    if (tool === 'gradient' || tool === 'cleanup' || tool === 'remover') say(t(tool === 'gradient' ? 'station.gradientOn' : tool === 'cleanup' ? 'station.cleanupOn' : 'station.removerOn'));
+    else status.classList.remove('show');
     refresh();
   }
 
+  /** Story 049: the ✓ on each step that matches her order (updated with the design note, at most 4 times a second). */
+  function updateChecks(): void {
+    const checks = stepChecks(design, options.request);
+    for (const step of STATION_STEPS) tabButtons[step].classList.toggle('matched', checks[step]);
+  }
+
   function refresh(): void {
+    updateChecks();
     (Object.keys(tabButtons) as Tab[]).forEach((key) => tabButtons[key].setAttribute('aria-selected', String(key === tab)));
     shapeButtons.forEach((node, index) => node.setAttribute('aria-pressed', String(SHAPES[index] === design.shape)));
     (Object.keys(toolButtons) as StationTool[]).forEach((key) => toolButtons[key].setAttribute('aria-pressed', String(key === tool)));
@@ -278,7 +309,9 @@ export function createNailStation(options: NailStationOptions): NailStation {
 
   // Touch layer: forwards pointer positions to the station (relative to the zone).
   const touch = el('div', 'station-touch hidden');
-  touch.append(status);
+  // Story 049: the step's instruction sits over the empty palm (no toolbar height taken); a short message (spill, a
+  // tool) takes its place for a few seconds.
+  touch.append(status, instruction);
   let drawing = false;
   // Story 047: the layer's position is read once per stroke (not on every finger movement).
   let box: DOMRect | null = null;
@@ -324,7 +357,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
     // Leave room for Mai's bubble (her corner). The client's small face is top-left, where the hand is empty (the
     // thumb sits low), so only a little room is kept on that side unless Mai is there too.
     // Story 035: a tall zone is the full-screen service: the hand uses the width, below a band for her face and bubble.
-    const tall = r.height >= 300;
+    // The full-screen service (story 049: the steps make the toolbar taller, so the hand zone can be under 300 px).
+    const tall = r.height >= 220;
     const left = tall ? 8 : side === 'left' ? 70 : 20;
     const right = tall ? 8 : side === 'right' ? 70 : 8;
     view.layout(r.left, r.top, r.width, r.height, left, right, tall ? Math.max(84, options.topBand?.() ?? 138) : 0);
@@ -338,7 +372,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
    */
   function placeHint(width: number, height: number): void {
     const margin = 6;
-    const hintHeight = Math.max(30, status.offsetHeight || 34);
+    const hintHeight = Math.max(30, status.offsetHeight || 34, instruction.offsetHeight);
     const top = height - 3 - hintHeight;
     const blocked = view
       .nailBoxes()
@@ -353,8 +387,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
     }
     // Keep a sensible width; if the gap is too narrow the hint spans the bottom (it only shows for a few seconds).
     if (best[1] - best[0] < 140) best = [margin, width - margin];
-    status.style.left = `${best[0]}px`;
-    status.style.right = `${width - best[1]}px`;
+    status.style.left = instruction.style.left = `${best[0]}px`;
+    status.style.right = instruction.style.right = `${width - best[1]}px`;
   }
 
   function finish(): MatchResult {
@@ -377,7 +411,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
       view.container.visible = open;
       if (open) {
         requestAnimationFrame(relayout);
-        if (!done) say(status.textContent ?? t('station.hint'));
+        if (!done && status.textContent) say(status.textContent);
       }
     },
     relayout,

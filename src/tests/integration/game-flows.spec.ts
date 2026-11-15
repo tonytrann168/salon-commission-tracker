@@ -143,6 +143,39 @@ for (const lang of LANGS) {
       await expect(page.locator('.chat-input')).toBeVisible();
     });
 
+    test('clear steps (story 049): 1 Shape › 2 Colour › 3 Art with an instruction; a ✓ when a step matches her order; ? shows a 3-picture how-to', async ({ page }) => {
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('Hello! What colour would you like?');
+      await page.locator('.chat-form button[type=submit]').click();
+      const steps = page.locator('.station-steps .station-step');
+      await expect(steps).toHaveCount(3);
+      await expect(steps.locator('.step-num')).toHaveText(['1', '2', '3']);
+      const words = lang === 'vi' ? ['Dáng', 'Màu', 'Trang trí'] : ['Shape', 'Colour', 'Art'];
+      for (const [i, word] of words.entries()) await expect(steps.nth(i).locator('.tab-text')).toContainText(word);
+      // Every step's word is whole at 320 px, and the path stays inside the screen.
+      const fits = await steps.evaluateAll((nodes) => nodes.every((n) => { const text = n.querySelector<HTMLElement>('.tab-text')!; const r = n.getBoundingClientRect(); return text.scrollWidth <= text.clientWidth + 1 && r.left >= 0 && r.right <= window.innerWidth; }));
+      expect(fits).toBe(true);
+      await expect(page.locator('.station-step[data-step=colour]')).toHaveAttribute('aria-selected', 'true');
+      await expect(page.locator('.station-instruction')).toContainText('2');
+      // Step 1: her shape gets a ✓ (she asked for almond).
+      await page.locator('.station-step[data-step=shape]').click();
+      await expect(page.locator('.station-instruction')).toContainText('1');
+      await expect(page.locator('.station-step[data-step=shape]')).not.toHaveClass(/matched/);
+      await page.locator('.station-shape').nth(3).click();
+      await expect(page.locator('.station-step[data-step=shape]')).toHaveClass(/matched/);
+      // The how-to: three pictures with words, closed with one button.
+      await page.locator('.station-how').click();
+      await expect(page.locator('.station-howto-step')).toHaveCount(3);
+      await expect(page.locator('.station-howto-step svg')).toHaveCount(3);
+      expect(await noOverflow(page)).toBe(true);
+      await page.locator('.station-howto-close').click();
+      await expect(page.locator('.station-howto')).toHaveCount(0);
+    });
+
     test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page, { replies: ['Hi!', 'Red, please. Oh, can you fix that edge? There is polish on my skin.'] });
@@ -186,6 +219,9 @@ for (const lang of LANGS) {
       }
       await page.waitForSelector('.chat-results:not(.hidden) .results-section', { timeout: 15_000 });
       await expect(page.locator('.results-fix.bad')).toHaveCount(1);
+      // The companion's cheer and the come-back line say it kindly (overseer, on 048).
+      await expect(page.locator('.payment-cheer')).toContainText(lang === 'vi' ? 'sửa trước' : 'fix what the client asks');
+      await expect(page.locator('.results-note').filter({ hasText: lang === 'vi' ? 'có thể quay lại' : 'might come back' })).toHaveCount(1);
       await expect(page.locator('.bestie-fix.bad')).toHaveCount(1);
     });
 

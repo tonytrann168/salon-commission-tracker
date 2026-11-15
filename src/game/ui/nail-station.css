@@ -3,7 +3,7 @@
 .station-touch { position: absolute; left: 0; right: 0; z-index: 1; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 /* The hint/status: small, inside the hand area, never blocking touch. */
 /* Bottom-right, under the ring and pinky fingers (no nails there; the thumb is bottom-left, Mai top-right). */
-.station-status { position: absolute; left: 96px; right: 6px; bottom: 3px; margin: 0; padding: 3px 8px; border-radius: 10px; background: rgba(255, 255, 255, 0.88); font-size: 12px; line-height: 1.2; color: #5b4a53; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+.station-status { position: absolute; left: 96px; right: 6px; bottom: 3px; margin: 0; padding: 3px 8px; border-radius: 10px; background: rgba(255, 255, 255, 0.88); font-size: 16px; line-height: 1.25; font-weight: 600; color: #5b4a53; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
 .station-status.show { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .station-status { transition: none; } }
 /* One row: tabs | options (scroll, faded edges) | Done. */
@@ -70,3 +70,32 @@ html[data-motion='reduce'] .station-controls .station-fix.pulse { animation: non
 .station-row .station-remover, .station-row .station-remove-all, .station-tools.fixing .station-row .station-tool { flex: none; flex-direction: column; gap: 1px; min-width: 60px; min-height: 48px; padding: 3px 8px; border-radius: 14px; border: 2px solid #ecd3de; background: #fff; }
 .station-row .station-remover .tab-text, .station-row .station-remove-all .tab-text, .station-tools.fixing .station-row .tab-text { display: block !important; font: 700 13px/1.15 system-ui, sans-serif; white-space: nowrap; }
 .station-row .station-tool[aria-pressed='true'] { border-color: #ff5c9a; background: #ffe8f1; }
+
+/* Story 049: the steps as a numbered path at the top (1 Shape › 2 Colour › 3 Art), the current one filled, a green ✓
+   on each that matches her order; the instruction for the current step under them (16 px). */
+.station-tools .station-steps { display: flex; gap: 11px; padding: 0 2px; background: none; border-radius: 0; }
+.station-steps .station-step { position: relative; flex: 1 1 auto; min-width: 0; width: auto; min-height: 44px; padding: 3px 4px; gap: 3px; border: 2px solid #ecd3de; border-radius: 14px; background: #fff; color: #3b2a33; }
+.station-steps .station-step + .station-step::before { content: '›'; position: absolute; left: -10px; top: 50%; transform: translateY(-52%); color: #b98aa0; font: 700 18px/1 system-ui, sans-serif; pointer-events: none; }
+.station-steps .station-step .step-num { flex: none; display: inline-grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: #f1dde6; color: #5a2e43; font: 800 12px/1 system-ui, sans-serif; }
+.station-steps .station-step .tab-text { display: flex !important; flex-direction: column; align-items: flex-start; min-width: 0; font: 700 15px/1.1 system-ui, sans-serif; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.station-steps .station-step .step-optional { font: 600 11px/1.1 system-ui, sans-serif; opacity: 0.75; }
+.station-steps .station-step .step-check { position: absolute; top: -7px; right: -5px; display: none; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #2f9e5b; color: #fff; font: 800 12px/1 system-ui, sans-serif; box-shadow: 0 0 0 2px #fff4f8; }
+.station-steps .station-step.matched .step-check { display: grid; }
+.station-steps .station-step.matched { border-color: #9bd4b0; }
+.station-steps .station-step[aria-selected='true'] { background: #ff5c9a; border-color: #ff5c9a; color: #fff; }
+.station-steps .station-step[aria-selected='true'] .step-num { background: #fff; color: #ff5c9a; }
+.station-instruction { position: absolute; left: 6px; right: 6px; bottom: 3px; margin: 0; padding: 4px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.92); font: 600 16px/1.25 system-ui, sans-serif; color: #3b2a33; text-align: center; pointer-events: none; }
+.station-status.show + .station-instruction { visibility: hidden; }
+.station-status.show { z-index: 1; }
+.station-controls .station-how { background: #f3e8ff; border-color: #e1cdf5; color: #5b2d91; }
+.station-controls .station-how .tab-icon { font-weight: 800; font-size: 19px; }
+
+/* Story 049: the how-to sheet (three pictures). */
+.station-howto { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 12px; background: rgba(59, 42, 51, 0.45); }
+.station-howto-card { width: min(420px, 100%); max-height: calc(100dvh - 24px); overflow-y: auto; box-sizing: border-box; padding: 14px 14px 16px; border-radius: 20px; background: #fff; color: #3b2a33; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25); }
+.station-howto-card h2 { margin: 0 0 8px; font-size: 19px; text-align: center; }
+.station-howto-steps { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
+.station-howto-step { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 10px; padding: 6px; border-radius: 14px; background: #fff4f8; }
+.station-howto-picture svg { display: block; width: 96px; height: 72px; }
+.station-howto-step p { margin: 0; font-size: 16px; line-height: 1.35; }
+.station-howto-close { width: 100%; min-height: 48px; font-size: 17px; }
