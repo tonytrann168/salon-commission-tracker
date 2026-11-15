@@ -5,7 +5,7 @@ import { MOOD_MAX } from '../mood';
 import { getPortraitDefinition } from '../portraits/definitions';
 import { EXPRESSION_CONFIG, poseFor } from '../portraits/portrait';
 import type { Expression } from '../portraits/portrait';
-import { PHASES, TurnError, clientVietnamese } from '../types';
+import { PHASES, TurnError, clientGrammar, clientVietnamese } from '../types';
 import type { AppointmentResult, ClientPersona, EnglishLevel, HelpLanguage, Translate } from '../types';
 import type { TranslationCache } from '../translation-cache';
 import { getLanguage, t } from '../i18n';
@@ -16,6 +16,8 @@ import { emotionFor } from '../voice-cast';
 import { SERVICE_TALK, checkoutLine, expectsAnswer, planServiceTalk } from '../service-talk';
 import type { PrepOverlay } from './pedicure-prep';
 import { createNailStation, nailsNote } from './nail-station-panel';
+import { openMenuSheet } from './menu-sheet';
+import type { MenuItem, OrderLine } from '../menu';
 import { FIX_CONFIG, canFix, fixKindOf, fixOutcomes, openLine, openRequest, thanksLine, updateRequests } from '../fix-requests';
 import type { FixOutcome, FixRequest } from '../fix-requests';
 import { NAIL_ART_CONFIG, NAIL_LENGTHS } from '../nail-art/design';
@@ -79,6 +81,8 @@ export function createChatPanel(
       /** Omitted when the player turned corrections off. `onPhrase` saves a shown correction's better line to the phrasebook. */
       corrections?: { transport: CorrectionsTransport; onPhrase: (phrase: Phrase) => void };
     };
+    /** Story 044: the salon menu (numbered) and her order on it, for the 📋 Menu button (consultation and checkout). */
+    menu?: { items: MenuItem[]; order: OrderLine[] };
     /** Story 005: the nail art station during the service phase (omitted when the client has no nail request). */
     nailArt?: {
       request: NailRequest;
@@ -143,10 +147,19 @@ export function createChatPanel(
     });
     mood.append(speaker);
   }
+  // Story 044: 📋 Menu (consultation and checkout): the numbered menu; at checkout her order and the total.
+  const menuButton = portraits.menu ? el('button', 'chat-menu-button', `📋 ${t('menu.button')}`) : null;
+  if (menuButton && portraits.menu) {
+    const menu = portraits.menu;
+    menuButton.type = 'button';
+    menuButton.addEventListener('click', () => openMenuSheet(menu, latest.phase === 'checkout', clientGrammar(portraits.client.pronoun)));
+  }
   header.append(phases, mood);
 
   const initial = appointment.getSnapshot();
   const zone = createPortraitZone(host, portraits.layer, portraits.client, poseFor(initial.mood, initial.result?.outcome ?? null), !portraits.bestie);
+  // Story 044: the menu button sits at the top left of the face area (Mai is at the right), never squeezing the mood.
+  if (menuButton) zone.element.append(menuButton);
 
   const log = el('div', 'chat-log');
   const errorBox = el('div', 'chat-error');
@@ -811,6 +824,7 @@ export function createChatPanel(
     mai?.setEnabled(canType);
     mai?.element.classList.toggle('hidden', snapshot.status === 'finished');
     updateService(snapshot);
+    menuButton?.classList.toggle('hidden', !(snapshot.phase === 'consultation' || snapshot.phase === 'checkout') || snapshot.status === 'finished');
   };
 
   /** Corrections queued for Mai this appointment (capped in config/learning.json). */

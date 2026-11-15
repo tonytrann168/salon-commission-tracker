@@ -278,6 +278,64 @@ for (const lang of LANGS) {
       expect(await noOverflow(page)).toBe(true);
     });
 
+    test('salon menu (story 044): Fancy prices reach the client; 📋 Menu in consultation and at checkout with her order; the bill rings it up; my own menu saves', async ({ page }) => {
+      test.setTimeout(90_000);
+      await seed(page, lang, { save: { xp: 100, appointments: 3, badges: ['first-client'], ...dailyWith('ana') } });
+      const seen = await mockApi(page);
+      await page.goto('/');
+      // Settings: Fancy prices.
+      await page.locator('.title-menu-row').first().locator('button').first().click();
+      await page.locator('.menu-presets [data-preset=fancy]').click();
+      await expect(page.locator('.menu-presets [data-preset=fancy]')).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.menu-settings .menu-item').first()).toContainText('$40');
+      await page.reload();
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      // Consultation: the menu button shows the numbered menu.
+      await page.locator('.chat-menu-button').click();
+      await expect(page.locator('.menu-sheet .menu-item')).toHaveCount(7);
+      await expect(page.locator('.menu-sheet .menu-item').first()).toContainText('Signature manicure');
+      await expect(page.locator('.menu-sheet .menu-item.ordered')).toHaveCount(0);
+      expect(await noOverflow(page)).toBe(true);
+      await page.locator('.menu-close').click();
+      await page.locator('.chat-input').fill('Hello! Here is our menu. What would you like?');
+      await page.locator('.chat-form button[type=submit]').click();
+      await expect.poll(() => seen['client-turn']?.length ?? 0).toBe(1);
+      const sent = seen['client-turn']![0] as { menu: { items: { name: { en: string }; price: number }[]; order: number[] } };
+      expect(sent.menu.items[0]).toMatchObject({ name: { en: 'Signature manicure' }, price: 40 });
+      expect(sent.menu.order).toEqual([1]);
+      // Service: no menu button. Done → checkout: her order is marked, with the total.
+      await expect(page.locator('.chat-menu-button')).toBeHidden();
+      await page.locator('.station-done').click();
+      await page.waitForSelector('.chat-panel:not(.service-mode) .chat-input', { timeout: 6_000 });
+      await page.locator('.chat-menu-button').click();
+      await expect(page.locator('.menu-sheet .menu-item.ordered')).toHaveCount(1);
+      await expect(page.locator('.menu-order')).toContainText('$40');
+      await page.locator('.menu-close').click();
+      for (const line of ['That is forty dollars, please.', 'Thank you! See you next time.']) {
+        if (await page.locator('.chat-results:not(.hidden)').count()) break;
+        await page.locator('.chat-input').fill(line);
+        await page.locator('.chat-form button[type=submit]').click();
+        await page.waitForFunction(() => !document.querySelector<HTMLButtonElement>('.chat-form button[type=submit]')?.disabled || document.querySelector('.chat-results:not(.hidden)'));
+      }
+      await page.waitForSelector('.chat-results:not(.hidden) .payment-card', { timeout: 15_000 });
+      await expect(page.locator('.payment-bill-line')).toHaveCount(1);
+      await expect(page.locator('.payment-bill-line')).toContainText('#1');
+      await expect(page.locator('.payment-bill-total')).toContainText('$40');
+      // My own menu: change the first price, save; the save keeps it.
+      await page.locator('.results-actions .chat-button.secondary').click();
+      await page.locator('.title-menu-row').first().locator('button').first().click();
+      await page.locator('.menu-presets [data-preset=custom]').click();
+      const price = page.locator('.menu-edit-row').first().locator('input[type=number]');
+      await price.fill('30');
+      await page.locator('.menu-save').click();
+      await expect(page.locator('.menu-presets [data-preset=custom]')).toHaveAttribute('aria-pressed', 'true');
+      const save = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}'));
+      expect(save.menu.preset).toBe('custom');
+      expect(save.menu.items[0].price).toBe(30);
+      expect(await noOverflow(page)).toBe(true);
+    });
+
     test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page, { replies: ['Hi!', 'Red, please. Oh, can you fix that edge? There is polish on my skin.'] });

@@ -1,3 +1,5 @@
+import { MENU_CONFIG, menuPrompt, parseItem } from '../../game/menu';
+import type { MenuItem, OrderLine } from '../../game/menu';
 import { EMOTIONS, isEmotion } from '../../game/voice-cast';
 import { applyScenario, getScenario, parseScenarioFields, scenarioPrompt } from '../../game/scenarios';
 import type { ClientVisits, Scenario } from '../../game/scenarios';
@@ -39,6 +41,8 @@ export interface ClientTurnRequest {
   /** Story 019: the situation (optional), and the visit facts for a returning client. */
   scenarioId?: string;
   visits?: ClientVisits;
+  /** Story 044: the salon's menu and her order on it (checked again here: plain names, prices in range, known numbers). */
+  menu?: { items: MenuItem[]; order: OrderLine[] };
 }
 
 export interface HandlerResponse {
@@ -88,7 +92,8 @@ export function parseClientTurnRequest(body: unknown): ParseResult<ClientTurnReq
   }
   const scenario = parseScenarioFields(body);
   if (!scenario.ok) return scenario;
-  return { ok: true, value: { transcript: messages, phase, mood, level, ...(nails ? { nails } : {}), ...(typeof body.clientId === 'string' ? { clientId: body.clientId } : {}), ...scenario.value } };
+  const menu = parseMenuField(body.menu);
+  return { ok: true, value: { transcript: messages, phase, mood, level, ...(nails ? { nails } : {}), ...(menu ? { menu } : {}), ...(typeof body.clientId === 'string' ? { clientId: body.clientId } : {}), ...scenario.value } };
 }
 
 /** Strictly validate the model's response and extract the structured turn from the forced tool call. */
@@ -119,7 +124,19 @@ const MOOD_RULES_REALISTIC = `- This stylist is comfortable in English, so react
 - Never mock her accent, background or mistakes. Stay polite when you ask again.`;
 
 /** Build the system prompt for one English level: persona, speaking rules, phase rules and mood rules. One variant per level, so it caches. */
-export function buildSystemPrompt(regular: ClientPersona, level: EnglishLevel, scenario?: Scenario, visits?: ClientVisits): string {
+/** Story 044: the menu from the browser, re-checked (bad items dropped; the order only names items on the menu). */
+export function parseMenuField(raw: unknown): { items: MenuItem[]; order: OrderLine[] } | undefined {
+  if (!isRecord(raw) || !Array.isArray(raw.items) || !Array.isArray(raw.order)) return undefined;
+  const items = raw.items
+    .slice(0, MENU_CONFIG.limits.maxItems)
+    .map((item) => parseItem(item, MENU_CONFIG.limits))
+    .filter((item): item is MenuItem => item !== null);
+  if (items.length === 0) return undefined;
+  const order = [...new Set(raw.order.filter((n): n is number => Number.isInteger(n) && n >= 1 && n <= items.length))].slice(0, 6).map((n) => ({ number: n, item: items[n - 1] as MenuItem }));
+  return order.length > 0 ? { items, order } : undefined;
+}
+
+export function buildSystemPrompt(regular: ClientPersona, level: EnglishLevel, scenario?: Scenario, visits?: ClientVisits, menu?: { items: MenuItem[]; order: OrderLine[] }): string {
   // Story 019: a scenario layers its situation and nail request over the client.
   const client = applyScenario(regular, scenario);
   const rules = ENGLISH_LEVELS_CONFIG.levels[level];
@@ -129,7 +146,7 @@ export function buildSystemPrompt(regular: ClientPersona, level: EnglishLevel, s
 PERSONA
 - What ${client.name} wants: ${client.wants}
 - Personality: ${client.personality}
-- How hard you are: ${(difficultyJson as Record<string, { pushback: string }>)[client.difficulty]?.pushback ?? ''}${scenario ? `\n- Today's situation: ${scenarioPrompt(scenario, visits)} You opened with: "${scenario.openingLine}"` : ''}${client.nailRequest ? `\n- Your nails: you want ${describeRequest(client.nailRequest)}. Say what you want during the consultation when asked (or if the stylist forgets to ask, mention it).` : ''}
+- How hard you are: ${(difficultyJson as Record<string, { pushback: string }>)[client.difficulty]?.pushback ?? ''}${scenario ? `\n- Today's situation: ${scenarioPrompt(scenario, visits)} You opened with: "${scenario.openingLine}"` : ''}${client.nailRequest ? `\n- Your nails: you want ${describeRequest(client.nailRequest)}. Say what you want during the consultation when asked (or if the stylist forgets to ask, mention it).` : ''}${menu ? `\n\n${menuPrompt(menu.items, menu.order)}` : ''}
 
 STYLE
 - Reply as ${client.name} speaking aloud: 1-3 short, natural sentences. No stage directions, no narration, no emojis.
@@ -213,7 +230,7 @@ export async function handleClientTurn(
       body: JSON.stringify({
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        system: [{ type: 'text', text: buildSystemPrompt(getClient(parsed.value.clientId ?? '') ?? DEFAULT_CLIENT, parsed.value.level, getScenario(parsed.value.scenarioId), parsed.value.visits), cache_control: { type: 'ephemeral' } }],
+        system: [{ type: 'text', text: buildSystemPrompt(getClient(parsed.value.clientId ?? '') ?? DEFAULT_CLIENT, parsed.value.level, getScenario(parsed.value.scenarioId), parsed.value.visits, parsed.value.menu), cache_control: { type: 'ephemeral' } }],
         tools: [TOOL],
         tool_choice: { type: 'tool', name: TOOL_NAME },
         messages: toApiMessages(parsed.value),

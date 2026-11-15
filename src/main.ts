@@ -1,3 +1,4 @@
+import { MENU_CONFIG, menuItems, orderFor } from './game/menu';
 import type { Container, Rectangle } from 'pixi.js';
 import { GALLERY_CONFIG, addToGallery } from './game/gallery';
 import type { FixOutcome } from './game/fix-requests';
@@ -395,9 +396,12 @@ async function boot(): Promise<void> {
     showScene('salon');
     // Story 005: what the client hears about her nails, and the finished result for the review and the stars.
     const nails: { note: string | undefined; finished: { description: string; match: number; fixes?: FixOutcome[] } | undefined; photo?: Promise<string | null> } = { note: undefined, finished: undefined };
+    // Story 044: the salon menu and her order on it (she orders by number; checkout rings it up).
+    const menuList = menuItems(loadSave().menu ?? { preset: MENU_CONFIG.default });
+    const order = orderFor(client.nailRequest, menuList);
     const appointment = createAppointment({
       client,
-      takeTurn: createFetchTransport(() => level, () => nails.note, client.id, scenarioFields),
+      takeTurn: createFetchTransport(() => level, () => nails.note, client.id, scenarioFields, { items: menuList, order: order.map((line) => line.number) }),
       level,
       // Grading starts from the chat panel's onEnded, once the final line has finished revealing (story 002).
       onFinished: () => undefined,
@@ -409,6 +413,7 @@ async function boot(): Promise<void> {
       helpLanguage: getHelpLanguage(),
       translations,
       translate: translateTransport,
+      menu: { items: menuList, order },
       ...(client.nailRequest
         ? {
             nailArt: {
@@ -474,6 +479,7 @@ async function boot(): Promise<void> {
           translations,
           helpLanguage: getHelpLanguage(),
           ...(nails.finished ? { nails: nails.finished } : {}),
+          bill: order.map((line) => ({ number: line.number, label: line.item.name[getLanguage()], price: line.item.price })),
           ...(nails.photo ? { photo: nails.photo, onPhoto: (photo: string, stars: number) => void addToGallery({ photo, clientName: client.name, stars, day: localDay() }) } : {}),
           extras: (grading, score) => [
             // Story 007: tips into the wallet, XP and rank, badges and the daily streak, once per appointment.

@@ -23,6 +23,8 @@ export interface PaymentCardOptions {
   /** Story 049 (overseer, on 048): a fix she asked for was left undone: the cheer says so, kindly. */
   openFix?: boolean;
   onDone: () => void;
+  /** Story 044: the ordered menu items, rung up by number (the total is `price`). */
+  bill?: { number: number; label: string; price: number }[];
   /** Story 050: wait this long before starting (the polaroid of the nails shows first). */
   delayMs?: number;
 }
@@ -32,8 +34,18 @@ export function createPaymentCard(options: PaymentCardOptions): HTMLElement {
   const card = el('section', 'payment-card');
   card.setAttribute('aria-live', 'polite');
 
-  const priceRow = el('p', 'payment-price pay-wait');
-  priceRow.append(el('span', '', `🧾 ${options.serviceLabel}`), el('strong', '', t('results.tipAmount', { dollars: options.price })));
+  const priceRow = el(options.bill ? 'div' : 'p', options.bill ? 'payment-price payment-bill pay-wait' : 'payment-price pay-wait');
+  if (options.bill) {
+    // Story 044: her order, rung up by menu number, and the total.
+    for (const line of options.bill) {
+      const row = el('p', 'payment-bill-line');
+      row.append(el('span', '', `#${line.number} ${line.label}`), el('span', '', t('results.tipAmount', { dollars: line.price })));
+      priceRow.append(row);
+    }
+    const total = el('p', 'payment-bill-total');
+    total.append(el('span', '', `🧾 ${t('payment.total')}`), el('strong', '', t('results.tipAmount', { dollars: options.price })));
+    priceRow.append(total);
+  } else priceRow.append(el('span', '', `🧾 ${options.serviceLabel}`), el('strong', '', t('results.tipAmount', { dollars: options.price })));
   const partsList = el('ul', 'payment-parts');
   const partNodes = options.parts.map((part) => {
     const item = el('li', 'pay-wait');

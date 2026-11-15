@@ -21,3 +21,9 @@
 /* Story 050: the polaroid of her nails stays: it comes first. */
 .chat-results.paying > :not(.payment-card):not(.polaroid) { display: none; }
 html[data-motion='reduce'] .payment-card * { animation: none !important; }
+
+/* Story 044: the bill: her ordered items by menu number, then the total. */
+.payment-bill { flex-direction: column; gap: 2px; }
+.payment-bill p { margin: 0; display: flex; justify-content: space-between; gap: 8px; }
+.payment-bill-line { font-size: 15px; color: #3b2a33; }
+.payment-bill-total { padding-top: 3px; border-top: 1px dashed #b9d6b9; }

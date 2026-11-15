@@ -11,6 +11,7 @@ import { replayTour } from '../onboarding';
 import { feedbackButton } from './feedback-sheet';
 import { createBackupSection } from './backup-panel';
 import { createComfortSection } from './comfort-section';
+import { createMenuSection } from './menu-settings';
 import { createAccountSection } from './account-panel';
 import { getAccount } from '../account/account';
 import { legalLinks } from './legal-links';
@@ -174,7 +175,7 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
       open.addEventListener('click', () => openWhatsNew(host, notes));
       versionRow.append(open);
     }
-    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, autoSendRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, comfort, backup, legalLinks(), versionRow, back);
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, autoSendRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, createMenuSection(), comfort, backup, legalLinks(), versionRow, back);
   };
 
   render();

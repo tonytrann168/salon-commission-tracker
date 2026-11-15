@@ -49,6 +49,8 @@ export interface ResultsScreenOptions {
   /** Story 050: the finished set's photo (shown first, as a polaroid) and what to do with it once shown (My work). */
   photo?: Promise<string | null>;
   onPhoto?: (photo: string, stars: number) => void;
+  /** Story 044: her order on the salon menu (rung up at checkout). */
+  bill?: { number: number; label: string; price: number }[];
   /** Story 039: what was done (for the price the client pays): a manicure or a pedicure, one or both hands/feet. */
   service?: { kind: 'manicure' | 'pedicure'; hands: 1 | 2 };
 }
@@ -187,7 +189,8 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     container.classList.add('paying');
     const payment = createPaymentCard({
       serviceLabel: t(kind === 'pedicure' ? 'payment.pedicure' : 'payment.manicure'),
-      price: servicePrice(kind, options.service?.hands ?? 1),
+      price: options.bill?.length ? options.bill.reduce((sum, line) => sum + line.price, 0) : servicePrice(kind, options.service?.hands ?? 1),
+      ...(options.bill?.length ? { bill: options.bill } : {}),
       parts: tipParts({ tip: score.tip, finalMood, scenario: options.scenario !== undefined, ...(options.nails ? { nailMatch: options.nails.match } : {}) }),
       tip: score.tip,
       stars: score.stars,

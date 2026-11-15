@@ -1,3 +1,4 @@
+import type { MenuChoice } from './menu';
 import progressionJson from './config/progression.json';
 import { NAIL_ART_CONFIG } from './nail-art/design';
 import type { NailArtConfig } from './nail-art/design';
@@ -166,6 +167,8 @@ export interface ProgressSave {
   streak: number;
   /** Story 019: past visits per client (for the "returning client" scenario). */
   history: Record<string, { visits: number; lastStars: number; lastDay: string }>;
+  /** Story 044: the salon menu (a price set or the player's own); the default set when missing. */
+  menu?: MenuChoice;
 }
 
 export const NEW_SAVE: ProgressSave = { version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0, history: {} };

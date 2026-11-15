@@ -1,3 +1,4 @@
+import { parseMenuChoice } from './menu';
 import { NEW_SAVE } from './progression';
 import type { ProgressSave } from './progression';
 import { readStored, writeStored } from './safe-storage';
@@ -54,6 +55,8 @@ export function parseSave(raw: string | null): ProgressSave {
     dailyDoneDay: day(d.dailyDoneDay),
     streak: whole(d.streak, 0),
     history: parseHistory(d.history),
+    // Story 044: the salon menu, kept only when one was chosen.
+    ...(d.menu !== undefined ? { menu: parseMenuChoice(d.menu) } : {}),
   };
 }
 

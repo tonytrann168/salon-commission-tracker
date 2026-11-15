@@ -1,0 +1,34 @@
+{
+  "_note": "Story 044: the salon menu (pretend money, shown to the client and rung up at checkout; the wallet still gets only the tip). presets: Basic / Mid / Fancy price sets; Mid keeps the old prices. tag: what the item is, so her order can be found on any menu (manicure, fullSet = both hands, pedicure, ombre, gems, art, extensions = long nails, other). limits: the player's own menu.",
+  "default": "mid",
+  "limits": { "minItems": 1, "maxItems": 12, "minPrice": 1, "maxPrice": 200, "maxName": 30 },
+  "presets": {
+    "basic": [
+      { "tag": "manicure", "price": 18, "name": { "en": "Manicure", "vi": "Làm móng tay" } },
+      { "tag": "fullSet", "price": 28, "name": { "en": "Full set (both hands)", "vi": "Bộ móng hai tay" } },
+      { "tag": "pedicure", "price": 25, "name": { "en": "Pedicure", "vi": "Làm móng chân" } },
+      { "tag": "ombre", "price": 5, "name": { "en": "Ombre", "vi": "Sơn ombre" } },
+      { "tag": "gems", "price": 5, "name": { "en": "Gems", "vi": "Đính đá" } },
+      { "tag": "art", "price": 5, "name": { "en": "Nail art stickers", "vi": "Hình dán" } },
+      { "tag": "extensions", "price": 10, "name": { "en": "Long nails (extensions)", "vi": "Nối móng dài" } }
+    ],
+    "mid": [
+      { "tag": "manicure", "price": 25, "name": { "en": "Manicure", "vi": "Làm móng tay" } },
+      { "tag": "fullSet", "price": 35, "name": { "en": "Full set (both hands)", "vi": "Bộ móng hai tay" } },
+      { "tag": "pedicure", "price": 35, "name": { "en": "Pedicure", "vi": "Làm móng chân" } },
+      { "tag": "ombre", "price": 8, "name": { "en": "Ombre", "vi": "Sơn ombre" } },
+      { "tag": "gems", "price": 8, "name": { "en": "Gems", "vi": "Đính đá" } },
+      { "tag": "art", "price": 8, "name": { "en": "Nail art stickers", "vi": "Hình dán" } },
+      { "tag": "extensions", "price": 15, "name": { "en": "Long nails (extensions)", "vi": "Nối móng dài" } }
+    ],
+    "fancy": [
+      { "tag": "manicure", "price": 40, "name": { "en": "Signature manicure", "vi": "Làm móng tay cao cấp" } },
+      { "tag": "fullSet", "price": 55, "name": { "en": "Luxury full set", "vi": "Bộ móng hai tay cao cấp" } },
+      { "tag": "pedicure", "price": 55, "name": { "en": "Spa pedicure", "vi": "Làm móng chân spa" } },
+      { "tag": "ombre", "price": 12, "name": { "en": "Ombre", "vi": "Sơn ombre" } },
+      { "tag": "gems", "price": 12, "name": { "en": "Crystal gems", "vi": "Đính đá pha lê" } },
+      { "tag": "art", "price": 15, "name": { "en": "Hand-picked nail art", "vi": "Hình dán chọn lọc" } },
+      { "tag": "extensions", "price": 25, "name": { "en": "Long nails (extensions)", "vi": "Nối móng dài" } }
+    ]
+  }
+}
