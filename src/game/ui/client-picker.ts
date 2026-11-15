@@ -1,3 +1,4 @@
+import { dailyLineKey } from '../daily';
 import { clientsByDifficulty } from '../clients/roster';
 import { getLanguage, t } from '../i18n';
 import { DIFFICULTIES } from '../types';
@@ -45,6 +46,12 @@ export function avatar(client: ClientPersona, faceImage?: ClientPickerOptions['f
 }
 
 /** Today's challenge card (story 007; also on the salon path, story 057a). */
+/** 057a part 2: the challenge's line: start a streak at 0; keep it while it is going; done today, cheer it. */
+function dailyLine(streak: number, done: boolean): string {
+  const line = dailyLineKey(streak, done);
+  return t(line.key, line.params);
+}
+
 export function createDailyCard(daily: NonNullable<ClientPickerOptions['daily']>, faceImage?: ClientPickerOptions['faceImage']): HTMLButtonElement {
   const { client, done, streak } = daily;
   const card = el('button', done ? 'picker-daily done' : 'picker-daily');
@@ -54,7 +61,7 @@ export function createDailyCard(daily: NonNullable<ClientPickerOptions['daily']>
     el('span', 'picker-daily-label', done ? t('daily.doneLabel') : t('daily.label')),
     el('strong', '', client.name),
     ...(daily.tag ? [el('span', 'picker-tag', daily.tag)] : []),
-    el('span', 'picker-line', streak > 0 ? t('daily.streak', { days: streak }) : t('daily.start')),
+    el('span', 'picker-line', dailyLine(streak, done)),
   );
   card.append(avatar(client, faceImage), words);
   card.setAttribute('aria-label', done ? t('daily.doneAria', { name: client.name }) : t('daily.aria', { name: client.name }));

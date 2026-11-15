@@ -1,7 +1,8 @@
 import dailyJson from './config/daily.json';
 
 /**
- * Story 056: come back every day. A play streak (a local day with at least one finished appointment), one free streak
+ * Story 056: come back every day. Owner decision: the gift, milestones, the goal ring and level-ups give COINS; tips
+ * come only from clients. A play streak (a local day with at least one finished appointment), one free streak
  * freeze a week (earned by playing that week, never bought), and a daily free gift of in-game tips with bigger gifts at
  * streak milestones. Pretend money only; nothing is for sale. Pure; the save keeps `PlayState`. Config:
  * config/daily.json.
@@ -11,6 +12,8 @@ export interface DailyConfig {
   freeze: { perWeek: number; maxHeld: number };
   gift: { min: number; max: number; bonusChance: number; bonus: number };
   milestones: { days: number; gift: number }[];
+  /** Owner decision (two currencies): coins for the welcome, the daily goal ring and each level up. */
+  coins: { welcome: number; goal: number; levelUp: number };
 }
 
 export function parseDailyConfig(raw: unknown): DailyConfig {
@@ -24,7 +27,8 @@ export function parseDailyConfig(raw: unknown): DailyConfig {
   if (gift.min > gift.max) fail('"gift.min" must not be above gift.max');
   const milestones = (Array.isArray(c.milestones) ? c.milestones : fail('"milestones" must be a list')).map((m, i) => ({ days: whole(m?.days, `milestones[${i}].days`, 3650), gift: whole(m?.gift, `milestones[${i}].gift`) }));
   if (!milestones.every((m, i) => m.days >= 2 && (i === 0 || m.days > (milestones[i - 1] as { days: number }).days))) fail('"milestones" must rise, from 2 days');
-  return { freeze, gift, milestones };
+  const coins = { welcome: whole(c.coins?.welcome, 'coins.welcome'), goal: whole(c.coins?.goal, 'coins.goal'), levelUp: whole(c.coins?.levelUp, 'coins.levelUp') };
+  return { freeze, gift, milestones, coins };
 }
 
 export const DAILY_CONFIG: DailyConfig = parseDailyConfig(dailyJson);
@@ -132,3 +136,19 @@ export const giftReady = (play: PlayState, today: string): boolean => play.giftD
 
 /** Story 057a: appointments finished today (the daily goal ring). */
 export const doneToday = (play: PlayState, today: string): number => (play.lastDay === today ? play.dayCount : 0);
+
+/** Owner decision: the one-time welcome coins (for new saves and for saves from before coins). */
+export function welcomeCoins<S extends { coins?: number; coinsWelcomed?: boolean }>(save: S, config: DailyConfig = DAILY_CONFIG): S {
+  return save.coinsWelcomed ? save : { ...save, coins: (save.coins ?? 0) + config.coins.welcome, coinsWelcomed: true };
+}
+
+/** Coins an appointment earns: reaching today's goal ring (once a day) and a level up. */
+export function appointmentCoins(goalReachedNow: boolean, levelUp: boolean, config: DailyConfig = DAILY_CONFIG): number {
+  return (goalReachedNow ? config.coins.goal : 0) + (levelUp ? config.coins.levelUp : 0);
+}
+
+/** 057a part 2: which line today's challenge shows: start a streak (0 days), keep it (going, not yet played today), or cheer it (played today). */
+export function dailyLineKey(streak: number, playedToday: boolean): { key: 'daily.start' | 'daily.keep' | 'daily.streak'; params: { days: number } } {
+  if (streak <= 0) return { key: 'daily.start', params: { days: 0 } };
+  return { key: playedToday ? 'daily.streak' : 'daily.keep', params: { days: streak } };
+}

@@ -476,21 +476,25 @@ for (const lang of LANGS) {
       expect(await noOverflow(page)).toBe(true);
     });
 
-    test('come back every day (story 056): the gift opens once into the wallet; a finished appointment lights the streak; the shop shows Coming soon', async ({ page }) => {
+    test('come back every day (story 056, two currencies): the gift opens once into coins, tips stay; a finished appointment lights the streak; the shop shows Coming soon', async ({ page }) => {
       test.setTimeout(90_000);
-      await seed(page, lang, { save: { wallet: 10, xp: 100, appointments: 1, badges: ['first-client'], ...dailyWith('ana') } });
+      await seed(page, lang, { save: { wallet: 10, coins: 20, xp: 100, appointments: 1, badges: ['first-client'], ...dailyWith('ana') } });
       await mockApi(page);
       await page.goto('/');
-      // Home: the streak is 0 (not lit), the wallet $10, the gift waiting.
+      // Home: the streak is 0 (not lit), 20 coins, tips $10, the gift waiting.
       await expect(page.locator('.home-streak strong')).toHaveText('0');
       await expect(page.locator('.home-streak')).not.toHaveClass(/lit/);
       await expect(page.locator('.home-wallet')).toContainText('$10');
+      await expect(page.locator('.home-coins strong')).toHaveText('20');
       await page.locator('.home-gift.ready').click();
-      await expect(page.locator('.gift-sheet .gift-amount')).toHaveText(/^\+\$\d+$/);
+      await expect(page.locator('.gift-sheet .gift-amount')).toHaveText(/^\+\d+$/);
+      await expect(page.locator('.gift-sheet .gift-amount svg.coin-icon')).toHaveCount(1);
       await page.locator('.gift-collect').click();
-      const wallet = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}').wallet);
-      expect(wallet).toBeGreaterThanOrEqual(13);
-      await expect(page.locator('.home-wallet')).toContainText(`$${wallet}`);
+      const after = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}'));
+      expect(after.wallet).toBe(10);
+      expect(after.coins).toBeGreaterThanOrEqual(30);
+      await expect(page.locator('.home-coins strong')).toHaveText(String(after.coins));
+      await expect(page.locator('.home-wallet')).toContainText('$10');
       await expect(page.locator('.home-gift')).toBeDisabled();
       // Once a day: after a reload it is still opened.
       await page.reload();
@@ -508,10 +512,12 @@ for (const lang of LANGS) {
 
     test('the salon path (story 057a): a top bar with streak, level and the goal ring; the current node seats its client; a lesson node; one home bar', async ({ page }) => {
       test.setTimeout(120_000);
-      await seed(page, lang, { save: { xp: 100, appointments: 3, badges: ['first-client'], ...dailyWith('ana') } });
+      const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
+      const streak = { streak: 3, best: 3, lastDay: yesterday, freezes: 0, freezeWeek: '', giftDay: '', milestones: [3], dayCount: 0 };
+      await seed(page, lang, { save: { xp: 100, appointments: 3, badges: ['first-client'], play: streak, ...dailyWith('ana') } });
       await mockApi(page);
       await page.goto('/');
-      // Home: streak, wallet and gift in one bar that overlaps nothing.
+      // Home: streak, coins, tips and the account button in one bar that overlaps nothing.
       const bar = await page.evaluate(() => {
         const b = document.querySelector('.home-status')!.getBoundingClientRect();
         const toggle = document.querySelector('.language-toggle')!.getBoundingClientRect();
@@ -519,11 +525,14 @@ for (const lang of LANGS) {
         return { oneRow: kids.every((k) => Math.abs(k.top - kids[0]!.top) < 4), clearOfToggle: b.right <= toggle.left, inside: kids.every((k) => k.right <= b.right + 1) };
       });
       expect(bar).toEqual({ oneRow: true, clearOfToggle: true, inside: true });
+      await expect(page.locator('.home-status > *')).toHaveCount(4);
       // Start → the path: the bar, today's challenge, the day's nodes.
       await page.locator('.title-menu > .chat-button').first().click();
       await expect(page.locator('.path-bar .path-level')).toContainText(lang === 'vi' ? 'Cấp' : 'Level');
       await expect(page.locator('.path-goal-count')).toHaveText('0/3');
       await expect(page.locator('.path-screen .picker-daily')).toBeVisible();
+      // 057a part 2: with a 3-day streak, today's challenge says keep it (never "start a streak").
+      await expect(page.locator('.path-screen .picker-daily .picker-line')).toHaveText(lang === 'vi' ? 'Làm xong khách hôm nay để giữ chuỗi 3 ngày.' : "Finish today's client to keep your 3-day streak.");
       await expect(page.locator('.path-node.current')).toHaveCount(1);
       await expect(page.locator('.path-node.current')).toHaveAttribute('data-index', '0');
       await expect(page.locator('.path-node.locked').first()).toBeDisabled();

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { LANGS, fakeSupabase, mockApi, seed } from './fixtures';
+import { LANGS, fakeSupabase, mockApi, noOverflow, seed } from './fixtures';
 
 /** Story 029: keeping progress (backup, accounts) and the app shell (offline, a new build), in English and Vietnamese. */
 
@@ -97,6 +97,86 @@ for (const lang of LANGS) {
       const save = await pb.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}'));
       expect(save).toMatchObject({ wallet: 77, appointments: 12 });
       await b.close();
+    });
+
+    test('the welcome front page (057a part 2): first open shows it; Play without an account, Create account and Sign in each lead home; the top-bar account button; a signed-in reopen skips it', async ({ browser }) => {
+      test.setTimeout(120_000);
+      const supabase = fakeSupabase({ confirmEmail: false });
+      const email = `hoa.${lang}@example.com`;
+      // 1. Play without an account: home with the guest button; it stays answered after a reload.
+      const a = await browser.newContext();
+      await supabase.route(a);
+      await seed(a, lang, { welcome: false, companion: false, level: false, menuConfirmed: false });
+      await mockApi(a);
+      const pa = await a.newPage();
+      await pa.goto('/');
+      await expect(pa.locator('.welcome-screen')).toBeVisible();
+      await expect(pa.locator('.welcome-create')).toHaveText(lang === 'vi' ? 'Tạo tài khoản' : 'Create account');
+      await expect(pa.locator('.welcome-signin')).toHaveText(lang === 'vi' ? 'Đăng nhập' : 'Sign in');
+      await expect(pa.locator('.welcome-guest')).toHaveText(lang === 'vi' ? 'Chơi thử không cần tài khoản' : 'Play without an account');
+      expect(await noOverflow(pa)).toBe(true);
+      await pa.locator('.welcome-guest').click();
+      await expect(pa.locator('.title-menu')).toBeVisible();
+      await expect(pa.locator('.home-avatar:not(.signed-in)')).toBeVisible();
+      // The welcome coins came with the first home visit (a guest's coins are kept on the phone).
+      await expect(pa.locator('.home-coins strong')).toHaveText('20');
+      await pa.reload();
+      await expect(pa.locator('.title-menu')).toBeVisible();
+      await expect(pa.locator('.welcome-screen')).toHaveCount(0);
+      // The guest's account button opens Sign in / Create account.
+      await pa.locator('.home-avatar').click();
+      await expect(pa.locator('.account-sheet .account-email')).toBeVisible();
+      await a.close();
+
+      // 2. Create account from the welcome page: signed in, home shows the initial with a tick; "Your account" has the email.
+      const b = await browser.newContext();
+      await supabase.route(b);
+      await seed(b, lang, { welcome: false });
+      await mockApi(b);
+      const pb = await b.newPage();
+      let loads = 0;
+      pb.on('load', () => loads++);
+      await pb.goto('/');
+      await pb.locator('.welcome-create').click();
+      await pb.locator('.account-email').fill(email);
+      await pb.locator('.account-password-input').fill('polish123');
+      await pb.locator('.feedback-actions .chat-button').last().click();
+      await expect(pb.locator('.title-menu')).toBeVisible();
+      await expect(pb.locator('.home-avatar.signed-in')).toContainText('H');
+      await pb.locator('.home-avatar').click();
+      await expect(pb.locator('.account-home-sheet .account-section')).toContainText(email);
+      // The delete confirmation waits for Delete (it showed open: its display overrode [hidden]).
+      await expect(pb.locator('.account-home-sheet .backup-confirm')).toBeHidden();
+      await pb.locator('.account-sheet-close').click();
+      // A signed-in reopen skips the welcome page (even with its answer gone: the account is remembered).
+      await pb.evaluate(() => localStorage.removeItem('salon.welcomeDone'));
+      await pb.reload();
+      await expect(pb.locator('.title-menu')).toBeVisible();
+      await expect(pb.locator('.welcome-screen')).toHaveCount(0);
+      await pb.evaluate(() => window.dispatchEvent(new Event('salon:account')));
+      await expect(pb.locator('.home-avatar.signed-in')).toBeVisible();
+      // No reload loop (an account with no appointments yet): the page loaded twice (open + our reload) and stays.
+      await expect.poll(() => loads, { timeout: 3000 }).toBe(2);
+      await pb.waitForTimeout(1500);
+      expect(loads).toBe(2);
+      await b.close();
+
+      // 3. Sign in from the welcome page on another phone.
+      const c = await browser.newContext();
+      await supabase.route(c);
+      await seed(c, lang, { welcome: false });
+      await mockApi(c);
+      const pc = await c.newPage();
+      await pc.goto('/');
+      await pc.locator('.welcome-signin').click();
+      await expect(pc.locator('#account-title')).toHaveText(lang === 'vi' ? 'Đăng nhập' : 'Sign in');
+      await pc.locator('.account-email').fill(email);
+      await pc.locator('.account-password-input').fill('polish123');
+      await pc.locator('.feedback-actions .chat-button').last().click();
+      await expect(pc.locator('.title-menu')).toBeVisible();
+      await pc.evaluate(() => window.dispatchEvent(new Event('salon:account')));
+      await expect(pc.locator('.home-avatar.signed-in')).toBeVisible();
+      await c.close();
     });
 
     test('sign-up errors (story 053): "Confirm email" off signs in at once and syncs; a failing email is a gentle message, never a raw error', async ({ browser }) => {

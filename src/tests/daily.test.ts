@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import dailyJson from '../game/config/daily.json';
-import { DAILY_CONFIG, NEW_PLAY, daysBetween, giftReady, liveStreak, openDailyGift, parseDailyConfig, parsePlay, recordPlayDay, weekOf } from '../game/daily';
+import { DAILY_CONFIG, NEW_PLAY, appointmentCoins, dailyLineKey, daysBetween, giftReady, liveStreak, openDailyGift, parseDailyConfig, parsePlay, recordPlayDay, weekOf, welcomeCoins } from '../game/daily';
+import { PATH_CONFIG } from '../game/path';
+import { PROGRESSION_CONFIG } from '../game/progression';
 import type { PlayState } from '../game/daily';
 import { NEW_SAVE, applyAppointment } from '../game/progression';
 import { parseSave } from '../game/save';
@@ -69,8 +71,9 @@ describe('the daily gift', () => {
   it('a streak milestone gives a bigger gift, once per streak', () => {
     const p = play(['2026-11-09', '2026-11-10', '2026-11-11']);
     const g = openDailyGift(p, '2026-11-11', () => 0.999)!;
-    expect(g.milestone).toEqual({ days: 3, gift: 15 });
-    expect(g.total).toBe(DAILY_CONFIG.gift.max + 15);
+    const first = DAILY_CONFIG.milestones[0]!;
+    expect(g.milestone).toEqual(first);
+    expect(g.total).toBe(DAILY_CONFIG.gift.max + first.gift);
     const next = openDailyGift({ ...g.play, lastDay: '2026-11-12', streak: 4 }, '2026-11-12', () => 0.999)!;
     expect(next.milestone).toBeNull();
   });
@@ -78,5 +81,67 @@ describe('the daily gift', () => {
   it('refuses a bad config', () => {
     expect(() => parseDailyConfig({ ...dailyJson, gift: { ...dailyJson.gift, min: 9, max: 3 } })).toThrow('daily.json: "gift.min"');
     expect(() => parseDailyConfig({ ...dailyJson, milestones: [{ days: 7, gift: 1 }, { days: 3, gift: 1 }] })).toThrow('"milestones"');
+  });
+});
+
+describe('two currencies (owner decision): coins from gifts, milestones, the goal ring and level-ups; tips only from clients', () => {
+  it('the gift amounts are coins in config: 10-20, a +10 bonus, bigger milestones at 3, 7, 14 and 30 days', () => {
+    expect(DAILY_CONFIG.gift).toMatchObject({ min: 10, max: 20, bonus: 10 });
+    expect(DAILY_CONFIG.milestones.map((m) => m.days)).toEqual([3, 7, 14, 30]);
+    expect(DAILY_CONFIG.milestones.every((m) => m.gift > DAILY_CONFIG.gift.max)).toBe(true);
+  });
+
+  it('gives the welcome coins once, also to a save from before coins, and keeps its tips', () => {
+    const old = { ...NEW_SAVE, wallet: 77 };
+    const welcomed = welcomeCoins(old);
+    expect(welcomed).toMatchObject({ wallet: 77, coins: DAILY_CONFIG.coins.welcome, coinsWelcomed: true });
+    expect(welcomeCoins(welcomed)).toBe(welcomed);
+  });
+
+  it('counts coins for the goal ring and a level up', () => {
+    expect(appointmentCoins(false, false)).toBe(0);
+    expect(appointmentCoins(true, false)).toBe(DAILY_CONFIG.coins.goal);
+    expect(appointmentCoins(true, true)).toBe(DAILY_CONFIG.coins.goal + DAILY_CONFIG.coins.levelUp);
+  });
+
+  it('an appointment gives tips to the wallet, and coins only when it reaches the goal ring or a level', () => {
+    const base = { stars: 3, tip: 8, goalMet: false, walkedOut: false, skills: { greeting: 60, consultation: 60, upsell: 60, rebooking: 60, problemHandling: 60 }, englishScore: 60, difficulty: 'easy' as const, daily: false };
+    let save = { ...NEW_SAVE, xp: 0 };
+    const coinsAt: number[] = [];
+    const expected: number[] = [];
+    for (let i = 0; i < PATH_CONFIG.goal + 1; i++) {
+      const update = applyAppointment(save, { ...base, today: '2026-11-15' });
+      coinsAt.push(update.coinsGained);
+      expected.push((i === PATH_CONFIG.goal - 1 ? DAILY_CONFIG.coins.goal : 0) + (update.rankUp ? DAILY_CONFIG.coins.levelUp : 0));
+      save = update.save;
+    }
+    // Only the goal-th appointment of the day pays the goal coins (plus a level's coins whenever one comes).
+    expect(coinsAt).toEqual(expected);
+    expect(coinsAt[PATH_CONFIG.goal - 1]).toBeGreaterThanOrEqual(DAILY_CONFIG.coins.goal);
+    expect(save.coins).toBe(expected.reduce((a, b) => a + b, 0));
+    expect(save.wallet).toBe(8 * (PATH_CONFIG.goal + 1));
+    // A level up pays its coins.
+    const tech = PROGRESSION_CONFIG.ranks[1]!;
+    const up = applyAppointment({ ...NEW_SAVE, xp: tech.xp - 1 }, { ...base, today: '2026-11-16' });
+    expect(up.rankUp).not.toBeNull();
+    expect(up.coinsGained).toBe(DAILY_CONFIG.coins.levelUp);
+    expect(up.save.coins).toBe(DAILY_CONFIG.coins.levelUp);
+    // A walk-out pays no goal coins.
+    expect(applyAppointment(NEW_SAVE, { ...base, walkedOut: true, today: '2026-11-16' }).coinsGained).toBe(0);
+  });
+
+  it('keeps coins in the save and drops nonsense', () => {
+    expect(parseSave(JSON.stringify({ ...NEW_SAVE, coins: 45, coinsWelcomed: true }))).toMatchObject({ coins: 45, coinsWelcomed: true });
+    const bad = parseSave(JSON.stringify({ ...NEW_SAVE, coins: -5, coinsWelcomed: 'yes' }));
+    expect(bad.coins).toBeUndefined();
+    expect(bad.coinsWelcomed).toBeUndefined();
+  });
+});
+
+describe("today's challenge line (057a part 2)", () => {
+  it('says start at 0 days, keep while the streak is going, and cheers once played', () => {
+    expect(dailyLineKey(0, false).key).toBe('daily.start');
+    expect(dailyLineKey(3, false)).toEqual({ key: 'daily.keep', params: { days: 3 } });
+    expect(dailyLineKey(3, true)).toEqual({ key: 'daily.streak', params: { days: 3 } });
   });
 });

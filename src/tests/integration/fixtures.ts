@@ -24,6 +24,10 @@ export interface SeedOptions {
   whatsNewSeen?: boolean;
   /** Story 054: the salon menu already set up (default true; false shows the first-game setup step). */
   menuConfirmed?: boolean;
+  /** 057a part 2: the welcome front page already answered (default true; false shows it on a first open). */
+  welcome?: boolean;
+  /** Owner decision: the one-time welcome coins already given (default true, so tests start with no note). */
+  coinsWelcomed?: boolean;
 }
 
 /** Storage for a player, written once per browser context (a reload keeps what the game saved). */
@@ -32,13 +36,14 @@ export async function seed(target: Page | BrowserContext, lang: Lang, options: S
     'salon.helpLanguage': lang === 'vi' ? 'full' : 'tap',
     'salon.clientVoice': 'off',
     'salon.cornerSeen': '1',
+    ...(options.welcome === false ? {} : { 'salon.welcomeDone': '1' }),
     // Story 034: What's new is tested on its own; elsewhere it is already seen.
     ...(options.whatsNewSeen === false ? {} : { 'salon.whatsNewSeen': APP_VERSION }),
     ...(options.level === false ? {} : { 'salon.englishLevel': 'some' }),
     ...(options.companion === false ? {} : { 'salon.companion.v1': JSON.stringify({ chosen: true, gender: 'female', name: 'Mai', equipped: {} }) }),
     ...(options.tourDone === false ? {} : { 'salon.tour.v1': JSON.stringify({ done: true, seen: [] }) }),
     ...(options.save || options.menuConfirmed !== false
-      ? { 'salon.save': JSON.stringify({ version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0, history: {}, ...(options.menuConfirmed === false ? {} : { menuConfirmed: true }), ...options.save }) }
+      ? { 'salon.save': JSON.stringify({ version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0, history: {}, ...(options.menuConfirmed === false ? {} : { menuConfirmed: true }), ...(options.coinsWelcomed === false ? {} : { coinsWelcomed: true }), ...options.save }) }
       : {}),
     ...options.extra,
   };

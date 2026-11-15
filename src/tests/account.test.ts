@@ -194,6 +194,14 @@ describe('keeping the device and the cloud together', () => {
     expect(decideSync(local, { fingerprint: 'C' }, 'X')).toBe('ask');
   });
 
+  it('a synced phone with no appointments yet uploads its own small changes instead of downloading again (no reload loop)', () => {
+    // 057a part 2 regression: an account made before the first appointment. Every boot writes a little (the tagline),
+    // so the phone differs from the cloud it last synced; downloading again reloaded the page, again and again.
+    expect(decideSync({ fingerprint: 'L2', appointments: 0 }, { fingerprint: 'C' }, 'C')).toBe('upload');
+    // A fresh phone (never synced) with nothing played still takes the cloud's progress.
+    expect(decideSync({ fingerprint: 'L', appointments: 0 }, { fingerprint: 'C' }, '')).toBe('download');
+  });
+
   it('fingerprints the progress, not the code (codes carry their date)', async () => {
     const data = progress(2);
     expect(await makeBackup(data, new Date(1))).not.toBe(await makeBackup(data, new Date(2)));

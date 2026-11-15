@@ -1,4 +1,5 @@
-import { NEW_PLAY, recordPlayDay } from './daily';
+import { NEW_PLAY, appointmentCoins, recordPlayDay } from './daily';
+import { PATH_CONFIG } from './path';
 import type { PlayState } from './daily';
 import type { MenuChoice } from './menu';
 import progressionJson from './config/progression.json';
@@ -179,6 +180,10 @@ export interface ProgressSave {
   play?: PlayState;
   /** Story 057a: nodes finished on the salon path. */
   pathDone?: number;
+  /** Owner decision (two currencies): coins (gift, milestones, goal ring, level-ups); `wallet` is tips. */
+  coins?: number;
+  /** The one-time welcome coins were given. */
+  coinsWelcomed?: boolean;
 }
 
 export const NEW_SAVE: ProgressSave = { version: 1, wallet: 0, tipsEarned: 0, xp: 0, appointments: 0, owned: [], badges: [], daily: null, dailyDoneDay: '', streak: 0, history: {} };
@@ -281,6 +286,8 @@ export interface ProgressUpdate {
   streak: { days: number; milestone: boolean } | null;
   /** Story 056: the play streak after this appointment (newDay: the streak moved on today; a freeze covered a gap). */
   played: { streak: number; newDay: boolean; freezeUsed: boolean } | null;
+  /** Coins this appointment earned (the daily goal ring reached, a level up). */
+  coinsGained: number;
 }
 
 function earns(rule: BadgeRule, outcome: AppointmentOutcome, save: ProgressSave): boolean {
@@ -328,12 +335,17 @@ export function applyAppointment(before: ProgressSave, outcome: AppointmentOutco
   if (badges.length > 0) save = { ...save, badges: [...save.badges, ...badges.map((b) => b.id)] };
   // Story 056: a finished appointment (not a walk-out) counts the day for the play streak.
   let played: ProgressUpdate['played'] = null;
+  let goalReachedNow = false;
   if (!outcome.walkedOut) {
     const day = recordPlayDay(save.play ?? NEW_PLAY, outcome.today);
     save = { ...save, play: day.play };
     played = { streak: day.play.streak, newDay: day.newDay, freezeUsed: day.freezeUsed };
+    goalReachedNow = day.play.dayCount === PATH_CONFIG.goal;
   }
-  return { save, xpGained, tipGained, rankUp, unlocked, badges, streak, played };
+  // Owner decision: coins for reaching the daily goal ring and for a level up (tips come only from the client).
+  const coinsGained = appointmentCoins(goalReachedNow, rankUp !== null);
+  if (coinsGained > 0) save = { ...save, coins: (save.coins ?? 0) + coinsGained };
+  return { save, xpGained, tipGained, rankUp, unlocked, badges, streak, played, coinsGained };
 }
 
 // ---- The shop ----

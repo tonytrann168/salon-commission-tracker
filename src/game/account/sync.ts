@@ -63,8 +63,10 @@ export type SyncChoice = 'upload' | 'download' | 'same' | 'ask';
 export function decideSync(local: { fingerprint: string; appointments: number }, cloud: { fingerprint: string } | null, synced: string): SyncChoice {
   if (!cloud) return 'upload';
   if (cloud.fingerprint === local.fingerprint) return 'same';
-  if (local.appointments === 0 || local.fingerprint === synced) return 'download';
+  // 057a part 2: the cloud is what this phone last synced → only this phone changed: upload (even with no
+  // appointments yet; downloading again reloaded the page in a loop, since every boot writes a little).
   if (cloud.fingerprint === synced) return 'upload';
+  if (local.appointments === 0 || local.fingerprint === synced) return 'download';
   return 'ask';
 }
 

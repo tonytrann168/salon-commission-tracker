@@ -1,9 +1,10 @@
+import { DAILY_CONFIG, NEW_PLAY, liveStreak as playStreak, welcomeCoins } from './game/daily';
 import { createPathScreen } from './game/ui/path-screen';
 import { createLessonScreen } from './game/ui/lesson-screen';
 import { PATH_CONFIG, finishNode } from './game/path';
 import type { PathNode } from './game/path';
 import { companionSpeech } from './game/companion-voice';
-import { createHomeStatus } from './game/ui/home-status';
+import { ACCOUNT_EVENT, createHomeStatus } from './game/ui/home-status';
 import { createMenuSetupScreen } from './game/ui/menu-setup';
 import { MENU_CONFIG, menuItems, orderFor } from './game/menu';
 import type { Container, Rectangle } from 'pixi.js';
@@ -71,12 +72,16 @@ import { APP_VERSION } from './game/feedback';
 import { markWhatsNewSeen, notesFor, shouldShowWhatsNew, whatsNewSeen } from './game/whats-new';
 import { openWhatsNew } from './game/ui/whats-new';
 import { getAccount, useCloudForTesting } from './game/account/account';
-import { accountNudge, showSyncOutcome } from './game/ui/account-panel';
+import { accountNudge, createAccountSection, openSignInSheet, showSyncOutcome } from './game/ui/account-panel';
+import { createWelcomeScreen } from './game/ui/welcome-screen';
 import { isBackedUp } from './game/backup';
 import { onStoredWrite, readStored, writeStored } from './game/safe-storage';
 import { CORNER_SEEN_KEY, shouldCue } from './game/corner';
 import { SEASON_KEY, activeSeason, giftDue, openGift, parseSeasonState, seasonOverride, seasonPalette, seasonStickers } from './game/seasons';
 import type { Season } from './game/seasons';
+
+/** 057a part 2: the welcome front page was answered on this phone (an account, or play without one). */
+const WELCOME_KEY = 'salon.welcomeDone';
 
 async function boot(): Promise<void> {
   const host = document.getElementById('app');
@@ -91,6 +96,8 @@ async function boot(): Promise<void> {
     if (isBackedUp(key)) getAccount()?.changed();
   });
   const account = getAccount();
+  // 057a part 2: the top bar's account button follows the account (a restored session, sign in, sign out).
+  account?.onChange(() => window.dispatchEvent(new Event(ACCOUNT_EVENT)));
   if (account) void account.start().then((outcome) => (outcome.kind !== 'error' || navigator.onLine) && showSyncOutcome(appHost, outcome));
   // Dev builds only: evidence scripts swap in a stand-in cloud.
   if (import.meta.env.DEV) (window as unknown as { salonUseCloud?: typeof useCloudForTesting }).salonUseCloud = useCloudForTesting;
@@ -195,9 +202,64 @@ async function boot(): Promise<void> {
     const firstRun = !loadCompanion().chosen;
     if (shouldShowWhatsNew(APP_VERSION, whatsNewSeen(), firstRun)) openWhatsNew(appHost, notesFor(APP_VERSION)!);
     if (whatsNewSeen() !== APP_VERSION) markWhatsNewSeen(APP_VERSION);
-    // Story 056: the streak flame, the wallet and today's free gift, top left (re-read on every visit to home).
-    menu.append(createHomeStatus(appHost, { load: loadSave, save: writeSave, today: localDay() }));
+    // Owner decision (two currencies): a one-time welcome gift of coins, for new players and saves from before coins.
+    if (!loadSave().coinsWelcomed) {
+      writeSave(welcomeCoins(loadSave()));
+      showNote(t('coins.welcome', { coins: DAILY_CONFIG.coins.welcome }));
+    }
+    // Story 056, 057a part 2: the ONE top bar: streak, coins, tips and the account button; today's gift below it.
+    menu.append(
+      createHomeStatus(appHost, {
+        load: loadSave,
+        save: writeSave,
+        today: localDay(),
+        ...(account
+          ? {
+              avatar: () => ({
+                signedIn: account.user !== null,
+                initial: (account.user?.email.trim()[0] ?? '').toUpperCase(),
+                onClick: () => (account.user ? openAccountSheet(account, showTitle) : openSignInSheet(appHost, account, { onDone: showTitle })),
+              }),
+            }
+          : {}),
+      }),
+    );
     teardownDom = () => menu.remove();
+  };
+
+  /** 057a part 2: "Your account" from the top bar: the email, Sign out, Delete (the Settings section, in a sheet). */
+  const openAccountSheet = (account: NonNullable<ReturnType<typeof getAccount>>, onClose: () => void) => {
+    const overlay = el('div', 'feedback-overlay');
+    const sheet = el('section', 'feedback-sheet account-sheet account-home-sheet');
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    sheet.setAttribute('aria-label', t('account.yourAccount'));
+    const close = el('button', 'chat-button secondary account-sheet-close', t('common.back'));
+    close.type = 'button';
+    close.addEventListener('click', () => {
+      overlay.remove();
+      onClose();
+    });
+    sheet.append(createAccountSection(appHost, account), close);
+    overlay.append(sheet);
+    appHost.append(overlay);
+    close.focus({ preventScroll: true });
+  };
+
+  /** 057a part 2 (owner request): the welcome front page, on a first open while not signed in. */
+  const showWelcome = (account: NonNullable<ReturnType<typeof getAccount>>) => {
+    teardownDom();
+    showScene('title');
+    const done = () => {
+      writeStored(WELCOME_KEY, '1');
+      showTitle();
+    };
+    const screen = createWelcomeScreen(host, {
+      onCreate: () => openSignInSheet(appHost, account, { mode: 'signUp', onDone: done }),
+      onSignIn: () => openSignInSheet(appHost, account, { mode: 'signIn', onDone: done }),
+      onGuest: done,
+    });
+    teardownDom = () => screen.remove();
   };
 
   const showSettings = () => {
@@ -362,7 +424,7 @@ async function boot(): Promise<void> {
     writeSave(offered.save);
     const save = loadSave();
     const scenario = getScenario(offered.scenarioId);
-    return { client: offered.client, done: dailyDoneToday(save, today), streak: liveStreak(save, today), onPick: () => begin(offered.client, true, scenario), ...(scenario ? { tag: scenario.tag[getLanguage()] } : {}) };
+    return { client: offered.client, done: dailyDoneToday(save, today), streak: playStreak(save.play ?? NEW_PLAY, today), onPick: () => begin(offered.client, true, scenario), ...(scenario ? { tag: scenario.tag[getLanguage()] } : {}) };
   };
 
   const showClientPicker = () => {
@@ -642,7 +704,10 @@ async function boot(): Promise<void> {
     window.setTimeout(() => note.remove(), NOTE_MS);
   }
 
-  showTitle();
+  // 057a part 2: a first open while not signed in (no account remembered on this phone) starts on the welcome page.
+  const firstAccount = getAccount();
+  if (firstAccount && !firstAccount.user && !firstAccount.memory().email && readStored(WELCOME_KEY) !== '1') showWelcome(firstAccount);
+  else showTitle();
 
   // Story 018: installable app with an offline title (built files only; never /api). Production builds only.
   if (import.meta.env.PROD && 'serviceWorker' in navigator) {
