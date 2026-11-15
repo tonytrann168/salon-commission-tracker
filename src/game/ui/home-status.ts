@@ -76,7 +76,7 @@ function openGiftSheet(host: HTMLElement, coins: number, bonus: number, mileston
       burst.append(coin);
     }
   }
-  card.append(burst, renderMascot('talking', 64, { crop: 'bust', ...companionLook() }), el('h2', '', t('daily.giftTitle')), el('p', 'gift-amount', `+$${coins}`));
+  card.append(renderMascot('talking', 64, { crop: 'bust', ...companionLook() }), el('h2', '', t('daily.giftTitle')), el('p', 'gift-amount', `+$${coins}`));
   if (bonus > 0) card.append(el('p', 'gift-extra', t('daily.giftBonus', { dollars: bonus })));
   if (milestone) card.append(el('p', 'gift-extra gift-milestone', t('daily.giftMilestone', { days: milestone.days, dollars: milestone.gift })));
   card.append(el('p', 'gift-total', t('daily.giftTotal', { dollars: total, name: companionName() })));
@@ -88,7 +88,8 @@ function openGiftSheet(host: HTMLElement, coins: number, bonus: number, mileston
   };
   collect.addEventListener('click', close);
   card.append(collect);
-  sheet.append(card);
+  // 056 fix: the coins fly out from BEHIND the card (only around its edges), never over its words or Collect.
+  sheet.append(burst, card);
   host.append(sheet);
   collect.focus({ preventScroll: true });
 }
