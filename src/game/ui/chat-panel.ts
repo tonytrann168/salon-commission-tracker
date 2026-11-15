@@ -19,7 +19,8 @@ import { createNailStation, nailsNote } from './nail-station-panel';
 import { openMenuSheet } from './menu-sheet';
 import { priceBoardIcon } from './menu-icon';
 import type { MenuItem, OrderLine } from '../menu';
-import { FIX_CONFIG, canFix, fixKindOf, fixOutcomes, openLine, openRequest, thanksLine, updateRequests } from '../fix-requests';
+import { FIX_CONFIG, canFix, fixKindOf, fixKindsOf, fixOutcomes, offersFix, openLine, openRequest, thanksLine, updateRequests } from '../fix-requests';
+import type { FixKind } from '../fix-requests';
 import type { FixOutcome, FixRequest } from '../fix-requests';
 import { NAIL_ART_CONFIG, NAIL_LENGTHS } from '../nail-art/design';
 import type { NailDesign, NailRequest, PaletteColor, StickerKind } from '../nail-art/design';
@@ -263,7 +264,8 @@ export function createChatPanel(
           checkFixes(design);
         },
         onDone: (design, result) => {
-          appointment.adjustMood(result.moodDelta);
+          // Story 058: a fix at checkout is judged by the fix itself (thanks or her open line), not the set again.
+          if (!checkoutFixing) appointment.adjustMood(result.moodDelta);
           nailArt.onNote(nailsNote(design, result, nailArt.request.service));
           nailArt.onDone(design, result);
           lastMatch = result.score;
@@ -425,7 +427,11 @@ export function createChatPanel(
   /** A fix she asked for: track it and show the Fix it step. */
   const askFix = (text: string): void => {
     const kind = fixKindOf(text);
-    if (!kind || !station || ending) return;
+    if (kind) openFixKind(kind, text);
+  };
+  /** Track a request of this kind and show the Fix it step. */
+  const openFixKind = (kind: FixKind, text: string): void => {
+    if (!station || ending) return;
     // The same ask again (or heard twice) while it is still open is one request.
     if (fixes.some((f) => f.kind === kind && f.status === 'open')) return;
     const request = openRequest(kind, station.design(), text);
@@ -536,9 +542,66 @@ export function createChatPanel(
     appointment.holdPhase('service');
     for (const line of planServiceTalk(portraits.client.difficulty)) talkTimers.push(window.setTimeout(() => sayWhenFree(line.text), line.at * 1000));
   };
+  // Story 058: after Done (checkout), her complaint ("polish on my skin… more red than coral") or the player offering a
+  // fix shows 🔧 Fix it in the chat; it reopens the station on the Fix it step, and the next Done returns to checkout.
+  let checkoutFixing = false;
+  let checkoutSeen = Number.MAX_SAFE_INTEGER;
+  let checkoutFixStart = 0;
+  const checkoutAsks = new Map<FixKind, string>();
+  const fixNow = el('button', 'chat-button fix-now hidden', `🔧 ${t('fix.now')}`);
+  fixNow.type = 'button';
+  root.insertBefore(fixNow, form);
+  const watchCheckout = (snapshot: AppointmentSnapshot): void => {
+    if (snapshot.status === 'finished') {
+      fixNow.classList.add('hidden');
+      return;
+    }
+    if (!root.classList.contains('service-over') || checkoutFixing) return;
+    for (let i = checkoutSeen + 1; i < snapshot.transcript.length; i++) {
+      const message = snapshot.transcript[i]!;
+      if (message.role === 'client') fixKindsOf(message.content).forEach((kind) => checkoutAsks.set(kind, message.content));
+      else if (message.role === 'player' && offersFix(message.content) && checkoutAsks.size === 0) {
+        // The player offers before she names it: the last thing she said about the nails, else a clean-up.
+        const hers = [...snapshot.transcript.slice(0, i)].reverse().find((m) => m.role === 'client' && fixKindsOf(m.content).length > 0);
+        if (hers) fixKindsOf(hers.content).forEach((kind) => checkoutAsks.set(kind, hers.content));
+        else checkoutAsks.set('edge', message.content);
+      }
+    }
+    checkoutSeen = Math.max(checkoutSeen, snapshot.transcript.length - 1);
+    fixNow.classList.toggle('hidden', checkoutAsks.size === 0);
+  };
+  fixNow.addEventListener('click', () => {
+    if (!station || checkoutFixing) return;
+    checkoutFixing = true;
+    fixNow.classList.add('hidden');
+    checkoutFixStart = fixes.length;
+    root.classList.remove('service-over');
+    root.classList.add('service-mode', 'checkout-fix');
+    setStationOpen(true);
+    for (const [kind, text] of checkoutAsks) openFixKind(kind, text);
+    checkoutAsks.clear();
+  });
+  /** The Done after a checkout fix: back to checkout; she thanks the player (fixed) or says it is still not right. */
+  const finishCheckoutFix = (): void => {
+    if (!station) return;
+    checkFixes(station.design());
+    const asked = fixes.slice(checkoutFixStart);
+    for (const request of asked.filter((f) => f.status === 'open')) appointment.adjustMood(FIX_CONFIG.openMood);
+    if (fixes.length > 0) nailArt?.onFixes?.(fixOutcomes(fixes));
+    nailArt?.onPhoto?.(station.photoSource());
+    station.closeFix(false);
+    setStationOpen(false);
+    root.classList.remove('service-mode', 'checkout-fix');
+    root.classList.add('service-over');
+    for (const request of asked) appointment.clientSays(request.status === 'fixed' ? thanksLine(request.kind) : openLine(request.kind));
+    checkoutFixing = false;
+    checkoutSeen = appointment.getSnapshot().transcript.length - 1;
+  };
+
   /** After Done: a redo scenario's first Done → her redo line, the station stays; otherwise → checkout in the chat. */
   function afterDone(): void {
     if (!station) return;
+    if (checkoutFixing) return finishCheckoutFix();
     if (station.canRedo) {
       // Story 048: her redo is a fix request: the station reopens on the Fix it step.
       appointment.clientSays(SERVICE_TALK.redo);
@@ -570,6 +633,7 @@ export function createChatPanel(
       appointment.holdPhase(null);
       // The job is finished: no tools at checkout, just the finished nails.
       root.classList.add('service-over');
+      checkoutSeen = latest.transcript.length - 1;
       appointment.advance('checkout');
       appointment.clientSays(checkoutLine(lastMatch, latest.mood));
       ending = false;
@@ -596,6 +660,7 @@ export function createChatPanel(
       }
       requestAnimationFrame(() => station.relayout());
     }
+    watchCheckout(snapshot);
     if (!serviceMode) return;
     if (!stationOpen) setStationOpen(true);
     // The player sent from the sheet: back to the nails; her question is answered.

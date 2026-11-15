@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fixJson from '../game/config/fix-requests.json';
-import { FIX_CONFIG, FIX_KINDS, applyFixesToSkills, canFix, fixKindOf, fixOutcomes, meetsRequest, openLine, openRequest, parseFixConfig, thanksLine, updateRequests } from '../game/fix-requests';
+import { FIX_CONFIG, FIX_KINDS, applyFixesToSkills, canFix, fixKindOf, fixKindsOf, fixOutcomes, offersFix, meetsRequest, openLine, openRequest, parseFixConfig, thanksLine, updateRequests } from '../game/fix-requests';
 import { NAIL_COUNT, addSpill, emptyDesign, paint, paintableCells, removeAll, removeNail, decorate } from '../game/nail-art/design';
 import type { NailDesign } from '../game/nail-art/design';
 import { SERVICE_TALK } from '../game/service-talk';
@@ -136,3 +136,18 @@ describe('a length fix (story 051)', () => {
   });
 });
 
+
+describe('a fix asked after Done (story 058)', () => {
+  it("finds both requests in the owner's playtest line: polish on her skin (edge) and a colour that is not what she asked", () => {
+    const grace = 'There is some polish on my skin near one nail… and it is a bit more red than coral.';
+    expect(fixKindsOf(grace)).toEqual(['edge', 'colour']);
+    expect(fixKindsOf("Hmm, this isn't quite the shade I asked for.")).toEqual(['colour']);
+    expect(fixKindsOf('They look lovely, thank you!')).toEqual([]);
+    expect(fixKindsOf('That will be forty dollars.')).toEqual([]);
+  });
+
+  it('hears the player offering to fix it, in English and Vietnamese', () => {
+    for (const line of ['Let me fix it for you.', "I'll fix that right away!", 'I can clean that up for you.', 'Để em sửa lại cho chị nha.', 'Em sửa liền nha chị.']) expect(offersFix(line)).toBe(true);
+    for (const line of ['That is forty dollars, please.', 'Thank you! See you next time.', 'Would you like to book again?']) expect(offersFix(line)).toBe(false);
+  });
+});

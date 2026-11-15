@@ -707,5 +707,6 @@
   "progress.stars": "Sao",
   "progress.coins": "Xu",
   "progress.tips": "Tip",
-  "progress.streakUp": "🔥 Chuỗi {from} → {to} ngày!"
+  "progress.streakUp": "🔥 Chuỗi {from} → {to} ngày!",
+  "fix.now": "Sửa lại"
 }

@@ -23,6 +23,8 @@ export interface FixConfig {
   openMood: number;
   skills: { fixedFloor: number; openCap: number };
   lines: Record<FixKind, { thanks: string[]; open: string[] }>;
+  /** Story 058: the player offering to fix it (English and Vietnamese), case-insensitive regular expressions. */
+  playerOffers: RegExp[];
 }
 
 export function parseFixConfig(raw: unknown): FixConfig {
@@ -61,6 +63,13 @@ export function parseFixConfig(raw: unknown): FixConfig {
     openMood: c.openMood as number,
     skills: { fixedFloor, openCap },
     lines,
+    playerOffers: texts((c as { playerOffers?: unknown }).playerOffers, 'playerOffers').map((source) => {
+      try {
+        return new RegExp(source, 'iu');
+      } catch {
+        return fail(`"playerOffers" has a bad pattern: ${source}`);
+      }
+    }),
   };
 }
 
@@ -81,6 +90,16 @@ export interface FixRequest {
 /** The kind of fix a client line asks for (one of her set lines, or the same ask in her own words), or null. */
 export function fixKindOf(line: string, config: FixConfig = FIX_CONFIG): FixKind | null {
   return FIX_KINDS.find((kind) => config.asks[kind].includes(line)) ?? FIX_KINDS.find((kind) => config.patterns[kind].some((re) => re.test(line))) ?? null;
+}
+
+/** Story 058: every kind of fix one line asks for ("polish on my skin… and a bit more red than coral": edge and colour). */
+export function fixKindsOf(line: string, config: FixConfig = FIX_CONFIG): FixKind[] {
+  return FIX_KINDS.filter((kind) => config.asks[kind].includes(line) || config.patterns[kind].some((re) => re.test(line)));
+}
+
+/** Story 058: the player says they will fix it ("Let me fix it for you", "Để em sửa lại"). */
+export function offersFix(line: string, config: FixConfig = FIX_CONFIG): boolean {
+  return config.playerOffers.some((re) => re.test(line));
 }
 
 /** A new open request. `line` (story 051): what she said, so a length fix knows if she wants them shorter or longer. */

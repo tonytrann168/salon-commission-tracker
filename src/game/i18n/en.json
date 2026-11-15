@@ -707,5 +707,6 @@
   "progress.stars": "Stars",
   "progress.coins": "Coins",
   "progress.tips": "Tips",
-  "progress.streakUp": "🔥 Streak {from} → {to}!"
+  "progress.streakUp": "🔥 Streak {from} → {to}!",
+  "fix.now": "Fix it"
 }

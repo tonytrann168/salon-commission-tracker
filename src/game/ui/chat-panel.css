@@ -135,3 +135,8 @@ html[data-motion='reduce'] .reply-chip.pulse { animation: none; }
 /* 057b (overseer nit): compact, so the home top bar keeps a clear gap before it at 320 px. */
 .title-menu .language-option { min-width: 36px; min-height: 40px; padding: 0 6px; border: 0; border-radius: 999px; background: transparent; color: #3b2a33; font: 700 14px system-ui, sans-serif; cursor: pointer; }
 .title-menu .language-option[aria-pressed='true'] { background: #ff5c9a; color: #fff; }
+
+/* Story 058: Fix it after Done (checkout): a clear orange button above the reply bar. */
+.chat-panel .fix-now { align-self: center; margin: 4px 16px; min-height: 52px; padding: 0 24px; background: #f08a24; color: #fff; font-size: 18px; pointer-events: auto; box-shadow: 0 3px 0 #c56a12; }
+.chat-panel .fix-now.hidden { display: none; }
+.chat-panel.checkout-fix .fix-now { display: none; }

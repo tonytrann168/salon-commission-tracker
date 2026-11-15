@@ -1,5 +1,5 @@
 {
-  "_note": "Story 048: when the client asks for a fix during the service. asks: her service-talk lines (and the redo line) that open a request of that kind. patterns: case-insensitive regular expressions that catch the same ask in her AI replies during the service. A request is fixed once the player has used a fix tool (Clean up, Remover) after she asked and the nails then meet the kind's test: edge = every nail's neatness at least edge.minNeatness; length = shorter (or longer, if she asked for longer) than when she asked; colour = a different base colour than when she asked, painted to at least colour.minCoverage on average. fixedMood / openMood: her mood change when it is fixed, or still open at Done. skills: problem handling is at least fixedFloor when every request was fixed, at most openCap when one was left open. lines: what she says (thanks when fixed, open when still not fixed at Done).",
+  "_note": "Story 048: when the client asks for a fix during the service. asks: her service-talk lines (and the redo line) that open a request of that kind. patterns: case-insensitive regular expressions that catch the same ask in her AI replies during the service. A request is fixed once the player has used a fix tool (Clean up, Remover) after she asked and the nails then meet the kind's test: edge = every nail's neatness at least edge.minNeatness; length = shorter (or longer, if she asked for longer) than when she asked; colour = a different base colour than when she asked, painted to at least colour.minCoverage on average. fixedMood / openMood: her mood change when it is fixed, or still open at Done. skills: problem handling is at least fixedFloor when every request was fixed, at most openCap when one was left open. lines: what she says (thanks when fixed, open when still not fixed at Done). Story 058: the same requests after Done (at checkout): her complaint, or the player offering a fix (playerOffers, English and Vietnamese), shows a Fix it button in the chat that reopens the station on the Fix it step. A colour that is not what she asked for (\"a bit more red than coral\") is a colour request.",
   "asks": {
     "edge": [
       "Can you fix that edge? It doesn't look even.",
@@ -20,7 +20,10 @@
     ],
     "colour": [
       "\\b(different|another|new)\\b.{0,15}\\bcolou?r\\b",
-      "\\bchange\\b.{0,20}\\bcolou?r\\b"
+      "\\bchange\\b.{0,20}\\bcolou?r\\b",
+      "\\b(a (bit|little) |too |much )?more (red|pink|orange|purple|brown|dark|darker|light|lighter|bright|brighter|nude|coral|peach)\\b.{0,20}\\bthan\\b",
+      "\\b(not|isn't|is not|wasn't) (quite |really )?(the|what|my) (colou?r|shade)\\b",
+      "\\b(colou?r|shade)\\b.{0,25}\\b(isn't|is not|wasn't|was not|not) (quite )?(what|the one) i (asked|wanted|picked|chose)"
     ],
     "length": [
       "\\b(make|cut|file|do) (them|it|my nails|the nails)( a (little|bit))? (shorter|longer)\\b",
@@ -71,5 +74,10 @@
         "I did ask about the length… never mind."
       ]
     }
-  }
+  },
+  "playerOffers": [
+    "\\b(let me|i'?ll|i will|i can|allow me to|let's)\\b.{0,12}\\b(fix|clean|redo|touch up|change|repaint|tidy)\\b",
+    "\\b(để )?(em|chị|anh|tôi|mình) (sửa|làm lại|lau|chỉnh)\\b",
+    "\\bsửa (lại )?(cho|liền|ngay)\\b"
+  ]
 }
