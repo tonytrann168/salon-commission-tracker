@@ -1,7 +1,7 @@
 import { haptic } from '../comfort';
 import { clientGrammar } from '../types';
 import type { ClientPronoun } from '../types';
-import type { Container } from 'pixi.js';
+import type { Container, Rectangle } from 'pixi.js';
 import { getLanguage, t } from '../i18n';
 import { NAIL_ART_CONFIG, NAIL_LENGTHS, emptyDesign, limbFor, nailsFor, paletteColor, removeAll } from '../nail-art/design';
 import type { FixKind } from '../fix-requests';
@@ -53,6 +53,8 @@ export interface NailStation {
   readonly canRedo: boolean;
   /** Story 051: the lengths on offer. */
   readonly lengths: readonly NailLength[];
+  /** Story 050: what to photograph for the finished set (the hand on the stage, cropped to the fingers). */
+  photoSource(): { target: Container; frame: Rectangle | null };
   /**
    * Story 048: she asked for a fix. The Fix it step shows (in Clean up's place) with the Remover, Remove all and the
    * right tool for the request; after Done (the colour redo) the station reopens for it.
@@ -530,6 +532,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     },
     relayout,
     lengths,
+    photoSource: () => ({ target: view.container, frame: view.photoFrame() }),
     design: () => design,
     openFix(kind) {
       if (done) {

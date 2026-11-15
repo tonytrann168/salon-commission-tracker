@@ -179,7 +179,7 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
     hand,
     foot,
     brushRadius: num(raw.brushRadius, 'brushRadius', 0.5, 20),
-    spill: { marginCells: num(spill.marginCells, 'spill.marginCells', 0, 6), forgiveRing: num(spill.forgiveRing, 'spill.forgiveRing', 0, 3), zeroNeatnessAt: num(spill.zeroNeatnessAt, 'spill.zeroNeatnessAt', 0.05, 2) },
+    spill: { marginCells: num(spill.marginCells, 'spill.marginCells', 0, 12), forgiveRing: num(spill.forgiveRing, 'spill.forgiveRing', 0, 6), zeroNeatnessAt: num(spill.zeroNeatnessAt, 'spill.zeroNeatnessAt', 0.05, 2) },
     cleanupRadius: num(raw.cleanupRadius, 'cleanupRadius', 0.5, 30),
     tidy: { seconds: num(isRecord(raw.tidy) ? raw.tidy.seconds : undefined, 'tidy.seconds', 0, 10) },
     maxDecorationsPerNail: num(raw.maxDecorationsPerNail, 'maxDecorationsPerNail', 0, 10),

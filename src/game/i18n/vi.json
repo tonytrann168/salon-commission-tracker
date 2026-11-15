@@ -596,5 +596,12 @@
   "station.undoLabel": "Bỏ nét vừa làm",
   "station.undone": "↶ Đã bỏ nét vừa làm.",
   "station.step.clean": "Lau: chà sạch da, hoặc bấm ✨ rồi chạm vào móng.",
-  "station.rubWord": "Chà"
+  "station.rubWord": "Chà",
+  "results.photoCaption": "Móng của {name} · {date}",
+  "results.photoTough": "Bộ nào cũng là luyện tập. Bộ sau sẽ đẹp hơn. 💪",
+  "profile.myWork": "Tác phẩm của {you}",
+  "profile.myWorkEmpty": "Làm xong một bộ móng là ảnh hiện ở đây.",
+  "profile.savePhoto": "Lưu vào điện thoại",
+  "profile.closePhoto": "Đóng",
+  "profile.photoAlt": "Móng của {name}, {stars} sao"
 }

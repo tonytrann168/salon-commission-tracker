@@ -1,4 +1,4 @@
-import { Container, Graphics } from 'pixi.js';
+import { Container, Graphics, Rectangle } from 'pixi.js';
 import { NAIL_ART_CONFIG, lengthReach, mirroredFingers, withLength, addSpill, cleanUp, dab, removeNail, tidyNail, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid, wipeCells } from './design';
 import type { Decoration, FingerConfig, HandConfig, NailDesign, NailShape, StickerKind } from './design';
 
@@ -36,6 +36,8 @@ export interface StationView {
   pointer(x: number, y: number, phase: 'down' | 'move', tool: StationTool, sticker: StickerKind): NailDesign;
   /** Story 017: which hand is on the station (0 right, 1 left). The design's nails 0-4 are the right hand, 5-9 the left. */
   setHand(hand: 0 | 1): void;
+  /** Story 050: where the fingers and nails are, in the container's own space (the photo of the finished set). */
+  photoFrame(padding?: number): Rectangle | null;
   /** Each nail's bounding box on screen, relative to the station rectangle (for placing the hint clear of them). */
   nailBoxes(): { left: number; right: number; top: number; bottom: number }[];
   destroy(): void;
@@ -115,13 +117,39 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
     const ch = h / rows;
     const from = hex(base.hex);
     const to = fade ? hex(fade.hex) : from;
+    // Story 050 (overseer): polish looks like brush strokes, not a grid: each painted cell is a soft round dab that
+    // overlaps its neighbours (the nail's mask clips them), so a half-painted nail has a smooth stroke edge.
+    // Cells inside the painted area are plain squares (cheap); only cells on its edge are round dabs.
+    const rx = cw * 0.9;
+    const ry = ch * 0.9;
     const bleed = 0.05;
-    for (const cell of cells) {
+    const has = new Set(cells);
+    const edge = (cell: number): boolean => {
+      const col = cell % cols;
+      return (col === 0 || !has.has(cell - 1)) || (col === cols - 1 || !has.has(cell + 1)) || !has.has(cell - cols) || !has.has(cell + cols);
+    };
+    const shape = (cell: number): void => {
       const col = cell % cols;
       const row = Math.floor(cell / cols);
-      // Gradient: polish at the cuticle, fading to the gradient colour at the tip.
-      const color = fade ? mix(to, from, (row + 0.5) / rows) : from;
-      view.paintLayer.rect(col * cw - bleed, row * ch - bleed, cw + 2 * bleed, ch + 2 * bleed).fill({ color });
+      if (edge(cell)) view.paintLayer.ellipse((col + 0.5) * cw, (row + 0.5) * ch, rx, ry);
+      else view.paintLayer.rect(col * cw - bleed, row * ch - bleed, cw + 2 * bleed, ch + 2 * bleed);
+    };
+    if (!fade) {
+      for (const cell of cells) shape(cell);
+      view.paintLayer.fill({ color: from });
+    } else {
+      // Gradient: polish at the cuticle, fading to the gradient colour at the tip (one colour per row).
+      const byRow = new Map<number, number[]>();
+      for (const cell of cells) {
+        const row = Math.floor(cell / cols);
+        const list = byRow.get(row) ?? [];
+        list.push(cell);
+        byRow.set(row, list);
+      }
+      for (const [row, inRow] of [...byRow].sort((a, b) => a[0] - b[0])) {
+        inRow.forEach(shape);
+        view.paintLayer.fill({ color: mix(to, from, (row + 0.5) / rows) });
+      }
     }
     // The nail is curved: a highlight down one side.
     if (cells.length > 6) view.gloss.moveTo(w * 0.3, h * 0.3).quadraticCurveTo(w * 0.24, h * 0.5, w * 0.3, h * 0.7).stroke({ width: Math.max(0.6, w * 0.08), color: 0xffffff, alpha: 0.55, cap: 'round' });
@@ -141,9 +169,9 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
     // one closer to skin colour (it reads as thin, slightly see-through polish), opaque so overlaps never darken.
     const centres = cells.map((cell) => [((cell % grid.cols) - grid.margin + 0.5) * cw, (Math.floor(cell / grid.cols) - grid.margin + 0.5) * ch] as const);
     const polish = hex(base.hex);
-    for (const [x, y] of centres) view.spillLayer.ellipse(x, y, cw * 1.05, ch * 1.05);
+    for (const [x, y] of centres) view.spillLayer.ellipse(x, y, cw * 1.7, ch * 1.5);
     view.spillLayer.fill({ color: mix(polish, SKIN, 0.55) });
-    for (const [x, y] of centres) view.spillLayer.ellipse(x, y, cw * 0.72, ch * 0.72);
+    for (const [x, y] of centres) view.spillLayer.ellipse(x, y, cw * 1.15, ch * 1.0);
     view.spillLayer.fill({ color: mix(polish, SKIN, 0.3) });
   };
 
@@ -333,6 +361,17 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       }
       design = stored;
       return next;
+    },
+    photoFrame(padding = 10) {
+      const a = fingersLayer.getBounds();
+      const b = nailsLayer.getBounds();
+      if (a.width <= 0 && b.width <= 0) return null;
+      const origin = container.getGlobalPosition();
+      const left = Math.min(a.x, b.x) - origin.x - padding;
+      const top = Math.min(a.y, b.y) - origin.y - padding;
+      const right = Math.max(a.x + a.width, b.x + b.width) - origin.x + padding;
+      const bottom = Math.max(a.y + a.height, b.y + b.height) - origin.y + padding;
+      return new Rectangle(Math.max(0, left), Math.max(0, top), right - Math.max(0, left), bottom - Math.max(0, top));
     },
     nailBoxes() {
       return views.map((v) => {

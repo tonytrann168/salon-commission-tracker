@@ -1,3 +1,5 @@
+import type { Container, Rectangle } from 'pixi.js';
+import { GALLERY_CONFIG, addToGallery } from './game/gallery';
 import type { FixOutcome } from './game/fix-requests';
 import type { SceneName, Stage } from './game/stage';
 import { createAppointment } from './game/appointment';
@@ -392,7 +394,7 @@ async function boot(): Promise<void> {
     teardownDom();
     showScene('salon');
     // Story 005: what the client hears about her nails, and the finished result for the review and the stars.
-    const nails: { note: string | undefined; finished: { description: string; match: number; fixes?: FixOutcome[] } | undefined } = { note: undefined, finished: undefined };
+    const nails: { note: string | undefined; finished: { description: string; match: number; fixes?: FixOutcome[] } | undefined; photo?: Promise<string | null> } = { note: undefined, finished: undefined };
     const appointment = createAppointment({
       client,
       takeTurn: createFetchTransport(() => level, () => nails.note, client.id, scenarioFields),
@@ -422,6 +424,10 @@ async function boot(): Promise<void> {
               },
               onDone: (design: NailDesign, result: MatchResult) => {
                 nails.finished = { description: describeDesign(design, undefined, client.nailRequest?.service), match: result.score };
+              },
+              // Story 050: the finished set's photo (taken now, shown first on the results and kept in My work).
+              onPhoto: (source: { target: Container; frame: Rectangle | null }) => {
+                nails.photo = stage.snapshot(source.target, GALLERY_CONFIG.width, GALLERY_CONFIG.quality, source.frame ?? undefined);
               },
               // Story 048: the fixes she asked for go to the review, the scorecard and the debrief.
               onFixes: (fixes: FixOutcome[]) => {
@@ -468,6 +474,7 @@ async function boot(): Promise<void> {
           translations,
           helpLanguage: getHelpLanguage(),
           ...(nails.finished ? { nails: nails.finished } : {}),
+          ...(nails.photo ? { photo: nails.photo, onPhoto: (photo: string, stars: number) => void addToGallery({ photo, clientName: client.name, stars, day: localDay() }) } : {}),
           extras: (grading, score) => [
             // Story 007: tips into the wallet, XP and rank, badges and the daily streak, once per appointment.
             progressPanel(grading, score, result.outcome),
@@ -505,7 +512,18 @@ async function boot(): Promise<void> {
       const items = celebrationsFor(update);
       const panel = createProgressPanel(update);
       // Only while the results are still showing (the player may already have tapped Next).
-      if (items.length > 0) window.setTimeout(() => panel.isConnected && celebrate(appHost, items), CELEBRATE_DELAY_MS);
+      // Story 050: her nails' polaroid and the payment have the first moment; badges and rank-ups come once the payment
+      // card is done (the results lose their "paying" class), only while the results are still showing.
+      if (items.length > 0) {
+        const started = Date.now();
+        const wait = (): void => {
+          if (Date.now() - started > 20_000) return;
+          const paying = !panel.isConnected || panel.closest('.paying') !== null || document.querySelector('.chat-results.hidden') !== null;
+          if (paying) return void window.setTimeout(wait, 250);
+          window.setTimeout(() => panel.isConnected && celebrate(appHost, items), CELEBRATE_DELAY_MS);
+        };
+        window.setTimeout(wait, 250);
+      }
       progress = panel;
       return panel;
     }

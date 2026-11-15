@@ -5,10 +5,12 @@ import type { ScoreResult, ScoringConfig } from '../scoring';
 import { ENGLISH_KEYS, SKILL_KEYS, TurnError } from '../types';
 import type { TranslationCache } from '../translation-cache';
 import type { AppointmentResult, EnglishLevel, GradeAppointment, Grading, HelpLanguage } from '../types';
-import { t } from '../i18n';
+import { getLanguage, t } from '../i18n';
 import { servicePrice, tipParts } from '../payment';
 import { createPaymentCard } from './payment-card';
 import { guardMessage } from './guard-message';
+import { createPolaroid } from './polaroid';
+import { PAYMENT_CONFIG, cheerFor } from '../payment';
 import { applyFixesToSkills } from '../fix-requests';
 import type { FixOutcome } from '../fix-requests';
 import './results-screen.css';
@@ -44,6 +46,9 @@ export interface ResultsScreenOptions {
   nails?: { description: string; match: number; fixes?: FixOutcome[] };
   /** Sections built once the scorecard is ready: the bestie's debrief (story 003), the English review, recap and level change (story 011). */
   extras?: (grading: Grading, score: ScoreResult) => HTMLElement[];
+  /** Story 050: the finished set's photo (shown first, as a polaroid) and what to do with it once shown (My work). */
+  photo?: Promise<string | null>;
+  onPhoto?: (photo: string, stars: number) => void;
   /** Story 039: what was done (for the price the client pays): a manicure or a pedicure, one or both hands/feet. */
   service?: { kind: 'manicure' | 'pedicure'; hands: 1 | 2 };
 }
@@ -173,7 +178,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     show(box);
   };
 
-  const showResults = (grading: Grading, score: ScoreResult): void => {
+  const showResults = (grading: Grading, score: ScoreResult, photo: string | null = null): void => {
     // Story 039: the payment moment first (price, the tip part by part, stars, the companion's cheer); the review and
     // the scorecard appear when it is done (a tap skips; reduced motion shows the totals at once).
     const finalMood = result.moodHistory[result.moodHistory.length - 1] ?? 0;
@@ -188,6 +193,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
       stars: score.stars,
       walkedOut: result.outcome === 'walked_out',
       ...(openFix ? { openFix: true } : {}),
+      ...(photo ? { delayMs: PAYMENT_CONFIG.timing.photoMs } : {}),
       onDone: () => container.classList.remove('paying'),
     });
 
@@ -202,7 +208,14 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     const actions = el('div', 'results-actions');
     actions.append(button(options.nextLabel ?? t('results.nextClient'), onNextClient), button(t('results.backToMenu'), onBackToMenu, true));
 
+    // Story 050: her nails first, as a big polaroid, with a celebration that fits the result; then the payment.
+    const band = cheerFor(score.stars, result.outcome === 'walked_out');
+    const polaroid = photo
+      ? [createPolaroid({ photo, band, caption: t('results.photoCaption', { name: clientName, date: new Date().toLocaleDateString(getLanguage() === 'vi' ? 'vi-VN' : 'en-US', { day: 'numeric', month: 'short' }) }), ...(band === 'tough' ? { note: t('results.photoTough') } : {}) })]
+      : [];
+    if (photo) options.onPhoto?.(photo, score.stars);
     show(
+      ...polaroid,
       payment,
       ...notes,
       ...(extras ? extras(grading, score) : []),
@@ -232,6 +245,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     // Story 048: a fix done counts as good problem handling; one left open caps it.
     const fixes = options.nails?.fixes ?? [];
     if (fixes.length > 0) grading = { ...grading, skills: applyFixesToSkills(grading.skills, fixes) };
+    const photo = options.photo ? await options.photo.catch(() => null) : null;
     showResults(
       grading,
       scoreAppointment(
@@ -247,6 +261,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
         },
         config,
       ),
+      photo,
     );
   };
 

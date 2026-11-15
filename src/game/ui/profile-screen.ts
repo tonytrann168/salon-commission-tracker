@@ -3,6 +3,7 @@ import { getLanguage, t } from '../i18n';
 import { PROGRESSION_CONFIG, liveStreak, rankFor } from '../progression';
 import type { ProgressSave } from '../progression';
 import { el } from './dom';
+import { createMyWork } from './my-work';
 import './level-picker.css';
 import './progression.css';
 
@@ -66,7 +67,8 @@ export function createProfileScreen(host: HTMLElement, options: { save: Progress
     dress.addEventListener('click', options.onDressUp);
     extra.push(dress);
   }
-  screen.append(title, rankBar(save.xp), stats, ...extra, badges, back);
+  // Story 050: My work (the finished sets' photos) before the badges.
+  screen.append(title, rankBar(save.xp), stats, ...extra, createMyWork(), badges, back);
   host.appendChild(screen);
   return screen;
 }

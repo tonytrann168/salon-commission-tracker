@@ -1,0 +1,6 @@
+{
+  "_note": "Story 050: the finished-set photo and the My work gallery. max: photos kept (newest first). width: the photo's width in pixels. quality: JPEG quality (0-1). Photos stay on this phone (not in backups or the account).",
+  "max": 20,
+  "width": 360,
+  "quality": 0.8
+}

@@ -7,7 +7,7 @@ import paymentJson from './config/payment.json';
 export interface PaymentConfig {
   prices: { manicure: number; pedicure: number; bothExtra: number };
   tipShares: { match: number; mood: number; scenario: number };
-  timing: { priceMs: number; firstPartMs: number; partGapMs: number; starGapMs: number; cheerMs: number; holdMs: number; maxTotalMs: number };
+  timing: { priceMs: number; firstPartMs: number; partGapMs: number; starGapMs: number; cheerMs: number; holdMs: number; maxTotalMs: number; /** Story 050: the polaroid shows alone this long before the payment starts. */ photoMs: number };
 }
 
 export function parsePaymentConfig(raw: unknown): PaymentConfig {

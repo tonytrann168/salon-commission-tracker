@@ -162,8 +162,8 @@
     "flower"
   ],
   "grid": {
-    "cols": 6,
-    "rows": 10
+    "cols": 12,
+    "rows": 20
   },
   "hand": {
     "_note": "One hand, palm down, fingers up, in hand units (box w x h). Per finger: nail centre (x, y), angle in degrees (0 = straight up, + leans right), nail size, finger length below the nail and width (x nail width). Two hands later = a second list.",
@@ -305,8 +305,8 @@
   },
   "brushRadius": 3.4,
   "spill": {
-    "marginCells": 3,
-    "forgiveRing": 1,
+    "marginCells": 6,
+    "forgiveRing": 2,
     "zeroNeatnessAt": 0.35
   },
   "cleanupRadius": 6.5,

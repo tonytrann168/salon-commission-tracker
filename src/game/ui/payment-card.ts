@@ -23,6 +23,8 @@ export interface PaymentCardOptions {
   /** Story 049 (overseer, on 048): a fix she asked for was left undone: the cheer says so, kindly. */
   openFix?: boolean;
   onDone: () => void;
+  /** Story 050: wait this long before starting (the polaroid of the nails shows first). */
+  delayMs?: number;
 }
 
 export function createPaymentCard(options: PaymentCardOptions): HTMLElement {
@@ -94,7 +96,7 @@ export function createPaymentCard(options: PaymentCardOptions): HTMLElement {
     return card;
   }
   card.addEventListener('click', finish);
-  const at = (ms: number, run: () => void): void => void timers.push(window.setTimeout(() => !finished && run(), ms));
+  const at = (ms: number, run: () => void): void => void timers.push(window.setTimeout(() => !finished && run(), ms + (options.delayMs ?? 0)));
   if (!options.walkedOut) {
     at(timing.priceMs, () => {
       reveal(priceRow);

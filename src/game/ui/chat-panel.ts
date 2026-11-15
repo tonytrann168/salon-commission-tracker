@@ -1,5 +1,5 @@
 import { prefersReducedMotion } from '../comfort';
-import type { Container } from 'pixi.js';
+import type { Container, Rectangle } from 'pixi.js';
 import type { Appointment, AppointmentSnapshot } from '../appointment';
 import { MOOD_MAX } from '../mood';
 import { getPortraitDefinition } from '../portraits/definitions';
@@ -90,6 +90,8 @@ export function createChatPanel(
       onNote: (note: string | undefined) => void;
       /** Finished (Done, or the appointment ended): the design and its match. */
       onDone: (design: NailDesign, result: MatchResult) => void;
+      /** Story 050: the finished set, to photograph (at the final Done, while the hand is still on the stage). */
+      onPhoto?: (source: { target: Container; frame: Rectangle | null }) => void;
       /** Story 048: the fixes she asked for and whether each was done (at the final Done). */
       onFixes?: (fixes: FixOutcome[]) => void;
       /** Story 007: bought polishes and upgraded tools. */
@@ -517,6 +519,7 @@ export function createChatPanel(
       appointment.clientSays(openLine(open.kind));
     }
     if (fixes.length > 0) nailArt?.onFixes?.(fixOutcomes(fixes));
+    nailArt?.onPhoto?.(station.photoSource());
     station.closeFix(false);
     if (!serviceStarted) {
       window.setTimeout(() => setStationOpen(false), 1800);

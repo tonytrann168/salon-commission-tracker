@@ -596,5 +596,12 @@
   "station.undoLabel": "Undo the last stroke",
   "station.undone": "↶ Undone.",
   "station.step.clean": "Clean up: rub the skin, or tap ✨ then a nail.",
-  "station.rubWord": "Rub"
+  "station.rubWord": "Rub",
+  "results.photoCaption": "{name}'s nails · {date}",
+  "results.photoTough": "Every set is practice. The next one will shine. 💪",
+  "profile.myWork": "My work",
+  "profile.myWorkEmpty": "Finish a set and its photo shows here.",
+  "profile.savePhoto": "Save to phone",
+  "profile.closePhoto": "Close",
+  "profile.photoAlt": "{name}'s nails, {stars} stars"
 }

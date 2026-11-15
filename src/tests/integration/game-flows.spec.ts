@@ -251,6 +251,33 @@ for (const lang of LANGS) {
       await expect(page.locator('.station-status')).toContainText(lang === 'vi' ? 'Viền sạch' : 'Edges clean');
     });
 
+    test('celebrate the set (story 050): her nails as a polaroid first, then the payment; the photo is kept in My work and can be saved', async ({ page }) => {
+      await seed(page, lang, { save: { xp: 100, appointments: 3, badges: ['first-client'], ...dailyWith('ana') } });
+      await mockApi(page);
+      await page.goto('/');
+      await playToResults(page);
+      const polaroid = page.locator('.chat-results .polaroid');
+      await expect(polaroid).toBeVisible();
+      await expect(polaroid.locator('img')).toHaveAttribute('src', /^data:image\/jpeg/);
+      expect(await polaroid.evaluate((node) => /polaroid-(top|good|okay|tough)/.test(node.className))).toBe(true);
+      await expect(polaroid.locator('figcaption')).toContainText(lang === 'vi' ? 'Móng của' : "'s nails");
+      // The photo comes first: it sits above the payment card.
+      const order = await page.evaluate(() => document.querySelector('.polaroid')!.getBoundingClientRect().top < document.querySelector('.payment-card')!.getBoundingClientRect().top);
+      expect(order).toBe(true);
+      expect(await noOverflow(page)).toBe(true);
+      // My work on the profile: one photo; tap it for the big view and Save to phone.
+      await page.locator('.results-actions .chat-button.secondary').click();
+      await page.locator('.title-menu-row').nth(1).locator('button').last().click();
+      await expect(page.locator('.my-work-tile')).toHaveCount(1);
+      await page.locator('.my-work-tile').click();
+      await expect(page.locator('.my-work-viewer .my-work-big')).toHaveAttribute('src', /^data:image\/jpeg/);
+      await expect(page.locator('.my-work-save')).toContainText(lang === 'vi' ? 'Lưu vào điện thoại' : 'Save to phone');
+      const download = page.waitForEvent('download');
+      await page.locator('.my-work-save').click();
+      expect((await download).suggestedFilename()).toMatch(/^salon-besties-.*\.jpg$/);
+      expect(await noOverflow(page)).toBe(true);
+    });
+
     test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page, { replies: ['Hi!', 'Red, please. Oh, can you fix that edge? There is polish on my skin.'] });

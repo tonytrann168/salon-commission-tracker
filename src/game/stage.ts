@@ -1,4 +1,4 @@
-import { Application, Container, Graphics } from 'pixi.js';
+import { Application, Container, Graphics, Rectangle } from 'pixi.js';
 import { createPortrait } from './portraits/definitions';
 import { createSalonScene } from './salon-scene';
 import { createTitleScreen } from './title-screen';
@@ -19,6 +19,8 @@ export interface Stage {
   layer: Container;
   /** A portrait as a data-URL image (the client picker's faces). */
   faceImage(portraitId: string, px: number): Promise<string | null>;
+  /** Story 050: a photo of something on the stage (the finished nails) as a JPEG data URL, `width` px wide. */
+  snapshot(target: Container, width: number, quality: number, frame?: Rectangle): Promise<string | null>;
   createChatPanel: typeof createChatPanel;
 }
 
@@ -60,6 +62,25 @@ export async function createStage(host: HTMLElement): Promise<Stage> {
         return null;
       } finally {
         frame.destroy({ children: true });
+      }
+    },
+    async snapshot(target, width, quality, frame) {
+      try {
+        const bounds = frame ?? target.getLocalBounds().rectangle;
+        if (bounds.width <= 0 || bounds.height <= 0) return null;
+        const source = app.renderer.extract.canvas({ target, resolution: width / bounds.width, ...(frame ? { frame } : {}) }) as HTMLCanvasElement;
+        // JPEG has no transparency: the salon pink goes behind the hand.
+        const photo = document.createElement('canvas');
+        photo.width = source.width;
+        photo.height = source.height;
+        const g = photo.getContext('2d');
+        if (!g) return null;
+        g.fillStyle = '#fde7ef';
+        g.fillRect(0, 0, photo.width, photo.height);
+        g.drawImage(source, 0, 0);
+        return photo.toDataURL('image/jpeg', quality);
+      } catch {
+        return null;
       }
     },
     createChatPanel,
