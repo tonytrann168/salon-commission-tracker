@@ -615,7 +615,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
       tabButtons.fix.classList.add('pulse');
       tool = kind === 'edge' ? 'cleanup' : kind === 'colour' ? 'remover' : 'polish';
       selectTab('fix');
-      say(t(`station.fixAsk.${kind}`, clientGrammar(options.clientPronoun)), true);
+      // 064 review: while first aid is open, its step hint stays (the Fix it step waits in the steps).
+      if (!aidButtons) say(t(`station.fixAsk.${kind}`, clientGrammar(options.clientPronoun)), true);
     },
     closeFix(fixed = true) {
       if (fixKind === null) return;

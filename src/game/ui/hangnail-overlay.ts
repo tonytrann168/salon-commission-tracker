@@ -37,6 +37,8 @@ export function createHangnailOverlay(options: HangnailOverlayOptions): Hangnail
     '<svg class="hangnail-flap" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M4 16 Q6 9 12 6 Q10 11 13 14 Q9 13 4 16 Z" fill="#f0b79a" stroke="#b46f55" stroke-width="1.2" stroke-linejoin="round"/></svg>' +
     '<span class="hangnail-ring" aria-hidden="true"></span>';
   spot.style.setProperty('--trim-ms', `${HANGNAIL_CONFIG.trimMs}ms`);
+  // 064 review: a soft pulsing ring so the little flap is easy to find (until the Nipper is on, or it is trimmed).
+  spot.classList.add('pulse');
   options.touch.append(spot);
 
   let downAt = 0;

@@ -1,3 +1,6 @@
+import { createStationView } from './nail-art/station';
+import { NAIL_ART_CONFIG, limbFor } from './nail-art/design';
+import type { NailDesign, NailRequest } from './nail-art/design';
 import { Application, Container, Graphics, Rectangle } from 'pixi.js';
 import { createPortrait } from './portraits/definitions';
 import { createSalonScene } from './salon-scene';
@@ -21,6 +24,8 @@ export interface Stage {
   faceImage(portraitId: string, px: number): Promise<string | null>;
   /** Story 050: a photo of something on the stage (the finished nails) as a JPEG data URL, `width` px wide. */
   snapshot(target: Container, width: number, quality: number, frame?: Rectangle): Promise<string | null>;
+  /** Story 065: a design drawn by the nail renderer (off screen) as a photo: her reference picture. */
+  designPhoto(design: NailDesign, request: NailRequest, width: number, quality: number): Promise<string | null>;
   createChatPanel: typeof createChatPanel;
 }
 
@@ -45,7 +50,7 @@ export async function createStage(host: HTMLElement): Promise<Stage> {
     sceneRoot.addChild(SCENES[current](app.screen.width, app.screen.height));
   };
   app.renderer.on('resize', draw);
-  return {
+  const stage: Stage = {
     show(scene) {
       current = scene;
       draw();
@@ -83,6 +88,24 @@ export async function createStage(host: HTMLElement): Promise<Stage> {
         return null;
       }
     },
+    async designPhoto(design, request, width, quality) {
+      const view = createStationView(design, { brushRadius: NAIL_ART_CONFIG.brushRadius, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius }, limbFor(request), longestFor(request));
+      try {
+        view.layout(0, 0, 320, 300, 8, 8, 0);
+        view.setDesign(design);
+        return await stage.snapshot(view.container, width, quality, view.photoFrame() ?? undefined);
+      } catch {
+        return null;
+      } finally {
+        view.destroy();
+      }
+    },
     createChatPanel,
   };
+  return stage;
+}
+
+/** The longest length a design may show (the station leaves room for it), as in the station panel. */
+function longestFor(request: NailRequest): number {
+  return Math.max(1, ...(request.lengths ?? []).map((l) => NAIL_ART_CONFIG.lengths[l]));
 }

@@ -1,3 +1,4 @@
+import { bringsPicture, referenceTarget } from './game/reference';
 import { planHangnail } from './game/hangnail';
 import { DAILY_CONFIG, NEW_PLAY, liveStreak as playStreak, welcomeCoins } from './game/daily';
 import { createPathScreen } from './game/ui/path-screen';
@@ -560,6 +561,9 @@ async function boot(): Promise<void> {
       // Grading starts from the chat panel's onEnded, once the final line has finished revealing (story 002).
       onFinished: () => undefined,
     });
+    // Story 065 (hard clients): she may bring a picture: her request narrows to it, drawn by the nail renderer.
+    const picture = client.nailRequest && client.nailRequest.service !== 'pedicure' && bringsPicture(client.difficulty, `${client.id}:${loadSave().appointments}`) ? referenceTarget(client.nailRequest) : null;
+    const referencePhoto = picture ? stage.designPhoto(picture.design, picture.request, GALLERY_CONFIG.width, GALLERY_CONFIG.quality) : null;
     const panel = stage.createChatPanel(host, appointment, {
       client,
       layer: stage.layer,
@@ -571,7 +575,8 @@ async function boot(): Promise<void> {
       ...(client.nailRequest
         ? {
             nailArt: {
-              request: client.nailRequest,
+              request: picture?.request ?? client.nailRequest,
+              ...(referencePhoto ? { reference: referencePhoto } : {}),
               // Story 028: seasonal polishes and stickers only while their season runs.
               palette: seasonPalette(stationPalette(NAIL_ART_CONFIG.palette, loadSave()), activeSeason(localDay(), seasonOverride())),
               stickers: seasonStickers(NAIL_ART_CONFIG.stickers, activeSeason(localDay(), seasonOverride())),
@@ -639,6 +644,7 @@ async function boot(): Promise<void> {
           helpLanguage: getHelpLanguage(),
           ...(nails.finished ? { nails: nails.finished } : {}),
           bill: order.map((line) => ({ number: line.number, label: line.item.name[getLanguage()], price: line.item.price })),
+          ...(referencePhoto ? { reference: referencePhoto } : {}),
           ...(nails.photo ? { photo: nails.photo, onPhoto: (photo: string, stars: number) => void addToGallery({ photo, clientName: client.name, stars, day: localDay() }) } : {}),
           extras: (grading, score) => [
             // Story 007: tips into the wallet, XP and rank, badges and the daily streak, once per appointment.

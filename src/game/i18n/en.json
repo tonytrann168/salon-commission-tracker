@@ -788,9 +788,19 @@
   "hangnail.holdLonger": "Hold a little longer, gently.",
   "hangnail.trimmed": "✓ Hangnail trimmed. Neat!",
   "hangnail.firstAid": "First aid",
-  "hangnail.styptic": "Apply styptic",
+  "hangnail.styptic": "Styptic",
   "hangnail.bandage": "Bandage",
-  "hangnail.saySorry": "All cared for. Now say sorry in the chat 💬",
+  "hangnail.saySorry": "Say sorry in the chat 💬",
   "hangnail.notice": "✂️ {CShe} has a hangnail: tap Clean, then Nipper, and hold on it gently.",
-  "hangnail.firstAidHint": "First aid: apply styptic, then a bandage."
+  "hangnail.firstAidHint": "A small nick: tap 1 · Styptic, then 2 · Bandage.",
+  "picture.button": "Her picture of the nails she wants",
+  "picture.title": "{name}'s picture",
+  "picture.alt": "The nails {name} wants",
+  "picture.line": "Make the nails look like this: shape, length, colour and art.",
+  "picture.close": "Got it",
+  "picture.missing": "The picture could not be shown.",
+  "picture.compareTitle": "Her picture vs your work",
+  "picture.yourWork": "Your work",
+  "picture.match": "Match {n}%",
+  "picture.nudge": "📷 {CShe} brought a picture: tap 📷."
 }

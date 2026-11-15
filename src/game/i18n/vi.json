@@ -790,7 +790,17 @@
   "hangnail.firstAid": "Sơ cứu",
   "hangnail.styptic": "Cầm máu",
   "hangnail.bandage": "Dán băng",
-  "hangnail.saySorry": "Xong rồi. Giờ nói một câu xin lỗi nha 💬",
+  "hangnail.saySorry": "Nói một câu xin lỗi nha 💬",
   "hangnail.notice": "✂️ Khách bị xước măng rô: bấm Lau, rồi Kềm, và giữ nhẹ tay trên đó.",
-  "hangnail.firstAidHint": "Sơ cứu: bôi thuốc cầm máu, rồi dán băng."
+  "hangnail.firstAidHint": "Khách bị chảy máu nhẹ: bấm 1 · Cầm máu, rồi 2 · Dán băng.",
+  "picture.button": "Hình mẫu móng khách muốn",
+  "picture.title": "Hình mẫu của {name}",
+  "picture.alt": "Bộ móng {name} muốn",
+  "picture.line": "Làm giống hình này nha: dáng, độ dài, màu và trang trí.",
+  "picture.close": "Hiểu rồi",
+  "picture.missing": "Không hiện được hình.",
+  "picture.compareTitle": "Hình mẫu và bộ móng của {you}",
+  "picture.yourWork": "Bộ móng của {you}",
+  "picture.match": "Giống {n}%",
+  "picture.nudge": "📷 Khách có hình mẫu: bấm 📷."
 }

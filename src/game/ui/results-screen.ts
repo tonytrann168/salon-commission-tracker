@@ -1,3 +1,4 @@
+import { pictureCompare } from './picture-sheet';
 import { chargeReaction, tipForCharge } from '../charge';
 import type { ChargeReaction } from '../charge';
 import { createTotalStep } from './total-step';
@@ -51,6 +52,8 @@ export interface ResultsScreenOptions {
   extras?: (grading: Grading, score: ScoreResult) => HTMLElement[];
   /** Story 050: the finished set's photo (shown first, as a polaroid) and what to do with it once shown (My work). */
   photo?: Promise<string | null>;
+  /** Story 065: her picture (hard clients): shown next to the finished set, with the match. */
+  reference?: Promise<string | null>;
   onPhoto?: (photo: string, stars: number) => void;
   /** Story 044: her order on the salon menu (rung up at checkout). */
   bill?: { number: number; label: string; price: number }[];
@@ -219,7 +222,10 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
 
     // Story 050: her nails first, as a big polaroid, with a celebration that fits the result; then the payment.
     const band = cheerFor(score.stars, result.outcome === 'walked_out');
-    const polaroid = photo
+    const compare = photo && reference && options.nails ? pictureCompare(reference, photo, options.nails.match, clientName) : null;
+    const polaroid = compare
+      ? [compare]
+      : photo
       ? [createPolaroid({ photo, band, caption: t('results.photoCaption', { name: clientName, date: new Date().toLocaleDateString(getLanguage() === 'vi' ? 'vi-VN' : 'en-US', { day: 'numeric', month: 'short' }) }), ...(band === 'tough' ? { note: t('results.photoTough') } : {}) })]
       : [];
     if (photo) options.onPhoto?.(photo, score.stars);
@@ -255,6 +261,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
       step.querySelector<HTMLButtonElement>('.total-charge')?.focus({ preventScroll: true });
     });
   let charged: number | null = null;
+  let reference: string | null = null;
   let lastReaction: ChargeReaction | null = null;
 
   const run = async (): Promise<void> => {
@@ -279,6 +286,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     const fixes = options.nails?.fixes ?? [];
     if (fixes.length > 0) grading = { ...grading, skills: applyFixesToSkills(grading.skills, fixes) };
     const photo = options.photo ? await options.photo.catch(() => null) : null;
+    reference = options.reference ? await options.reference.catch(() => null) : null;
     const scored = scoreAppointment(
         {
           finalMood,

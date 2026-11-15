@@ -1,0 +1,5 @@
+{
+  "_note": "Story 065 (hard clients): some bring a picture of the nails they want, drawn by the game's own nail renderer from a target design made from her request (one shape, one length, one colour, her art). Her request narrows to the picture, so the match at Done is how close the set is to it, shown side by side with the picture on the results. chance: the share of hard clients with a picture (by a stable hash of the visit). moodScale: her mood change from the match is multiplied by this (the picture makes the match matter more).",
+  "chance": 0.4,
+  "moodScale": 1.5
+}

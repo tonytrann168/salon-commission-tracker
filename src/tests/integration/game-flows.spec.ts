@@ -552,7 +552,9 @@ for (const lang of LANGS) {
       await seed(page, lang, { save: { xp: 100, appointments: 3, coins: 20, badges: ['first-client'], ...dailyWith('ana') } });
       await mockApi(page);
       await page.goto('/');
-      // The account button keeps a clear gap before EN | VI at 320 px.
+      // The account button keeps a clear gap before EN | VI at 320 px (measured once both are drawn).
+      await expect(page.locator('.home-avatar')).toBeVisible();
+      await expect(page.locator('.language-toggle')).toBeVisible();
       const gap = await page.evaluate(() => document.querySelector('.language-toggle')!.getBoundingClientRect().left - document.querySelector('.home-avatar')!.getBoundingClientRect().right);
       expect(gap).toBeGreaterThanOrEqual(6);
       // The gift: coins burst out as they are collected.
@@ -701,7 +703,7 @@ for (const lang of LANGS) {
       const open = async (appointments: number) => {
         const context = await browser.newContext({ viewport: { width: 320, height: 568 } });
         await seed(context, lang, { save: { xp: 2000, appointments, badges: ['first-client'], ...dailyWith('hana') } });
-        await mockApi(context, { replies: ['Hi!', 'Red, short oval, please.', 'Okay.', 'Thanks!'] });
+        await mockApi(context, { replies: ['Hi!', 'Red, long oval, please.', 'Okay.', 'Thanks!'] });
         const page = await context.newPage();
         await page.goto('/');
         await page.locator('.title-menu > .chat-button').first().click();
@@ -725,6 +727,9 @@ for (const lang of LANGS) {
         spot.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 3, pointerType: 'touch', pressure: 0.4 }));
       });
       await expect(page.locator('.hangnail.nicked')).toHaveCount(1);
+      // 064 review: the strip names the first-aid step (the trimming notice is gone).
+      await expect(page.locator('.service-nudge')).toBeHidden();
+      await expect(page.locator('.station-status')).toContainText(lang === 'vi' ? 'Cầm máu' : 'Styptic');
       // First aid's two steps are the tool row (nothing covers the hand or the nick).
       await expect(page.locator('.station-row .first-aid-styptic')).toBeVisible();
       expect(await page.evaluate(() => document.querySelector('.station-tools')!.getBoundingClientRect().top >= document.querySelector('.hangnail')!.getBoundingClientRect().bottom)).toBe(true);
@@ -734,7 +739,7 @@ for (const lang of LANGS) {
       await page.locator('.first-aid-styptic').click();
       await page.locator('.first-aid-bandage').click();
       await expect(page.locator('.hangnail.bandaged')).toHaveCount(1);
-      await expect(page.locator('.station-status')).toContainText(lang === 'vi' ? 'xin lỗi' : 'say sorry');
+      await expect(page.locator('.station-status')).toContainText(lang === 'vi' ? 'xin lỗi' : 'Say sorry');
       await expect(page.locator('.station-row .first-aid-bandage')).toHaveCount(0);
       await expect.poll(() => mood(page)).toBeGreaterThan(dipped);
       const cared = await mood(page);
@@ -758,6 +763,35 @@ for (const lang of LANGS) {
       await page.waitForSelector('.chat-panel:not(.service-mode) .chat-input', { timeout: 6_000 });
       await expect(page.locator('.chat-log')).not.toContainText('still bugging me');
       await context.close();
+    });
+
+    test('her picture (story 065): a hard client brings a reference picture (drawn by the nail renderer); the results show it next to the work with a match %', async ({ page }) => {
+      test.setTimeout(120_000);
+      // Hana (hard) with 15 appointments brings a picture this visit (and has no hangnail).
+      await seed(page, lang, { save: { xp: 2000, appointments: 15, badges: ['first-client'], ...dailyWith('hana') } });
+      await mockApi(page, { replies: ['Hi! Here is a picture of what I want.', 'Red, long oval, like the picture.', 'How much is it?', 'Thank you, see you!'] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.path-screen .picker-daily').click();
+      // 📷 in the mood row; it opens her picture, a polaroid drawn by the game.
+      const button = page.locator('.mood .chat-picture-button');
+      await expect(button).toBeVisible();
+      await expect(page.locator('.service-nudge')).toContainText('📷');
+      await button.click();
+      const photo = page.locator('.picture-sheet img.picture-photo');
+      await expect(photo).toBeVisible();
+      expect(await photo.getAttribute('src')).toMatch(/^data:image\//);
+      expect(await photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(50);
+      expect(await noOverflow(page)).toBe(true);
+      await page.locator('.picture-close').click();
+      await expect(page.locator('.picture-sheet')).toHaveCount(0);
+      // Played to the results: her picture next to the work, with a match %.
+      await finishAppointment(page);
+      const compare = page.locator('.picture-compare');
+      await expect(compare).toBeVisible();
+      await expect(compare.locator('img.picture-photo')).toHaveCount(2);
+      await expect(compare.locator('.picture-match')).toHaveText(lang === 'vi' ? /^Giống \d+%$/ : /^Match \d+%$/);
+      await expect(page.locator('.chat-results .polaroid')).toHaveCount(0);
     });
 
     test('every line graded (story 061): a line with a real fix is Try this, a short line is Good, a fine long line is Perfect (only Perfect has confetti)', async ({ page }) => {

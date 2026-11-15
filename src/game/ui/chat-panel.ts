@@ -1,3 +1,5 @@
+import { REFERENCE_CONFIG } from '../reference';
+import { openPictureSheet } from './picture-sheet';
 import { HANGNAIL_CONFIG, saysSorry } from '../hangnail';
 import { haptic, prefersReducedMotion } from '../comfort';
 import type { Container, Rectangle } from 'pixi.js';
@@ -111,6 +113,8 @@ export function createChatPanel(
       tools?: StationTools;
       /** Story 064 (hard clients): a hangnail on this nail (0-based), or none. */
       hangnail?: number;
+      /** Story 065 (hard clients): her picture of the nails she wants (drawn by the nail renderer). */
+      reference?: Promise<string | null>;
     };
     /** Voice in and out (story 004): the mic button, the client speaking aloud, and practising the last line. */
     voice?: { io: VoiceIO; clientId: string; speakReplies: boolean; onSpeakerChange: (on: boolean) => void };
@@ -180,6 +184,18 @@ export function createChatPanel(
   const initial = appointment.getSnapshot();
   const zone = createPortraitZone(host, portraits.layer, portraits.client, poseFor(initial.mood, initial.result?.outcome ?? null), !portraits.bestie);
   // Story 044: the menu button sits at the top left of the face area (Mai is at the right), never squeezing the mood.
+  // Story 065: 📷 her picture, a small button in the mood row (any time); it pulses until first opened.
+  const pictureButton = portraits.nailArt?.reference ? el('button', 'chat-picture-button pulse', '📷') : null;
+  if (pictureButton && portraits.nailArt?.reference) {
+    const photo = portraits.nailArt.reference;
+    pictureButton.type = 'button';
+    pictureButton.setAttribute('aria-label', t('picture.button'));
+    pictureButton.addEventListener('click', () => {
+      pictureButton.classList.remove('pulse');
+      void photo.then((src) => openPictureSheet(src, clientName));
+    });
+    mood.insertBefore(pictureButton, mood.querySelector('.speaker-button'));
+  }
   // Story 060: 📋 sits in the mood row as a small icon button, so it never covers her face while she talks.
   if (menuButton) {
     menuButton.setAttribute('aria-label', t('menu.sectionTitle'));
@@ -271,6 +287,10 @@ export function createChatPanel(
                   } else {
                     appointment.adjustMood(HANGNAIL_CONFIG.slipMood);
                     apologyDue = true;
+                    // 064 review: the trimming notice goes, so the strip shows the first-aid step.
+                    window.clearTimeout(nudgeTimer);
+                    nudge.classList.add('hidden');
+                    root.classList.remove('nudging');
                     appointment.clientSays(HANGNAIL_CONFIG.lines.ouch);
                   }
                 },
@@ -295,7 +315,8 @@ export function createChatPanel(
         },
         onDone: (design, result) => {
           // Story 058: a fix at checkout is judged by the fix itself (thanks or her open line), not the set again.
-          if (!checkoutFixing) appointment.adjustMood(result.moodDelta);
+          // Story 065: with her picture the match matters more.
+          if (!checkoutFixing) appointment.adjustMood(Math.round(result.moodDelta * (nailArt.reference ? REFERENCE_CONFIG.moodScale : 1)));
           nailArt.onNote(nailsNote(design, result, nailArt.request.service));
           nailArt.onDone(design, result);
           lastMatch = result.score;
@@ -589,6 +610,8 @@ export function createChatPanel(
     saidInService.add(text);
     appointment.clientSays(text);
   };
+  // Story 065: she shows her picture as the visit starts (the 📷 stays in the mood row).
+  if (pictureButton) showNudge(t('picture.nudge', clientGrammar(portraits.client.pronoun)));
   const startService = (): void => {
     serviceStarted = true;
     appointment.holdPhase('service');
