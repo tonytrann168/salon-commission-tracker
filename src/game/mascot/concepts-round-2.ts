@@ -30,6 +30,7 @@ const MOOD_POLISH: Record<MascotExpression, string> = {
   thinking: '#9aa9ff',
   tipWaiting: '#ffd54f',
   celebrating: '#2ec4a6',
+  sad: '#9aa9ff',
 };
 
 interface KittyLook {

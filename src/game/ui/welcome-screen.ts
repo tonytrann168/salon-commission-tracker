@@ -18,15 +18,12 @@ export interface WelcomeOptions {
 export function createWelcomeScreen(host: HTMLElement, options: WelcomeOptions): HTMLElement {
   const screen = el('section', 'screen welcome-screen');
   screen.setAttribute('aria-labelledby', 'welcome-title');
-  const logo = el('img', 'welcome-logo');
-  logo.src = '/icons/icon-192.png';
-  logo.alt = '';
-  logo.width = 96;
-  logo.height = 96;
-  const title = el('h1', 'welcome-title', t('welcome.title'));
+  // 057b (overseer nit): one companion only: the title is the logo, in words; the big face below.
+  const title = el('h1', 'welcome-title');
   title.id = 'welcome-title';
+  title.append(el('span', 'welcome-hello', t('welcome.hello')), el('span', 'welcome-brand', 'Salon Besties'));
   const companion = el('div', 'welcome-companion');
-  companion.append(renderMascot('happy', 132, { crop: 'bust', ...companionLook() }));
+  companion.append(renderMascot('happy', 120, { crop: 'bust', ...companionLook() }));
   const line = el('p', 'welcome-line', t('welcome.line', { name: companionName() }));
   const create = el('button', 'chat-button welcome-create', t('welcome.create'));
   create.type = 'button';
@@ -40,7 +37,7 @@ export function createWelcomeScreen(host: HTMLElement, options: WelcomeOptions):
   const note = el('p', 'welcome-note', t('welcome.guestNote'));
   const actions = el('div', 'welcome-actions');
   actions.append(create, signIn, guest, note);
-  screen.append(logo, title, companion, line, actions);
+  screen.append(title, companion, line, actions);
   host.append(screen);
   return screen;
 }

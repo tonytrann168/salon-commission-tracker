@@ -7,7 +7,8 @@ import mascotJson from '../config/mascot.json';
  * dress-up (story 013) and a later cosmetic shop slot in without rework.
  */
 
-export const MASCOT_EXPRESSIONS = ['idle', 'talking', 'happy', 'thinking', 'tipWaiting', 'celebrating'] as const;
+/** Story 057b adds `sad` (gentle: a client walked out). Final art per expression drops in through `imageSkins`. */
+export const MASCOT_EXPRESSIONS = ['idle', 'talking', 'happy', 'thinking', 'tipWaiting', 'celebrating', 'sad'] as const;
 export type MascotExpression = (typeof MASCOT_EXPRESSIONS)[number];
 
 /**

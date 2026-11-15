@@ -510,6 +510,37 @@ for (const lang of LANGS) {
       await expect(page.locator('.shop-soon-tile').first()).toContainText(lang === 'vi' ? 'Sắp có' : 'Soon');
     });
 
+    test('juice (story 057b): a perfect line pops with confetti, the appointment bar fills to the end, the gift bursts coins, the compact language switch leaves a gap', async ({ page }) => {
+      test.setTimeout(120_000);
+      await seed(page, lang, { save: { xp: 100, appointments: 3, coins: 20, badges: ['first-client'], ...dailyWith('ana') } });
+      await mockApi(page);
+      await page.goto('/');
+      // The account button keeps a clear gap before EN | VI at 320 px.
+      const gap = await page.evaluate(() => document.querySelector('.language-toggle')!.getBoundingClientRect().left - document.querySelector('.home-avatar')!.getBoundingClientRect().right);
+      expect(gap).toBeGreaterThanOrEqual(6);
+      // The gift: coins burst out as they are collected.
+      await page.locator('.home-gift.ready').click({ force: true });
+      await page.locator('.gift-collect').click();
+      await expect(page.locator('.burst-coins .burst-piece').first()).toBeAttached();
+      await expect(page.locator('.burst')).toHaveCount(0, { timeout: 3000 });
+      // An appointment: the bar starts low; a good line → "Perfect line!" with confetti; full at the end.
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.path-node.current').click();
+      await page.waitForSelector('.chat-input');
+      expect(Number(await page.locator('.chat-progress').getAttribute('aria-valuenow'))).toBeLessThan(34);
+      await page.locator('.chat-input').fill('Hello! Welcome to our salon. Please have a seat.');
+      await page.locator('.chat-form button[type=submit]').click();
+      await expect(page.locator('.perfect-line')).toBeVisible();
+      await expect(page.locator('.perfect-line')).toContainText(lang === 'vi' ? 'Câu chuẩn luôn!' : 'Perfect line!');
+      await expect(page.locator('.burst-confetti')).toBeAttached();
+      await expect.poll(async () => Number(await page.locator('.chat-progress').getAttribute('aria-valuenow'))).toBeGreaterThan(0);
+      // The service moves on at the station; Done brings the chat back.
+      await page.waitForSelector('.chat-panel.service-mode');
+      await page.locator('.station-done').click();
+      await finishAppointment(page, ['Which colour would you like today?', 'Your nails are done. That is twenty-five dollars.', 'Thank you! See you next time.']);
+      await expect(page.locator('.chat-progress')).toHaveAttribute('aria-valuenow', '100');
+    });
+
     test('the salon path (story 057a): a top bar with streak, level and the goal ring; the current node seats its client; a lesson node; one home bar', async ({ page }) => {
       test.setTimeout(120_000);
       const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();

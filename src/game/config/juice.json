@@ -1,0 +1,7 @@
+{
+  "_note": "Story 057b: the small rewards (Salon Besties' own look and sounds). progress.linesPerPhase: player lines that fill one phase's share of the appointment bar (it never fills a phase before the phase moves on). perfect.minWords: a line this long or longer, with nothing to fix, gets \"Perfect line!\". perfect.showMs: how long the badge shows. bursts: how many coins or confetti pieces fly, and for how long. reactMs: how long the companion keeps a cheering or sad face. None of the motion plays with Reduce motion.",
+  "progress": { "linesPerPhase": 3 },
+  "perfect": { "minWords": 3, "showMs": 1500 },
+  "bursts": { "coins": 10, "confetti": 16, "ms": 900 },
+  "reactMs": 2200
+}

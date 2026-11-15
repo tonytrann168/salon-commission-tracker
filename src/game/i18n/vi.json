@@ -700,5 +700,8 @@
   "welcome.create": "Tạo tài khoản",
   "welcome.signIn": "Đăng nhập",
   "welcome.guest": "Chơi thử không cần tài khoản",
-  "welcome.guestNote": "Tiến độ được lưu trên điện thoại này. Sau này {you} tạo tài khoản là giữ lại hết."
+  "welcome.guestNote": "Tiến độ được lưu trên điện thoại này. Sau này {you} tạo tài khoản là giữ lại hết.",
+  "chat.perfect": "Câu chuẩn luôn!",
+  "chat.progress": "Cuộc hẹn đã đi được bao xa",
+  "welcome.hello": "Chào mừng đến"
 }

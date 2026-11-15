@@ -45,6 +45,7 @@ const LABELS: Record<MascotExpression, string> = {
   thinking: 'thinking (hint)',
   tipWaiting: 'tip waiting',
   celebrating: 'celebrating (level-up)',
+  sad: 'sad (walk-out)',
 };
 
 const style = document.createElement('style');

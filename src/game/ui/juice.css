@@ -1,0 +1,37 @@
+/* Story 057b: the small rewards, in Salon Besties' own look. Short, soft, never in the way (click-through), and
+   none of the motion with Reduce motion. */
+
+/* Bouncy buttons: a quick squash on press, a springy return. */
+.chat-button, .home-gift, .home-avatar, .path-more, .welcome-guest { transition: transform 0.18s cubic-bezier(0.34, 1.7, 0.55, 1); }
+.chat-button:active:not(:disabled), .home-gift:active:not(:disabled), .home-avatar:active, .welcome-guest:active { transform: scale(0.94); transition-duration: 0.06s; }
+@media (prefers-reduced-motion: reduce) { .chat-button, .home-gift, .home-avatar, .path-more, .welcome-guest { transition: none; } .chat-button:active:not(:disabled) { transform: none; } }
+html[data-motion='reduce'] :is(.chat-button, .home-gift, .home-avatar, .path-more, .welcome-guest) { transition: none; }
+html[data-motion='reduce'] .chat-button:active:not(:disabled) { transform: none; }
+
+/* Bursts: pieces fly out from a point and fade. */
+.burst { position: fixed; z-index: 80; width: 0; height: 0; pointer-events: none; }
+.burst-piece { position: absolute; left: -10px; top: -10px; display: block; animation: burst-fly var(--burst-ms, 900ms) cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
+.burst-confetti .burst-piece { width: 9px; height: 13px; border-radius: 2px; background: hsl(var(--hue), 85%, 65%); left: -4px; top: -6px; }
+@keyframes burst-fly {
+  0% { transform: rotate(var(--angle)) translateY(0) scale(0.5); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: rotate(var(--angle)) translateY(calc(-1 * var(--dist))) scale(1); opacity: 0; }
+}
+
+/* "Perfect line!": a badge that pops over the chat for a moment. */
+.perfect-line { position: absolute; left: 50%; top: 38%; z-index: 7; padding: 10px 18px; border-radius: 999px; background: #fff; color: #2f7d4f; font: 800 20px/1.2 system-ui, sans-serif; white-space: nowrap; box-shadow: 0 0 0 3px #9bd4b0, 0 8px 22px rgba(59, 42, 51, 0.22); pointer-events: none; transform: translate(-50%, -50%); animation: perfect-pop var(--show-ms, 1500ms) ease-out forwards; }
+@keyframes perfect-pop {
+  0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  14% { transform: translate(-50%, -50%) scale(1.12); opacity: 1; }
+  24% { transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; }
+  100% { transform: translate(-50%, -64%) scale(1); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .perfect-line { animation: none; } }
+html[data-motion='reduce'] .perfect-line { animation: none; }
+
+/* The appointment progress bar, under the phase steps. */
+.chat-progress { height: 8px; margin: 6px 2px 0; border-radius: 4px; background: #f1dde6; overflow: hidden; }
+.chat-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #ff8ab5, #ff5c9a); transition: width 0.5s ease-out; }
+.chat-progress.done .chat-progress-fill { background: linear-gradient(90deg, #7cc297, #2f9e5b); }
+.chat-panel.station-open .chat-progress { display: none; }

@@ -700,5 +700,8 @@
   "welcome.create": "Create account",
   "welcome.signIn": "Sign in",
   "welcome.guest": "Play without an account",
-  "welcome.guestNote": "Your progress stays on this phone. You can make an account later and keep it all."
+  "welcome.guestNote": "Your progress stays on this phone. You can make an account later and keep it all.",
+  "chat.perfect": "Perfect line!",
+  "chat.progress": "How far the appointment has come",
+  "welcome.hello": "Welcome to"
 }

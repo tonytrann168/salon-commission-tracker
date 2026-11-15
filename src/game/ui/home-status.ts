@@ -5,6 +5,7 @@ import { t } from '../i18n';
 import { renderMascot } from '../mascot';
 import type { ProgressSave } from '../progression';
 import { emitSound } from '../sound-events';
+import { burst as burstFrom, centreOf } from './burst';
 import { coinIcon } from './coin-icon';
 import { el } from './dom';
 import './home-status.css';
@@ -126,6 +127,9 @@ function openGiftSheet(host: HTMLElement, coins: number, bonus: number, mileston
   const collect = el('button', 'chat-button gift-collect', t('daily.giftCollect'));
   collect.type = 'button';
   const close = (): void => {
+    // Story 057b: the coins burst out as they are collected, with the coin sound.
+    burstFrom(centreOf(collect), 'coins');
+    emitSound('coin');
     sheet.remove();
     onClose();
   };

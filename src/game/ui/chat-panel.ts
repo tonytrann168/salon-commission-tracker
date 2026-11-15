@@ -43,6 +43,8 @@ import { createScrollFollower, fitToVisualViewport } from './scroll-follow';
 import { startTextReveal } from './text-reveal';
 import type { TextReveal } from './text-reveal';
 import './chat-panel.css';
+import { JUICE_CONFIG, appointmentProgress, isPerfectLine } from '../juice';
+import { burst, centreOf } from './burst';
 
 /**
  * DOM chat UI over the Pixi scene: chat, mood meter, phase indicator, typing indicator, retry, hand-off to results. Story: story-001, story-002.
@@ -158,7 +160,17 @@ export function createChatPanel(
     menuButton.type = 'button';
     menuButton.addEventListener('click', () => openMenuSheet(menu, latest.phase === 'checkout', clientGrammar(portraits.client.pronoun)));
   }
-  header.append(phases, mood);
+  // Story 057b: a thin bar under the steps that fills as the visit goes on (full at the end).
+  const progressBar = el('div', 'chat-progress');
+  const progressFill = el('div', 'chat-progress-fill');
+  progressBar.append(progressFill);
+  progressBar.setAttribute('role', 'progressbar');
+  progressBar.setAttribute('aria-label', t('chat.progress'));
+  progressBar.setAttribute('aria-valuemin', '0');
+  progressBar.setAttribute('aria-valuemax', '100');
+  let progressPhase = -1;
+  let phaseStartLines = 0;
+  header.append(phases, progressBar, mood);
 
   const initial = appointment.getSnapshot();
   const zone = createPortraitZone(host, portraits.layer, portraits.client, poseFor(initial.mood, initial.result?.outcome ?? null), !portraits.bestie);
@@ -721,6 +733,22 @@ export function createChatPanel(
     const speaking = snapshot.transcript.length > renderedCount && last?.role === 'client';
     renderedCount = snapshot.transcript.length;
     const phaseIndex = VISIBLE_PHASES.findIndex((phase) => phase === snapshot.phase);
+    // Story 057b: the appointment bar (her lines in this phase fill its share; the phase moving on completes it).
+    const playerLines = snapshot.transcript.filter((message) => message.role === 'player').length;
+    if (phaseIndex !== progressPhase) {
+      progressPhase = phaseIndex;
+      phaseStartLines = playerLines;
+    }
+    const over = snapshot.status === 'finished';
+    const share = appointmentProgress(phaseIndex, VISIBLE_PHASES.length, playerLines - phaseStartLines, over && snapshot.result?.outcome === 'completed');
+    progressFill.style.width = `${Math.round(share * 100)}%`;
+    progressBar.setAttribute('aria-valuenow', String(Math.round(share * 100)));
+    progressBar.classList.toggle('done', share >= 1);
+    // A walk-out: the companion looks sad with you for a moment (gentle, no blame).
+    if (over && snapshot.result?.outcome === 'walked_out' && !walkOutShown) {
+      walkOutShown = true;
+      mai?.react('sad', JUICE_CONFIG.reactMs);
+    }
     phaseItems.forEach((item, index) => {
       const finished = snapshot.status === 'finished' && snapshot.result?.outcome === 'completed';
       item.className = finished || index < phaseIndex ? 'past' : index === phaseIndex ? 'current' : '';
@@ -838,6 +866,19 @@ export function createChatPanel(
 
   /** Corrections queued for Mai this appointment (capped in config/learning.json). */
   let tipsQueued = 0;
+  let walkOutShown = false;
+  /** Story 057b: "Perfect line!" pops over the chat for a moment, with a little confetti and a cheer. */
+  const showPerfect = (): void => {
+    root.querySelector('.perfect-line')?.remove();
+    const badge = el('div', 'perfect-line', `✨ ${t('chat.perfect')}`);
+    badge.setAttribute('role', 'status');
+    badge.style.setProperty('--show-ms', `${JUICE_CONFIG.perfect.showMs}ms`);
+    root.append(badge);
+    emitSound('correct');
+    burst(centreOf(badge), 'confetti');
+    mai?.react('celebrating', JUICE_CONFIG.reactMs);
+    window.setTimeout(() => badge.remove(), JUICE_CONFIG.perfect.showMs);
+  };
   /** After the player sends a line: check it in the background and, if it needs it, queue a tip on Mai's badge. Never blocks the chat. */
   const checkLine = (line: string, helped: boolean, before: AppointmentSnapshot): void => {
     const corrections = bestie?.corrections;
@@ -846,6 +887,7 @@ export function createChatPanel(
     corrections.transport
       .checkLine({ level: portraits.level, language: bestie.language, phase: before.phase, line: line.trim(), clientLine })
       .then((result) => {
+        if (latest.status !== 'finished' && isPerfectLine(line, result, helped)) showPerfect();
         if (!result.needsCorrection || !result.better || latest.status === 'finished') return;
         // Checks run side by side, so the cap is checked again when each answer lands.
         if (mai.queueTip({ praise: result.praise, said: line.trim(), better: result.better, reason: result.reason, language: bestie.language })) tipsQueued++;

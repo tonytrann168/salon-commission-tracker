@@ -14,6 +14,7 @@ const PETAL_COLOR: Record<MascotExpression, string> = {
   thinking: '#e8dc9a',
   tipWaiting: '#ffb3cf',
   celebrating: '#ff8fb1',
+  sad: '#ffd54f',
 };
 
 registerSkin({

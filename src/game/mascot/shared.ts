@@ -8,6 +8,12 @@ export function eyes(expression: MascotExpression, cx: number, cy: number, dx: n
     // Smiling eyes: upside-down arcs.
     return [-dx, dx].map((offset) => `<path d="M${cx + offset - r} ${cy + 1} Q${cx + offset} ${cy - r - 1} ${cx + offset + r} ${cy + 1}" fill="none" stroke="#3b2a33" stroke-width="2.6" stroke-linecap="round"/>`).join('');
   }
+  if (expression === 'sad') {
+    // Gentle: soft eyes looking down, brows tilted up in the middle.
+    return [-dx, dx]
+      .map((offset, i) => `<ellipse cx="${cx + offset}" cy="${cy + 1}" rx="${r * 0.9}" ry="${r}" fill="#3b2a33"/><circle cx="${cx + offset + r * 0.3}" cy="${cy + r * 0.1}" r="${r * 0.32}" fill="#fff"/><path d="M${cx + offset - r * 1.2} ${cy - r * (i === 0 ? 1.4 : 2.3)} L${cx + offset + r * 1.2} ${cy - r * (i === 0 ? 2.3 : 1.4)}" stroke="#3b2a33" stroke-width="2.2" stroke-linecap="round"/>`)
+      .join('');
+  }
   const look = expression === 'thinking' ? -1.5 : 0;
   return [-dx, dx]
     .map((offset) => `<ellipse cx="${cx + offset}" cy="${cy}" rx="${r}" ry="${r * 1.15}" fill="#3b2a33"/><circle cx="${cx + offset + r * 0.35 + look}" cy="${cy - r * 0.45 + look}" r="${r * 0.42}" fill="#fff"/><circle cx="${cx + offset - r * 0.3}" cy="${cy + r * 0.4}" r="${r * 0.18}" fill="#fff"/>`)
@@ -24,6 +30,8 @@ export function mouth(expression: MascotExpression, cx: number, cy: number, w: n
       return `<path d="M${cx - w} ${cy - 1} Q${cx} ${cy + w * 1.4} ${cx + w} ${cy - 1} Z" fill="#b5476a"/>`;
     case 'thinking':
       return `<path d="M${cx - w * 0.6} ${cy + 1} L${cx + w * 0.6} ${cy - 1}" stroke="#3b2a33" stroke-width="2.4" stroke-linecap="round"/>`;
+    case 'sad':
+      return `<path d="M${cx - w * 0.6} ${cy + 3} Q${cx} ${cy - w * 0.5} ${cx + w * 0.6} ${cy + 3}" fill="none" stroke="#3b2a33" stroke-width="2.4" stroke-linecap="round"/>`;
     default:
       return `<path d="M${cx - w * 0.7} ${cy - 1} Q${cx} ${cy + w * 0.8} ${cx + w * 0.7} ${cy - 1}" fill="none" stroke="#3b2a33" stroke-width="2.4" stroke-linecap="round"/>`;
   }
@@ -34,6 +42,7 @@ export const blush = (cx: number, cy: number, dx: number): string =>
 
 /** Little extras that read at bubble size: a thought dot, sparkles, confetti. */
 export function moodExtras(expression: MascotExpression): string {
+  if (expression === 'sad') return '<path d="M80 44 q3 6 0 8 q-3 -2 0 -8z" fill="#9fd3ff" stroke="#6aa9d8" stroke-width="1"/>';
   if (expression === 'thinking') return '<circle cx="86" cy="18" r="4" fill="#fff" stroke="#b98cf0" stroke-width="2"/><circle cx="93" cy="8" r="2.5" fill="#fff" stroke="#b98cf0" stroke-width="1.5"/>';
   if (expression === 'happy') return '<path d="M86 14 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2 z" fill="#ffd54f"/>';
   if (expression === 'celebrating')

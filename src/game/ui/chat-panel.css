@@ -132,5 +132,6 @@ html[data-motion='reduce'] .reply-chip.pulse { animation: none; }
 @media (max-height: 640px) { .title-menu .title-tagline { font-size: 14px; margin-bottom: 2px; } }
 /* Story 041: EN | VI in the top corner. */
 .title-menu .language-toggle { position: fixed; top: calc(8px + env(safe-area-inset-top)); right: 10px; display: flex; padding: 2px; border-radius: 999px; background: #f1dde6; box-shadow: 0 1px 4px rgba(59, 42, 51, 0.15); }
-.title-menu .language-option { min-width: 44px; min-height: 40px; padding: 0 10px; border: 0; border-radius: 999px; background: transparent; color: #3b2a33; font: 700 14px system-ui, sans-serif; cursor: pointer; }
+/* 057b (overseer nit): compact, so the home top bar keeps a clear gap before it at 320 px. */
+.title-menu .language-option { min-width: 36px; min-height: 40px; padding: 0 6px; border: 0; border-radius: 999px; background: transparent; color: #3b2a33; font: 700 14px system-ui, sans-serif; cursor: pointer; }
 .title-menu .language-option[aria-pressed='true'] { background: #ff5c9a; color: #fff; }

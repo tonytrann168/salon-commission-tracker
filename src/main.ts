@@ -80,6 +80,9 @@ import { CORNER_SEEN_KEY, shouldCue } from './game/corner';
 import { SEASON_KEY, activeSeason, giftDue, openGift, parseSeasonState, seasonOverride, seasonPalette, seasonStickers } from './game/seasons';
 import type { Season } from './game/seasons';
 
+/** Story 057b: the streak sound waits for the results' stars sound to finish. */
+const STREAK_SOUND_DELAY_MS = 900;
+
 /** 057a part 2: the welcome front page was answered on this phone (an account, or play without one). */
 const WELCOME_KEY = 'salon.welcomeDone';
 
@@ -650,6 +653,8 @@ async function boot(): Promise<void> {
       writeSave(pathNode === undefined ? update.save : { ...update.save, pathDone: finishNode(update.save.pathDone ?? 0, pathNode) });
       // Story 025: signed in → the appointment's progress goes to the account now.
       void getAccount()?.appointmentDone();
+      // Story 057b: the streak moved on today: its own little sound, after the stars.
+      if (update.played?.newDay) window.setTimeout(() => emitSound('streak'), STREAK_SOUND_DELAY_MS);
       const items = celebrationsFor(update);
       const panel = createProgressPanel(update);
       // Only while the results are still showing (the player may already have tapped Next).
@@ -703,6 +708,11 @@ async function boot(): Promise<void> {
     appHost.append(note);
     window.setTimeout(() => note.remove(), NOTE_MS);
   }
+
+  // Story 057b: a soft tap for every button (the sound-effects setting covers it).
+  document.addEventListener('pointerdown', (event) => {
+    if ((event.target as Element | null)?.closest?.('button:not(:disabled)')) emitSound('tap');
+  }, { capture: true, passive: true });
 
   // 057a part 2: a first open while not signed in (no account remembered on this phone) starts on the welcome page.
   const firstAccount = getAccount();

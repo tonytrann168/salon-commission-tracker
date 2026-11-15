@@ -1,6 +1,6 @@
 /* Story 056, 057a: the home screen's ONE top bar: streak, wallet and today's gift in a row, left of the EN | VI
    switch; nothing overlaps it (the companion is drawn below it). Big enough to read, 16 px. */
-.home-status { position: fixed; top: calc(8px + env(safe-area-inset-top)); left: 8px; right: 110px; z-index: 5; display: flex; flex-direction: row; align-items: center; gap: 5px; overflow: hidden; }
+.home-status { position: fixed; top: calc(8px + env(safe-area-inset-top)); left: 8px; right: 96px; z-index: 5; display: flex; flex-direction: row; align-items: center; gap: 5px; overflow: hidden; }
 .home-chip { flex: none; display: inline-flex; align-items: center; gap: 3px; min-height: 40px; padding: 0 8px; border-radius: 999px; background: #fff; color: #3b2a33; font: 800 16px/1 system-ui, sans-serif; box-shadow: 0 1px 4px rgba(59, 42, 51, 0.18); box-sizing: border-box; }
 .home-chip-icon { font-size: 17px; }
 .home-streak:not(.lit) .home-chip-icon { filter: grayscale(1); opacity: 0.55; }

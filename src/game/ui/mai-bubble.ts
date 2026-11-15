@@ -53,6 +53,8 @@ export interface MaiBubble {
   queueTip: (tip: Tip) => boolean;
   /** Hint and Help me say it only while the player can type. */
   setEnabled: (enabled: boolean) => void;
+  /** Story 057b: a face for a moment (cheering for a perfect line, sad when a client walks out), then back. */
+  react: (expression: MascotExpression, ms: number) => void;
   destroy: () => void;
 }
 
@@ -75,6 +77,7 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
   let expression: MascotExpression = 'idle';
   let side: 'left' | 'right' = readStored(SIDE_KEY) === 'left' ? 'left' : 'right';
   let hintRequest = 0;
+  let reactTimer = 0;
 
   const drawBubble = (): void => {
     const face = renderMascot(queue.unseen > 0 ? 'tipWaiting' : expression, BUBBLE_PX, { crop: 'bust', ...companionLook() });
@@ -272,6 +275,11 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
         }
       }
       return true;
+    },
+    react(next, ms) {
+      window.clearTimeout(reactTimer);
+      setExpression(next);
+      reactTimer = window.setTimeout(() => setExpression('idle'), ms);
     },
     setEnabled(next) {
       enabled = next;
