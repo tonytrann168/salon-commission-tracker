@@ -58,3 +58,15 @@
 @media (max-width: 400px) {
   .station-controls .station-tab { width: auto; padding: 4px 6px; }
 }
+
+/* Story 048: Fix it (in Clean up's place while she has asked for a fix): orange, pulsing once; its tools in the row. */
+.station-fix-slot { display: contents; }
+.station-controls .station-fix { background: #fff1e0; border-color: #ff9a3c; color: #8a4300; }
+.station-controls .station-fix[aria-selected='true'] { background: #ff8a1f; border-color: #ff8a1f; color: #fff; }
+.station-controls .station-fix.pulse { animation: fix-pulse 0.9s ease-in-out 3; }
+@keyframes fix-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(255, 138, 31, 0.25); } }
+@media (prefers-reduced-motion: reduce) { .station-controls .station-fix.pulse { animation: none; } }
+html[data-motion='reduce'] .station-controls .station-fix.pulse { animation: none; }
+.station-row .station-remover, .station-row .station-remove-all, .station-tools.fixing .station-row .station-tool { flex: none; flex-direction: column; gap: 1px; min-width: 60px; min-height: 48px; padding: 3px 8px; border-radius: 14px; border: 2px solid #ecd3de; background: #fff; }
+.station-row .station-remover .tab-text, .station-row .station-remove-all .tab-text, .station-tools.fixing .station-row .tab-text { display: block !important; font: 700 13px/1.15 system-ui, sans-serif; white-space: nowrap; }
+.station-row .station-tool[aria-pressed='true'] { border-color: #ff5c9a; background: #ffe8f1; }

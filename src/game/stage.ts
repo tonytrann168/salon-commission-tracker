@@ -26,11 +26,11 @@ const SCENES: Record<SceneName, (width: number, height: number) => Container> = 
 
 export async function createStage(host: HTMLElement): Promise<Stage> {
   const app = new Application();
-  // Story 047: the canvas is redrawn every frame, so its cost is per pixel. At phone densities (2× and up) edges look the
-  // same without multisample antialiasing, which is expensive on mid-range GPUs; density is capped at 2 (3× phones drew
-  // 2.25× the pixels for no visible gain).
+  // Story 047: the canvas is redrawn every frame, so its cost is per pixel: density is capped at 2 (3× phones drew 2.25×
+  // the pixels for no visible gain). Antialiasing stays on (overseer: without it the hand and nail edges look jagged;
+  // the art is the product).
   const density = Math.min(2, window.devicePixelRatio || 1);
-  await app.init({ resizeTo: host, background: 0xfff4f8, antialias: density < 2, autoDensity: true, resolution: density });
+  await app.init({ resizeTo: host, background: 0xfff4f8, antialias: true, autoDensity: true, resolution: density });
   // Behind every HTML screen, which may already be showing.
   host.prepend(app.canvas);
   // Scenes are rebuilt on resize. Portraits live on their own layer so they survive redraws.

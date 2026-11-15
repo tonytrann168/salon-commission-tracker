@@ -82,7 +82,14 @@ export function parseGradingRequest(body: unknown): ParseResult<GradingRequest> 
   const rawNails = isRecord(body.nails) ? body.nails : undefined;
   const nails =
     rawNails && typeof rawNails.description === 'string' && typeof rawNails.match === 'number' && rawNails.match >= 0 && rawNails.match <= 100
-      ? { description: rawNails.description.replace(/[^\p{L}\p{N} ,.;:%'()/-]/gu, '').slice(0, 300), match: Math.round(rawNails.match) }
+      ? {
+          description: rawNails.description.replace(/[^\p{L}\p{N} ,.;:%'()/-]/gu, '').slice(0, 300),
+          match: Math.round(rawNails.match),
+          // Story 048: the fixes she asked for during the service (known kinds only, at most 6).
+          ...(Array.isArray(rawNails.fixes)
+            ? { fixes: rawNails.fixes.filter((f): f is { kind: 'edge' | 'colour'; fixed: boolean } => isRecord(f) && (f.kind === 'edge' || f.kind === 'colour') && typeof f.fixed === 'boolean').slice(0, 6).map((f) => ({ kind: f.kind, fixed: f.fixed })) }
+            : {}),
+        }
       : undefined;
   const scenario = parseScenarioFields(body);
   if (!scenario.ok) return scenario;
@@ -202,10 +209,15 @@ function toUserMessage(client: ClientPersona, { transcript, outcome, finalMood, 
   const lines = transcript.map((message) => `${message.role === 'player' ? 'Stylist (player)' : client.name}: ${message.content}`);
   // Story 005: the finished nails, so the review can mention them.
   const nailLine = nails ? `\nNails: ${nails.description}. Match with what ${client.name} asked for: ${nails.match}/100. The review must mention the nails: warmly when they match, honestly but kindly when they don't (never harsh).` : '';
+  // Story 048: fixes she asked for. Fixed counts as good problem handling; one left open is mentioned in the review.
+  const fixWhat = { edge: 'to fix an uneven edge', colour: 'for a different colour' } as const;
+  const fixLine = nails?.fixes?.length
+    ? `\nFix requests during the service: ${nails.fixes.map((f) => `${client.name} asked ${fixWhat[f.kind]}: ${f.fixed ? 'the stylist fixed it' : 'it was NOT fixed'}`).join('; ')}. A fix that was done is good problem handling; one left undone must be mentioned in the review (kindly) and lowers problem handling.`
+    : '';
   // Story 019: the situation, so skills like problem handling are judged for it (e.g. a walk-in needs an apology and a wait time).
   const scenario = getScenario(scenarioId);
   const situationLine = scenario ? `\nSituation: ${scenarioPrompt(scenario, visits)} Judge the skills with this situation in mind, and let the review reflect it.` : '';
-  return `Outcome: ${outcome === 'walked_out' ? `${client.name} walked out` : 'checked out normally'}. Final mood: ${finalMood}/100.${nailLine}${situationLine}\n\n<transcript>\n${lines.join('\n')}\n</transcript>`;
+  return `Outcome: ${outcome === 'walked_out' ? `${client.name} walked out` : 'checked out normally'}. Final mood: ${finalMood}/100.${nailLine}${fixLine}${situationLine}\n\n<transcript>\n${lines.join('\n')}\n</transcript>`;
 }
 
 /** Framework-neutral handler. Never logs or echoes the key or the transcript. */

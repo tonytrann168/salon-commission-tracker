@@ -1,3 +1,4 @@
+import type { FixOutcome } from './game/fix-requests';
 import type { SceneName, Stage } from './game/stage';
 import { createAppointment } from './game/appointment';
 import { createFetchTransport } from './game/client-turn-transport';
@@ -391,7 +392,7 @@ async function boot(): Promise<void> {
     teardownDom();
     showScene('salon');
     // Story 005: what the client hears about her nails, and the finished result for the review and the stars.
-    const nails: { note: string | undefined; finished: { description: string; match: number } | undefined } = { note: undefined, finished: undefined };
+    const nails: { note: string | undefined; finished: { description: string; match: number; fixes?: FixOutcome[] } | undefined } = { note: undefined, finished: undefined };
     const appointment = createAppointment({
       client,
       takeTurn: createFetchTransport(() => level, () => nails.note, client.id, scenarioFields),
@@ -421,6 +422,10 @@ async function boot(): Promise<void> {
               },
               onDone: (design: NailDesign, result: MatchResult) => {
                 nails.finished = { description: describeDesign(design, undefined, client.nailRequest?.service), match: result.score };
+              },
+              // Story 048: the fixes she asked for go to the review, the scorecard and the debrief.
+              onFixes: (fixes: FixOutcome[]) => {
+                if (nails.finished) nails.finished = { ...nails.finished, fixes };
               },
             },
           }
@@ -468,7 +473,7 @@ async function boot(): Promise<void> {
             progressPanel(grading, score, result.outcome),
             // Story 016: feedback with this visit's details; the chat only if the tester ticks the box.
             feedbackButton(appHost, { details: { clientId: client.id, difficulty: client.difficulty, level, language: getLanguage(), stars: score.stars }, chat: result.transcript }),
-            createDebriefPanel({ transport: bestie, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, grading, score }),
+            createDebriefPanel({ transport: bestie, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, grading, score, clientPronoun: client.pronoun, ...(nails.finished?.fixes ? { fixes: nails.finished.fixes } : {}) }),
             createLearningPanel({ transport: corrections, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, ...(practice ? { onPractice: practice } : {}) }),
             ...[createLevelChangePanel(level, score.englishScore)].filter((panel): panel is HTMLElement => panel !== null),
           ],

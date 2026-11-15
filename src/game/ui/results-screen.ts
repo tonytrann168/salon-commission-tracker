@@ -9,6 +9,8 @@ import { t } from '../i18n';
 import { servicePrice, tipParts } from '../payment';
 import { createPaymentCard } from './payment-card';
 import { guardMessage } from './guard-message';
+import { applyFixesToSkills } from '../fix-requests';
+import type { FixOutcome } from '../fix-requests';
 import './results-screen.css';
 
 /**
@@ -39,7 +41,7 @@ export interface ResultsScreenOptions {
   /** Story 006: the Next client button's label during a shift ("Next client (2/3)", "Shift done!"). */
   nextLabel?: string;
   /** Story 005: the finished nails and their match (0-100), for the review and the stars. */
-  nails?: { description: string; match: number };
+  nails?: { description: string; match: number; fixes?: FixOutcome[] };
   /** Sections built once the scorecard is ready: the bestie's debrief (story 003), the English review, recap and level change (story 011). */
   extras?: (grading: Grading, score: ScoreResult) => HTMLElement[];
   /** Story 039: what was done (for the price the client pays): a manicure or a pedicure, one or both hands/feet. */
@@ -191,6 +193,8 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     if (score.goalMet) notes.push(el('p', 'results-note good', t('results.goalMet', who)));
     else if (grading.rebooked && !score.failed) notes.push(el('p', 'results-note', t('results.rebooked', who)));
     score.failReasons.forEach((reason) => notes.push(el('p', 'results-note bad', t(`results.fail.${reason}`, who))));
+    // Story 048: each fix she asked for, done or not.
+    (options.nails?.fixes ?? []).forEach((fix) => notes.push(el('p', `results-note results-fix ${fix.fixed ? 'good' : 'bad'}`, t(`results.fix.${fix.fixed ? 'fixed' : 'open'}.${fix.kind}`, who))));
 
     const actions = el('div', 'results-actions');
     actions.append(button(options.nextLabel ?? t('results.nextClient'), onNextClient), button(t('results.backToMenu'), onBackToMenu, true));
@@ -222,6 +226,9 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
       showError(error);
       return;
     }
+    // Story 048: a fix done counts as good problem handling; one left open caps it.
+    const fixes = options.nails?.fixes ?? [];
+    if (fixes.length > 0) grading = { ...grading, skills: applyFixesToSkills(grading.skills, fixes) };
     showResults(
       grading,
       scoreAppointment(

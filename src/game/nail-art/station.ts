@@ -1,5 +1,5 @@
 import { Container, Graphics } from 'pixi.js';
-import { NAIL_ART_CONFIG, mirroredFingers, addSpill, cleanUp, dab, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid, wipeCells } from './design';
+import { NAIL_ART_CONFIG, mirroredFingers, addSpill, cleanUp, dab, removeNail, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid, wipeCells } from './design';
 import type { Decoration, FingerConfig, HandConfig, NailDesign, NailShape, StickerKind } from './design';
 
 /**
@@ -9,7 +9,8 @@ import type { Decoration, FingerConfig, HandConfig, NailDesign, NailShape, Stick
  * what changed: one nail's paint or spill per brush step, so a drag stays at 60 fps on a phone.
  */
 
-export type StationTool = 'polish' | 'gradient' | 'gem' | 'sticker' | 'cleanup';
+/** Story 048: `remover` wipes a tapped nail back to bare. */
+export type StationTool = 'polish' | 'gradient' | 'gem' | 'sticker' | 'cleanup' | 'remover';
 
 interface NailView {
   finger: FingerConfig;
@@ -302,7 +303,7 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       // Browsers merge fast moves into one event per frame: fill the gap in half-brush steps so a quick stroke has no holes.
       const from = phase === 'move' ? last : null;
       last = { x, y };
-      if (!from || tool === 'gem' || tool === 'sticker') return applyAt(x, y, phase, tool, sticker);
+      if (!from || tool === 'gem' || tool === 'sticker' || tool === 'remover') return applyAt(x, y, phase, tool, sticker);
       const step = Math.max(1, tools.brushRadius * scale * 0.5);
       const steps = Math.min(64, Math.ceil(Math.hypot(x - from.x, y - from.y) / step));
       // applyAt reads `design`; step it through the in-between points, then put the stored design back for setDesign.
@@ -352,6 +353,12 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       const my = (margin * v.finger.nail.h) / NAIL_ART_CONFIG.grid.rows;
       return p.x >= -mx && p.x <= v.finger.nail.w + mx && p.y >= -my && p.y <= v.finger.nail.h + my;
     };
+    if (tool === 'remover') {
+      // One tap per nail: on the nail or the skin right around it.
+      if (phase !== 'down') return design;
+      const target = onNail >= 0 ? onNail : views.findIndex((_, i) => near(i));
+      return target < 0 ? design : removeNail(design, firstNail() + target);
+    }
     if (tool === 'gem' || tool === 'sticker') {
       if (phase !== 'down' || onNail < 0) return design;
       const p = local[onNail] as { x: number; y: number };

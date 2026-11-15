@@ -352,3 +352,20 @@ export function decorate(design: NailDesign, decoration: Decoration, config: Nai
   if (design.decorations.filter((d) => d.nail === decoration.nail).length >= config.maxDecorationsPerNail) return design;
   return { ...design, decorations: [...design.decorations, decoration] };
 }
+
+/** Story 048: the Remover: one nail back to bare (polish, skin spill and its decorations gone). */
+export function removeNail(design: NailDesign, nail: number): NailDesign {
+  const hasPaint = (design.painted[nail]?.length ?? 0) > 0 || (design.spill[nail]?.length ?? 0) > 0 || design.decorations.some((d) => d.nail === nail);
+  if (!hasPaint) return design;
+  return {
+    ...design,
+    painted: design.painted.map((list, index) => (index === nail ? [] : list)),
+    spill: design.spill.map((list, index) => (index === nail ? [] : list)),
+    decorations: design.decorations.filter((d) => d.nail !== nail),
+  };
+}
+
+/** Story 048: Remove all: every nail back to bare. The shape and the chosen colour stay. */
+export function removeAll(design: NailDesign): NailDesign {
+  return { ...design, gradient: null, painted: design.painted.map(() => []), spill: design.spill.map(() => []), decorations: [] };
+}

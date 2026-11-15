@@ -1,0 +1,57 @@
+{
+  "_note": "Story 048: when the client asks for a fix during the service. asks: her service-talk lines (and the redo line) that open a request of that kind. patterns: case-insensitive regular expressions that catch the same ask in her AI replies during the service. A request is fixed once the player has used a fix tool (Clean up, Remover) after she asked and the nails then meet the kind's test: edge = every nail's neatness at least edge.minNeatness; colour = a different base colour than when she asked, painted to at least colour.minCoverage on average. fixedMood / openMood: her mood change when it is fixed, or still open at Done. skills: problem handling is at least fixedFloor when every request was fixed, at most openCap when one was left open. lines: what she says (thanks when fixed, open when still not fixed at Done).",
+  "asks": {
+    "edge": [
+      "Can you fix that edge? It doesn't look even.",
+      "Careful, that's a little too close to my skin."
+    ],
+    "colour": [
+      "Hmm… actually, I'm not sure about this colour. Could we try a different one?"
+    ]
+  },
+  "patterns": {
+    "edge": [
+      "\\b(fix|clean|tidy)\\b.{0,30}\\b(edge|edges|skin|cuticle|smudge|mess)",
+      "\\b(edge|edges)\\b.{0,30}\\b(uneven|messy|not even|isn't even|doesn't look even)",
+      "polish (is )?on my skin"
+    ],
+    "colour": [
+      "\\b(different|another|new)\\b.{0,15}\\bcolou?r\\b",
+      "\\bchange\\b.{0,20}\\bcolou?r\\b"
+    ]
+  },
+  "edge": {
+    "minNeatness": 0.9
+  },
+  "colour": {
+    "minCoverage": 0.85
+  },
+  "fixedMood": 4,
+  "openMood": -8,
+  "skills": {
+    "fixedFloor": 80,
+    "openCap": 40
+  },
+  "lines": {
+    "edge": {
+      "thanks": [
+        "Oh, that's much better. Thank you!",
+        "Perfect, the edge looks clean now. Thanks!"
+      ],
+      "open": [
+        "Hmm, the edge still isn't clean… but okay.",
+        "You didn't fix that edge I mentioned. Oh well."
+      ]
+    },
+    "colour": {
+      "thanks": [
+        "Oh, I love this one so much more. Thank you!",
+        "Yes, this colour is perfect. Thank you for changing it!"
+      ],
+      "open": [
+        "So… we're keeping the old colour? Okay, I guess.",
+        "I did ask for a different colour… never mind."
+      ]
+    }
+  }
+}

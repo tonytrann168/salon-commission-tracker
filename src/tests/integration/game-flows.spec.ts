@@ -1,6 +1,21 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import serviceTalk from '../../game/config/service-talk.json' with { type: 'json' };
 import { LANGS, dailyWith, mockApi, noOverflow, playToResults, seed } from './fixtures';
+
+/** Story 048: paint every nail on the station: rows of strokes across the whole hand area (spill does not matter here). */
+async function paintEverything(page: Page): Promise<void> {
+  // Pointer events sent in the page (real mouse moves wait for a frame each, too slow on software rendering).
+  await page.locator('.station-touch').evaluate((touch) => {
+    const box = touch.getBoundingClientRect();
+    const fire = (type: string, x: number, y: number) => touch.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 7, clientX: x, clientY: y, buttons: 1 }));
+    for (let y = box.top + 3; y < box.bottom - 3; y += 3) {
+      fire('pointerdown', box.left + 2, y);
+      for (let x = box.left + 2; x < box.right - 2; x += 3) fire('pointermove', x, y);
+      fire('pointerup', box.right - 2, y);
+    }
+  });
+}
 
 /** Story 029: the game's main flows, end to end, at 320 px, in English and Vietnamese. */
 
@@ -95,7 +110,8 @@ for (const lang of LANGS) {
       await expect(page.locator(`.station-swatch[aria-label*="${lang === 'vi' ? 'Vàng hồng' : 'Rose gold'}" i]`)).toHaveCount(1);
     });
 
-    test('colour redo: after Done the client may ask once for a redo; the station takes exactly one more Done', async ({ page }) => {
+    test('colour redo (story 048): after Done she asks for a new colour; Fix it reopens the station; a new colour painted is fixed and she thanks the player', async ({ page }) => {
+      test.setTimeout(90_000);
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('kim', 'colour-redo') } });
       await mockApi(page);
       await page.goto('/');
@@ -105,17 +121,72 @@ for (const lang of LANGS) {
       await page.locator('.chat-form button[type=submit]').click();
       const done = page.locator('.station-done');
       await expect(done).toBeVisible();
+      await page.locator('.station-swatch').nth(3).click();
       await done.click();
-      // Story 035: she asks for the redo herself (from her face), and the station stays on screen.
+      // She asks for the redo herself, and the station reopens on the Fix it step (a word under the icon, selected).
       await expect(page.locator('.service-say')).toContainText('different one');
-      await expect(done).toHaveText(/↺/);
+      const fix = page.locator('.station-controls .station-fix');
+      await expect(fix).toBeVisible();
+      await expect(fix.locator('.tab-text')).toHaveText(lang === 'vi' ? 'Sửa lại' : 'Fix it');
+      await expect(fix).toHaveAttribute('aria-selected', 'true');
+      await expect(page.locator('.station-status')).toContainText('🔧');
       await expect(done).toBeEnabled();
-      await done.click();
       await expect(done).toContainText('✓');
+      // Remove all, a new colour (from the Fix row), and paint every nail.
+      await page.locator('.station-remove-all').click();
+      await page.locator('.station-row .station-swatch').nth(1).click();
+      await paintEverything(page);
+      await expect(page.locator('.service-say')).toContainText(/love this one|this colour is perfect/, { timeout: 5_000 });
+      await expect(fix).toHaveCount(0);
       await done.click();
-      // The second Done ends the service: back to the chat for checkout.
       await expect(page.locator('.chat-panel.service-mode')).toHaveCount(0, { timeout: 5_000 });
       await expect(page.locator('.chat-input')).toBeVisible();
+    });
+
+    test('a fix asked mid-service (story 048): her reply asks to fix the edge; Fix it shows with Clean up ready; one clean-up stroke fixes it', async ({ page }) => {
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
+      await mockApi(page, { replies: ['Hi!', 'Red, please. Oh, can you fix that edge? There is polish on my skin.'] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('Hello! What colour would you like?');
+      await page.locator('.chat-form button[type=submit]').click();
+      const fix = page.locator('.station-controls .station-fix');
+      await expect(fix).toBeVisible();
+      await expect(page.locator('.station-row .station-tool[aria-pressed=true] .tab-text')).toHaveText(lang === 'vi' ? 'Lau' : 'Clean');
+      await expect(page.locator('.station-remove-all')).toBeVisible();
+      await paintEverything(page);
+      await expect(page.locator('.service-say')).toContainText(/much better|edge looks clean/, { timeout: 5_000 });
+      await expect(fix).toHaveCount(0);
+      // Clean up is back in its place in the row.
+      await expect(page.locator('.station-controls .station-tool .tab-text')).toHaveText(lang === 'vi' ? 'Lau' : 'Clean');
+    });
+
+    test('a fix left open (story 048): Done again without fixing: her reaction, and the results and the companion say so', async ({ page }) => {
+      test.setTimeout(90_000);
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('kim', 'colour-redo') } });
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('Hello! Let me start.');
+      await page.locator('.chat-form button[type=submit]').click();
+      const done = page.locator('.station-done');
+      await page.locator('.station-swatch').nth(3).click();
+      await done.click();
+      await expect(page.locator('.station-controls .station-fix')).toBeVisible();
+      await done.click();
+      await expect(page.locator('.chat-panel.service-mode')).toHaveCount(0, { timeout: 5_000 });
+      await expect(page.locator('.chat-log')).toContainText(/old colour|different colour/);
+      for (const line of ['That is twenty-five dollars, please.', 'Thank you! See you next time.']) {
+        if (await page.locator('.chat-results:not(.hidden)').count()) break;
+        await page.locator('.chat-input').fill(line);
+        await page.locator('.chat-form button[type=submit]').click();
+        await page.waitForFunction(() => !document.querySelector<HTMLButtonElement>('.chat-form button[type=submit]')?.disabled || document.querySelector('.chat-results:not(.hidden)'));
+      }
+      await page.waitForSelector('.chat-results:not(.hidden) .results-section', { timeout: 15_000 });
+      await expect(page.locator('.results-fix.bad')).toHaveCount(1);
+      await expect(page.locator('.bestie-fix.bad')).toHaveCount(1);
     });
 
     test('the service is full screen: her own line, the Reply sheet, an ignored question costs a little, Done → checkout', async ({ page }) => {

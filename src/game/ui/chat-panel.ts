@@ -16,6 +16,8 @@ import { emotionFor } from '../voice-cast';
 import { SERVICE_TALK, checkoutLine, expectsAnswer, planServiceTalk } from '../service-talk';
 import type { PrepOverlay } from './pedicure-prep';
 import { createNailStation, nailsNote } from './nail-station-panel';
+import { FIX_CONFIG, fixKindOf, fixOutcomes, openLine, openRequest, thanksLine, updateRequests } from '../fix-requests';
+import type { FixOutcome, FixRequest } from '../fix-requests';
 import { NAIL_ART_CONFIG } from '../nail-art/design';
 import type { NailDesign, NailRequest, PaletteColor, StickerKind } from '../nail-art/design';
 import type { StationTools } from '../nail-art/station';
@@ -88,6 +90,8 @@ export function createChatPanel(
       onNote: (note: string | undefined) => void;
       /** Finished (Done, or the appointment ended): the design and its match. */
       onDone: (design: NailDesign, result: MatchResult) => void;
+      /** Story 048: the fixes she asked for and whether each was done (at the final Done). */
+      onFixes?: (fixes: FixOutcome[]) => void;
       /** Story 007: bought polishes and upgraded tools. */
       palette?: PaletteColor[];
       tools?: StationTools;
@@ -217,7 +221,10 @@ export function createChatPanel(
         ...(nailArt.tools ? { tools: nailArt.tools } : {}),
         topBand: () => serviceTop.offsetHeight + 6,
         maiSide: () => (mai ? ((mai.element.dataset.side as 'left' | 'right' | undefined) ?? 'right') : null),
-        onChange: (design) => nailArt.onNote(nailsNote(design, null, nailArt.request.service)),
+        onChange: (design) => {
+          nailArt.onNote(nailsNote(design, null, nailArt.request.service));
+          checkFixes(design);
+        },
         onDone: (design, result) => {
           appointment.adjustMood(result.moodDelta);
           nailArt.onNote(nailsNote(design, result, nailArt.request.service));
@@ -374,6 +381,33 @@ export function createChatPanel(
   let lastSeenClient = -1;
   let awaitingAnswer = false;
   let lastMatch = 0;
+  // Story 048: the fixes she asked for during this service.
+  let fixes: FixRequest[] = [];
+  /** A fix she asked for: track it and show the Fix it step. */
+  const askFix = (text: string): void => {
+    const kind = fixKindOf(text);
+    if (!kind || !station || ending) return;
+    // The same ask again (or heard twice) while it is still open is one request.
+    if (fixes.some((f) => f.kind === kind && f.status === 'open')) return;
+    fixes = [...fixes, openRequest(kind, station.design())];
+    station.openFix(kind);
+  };
+  /** After a change on the nails: a request now met is fixed; she thanks the player (a mood lift). */
+  function checkFixes(design: NailDesign): void {
+    if (!station || fixes.every((f) => f.status !== 'open')) return;
+    const update = updateRequests(fixes, design, station.takeFixAction());
+    fixes = update.requests;
+    // Doing the fix answers her ask: no wait for a reply, and no "ignored question" dip.
+    if (update.fixed.length > 0) {
+      awaitingAnswer = false;
+      window.clearTimeout(ignoreTimer);
+    }
+    for (const fixed of update.fixed) {
+      appointment.adjustMood(FIX_CONFIG.fixedMood);
+      sayWhenFree(thanksLine(fixed.kind));
+    }
+    if (update.fixed.length > 0 && fixes.every((f) => f.status !== 'open')) station.closeFix();
+  }
   let ignoreTimer = 0;
   let nudgeTimer = 0;
   const talkTimers: number[] = [];
@@ -415,6 +449,8 @@ export function createChatPanel(
   /** A client line while the station is on screen: a bubble from her face, the Reply chip, and a wait for questions. */
   const clientLineInService = (index: number, text: string): void => {
     lastSeenClient = index;
+    // Story 048: a line asking for a fix (her set lines or an AI reply) shows the Fix it step.
+    askFix(text);
     say.textContent = text.length > 140 ? `${text.slice(0, 137)}…` : text;
     say.classList.remove('hidden');
     chip.classList.remove('hidden');
@@ -451,9 +487,19 @@ export function createChatPanel(
   function afterDone(): void {
     if (!station) return;
     if (station.canRedo) {
+      // Story 048: her redo is a fix request: the station reopens on the Fix it step.
       appointment.clientSays(SERVICE_TALK.redo);
+      askFix(SERVICE_TALK.redo);
       return;
     }
+    // Story 048: a fix still open at Done: her reaction and a mood dip; the results and the debrief say so.
+    checkFixes(station.design());
+    for (const open of fixes.filter((f) => f.status === 'open')) {
+      appointment.adjustMood(FIX_CONFIG.openMood);
+      appointment.clientSays(openLine(open.kind));
+    }
+    if (fixes.length > 0) nailArt?.onFixes?.(fixOutcomes(fixes));
+    station.closeFix(false);
     if (!serviceStarted) {
       window.setTimeout(() => setStationOpen(false), 1800);
       return;

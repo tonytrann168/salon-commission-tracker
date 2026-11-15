@@ -8,7 +8,9 @@ import { getPlayerName } from '../settings';
 import type { BestieMemory } from '../bestie-memory';
 import { t } from '../i18n';
 import type { ScoreResult } from '../scoring';
-import { TurnError } from '../types';
+import { TurnError, clientGrammar } from '../types';
+import type { ClientPronoun } from '../types';
+import type { FixOutcome } from '../fix-requests';
 import type { EnglishLevel, Grading, Message, Outcome, Phase } from '../types';
 import { renderMascot } from '../mascot';
 import { el } from './dom';
@@ -61,6 +63,9 @@ export interface DebriefOptions {
   score: ScoreResult;
   /** Random number in [0, 1) deciding whether she asks a question this time. */
   roll?: number;
+  /** Story 048: the fixes the client asked for during the service; the companion says how each went. */
+  fixes?: readonly FixOutcome[];
+  clientPronoun?: ClientPronoun;
 }
 
 /**
@@ -74,7 +79,13 @@ export function createDebriefPanel(options: DebriefOptions): HTMLElement {
   const heading = el('h2', '', t('bestie.debriefTitle', { name: companionName() }));
   const levelTag = el('span', 'bestie-level');
   const body = el('div', 'bestie-debrief-body');
-  section.append(heading, levelTag, body);
+  // Story 048: how the fixes went, first and always (it never waits for the AI debrief).
+  const fixLines = (options.fixes ?? []).map((fix) => {
+    const p = el('p', `bestie-line bestie-fix ${fix.fixed ? 'good' : 'bad'}`);
+    p.append(el('strong', '', `🔧 ${t('bestie.fixTitle')}: `), el('span', '', t(`bestie.fix.${fix.fixed ? 'fixed' : 'open'}.${fix.kind}`, clientGrammar(options.clientPronoun))));
+    return p;
+  });
+  section.append(heading, levelTag, ...fixLines, body);
 
   const startMemory = loadMemory();
   const askQuestion = shouldAskQuestion(startMemory, options.roll ?? Math.random());

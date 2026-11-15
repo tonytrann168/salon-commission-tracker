@@ -3,7 +3,8 @@ import { clientGrammar } from '../types';
 import type { ClientPronoun } from '../types';
 import type { Container } from 'pixi.js';
 import { getLanguage, t } from '../i18n';
-import { NAIL_ART_CONFIG, emptyDesign, limbFor, nailsFor } from '../nail-art/design';
+import { NAIL_ART_CONFIG, emptyDesign, limbFor, nailsFor, removeAll } from '../nail-art/design';
+import type { FixKind } from '../fix-requests';
 import type { NailDesign, NailRequest, NailShape, PaletteColor, StickerKind } from '../nail-art/design';
 import { describeDesign, matchDesign } from '../nail-art/match';
 import type { MatchResult } from '../nail-art/match';
@@ -46,6 +47,15 @@ export interface NailStationOptions {
 
 export interface NailStation {
   readonly canRedo: boolean;
+  /**
+   * Story 048: she asked for a fix. The Fix it step shows (in Clean up's place) with the Remover, Remove all and the
+   * right tool for the request; after Done (the colour redo) the station reopens for it.
+   */
+  openFix(kind: FixKind): void;
+  /** Story 048: the Fix it step goes away (`fixed`: every request was fixed, the station says so). */
+  closeFix(fixed?: boolean): void;
+  /** Story 048: whether a fix tool (Clean up, Remover, Remove all) changed the nails since the last call. */
+  takeFixAction(): boolean;
   /** The toolbar (mount right under the zone). */
   toolbar: HTMLElement;
   /** The touch layer (mount over the zone, in the same positioned parent). */
@@ -109,7 +119,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     window.clearTimeout(hideHint);
     if (!keep) hideHint = window.setTimeout(() => status.classList.remove('show'), HINT_MS);
   };
-  type Tab = 'shape' | 'colour' | 'art';
+  type Tab = 'shape' | 'colour' | 'art' | 'fix';
   let tab: Tab = 'colour';
 
   const button = (label: string, className: string, onClick: () => void, aria?: string): HTMLButtonElement => {
@@ -124,6 +134,9 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const spillCount = (d: NailDesign): number => d.spill.reduce((sum, cells) => sum + cells.length, 0);
   // Story 047: the spill count is compared only when the spill changed (same arrays → no recount).
   let changeTimer = 0;
+  // Story 048: a fix tool changed the nails (read and reset by the chat panel).
+  let fixActed = false;
+  let fixKind: FixKind | null = null;
   const flushChange = (): void => {
     window.clearTimeout(changeTimer);
     changeTimer = 0;
@@ -146,31 +159,16 @@ export function createNailStation(options: NailStationOptions): NailStation {
       refresh();
     }, t('station.shapeLabel', { shape: t(`station.shape.${shape}`) })),
   );
-  // Story 033: a redo scenario lets Done turn into "Redo" once; the latest design is the one that counts.
+  // Story 033: a redo scenario lets the client ask once more after Done; story 048: the station then reopens on the
+  // Fix it step (the latest design is the one that counts).
   let redosLeft = options.redos ?? 0;
-  const setDoneLabel = (redo: boolean): void => {
-    doneButton.innerHTML = labelled(redo ? '↺' : '✓', t(redo ? 'station.redoWord' : 'station.doneLabel'));
-    doneButton.setAttribute('aria-label', t(redo ? 'station.redoLabel' : 'station.doneLabel'));
-  };
   const doneButton = button(labelled('✓', t('station.doneLabel')), 'station-done', () => {
-    if (done) {
-      if (redosLeft <= 0) return;
-      redosLeft -= 1;
-      done = false;
-      setDoneLabel(false);
-      refresh();
-      say(t('station.redoStart'), true);
-      return;
-    }
+    if (done) return;
     const result = finish();
     haptic(30);
     say(t('station.doneMessage', { ...clientGrammar(options.clientPronoun), score: result.score }), true);
     emitSound(result.moodDelta >= 0 ? 'moodUp' : 'moodDown');
     options.onDone(design, result);
-    if (redosLeft > 0) {
-      setDoneLabel(true);
-      doneButton.disabled = false;
-    }
   });
   doneButton.setAttribute('aria-label', t('station.doneLabel'));
   const resetButton = button(t('station.reset'), 'station-reset', () => setDesign(emptyDesign(design.shape, nails)), t('station.resetLabel'));
@@ -180,6 +178,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     gradient: button(`<span aria-hidden="true">🌈</span><span class="tab-text">${t('station.gradient').replace('🌈', '').trim()}</span>`, 'station-tool', () => selectTool('gradient'), t('station.gradient').replace('🌈', '').trim()),
     gem: button(t('station.gem'), 'station-tool', () => selectTool('gem')),
     cleanup: button(labelled('🧽', t('station.cleanWord')), 'station-tool', () => selectTool('cleanup'), t('station.cleanup')),
+    remover: button(labelled('🧴', t('station.removerWord')), 'station-tool station-remover', () => selectTool('remover'), t('station.remover')),
     sticker: button(t(`station.sticker.${sticker}`), 'station-tool', () => {
       // Tapping Sticker again cycles heart → star → flower.
       if (tool === 'sticker') {
@@ -207,9 +206,16 @@ export function createNailStation(options: NailStationOptions): NailStation {
     shape: button(`<span class="tab-icon" aria-hidden="true">▢</span><span class="tab-text">${t('station.tab.shape')}</span>`, 'station-tab', () => selectTab('shape'), t('station.tab.shape')),
     colour: button(`<span class="tab-icon" aria-hidden="true">🎨</span><span class="tab-text">${t('station.tab.colour')}</span>`, 'station-tab', () => selectTab('colour'), t('station.tab.colour')),
     art: button(`<span class="tab-icon" aria-hidden="true">✨</span><span class="tab-text">${t('station.tab.art')}</span>`, 'station-tab', () => selectTab('art'), t('station.tab.art')),
+    fix: button(labelled('🔧', t('station.fixWord')), 'station-tab station-fix', () => selectTab('fix'), t('station.fixLabel')),
   };
+  const removeAllButton = button(labelled('🫧', t('station.removeAll')), 'station-remove-all', () => {
+    fixActed = true;
+    setDesign(removeAll(design));
+    flushChange();
+    refresh();
+  }, t('station.removeAllLabel'));
   Object.values(tabButtons).forEach((node) => node.setAttribute('role', 'tab'));
-  tabs.append(...Object.values(tabButtons));
+  tabs.append(tabButtons.shape, tabButtons.colour, tabButtons.art);
   // Story 017: the hand switch, only for two-hand clients (one hand on the station at a time keeps the chat space).
   let hand: 0 | 1 = 0;
   // Story 024: feet for a pedicure.
@@ -230,24 +236,30 @@ export function createNailStation(options: NailStationOptions): NailStation {
   // 035 fixes: two rows. Row 1: the selected tab's options at full width (the colours are in plain sight). Row 2: the
   // tabs, Clean up (always at hand), the hand switch and Done.
   const controls = el('div', 'station-controls');
-  controls.append(tabs, toolButtons.cleanup, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []), doneButton);
+  // Story 048: while a fix is asked for, Fix it takes Clean up's place (Clean up is inside it), so the row still fits.
+  const fixSlot = el('div', 'station-fix-slot');
+  fixSlot.append(toolButtons.cleanup);
+  controls.append(tabs, fixSlot, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []), doneButton);
   toolbar.append(optionsRow, controls);
 
   function selectTab(next: Tab): void {
     tab = next;
     if (tab === 'shape') optionsRow.replaceChildren(...shapeButtons, resetButton);
     else if (tab === 'colour') optionsRow.replaceChildren(...swatches, toolButtons.gradient);
-    else optionsRow.replaceChildren(toolButtons.gem, toolButtons.sticker);
+    else if (tab === 'art') optionsRow.replaceChildren(toolButtons.gem, toolButtons.sticker);
+    // Story 048: the fix tools; a colour fix also has the colours right there.
+    else optionsRow.replaceChildren(toolButtons.remover, removeAllButton, toolButtons.cleanup, ...(fixKind === 'colour' ? swatches : []));
     if (tab === 'colour' && tool !== 'gradient' && tool !== 'cleanup') tool = 'polish';
     if (tab === 'art' && tool !== 'gem' && tool !== 'sticker') tool = 'gem';
+    if (tab === 'fix' && tool !== 'cleanup' && tool !== 'remover' && tool !== 'polish') tool = fixKind === 'edge' ? 'cleanup' : 'remover';
     optionsRow.scrollLeft = 0;
     refresh();
   }
 
   function selectTool(next: StationTool): void {
     // Gradient and Clean up toggle back to plain polish when tapped again.
-    tool = (next === 'gradient' || next === 'cleanup') && tool === next ? 'polish' : next;
-    say(tool === 'gradient' ? t('station.gradientOn') : tool === 'cleanup' ? t('station.cleanupOn') : t('station.hint'));
+    tool = (next === 'gradient' || next === 'cleanup' || next === 'remover') && tool === next ? 'polish' : next;
+    say(tool === 'gradient' ? t('station.gradientOn') : tool === 'cleanup' ? t('station.cleanupOn') : tool === 'remover' ? t('station.removerOn') : t('station.hint'));
     refresh();
   }
 
@@ -260,7 +272,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
       node.setAttribute('aria-pressed', String(tool === 'gradient' ? id === design.gradient : id === design.base));
     });
     toolbar.querySelectorAll('button').forEach((node) => {
-      (node as HTMLButtonElement).disabled = done && !(node === doneButton && redosLeft > 0);
+      (node as HTMLButtonElement).disabled = done;
     });
   }
 
@@ -273,6 +285,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const forward = (event: PointerEvent, phase: 'down' | 'move'): void => {
     if (done) return;
     if (phase === 'down' || !box) box = touch.getBoundingClientRect();
+    // Story 048: a clean-up or remover stroke is the player acting on her fix (even where the skin is already clean).
+    if (tool === 'cleanup' || tool === 'remover') fixActed = true;
     setDesign(view.pointer(event.clientX - box.left, event.clientY - box.top, phase, tool, sticker));
   };
   touch.addEventListener('pointerdown', (event) => {
@@ -368,6 +382,36 @@ export function createNailStation(options: NailStationOptions): NailStation {
     },
     relayout,
     design: () => design,
+    openFix(kind) {
+      if (done) {
+        if (redosLeft > 0) redosLeft -= 1;
+        done = false;
+      }
+      fixKind = kind;
+      toolbar.classList.add('fixing');
+      fixSlot.replaceChildren(tabButtons.fix);
+      tabButtons.fix.classList.remove('pulse');
+      void tabButtons.fix.offsetWidth;
+      tabButtons.fix.classList.add('pulse');
+      tool = kind === 'edge' ? 'cleanup' : 'remover';
+      selectTab('fix');
+      say(t(`station.fixAsk.${kind}`, clientGrammar(options.clientPronoun)), true);
+    },
+    closeFix(fixed = true) {
+      if (fixKind === null) return;
+      fixKind = null;
+      toolbar.classList.remove('fixing');
+      fixSlot.replaceChildren(toolButtons.cleanup);
+      if (tool === 'remover') tool = 'polish';
+      if (tab === 'fix') selectTab('colour');
+      else refresh();
+      if (fixed) say(t('station.fixed', clientGrammar(options.clientPronoun)));
+    },
+    takeFixAction() {
+      const acted = fixActed;
+      fixActed = false;
+      return acted;
+    },
     finish,
     get done() {
       return done;
