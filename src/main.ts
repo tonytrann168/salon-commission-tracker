@@ -549,7 +549,7 @@ async function boot(): Promise<void> {
     teardownDom();
     showScene('salon');
     // Story 005: what the client hears about her nails, and the finished result for the review and the stars.
-    const nails: { note: string | undefined; finished: { description: string; match: number; fixes?: FixOutcome[] } | undefined; photo?: Promise<string | null> } = { note: undefined, finished: undefined };
+    const nails: { note: string | undefined; finished: { description: string; match: number; fixes?: FixOutcome[] } | undefined; photo?: Promise<string | null>; workForPicture?: Promise<string | null> } = { note: undefined, finished: undefined };
     // Story 044: the salon menu and her order on it (she orders by number; checkout rings it up).
     const menuList = menuItems(loadSave().menu ?? { preset: MENU_CONFIG.default });
     // Story 063: her usual follows who she is (the same order the path's appointments card shows).
@@ -593,6 +593,8 @@ async function boot(): Promise<void> {
               },
               onDone: (design: NailDesign, result: MatchResult) => {
                 nails.finished = { description: describeDesign(design, undefined, client.nailRequest?.service), match: result.score };
+                // 066: next to her picture, your work is drawn the same way (same renderer, pose, crop and size).
+                if (picture) nails.workForPicture = stage.designPhoto(design, picture.request, GALLERY_CONFIG.width, GALLERY_CONFIG.quality, picture.design);
               },
               // Story 050: the finished set's photo (taken now, shown first on the results and kept in My work).
               onPhoto: (source: { target: Container; frame: Rectangle | null }) => {
@@ -644,7 +646,7 @@ async function boot(): Promise<void> {
           helpLanguage: getHelpLanguage(),
           ...(nails.finished ? { nails: nails.finished } : {}),
           bill: order.map((line) => ({ number: line.number, label: line.item.name[getLanguage()], price: line.item.price })),
-          ...(referencePhoto ? { reference: referencePhoto } : {}),
+          ...(referencePhoto ? { reference: referencePhoto, ...(nails.workForPicture ? { workForPicture: nails.workForPicture } : {}) } : {}),
           ...(nails.photo ? { photo: nails.photo, onPhoto: (photo: string, stars: number) => void addToGallery({ photo, clientName: client.name, stars, day: localDay() }) } : {}),
           extras: (grading, score) => [
             // Story 007: tips into the wallet, XP and rank, badges and the daily streak, once per appointment.

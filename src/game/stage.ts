@@ -25,7 +25,7 @@ export interface Stage {
   /** Story 050: a photo of something on the stage (the finished nails) as a JPEG data URL, `width` px wide. */
   snapshot(target: Container, width: number, quality: number, frame?: Rectangle): Promise<string | null>;
   /** Story 065: a design drawn by the nail renderer (off screen) as a photo: her reference picture. */
-  designPhoto(design: NailDesign, request: NailRequest, width: number, quality: number): Promise<string | null>;
+  designPhoto(design: NailDesign, request: NailRequest, width: number, quality: number, frameOf?: NailDesign): Promise<string | null>;
   createChatPanel: typeof createChatPanel;
 }
 
@@ -88,12 +88,23 @@ export async function createStage(host: HTMLElement): Promise<Stage> {
         return null;
       }
     },
-    async designPhoto(design, request, width, quality) {
-      const view = createStationView(design, { brushRadius: NAIL_ART_CONFIG.brushRadius, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius }, limbFor(request), longestFor(request));
+    async designPhoto(design, request, width, quality, frameOf) {
+      const make = (d: NailDesign) => {
+        const v = createStationView(d, { brushRadius: NAIL_ART_CONFIG.brushRadius, cleanupRadius: NAIL_ART_CONFIG.cleanupRadius }, limbFor(request), longestFor(request));
+        v.layout(0, 0, 320, 300, 8, 8, 0);
+        v.setDesign(d);
+        return v;
+      };
+      // 066: `frameOf` (her picture): the same crop for both, so polish spilled on the skin never shrinks the hand.
+      let frame: Rectangle | null = null;
+      if (frameOf) {
+        const ref = make(frameOf);
+        frame = ref.photoFrame();
+        ref.destroy();
+      }
+      const view = make(design);
       try {
-        view.layout(0, 0, 320, 300, 8, 8, 0);
-        view.setDesign(design);
-        return await stage.snapshot(view.container, width, quality, view.photoFrame() ?? undefined);
+        return await stage.snapshot(view.container, width, quality, (frame ?? view.photoFrame()) ?? undefined);
       } catch {
         return null;
       } finally {

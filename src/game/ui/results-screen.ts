@@ -54,6 +54,8 @@ export interface ResultsScreenOptions {
   photo?: Promise<string | null>;
   /** Story 065: her picture (hard clients): shown next to the finished set, with the match. */
   reference?: Promise<string | null>;
+  /** 066: the finished set drawn like her picture (same renderer and framing), for a fair side by side. */
+  workForPicture?: Promise<string | null>;
   onPhoto?: (photo: string, stars: number) => void;
   /** Story 044: her order on the salon menu (rung up at checkout). */
   bill?: { number: number; label: string; price: number }[];
@@ -222,7 +224,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
 
     // Story 050: her nails first, as a big polaroid, with a celebration that fits the result; then the payment.
     const band = cheerFor(score.stars, result.outcome === 'walked_out');
-    const compare = photo && reference && options.nails ? pictureCompare(reference, photo, options.nails.match, clientName) : null;
+    const compare = (workForPicture ?? photo) && reference && options.nails ? pictureCompare(reference, (workForPicture ?? photo) as string, options.nails.match, clientName) : null;
     const polaroid = compare
       ? [compare]
       : photo
@@ -262,6 +264,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     });
   let charged: number | null = null;
   let reference: string | null = null;
+  let workForPicture: string | null = null;
   let lastReaction: ChargeReaction | null = null;
 
   const run = async (): Promise<void> => {
@@ -287,6 +290,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     if (fixes.length > 0) grading = { ...grading, skills: applyFixesToSkills(grading.skills, fixes) };
     const photo = options.photo ? await options.photo.catch(() => null) : null;
     reference = options.reference ? await options.reference.catch(() => null) : null;
+    workForPicture = options.workForPicture ? await options.workForPicture.catch(() => null) : null;
     const scored = scoreAppointment(
         {
           finalMood,

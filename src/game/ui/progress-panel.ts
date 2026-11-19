@@ -28,11 +28,13 @@ export function createProgressPanel(update: ProgressUpdate, stars: number): HTML
     return { value, node };
   };
   tile('stars', '★', t('progress.stars'), `${stars}/5`);
+  // 066: the coins tile only when the visit earned coins (never "+0"); the row then has three tiles.
   const counters = [
     { ...tile('xp', '✨', 'XP', `+${update.xpGained}`), target: update.xpGained, format: (n: number) => `+${n}` },
-    { ...tile('coins', coinIcon(22), t('progress.coins'), `+${update.coinsGained}`), target: update.coinsGained, format: (n: number) => `+${n}` },
+    ...(update.coinsGained > 0 ? [{ ...tile('coins', coinIcon(22), t('progress.coins'), `+${update.coinsGained}`), target: update.coinsGained, format: (n: number) => `+${n}` }] : []),
     { ...tile('tips', '$', t('progress.tips'), `+$${update.tipGained}`), target: update.tipGained, format: (n: number) => `+$${n}` },
   ];
+  tiles.style.setProperty('--tiles', String(tiles.childElementCount));
   section.append(tiles);
   // The streak moving on (the first appointment today): 🔥 from → to.
   const played = update.played;

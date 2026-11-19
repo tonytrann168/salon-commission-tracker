@@ -539,7 +539,12 @@ for (const lang of LANGS) {
       await expect(card.locator('.rewards-stars .rewards-value')).toHaveText(/^[1-5]\/5$/);
       await expect(card.locator('.rewards-xp .rewards-value')).toHaveText(`+${save.xp - 100}`);
       await expect(card.locator('.rewards-tips .rewards-value')).toHaveText(`+$${save.wallet}`);
-      await expect(card.locator('.rewards-coins .rewards-value')).toHaveText(`+${save.coins ?? 0}`);
+      // 066: a visit that earned no coins shows no coins tile (never "+0"): three tiles.
+      if ((save.coins ?? 0) > 0) await expect(card.locator('.rewards-coins .rewards-value')).toHaveText(`+${save.coins}`);
+      else {
+        await expect(card.locator('.rewards-coins')).toHaveCount(0);
+        await expect(card.locator('.rewards-tile')).toHaveCount(3);
+      }
       await expect(card.locator('.rewards-streak.shown')).toHaveText(lang === 'vi' ? '🔥 Chuỗi 0 → 1 ngày!' : '🔥 Streak 0 → 1!');
       // The four tiles fit in one row at 320 px.
       const row = await card.locator('.rewards-tile').evaluateAll((tiles) => tiles.map((t) => t.getBoundingClientRect()).map((r) => ({ top: Math.round(r.top), right: r.right })));
@@ -776,6 +781,15 @@ for (const lang of LANGS) {
       // 📷 in the mood row; it opens her picture, a polaroid drawn by the game.
       const button = page.locator('.mood .chat-picture-button');
       await expect(button).toBeVisible();
+      // 066: 📋 then 📷 in the mood row (the menu stays reachable), nothing overlapping, all inside 320 px.
+      await expect(page.locator('.mood .chat-menu-button')).toBeVisible();
+      const row = await page.locator('.mood > *').evaluateAll((nodes) => nodes.map((n) => ({ cls: n.className, ...(({ left, right }) => ({ left, right }))(n.getBoundingClientRect()) })).filter((n) => n.right > n.left));
+      const menuAt = row.findIndex((n) => String(n.cls).includes('chat-menu-button'));
+      const pictureAt = row.findIndex((n) => String(n.cls).includes('chat-picture-button'));
+      expect(menuAt).toBeGreaterThanOrEqual(0);
+      expect(pictureAt).toBe(menuAt + 1);
+      for (let i = 1; i < row.length; i++) expect(row[i]!.left).toBeGreaterThanOrEqual(row[i - 1]!.right - 0.5);
+      expect(Math.max(...row.map((n) => n.right))).toBeLessThanOrEqual(320);
       await expect(page.locator('.service-nudge')).toContainText('📷');
       await button.click();
       const photo = page.locator('.picture-sheet img.picture-photo');
@@ -785,11 +799,22 @@ for (const lang of LANGS) {
       expect(await noOverflow(page)).toBe(true);
       await page.locator('.picture-close').click();
       await expect(page.locator('.picture-sheet')).toHaveCount(0);
-      // Played to the results: her picture next to the work, with a match %.
-      await finishAppointment(page);
+      // Painted red with polish spilled on the skin (a quick, messy job), then to the results.
+      await page.locator('.chat-input').fill('Hello! Red, long oval, like your picture.');
+      await page.locator('.chat-form button[type=submit]').click();
+      await page.waitForSelector('.chat-panel.service-mode');
+      await page.locator('.station-swatch').nth(3).click();
+      await paintEverything(page);
+      await page.locator('.station-done').click();
+      await finishAppointment(page, ['That is fifty dollars, please.', 'Thank you! See you next time.']);
       const compare = page.locator('.picture-compare');
       await expect(compare).toBeVisible();
       await expect(compare.locator('img.picture-photo')).toHaveCount(2);
+      // 066: both drawn the same way (same renderer, pose and crop), even with polish spilled on the skin: the two
+      // pictures come out the same size (before, the spill widened the crop and shrank the hand).
+      const sizes = await compare.locator('img.picture-photo').evaluateAll((imgs) => imgs.map((n) => [(n as HTMLImageElement).naturalWidth, (n as HTMLImageElement).naturalHeight]));
+      expect(Math.abs(sizes[0]![0]! - sizes[1]![0]!)).toBeLessThanOrEqual(2);
+      expect(Math.abs(sizes[0]![1]! - sizes[1]![1]!)).toBeLessThanOrEqual(2);
       await expect(compare.locator('.picture-match')).toHaveText(lang === 'vi' ? /^Giống \d+%$/ : /^Match \d+%$/);
       await expect(page.locator('.chat-results .polaroid')).toHaveCount(0);
     });

@@ -50,7 +50,7 @@
 /* Story 057c: the rewards card at the top of the results: four tiles in one row (320 px), the streak chip. */
 .results-rewards { display: flex; flex-direction: column; gap: 10px; cursor: default; }
 .results-rewards.counting { cursor: pointer; }
-.rewards-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.rewards-tiles { display: grid; grid-template-columns: repeat(var(--tiles, 4), minmax(0, 1fr)); gap: 6px; }
 .rewards-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 14px; background: #fff; box-shadow: 0 0 0 2px #f6d5e3; min-width: 0; }
 .rewards-icon { display: grid; place-items: center; height: 24px; font: 800 20px/1 system-ui, sans-serif; }
 .rewards-stars .rewards-icon { color: #f2b632; font-size: 24px; }

@@ -1,6 +1,6 @@
 # Round 4: owner list and playtest checklist
 
-> SAFE TO PAUSE after story 065. Stories 058–065 come from the owner's playtest of Sun 2026-11-15. The overseer
+> SAFE TO PAUSE after story 066 (round-4 polish). Stories 058–065 come from the owner's playtest of Sun 2026-11-15. The overseer
 > reviewed each one, and its notes went into the next commit.
 
 ## What changed (for the owner's playtest)
@@ -15,6 +15,7 @@
 | 063 | The new menu: 16 items in four groups with drawn icons. Settings → Bảng giá: Bình dân / Vừa / Sang. Clients order their usual ("#2 Gel mani + French"). |
 | 064 | A hard client with a hangnail: Lau → **✂️ Kềm**, then hold gently on the pulsing ring. A quick snip slips (a tiny dot): **1 · Cầm máu**, **2 · Dán băng**, then say "xin lỗi". |
 | 065 | A hard client brings **📷 a picture**: tap 📷 by the mood bar. At the results: "Hình mẫu và bộ móng của em" with **Giống N%**. |
+| 066 | Polish: 📋 then 📷 for picture clients; her picture and your work drawn the same way; no "+0 coins" tile (three tiles). |
 
 ## OWNER decisions
 

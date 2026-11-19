@@ -194,13 +194,14 @@ export function createChatPanel(
       pictureButton.classList.remove('pulse');
       void photo.then((src) => openPictureSheet(src, clientName));
     });
-    mood.insertBefore(pictureButton, mood.querySelector('.speaker-button'));
   }
   // Story 060: 📋 sits in the mood row as a small icon button, so it never covers her face while she talks.
   if (menuButton) {
     menuButton.setAttribute('aria-label', t('menu.sectionTitle'));
     mood.insertBefore(menuButton, mood.querySelector('.speaker-button'));
   }
+  // 066: 📷 right after 📋 (the menu shows in consultation and checkout; the picture all visit long).
+  if (pictureButton) mood.insertBefore(pictureButton, mood.querySelector('.speaker-button'));
 
   const log = el('div', 'chat-log');
   const errorBox = el('div', 'chat-error');
