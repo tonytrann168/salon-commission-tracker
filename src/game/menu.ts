@@ -138,7 +138,9 @@ export function orderFor(request: NailRequest | undefined, items: readonly MenuI
     return who && open.length > 0 ? (open[seedOf(who) % open.length] as OrderLine) : (open[0] ?? null);
   };
   const hands = request?.hands === 2 ? (find('fullSet') ?? usual(['manicure', 'gel', 'spa'])) : usual(['manicure', 'gel', 'spa']);
-  const base = (pedicure ? usual(['pedicure', 'spaPedicure', 'jellyPedicure']) : long ? (find('acrylic') ?? hands) : hands) ?? (items[0] ? { number: 1, item: items[0] } : null);
+  // Story 069b: a combo is one line (the gel combo when her usual is gel or spa).
+  const combo = request?.combo ? (hands?.item.tag === 'manicure' ? find('comboClassic') : find('comboGel')) ?? find('comboClassic') : null;
+  const base = combo ?? (pedicure ? usual(['pedicure', 'spaPedicure', 'jellyPedicure']) : long ? (find('acrylic') ?? hands) : hands) ?? (items[0] ? { number: 1, item: items[0] } : null);
   const extras: (OrderLine | null)[] = request
     ? [
         request.gradient === 'yes' ? (find('ombre') ?? find('art')) : null,
@@ -146,7 +148,7 @@ export function orderFor(request: NailRequest | undefined, items: readonly MenuI
         request.stickers !== 'none' ? find('art') : null,
         long && base?.item.tag !== 'acrylic' ? find('extensions') : null,
         // Some clients like a French tip with it.
-        who && !pedicure && seedOf(`${who}:french`) % 4 === 0 ? find('french') : null,
+        who && !pedicure && !combo && seedOf(`${who}:french`) % 4 === 0 ? find('french') : null,
       ]
     : [];
   const lines = [base, ...extras].filter((line): line is OrderLine => line !== null);

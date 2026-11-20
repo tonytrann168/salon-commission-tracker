@@ -23,6 +23,8 @@ import { emotionFor } from '../voice-cast';
 import { SERVICE_TALK, checkoutLine, expectsAnswer, planServiceTalk } from '../service-talk';
 import type { PrepOverlay } from './pedicure-prep';
 import { createNailStation, nailsNote } from './nail-station-panel';
+import type { NailStation } from './nail-station-panel';
+import { COMBO_CONFIG, comboScore } from '../combo';
 import { openMenuSheet } from './menu-sheet';
 import { priceBoardIcon } from './menu-icon';
 import type { MenuItem, OrderLine } from '../menu';
@@ -121,6 +123,10 @@ export function createChatPanel(
       hangnail?: number;
       /** Story 065 (hard clients): her picture of the nails she wants (drawn by the nail renderer). */
       reference?: Promise<string | null>;
+      /** Story 069b: a combo: after the hands' Done the station becomes the feet (soak and scrub first). */
+      feet?: NailRequest;
+      /** Story 069b: the hands of a combo are done (the feet come next). */
+      onHandsDone?: (design: NailDesign, result: MatchResult) => void;
     };
     /** Story 068: the player is stuck on her question (two misses): the next client turn picks for them. */
     onStuck?: () => void;
@@ -274,6 +280,12 @@ export function createChatPanel(
         language: bestie.language,
         tipCap: LEARNING_CONFIG.whispers.maxPerAppointment,
         current: () => ({ phase: latest.phase, mood: latest.mood, transcript: latest.transcript }),
+        // 068b review: a tapped answer goes into the reply box (opened if the station is up); the player sends it.
+        useLine: (text: string) => {
+          if (serviceMode) setReplyOpen(true);
+          setInput(text);
+          input.focus();
+        },
         onHelpMeSayIt: () => helpButton.click(),
         onTipSeen: (tip) => bestie.corrections?.onPhrase(tip.better),
         // Story 043: her tips aloud, in her voice, at the Speech speed (only when the setting is on).
@@ -286,18 +298,22 @@ export function createChatPanel(
   // Story 005: the nail station draws over the portrait zone in the service phase; the chat below stays usable.
   const serviceTop = el('div', 'service-top');
   const nailArt = portraits.nailArt;
-  const station = nailArt
-    ? createNailStation({
+  // Story 069b: a combo does the hands, then the feet (a new station), then one checkout.
+  let feetNext: NailRequest | null = nailArt?.feet ?? null;
+  const isCombo = feetNext !== null;
+  let handsScore: number | null = null;
+  const makeStation = (art: NonNullable<typeof nailArt>, request: NailRequest): NailStation =>
+    createNailStation({
         rect: () => zone.rect(),
         zone: zone.element,
         layer: portraits.layer,
-        request: nailArt.request,
+        request,
         clientPronoun: portraits.client.pronoun,
         // Story 064: her hangnail: a clean trim earns her thanks; a slip is her ouch, then first aid and a sorry.
-        ...(nailArt.hangnail !== undefined
+        ...(art.hangnail !== undefined && request.service !== 'pedicure'
           ? {
               hangnail: {
-                nail: nailArt.hangnail,
+                nail: art.hangnail,
                 onTrim: (outcome: 'clean' | 'slip') => {
                   if (outcome === 'clean') {
                     appointment.adjustMood(HANGNAIL_CONFIG.trimmedMood);
@@ -319,31 +335,57 @@ export function createChatPanel(
               },
             }
           : {}),
-        ...(nailArt.palette ? { palette: nailArt.palette } : {}),
-        ...(nailArt.stickers ? { stickers: nailArt.stickers } : {}),
-        ...(nailArt.redos ? { redos: nailArt.redos } : {}),
-        ...(nailArt.tools ? { tools: nailArt.tools } : {}),
+        ...(art.palette ? { palette: art.palette } : {}),
+        ...(art.stickers ? { stickers: art.stickers } : {}),
+        ...(art.redos ? { redos: art.redos } : {}),
+        ...(art.tools ? { tools: art.tools } : {}),
         // Story 051: Extra long is offered to hard clients (or when she asks for it).
         // Story 069: toes only take short nails.
-        lengths: nailArt.request.service === 'pedicure' ? PEDICURE_LENGTHS : NAIL_LENGTHS.filter((l) => l !== 'xlong' || portraits.client.difficulty === 'hard' || nailArt.request.lengths?.includes('xlong')),
+        lengths: request.service === 'pedicure' ? PEDICURE_LENGTHS : NAIL_LENGTHS.filter((l) => l !== 'xlong' || portraits.client.difficulty === 'hard' || request.lengths?.includes('xlong')),
         topBand: () => serviceTop.offsetHeight + 6,
         maiSide: () => (mai ? ((mai.element.dataset.side as 'left' | 'right' | undefined) ?? 'right') : null),
         onChange: (design) => {
-          nailArt.onNote(nailsNote(design, null, nailArt.request.service));
+          art.onNote(nailsNote(design, null, request.service));
           checkFixes(design);
         },
         onDone: (design, result) => {
           // Story 058: a fix at checkout is judged by the fix itself (thanks or her open line), not the set again.
-          // Story 065: with her picture the match matters more.
-          if (!checkoutFixing) appointment.adjustMood(Math.round(result.moodDelta * (nailArt.reference ? REFERENCE_CONFIG.moodScale : 1)));
-          nailArt.onNote(nailsNote(design, result, nailArt.request.service));
-          nailArt.onDone(design, result);
-          lastMatch = result.score;
+          // Story 065: with her picture the match matters more. Story 069b: each half of a combo counts a share.
+          if (!checkoutFixing) appointment.adjustMood(Math.round(result.moodDelta * (art.reference ? REFERENCE_CONFIG.moodScale : 1) * (isCombo ? COMBO_CONFIG.moodShare : 1)));
+          art.onNote(nailsNote(design, result, request.service));
+          // Story 069b: the hands of a combo are done: the feet come next (no checkout yet).
+          if (feetNext && !checkoutFixing && !station?.canRedo) {
+            handsScore = result.score;
+            art.onHandsDone?.(design, result);
+            toFeet(art, feetNext);
+            return;
+          }
+          art.onDone(design, result);
+          lastMatch = handsScore === null ? result.score : comboScore(handsScore, result.score);
           // Story 035: Done ends the service (or, in a redo scenario, the client asks for her redo first).
           afterDone();
         },
-      })
-    : null;
+      });
+  let station: NailStation | null = nailArt ? makeStation(nailArt, nailArt.request) : null;
+  /** Story 069b: the hands are done: her line, then the foot comes up (a new station) with the soak and scrub first. */
+  function toFeet(art: NonNullable<typeof nailArt>, feet: NailRequest): void {
+    feetNext = null;
+    appointment.clientSays(COMBO_CONFIG.feetLine);
+    window.setTimeout(() => {
+      const old = station;
+      if (!old || ending) return;
+      const next = makeStation(art, feet);
+      old.touch.before(next.touch);
+      old.toolbar.before(next.toolbar);
+      old.destroy();
+      station = next;
+      new ResizeObserver(liftMai).observe(next.toolbar);
+      drawOrder(feet);
+      root.dataset.stage = 'feet';
+      setStationOpen(true);
+      startPrep();
+    }, COMBO_CONFIG.switchMs);
+  }
   const stationToggle = el('button', 'station-toggle hidden', t('station.toggle'));
   stationToggle.type = 'button';
   stationToggle.setAttribute('aria-label', t('station.toggleLabel'));
@@ -357,7 +399,7 @@ export function createChatPanel(
     zone.setCompactClient(next);
     stationToggle.setAttribute('aria-pressed', String(next));
     requestAnimationFrame(() => {
-      station.relayout();
+      station?.relayout();
       liftMai();
     });
   }
@@ -381,7 +423,7 @@ export function createChatPanel(
         prep = null;
         root.classList.remove('prepping');
         if (moodDelta !== 0) appointment.adjustMood(moodDelta);
-        requestAnimationFrame(() => station.relayout());
+        requestAnimationFrame(() => station?.relayout());
       },
     });
     zone.element.append(prep.element);
@@ -390,7 +432,7 @@ export function createChatPanel(
   if (station) {
     zone.element.append(station.touch);
     mood.insertBefore(stationToggle, mood.querySelector('.speaker-button'));
-    new ResizeObserver(() => station.relayout()).observe(zone.element);
+    new ResizeObserver(() => station?.relayout()).observe(zone.element);
     new ResizeObserver(liftMai).observe(station.toolbar);
   }
 
@@ -479,20 +521,23 @@ export function createChatPanel(
   };
   dismiss.addEventListener('click', markRead);
   const order = el('p', 'service-order');
-  if (nailArt) {
+  /** Her order on the card (story 069b: redrawn for the feet of a combo). */
+  function drawOrder(r: NailRequest): void {
     const lang = getLanguage();
-    const r = nailArt.request;
     const colours = r.colors.map((id) => NAIL_ART_CONFIG.palette.find((c) => c.id === id)?.name[lang] ?? id).join(' / ');
     const shapes = r.shapes.map((shape) => t(`station.shape.${shape}`)).join(' / ');
     // Story 051: her length goes with the shape on the order.
     const lengthWords = r.lengths?.length ? ` · ${r.lengths.map((l) => t(`station.length.${l}`)).join(' / ')}` : '';
     const extras = [r.gradient === 'yes' ? '🌈' : '', r.gems !== 'none' ? `💎 ${t(`service.order.${r.gems}`)}` : '', r.stickers !== 'none' ? `⭐ ${t(`service.order.${r.stickers}`)}` : ''].filter(Boolean);
-    // Story 069: a big-toe accent says where the art goes.
-    if (r.accent === 'bigToe' && extras.some((x) => x.startsWith('💎') || x.startsWith('⭐'))) extras.push(t('service.order.bigToe'));
+    // Story 069: a big-toe accent says where the art goes (069b review: on its own line, so it is never cut at 320 px).
+    const accent = r.accent === 'bigToe' && extras.some((x) => x.startsWith('💎') || x.startsWith('⭐')) ? `\n👣 ${t('service.order.bigToe')}` : '';
+    // Story 069b: the feet of a combo say so.
+    const feet = isCombo && r.service === 'pedicure' ? `🦶 ${t('service.order.feet')} · ` : '';
     // Colours on the first line, shape and extras on the second (never cut; a tap shows it all if it is longer).
-    order.textContent = `🎨 ${colours}\n${[`${shapes}${lengthWords}`, ...extras].join(" · ")}`;
+    order.textContent = `${feet}🎨 ${colours}\n${[`${shapes}${lengthWords}`, ...extras].join(" · ")}${accent}`;
     order.setAttribute('aria-label', `${t('service.order.label')}: ${order.textContent}`);
   }
+  if (nailArt) drawOrder(nailArt.request);
   // Her bubble grows to fit the whole sentence (this is an English-practice game) and the order is never cut: the block
   // is measured, and the hand is laid out below it.
   serviceTop.append(talk, order);
@@ -501,7 +546,7 @@ export function createChatPanel(
     zone.element.append(serviceTop, nudge, doneBanner);
     new ResizeObserver(() => {
       root.style.setProperty('--service-top', `${serviceTop.offsetHeight + 6}px`);
-      station.relayout();
+      station?.relayout();
     }).observe(serviceTop);
   }
   let serviceMode = false;
@@ -777,7 +822,7 @@ export function createChatPanel(
         window.clearTimeout(ignoreTimer);
         if (stationOpen && !ending) setStationOpen(false);
       }
-      requestAnimationFrame(() => station.relayout());
+      requestAnimationFrame(() => station?.relayout());
     }
     watchCheckout(snapshot);
     trackLines(snapshot);

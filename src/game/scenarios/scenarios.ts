@@ -69,6 +69,7 @@ export function parseScenario(raw: unknown, file: string, clientIds: readonly st
       ...(n.hands !== undefined ? { hands: n.hands === 1 || n.hands === 2 ? n.hands : fail('"nailRequest.hands" must be 1 or 2') } : {}),
       ...(n.service !== undefined ? { service: n.service === 'manicure' || n.service === 'pedicure' ? n.service : fail('"nailRequest.service" must be manicure or pedicure') } : {}),
       ...(n.accent !== undefined ? { accent: n.accent === 'bigToe' ? ('bigToe' as const) : fail('"nailRequest.accent" must be bigToe') } : {}),
+      ...(n.combo !== undefined ? { combo: typeof n.combo === 'boolean' ? n.combo : fail('"nailRequest.combo" must be true or false') } : {}),
     };
   }
   return {

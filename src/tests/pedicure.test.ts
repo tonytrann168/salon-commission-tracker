@@ -3,7 +3,10 @@ import { NAIL_ART_CONFIG, PEDICURE_LENGTHS, PEDICURE_SHAPES, decorate, emptyDesi
 import type { NailDesign, NailRequest } from '../game/nail-art/design';
 import { describeRequest, matchDesign } from '../game/nail-art/match';
 import { referenceTarget } from '../game/reference';
-import { MENU_CONFIG, comboSaving } from '../game/menu';
+import { MENU_CONFIG, comboSaving, orderFor } from '../game/menu';
+import { COMBO_CONFIG, comboScore, comboStages, parseComboConfig } from '../game/combo';
+import comboJson from '../game/config/combo.json';
+import { getScenario } from '../game/scenarios';
 import nailArtJson from '../game/config/nail-art.json';
 
 /** Story 069 (owner playtest 5): a real foot, toe rules, big-toe accent, combos on the menu. */
@@ -61,5 +64,30 @@ describe('combos', () => {
         expect(saving / (saving + item.price)).toBeLessThanOrEqual(0.25);
       }
     }
+  });
+});
+
+describe('the combo visit (story 069b)', () => {
+  const combo: NailRequest = { shapes: ['almond', 'round'], lengths: ['medium'], colors: ['coral'], gems: 'few', stickers: 'none', gradient: 'no', combo: true };
+  it('is the hands (as asked), then both feet (short, square or round, no art by default)', () => {
+    const stages = comboStages(combo)!;
+    expect(stages.hands).toMatchObject({ service: 'manicure', shapes: ['almond', 'round'], lengths: ['medium'], gems: 'few' });
+    expect(stages.hands.combo).toBeUndefined();
+    expect(stages.feet).toMatchObject({ service: 'pedicure', hands: 2, shapes: ['round'], lengths: ['short'], colors: ['coral'], gems: 'none' });
+    expect(comboStages({ ...combo, combo: false })).toBeNull();
+    expect(comboScore(80, 91)).toBe(86);
+  });
+  it('rings up ONE combo line (gel combo when her usual is gel), never two services', () => {
+    const items = MENU_CONFIG.presets.mid;
+    const lines = orderFor(combo, items, 'lily');
+    expect(lines.filter((l) => l.item.tag.startsWith('combo'))).toHaveLength(1);
+    expect(lines.some((l) => ['manicure', 'gel', 'spa', 'pedicure', 'spaPedicure'].includes(l.item.tag))).toBe(false);
+  });
+  it('reads combo.json and refuses bad values', () => {
+    expect(parseComboConfig(comboJson)).toEqual(COMBO_CONFIG);
+    expect(() => parseComboConfig({ ...comboJson, moodShare: 0 })).toThrow('combo.json');
+  });
+  it('the combo-day scenario is a combo', () => {
+    expect(getScenario('combo-day')?.nailRequest?.combo).toBe(true);
   });
 });

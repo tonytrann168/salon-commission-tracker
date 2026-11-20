@@ -11,6 +11,7 @@ import { companionSpeech } from './game/companion-voice';
 import { ACCOUNT_EVENT, createHomeStatus } from './game/ui/home-status';
 import { createMenuSetupScreen } from './game/ui/menu-setup';
 import { MENU_CONFIG, menuItems, orderFor } from './game/menu';
+import { comboScore, comboStages } from './game/combo';
 import type { Container, Rectangle } from 'pixi.js';
 import { GALLERY_CONFIG, addToGallery } from './game/gallery';
 import type { FixOutcome } from './game/fix-requests';
@@ -581,7 +582,10 @@ async function boot(): Promise<void> {
     // Story 065 (hard clients): she may bring a picture: her request narrows to it, drawn by the nail renderer.
     // Story 069: a pedicure request is kept to what toes take (short; square or round); pictures work for feet too.
     const nailRequest = client.nailRequest ? pedicureRequest(client.nailRequest) : undefined;
-    const picture = nailRequest && bringsPicture(client.difficulty, `${client.id}:${loadSave().appointments}`) ? referenceTarget(nailRequest) : null;
+    // Story 069b: a combo is the hands, then the feet, then one checkout (no picture for a combo).
+    const combo = nailRequest ? comboStages(nailRequest) : null;
+    let handsDone: { description: string; score: number } | null = null;
+    const picture = nailRequest && !combo && bringsPicture(client.difficulty, `${client.id}:${loadSave().appointments}`) ? referenceTarget(nailRequest) : null;
     turnFlags.picture = picture !== null;
     const referencePhoto = picture ? stage.designPhoto(picture.design, picture.request, GALLERY_CONFIG.width, GALLERY_CONFIG.quality) : null;
     const panel = stage.createChatPanel(host, appointment, {
@@ -604,7 +608,15 @@ async function boot(): Promise<void> {
       ...(client.nailRequest
         ? {
             nailArt: {
-              request: picture?.request ?? nailRequest ?? client.nailRequest,
+              request: combo?.hands ?? picture?.request ?? nailRequest ?? client.nailRequest,
+              ...(combo
+                ? {
+                    feet: combo.feet,
+                    onHandsDone: (design: NailDesign, result: MatchResult) => {
+                      handsDone = { description: describeDesign(design, undefined, 'manicure'), score: result.score };
+                    },
+                  }
+                : {}),
               ...(referencePhoto ? { reference: referencePhoto } : {}),
               // Story 028: seasonal polishes and stickers only while their season runs.
               palette: seasonPalette(stationPalette(NAIL_ART_CONFIG.palette, loadSave()), activeSeason(localDay(), seasonOverride())),
@@ -621,7 +633,10 @@ async function boot(): Promise<void> {
                 nails.note = note;
               },
               onDone: (design: NailDesign, result: MatchResult) => {
-                nails.finished = { description: describeDesign(design, undefined, client.nailRequest?.service), match: result.score };
+                const feet = combo ? describeDesign(design, undefined, 'pedicure') : null;
+                nails.finished = handsDone && feet
+                  ? { description: `hands: ${handsDone.description}; feet: ${feet}`, match: comboScore(handsDone.score, result.score) }
+                  : { description: describeDesign(design, undefined, client.nailRequest?.service), match: result.score };
                 // 066: next to her picture, your work is drawn the same way (same renderer, pose, crop and size).
                 if (picture) nails.workForPicture = stage.designPhoto(design, picture.request, GALLERY_CONFIG.width, GALLERY_CONFIG.quality, picture.design);
               },

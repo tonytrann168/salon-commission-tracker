@@ -822,5 +822,8 @@
   "menu.short.comboGel": "Combo gel + chân spa",
   "menu.comboSaving": "Rẻ hơn ${dollars} so với làm riêng",
   "service.order.bigToe": "chỉ ngón cái",
-  "mai.answerTitle": "Trả lời câu khách hỏi:"
+  "mai.answerTitle": "Trả lời câu khách hỏi:",
+  "service.order.feet": "Giờ tới chân",
+  "mai.useLine": "Dùng câu này: {line}",
+  "mai.useLineHint": "Bấm vào một câu để đưa vào ô trả lời."
 }

@@ -1,0 +1,41 @@
+{
+  "id": "combo-day",
+  "name": {
+    "en": "Mani + pedi",
+    "vi": "Combo tay + chân"
+  },
+  "tag": {
+    "en": "💅🦶 Combo: hands and feet, one visit",
+    "vi": "💅🦶 Combo: tay và chân trong một lần"
+  },
+  "difficulty": "medium",
+  "eligible": {
+    "difficulties": [
+      "medium"
+    ],
+    "excludeClients": [
+      "jake",
+      "marcus"
+    ]
+  },
+  "occasion": "You came for a mani + pedi combo: your hands first, then your feet, and one bill at the combo price.",
+  "constraints": "You want the combo from the menu (hands and feet in one visit) because it costs a little less than the two separately. The same colour on hands and toes. You may ask how much you save with the combo. You are happy when the stylist tells you what comes next (hands first, then the foot soak).",
+  "openingLine": "Hi! Can I get the mani-pedi combo today? Same colour on my hands and toes, please.",
+  "nailRequest": {
+    "lengths": [
+      "short"
+    ],
+    "shapes": [
+      "round",
+      "square"
+    ],
+    "colors": [
+      "coral",
+      "hot-pink"
+    ],
+    "gradient": "no",
+    "gems": "none",
+    "stickers": "none",
+    "combo": true
+  }
+}

@@ -99,6 +99,48 @@ for (const lang of LANGS) {
       await page.locator('.station-step[data-step=length]').click();
       await expect(page.locator('.station-length')).toHaveCount(1);
       await expect(page.locator('.service-order')).toContainText(lang === 'vi' ? 'chỉ ngón cái' : 'big toes only');
+      // 069a review: at 320 px the whole order shows (never cut).
+      await page.setViewportSize({ width: 320, height: 568 });
+      await page.waitForTimeout(300);
+      expect(await page.locator('.service-order').evaluate((node) => node.scrollHeight <= node.clientHeight + 1 && node.scrollWidth <= node.clientWidth + 1)).toBe(true);
+    });
+
+    test('a combo (story 069b): hands, then the feet with soak and scrub, then ONE checkout at the combo price', async ({ page }) => {
+      test.setTimeout(90_000);
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('grace', 'combo-day') } });
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('Of course! Hands first, then a foot soak.');
+      await page.locator('.chat-form button[type=submit]').click();
+      // The hands: no soak yet; the hand shapes (more than the two toe shapes).
+      await expect(page.locator('.station-tools')).toBeVisible();
+      await expect(page.locator('.pedi-prep')).toHaveCount(0);
+      await page.locator('.station-step[data-step=shape]').click();
+      expect(await page.locator('.station-shape').count()).toBeGreaterThan(2);
+      // Done on the hands: no checkout; she asks for her feet; the foot comes up with the soak and scrub first.
+      await page.locator('.station-done').click();
+      await expect(page.locator('.chat-panel')).toHaveAttribute('data-stage', 'feet', { timeout: 6_000 });
+      await expect(page.locator('.pedi-prep')).toBeVisible();
+      await expect(page.locator('.chat-panel')).toHaveClass(/service-mode/);
+      await page.locator('.pedi-start').click();
+      await expect(page.locator('.pedi-prep[data-step=scrubbing]')).toBeVisible({ timeout: 10_000 });
+      while (await page.locator('.pedi-scrub').count()) await page.locator('.pedi-scrub').click();
+      await expect(page.locator('.pedi-prep')).toHaveCount(0, { timeout: 6_000 });
+      await expect(page.locator('.service-order')).toContainText(lang === 'vi' ? 'Giờ tới chân' : 'Now the feet');
+      await page.locator('.station-step[data-step=shape]').click();
+      await expect(page.locator('.station-shape')).toHaveCount(2);
+      // Done on the feet: checkout (one, for the whole visit); the bill is the combo line only.
+      await page.locator('.station-done').click();
+      await page.waitForSelector('.chat-panel:not(.service-mode) .chat-input', { timeout: 8_000 });
+      await finishAppointment(page, ['Your hands and feet are done. That is sixty dollars.', 'Thank you! See you next time.'], { stopAtTotal: true });
+      const bill = page.locator('.total-step .payment-bill-line:not(.total-menu)');
+      await expect(bill).toHaveCount(1);
+      await expect(bill).toContainText(lang === 'vi' ? 'Combo' : /mani \+ (spa )?pedi/);
+      // The menu price is that one line's price (Grace's usual is gel: the gel combo).
+      const price = (await bill.textContent())!.match(/\$(\d+)/)![1]!;
+      await expect(page.locator('.total-step .total-menu')).toContainText(`$${price}`);
     });
 
     test('buying a polish in the shop puts it in the station', async ({ page }) => {
@@ -860,6 +902,10 @@ for (const lang of LANGS) {
       const top = page.locator('.mai-panel > :nth-child(2)');
       await expect(top).toContainText(lang === 'vi' ? 'Trả lời câu khách hỏi:' : 'Answer her question:');
       await expect(top).toContainText(/\b(short|medium)\b/i);
+      // 068b review: tapping an answer fills the reply box (not sent: the player taps Send).
+      await top.locator('.mai-answer-use').first().click();
+      await expect(page.locator('.chat-input')).toHaveValue('Short, please.');
+      await page.locator('.chat-input').fill('');
       const chip = page.locator('.chat-bubble.player .line-grade.tappable').last();
       await expect(chip).toBeVisible();
       await page.locator('.mai-panel').evaluate((panel) => panel.classList.add('hidden'));

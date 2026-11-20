@@ -822,5 +822,8 @@
   "menu.short.comboGel": "Gel mani + spa pedi",
   "menu.comboSaving": "Save ${dollars} vs separately",
   "service.order.bigToe": "big toes only",
-  "mai.answerTitle": "Answer her question:"
+  "mai.answerTitle": "Answer her question:",
+  "service.order.feet": "Now the feet",
+  "mai.useLine": "Use this line: {line}",
+  "mai.useLineHint": "Tap a line to put it in your reply."
 }

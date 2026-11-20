@@ -13,7 +13,7 @@ const ids = (list: { id: string }[]) => list.map((s) => s.id).sort();
 
 describe('scenario data', () => {
   it('has the scenarios (six from story 019, pedicure day from 024, rainy day and colour redo from 033), each with a tag and an opening line in place', () => {
-    expect(ids(SCENARIOS)).toEqual(['bridal-trial', 'colour-redo', 'elderly-regular', 'gift-card', 'party-tonight', 'pedicure-day', 'rainy-day', 'returning-client', 'walk-in-rush']);
+    expect(ids(SCENARIOS)).toEqual(['bridal-trial', 'colour-redo', 'combo-day', 'elderly-regular', 'gift-card', 'party-tonight', 'pedicure-day', 'rainy-day', 'returning-client', 'walk-in-rush']);
     for (const s of SCENARIOS) {
       expect(s.tag.en.length, s.id).toBeGreaterThan(5);
       expect(s.tag.vi.length, s.id).toBeGreaterThan(5);

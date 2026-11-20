@@ -44,6 +44,8 @@ export interface MaiBubbleOptions {
   onTipSeen: (tip: Tip) => void;
   /** Story 043: read a line aloud in her voice (only when the setting is on). */
   speak?: (text: string, lang: 'en' | 'vi') => void;
+  /** 068b review: a tapped answer line goes into the reply box (the player still taps Send or says it). */
+  useLine?: (text: string) => void;
 }
 
 export interface MaiBubble {
@@ -106,18 +108,27 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
     const list = el('ul', 'mai-answer-lines');
     for (const line of answer.lines) {
       const item = el('li', 'mai-answer-line');
+      const use = el('button', 'mai-answer-use');
+      use.type = 'button';
       const en = el('strong', '', line.en);
       en.lang = 'en';
-      item.append(en);
+      use.append(en);
       if (options.language === 'vi') {
         const vi = el('small', 'mai-answer-vi', line.vi);
         vi.lang = 'vi';
-        item.append(vi);
+        use.append(vi);
       }
+      use.setAttribute('aria-label', t('mai.useLine', { line: line.en }));
+      use.addEventListener('click', () => {
+        options.useLine?.(line.en);
+        setOpen(false);
+      });
+      item.append(use);
       list.append(item);
     }
-    card.append(asked, list);
+    card.append(asked, list, el('p', 'bestie-label mai-answer-hint', t('mai.useLineHint')));
     return card;
+
   };
 
   const hintBox = el('div', 'mai-hint');
