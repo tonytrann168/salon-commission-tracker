@@ -74,9 +74,10 @@ function fakeAudio() {
   const node = () => ({ connect(next: unknown) { return next; } });
   const created = { oscillators: 0, contexts: 0 };
   const state = { value: 'suspended' as AudioContextState };
+  let last: AudioContext | null = null;
   const makeContext = () => {
     created.contexts++;
-    return {
+    last = {
       get state() { return state.value; },
       currentTime: 0,
       sampleRate: 8000,
@@ -90,6 +91,7 @@ function fakeAudio() {
       createBuffer: (_c: number, length: number) => ({ getChannelData: () => new Float32Array(length) }),
       createBufferSource: () => ({ ...node(), buffer: null, start() {}, stop() {} }),
     } as unknown as AudioContext;
+    return last;
   };
   const listeners = new Map<string, Set<(event: Event) => void>>();
   let hidden = false;
@@ -103,7 +105,7 @@ function fakeAudio() {
     isHidden: () => hidden,
   };
   const fire = (type: string, detail?: unknown) => [...(listeners.get(type) ?? [])].forEach((listener) => listener({ detail } as unknown as Event));
-  return { host, created, state, fire, intervals, listeners, setHidden: (value: boolean) => { hidden = value; } };
+  return { host, created, state, fire, intervals, listeners, context: () => last, setHidden: (value: boolean) => { hidden = value; } };
 }
 
 describe('audio engine', () => {
@@ -119,7 +121,8 @@ describe('audio engine', () => {
     expect(audio.state.value).toBe('running');
     audio.intervals[0]?.();
     expect(audio.created.oscillators).toBeGreaterThan(0);
-    expect(audio.listeners.get('pointerdown')?.size).toBe(0);
+    // Story 068: one tap listener stays, to resume the music if iOS stops it later.
+    expect(audio.listeners.get('pointerdown')?.size).toBe(1);
   });
 
   it('plays an effect for a sound event, one tone per note', async () => {
@@ -145,6 +148,35 @@ describe('audio engine', () => {
     audio.fire('visibilitychange');
     await Promise.resolve();
     expect(audio.state.value).toBe('running');
+  });
+
+  it('story 068: a later tap brings the music back when iOS interrupts or suspends it (a call, another app, a spoken line)', async () => {
+    const audio = fakeAudio();
+    createAudioEngine(audio.host);
+    audio.fire('pointerdown');
+    await Promise.resolve();
+    expect(audio.state.value).toBe('running');
+    audio.state.value = 'interrupted' as AudioContextState;
+    audio.fire('pointerdown');
+    await Promise.resolve();
+    expect(audio.state.value).toBe('running');
+    audio.state.value = 'suspended';
+    audio.fire('pageshow');
+    await Promise.resolve();
+    expect(audio.state.value).toBe('running');
+  });
+
+  it('story 068: a duck that is never released (a spoken line whose end never came) lifts by itself', async () => {
+    const audio = fakeAudio();
+    const engine = createAudioEngine(audio.host);
+    audio.fire('pointerdown');
+    await Promise.resolve();
+    engine.duck(true);
+    expect(engine.ducked).toBe(true);
+    const ctx = audio.context();
+    (ctx as unknown as { currentTime: number }).currentTime = AUDIO_CONFIG.duck.maxSeconds + 1;
+    audio.intervals[0]?.();
+    expect(engine.ducked).toBe(false);
   });
 
   it('never breaks the game when Web Audio is missing', () => {

@@ -53,6 +53,8 @@ export interface MaiBubble {
   queueTip: (tip: Tip) => boolean;
   /** Hint and Help me say it only while the player can type. */
   setEnabled: (enabled: boolean) => void;
+  /** Story 068: the player seems stuck: open with her waiting tip (a ready line), or ask for a hint. */
+  helpNow: () => void;
   /** Story 057b: a face for a moment (cheering for a perfect line, sad when a client walks out), then back. */
   react: (expression: MascotExpression, ms: number) => void;
   destroy: () => void;
@@ -275,6 +277,11 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
         }
       }
       return true;
+    },
+    helpNow() {
+      const hadTips = queue.unseen > 0;
+      if (!open) setOpen(true);
+      if (!hadTips) askHint();
     },
     react(next, ms) {
       window.clearTimeout(reactTimer);

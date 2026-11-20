@@ -9,7 +9,13 @@ const TIMEOUT_MS = 30_000;
 /** `getNails` (story 005): a one-line description of the nails for the client, or undefined before the service. */
 /** `scenario` (story 019): the situation and, for a returning client, the visit facts. */
 /** `menu` (story 044): the salon menu and her order numbers, so she orders by number. */
-export function createFetchTransport(getLevel: () => EnglishLevel, getNails: () => string | undefined = () => undefined, clientId?: string, scenario?: { scenarioId: string; visits?: { visits: number; lastStars: number; lastDay: string } }, menu?: { items: MenuItem[]; order: number[] }): TakeTurn {
+/** `flags` (story 068): read each turn: she brought a picture; the player is stuck (asked once, then cleared). */
+export function createFetchTransport(getLevel: () => EnglishLevel, getNails: () => string | undefined = () => undefined, clientId?: string, scenario?: { scenarioId: string; visits?: { visits: number; lastStars: number; lastDay: string } }, menu?: { items: MenuItem[]; order: number[] }, flags?: { picture: boolean; pickNext: boolean }): TakeTurn {
+  const takeStuck = (): boolean => {
+    const stuck = flags?.pickNext ?? false;
+    if (flags) flags.pickNext = false;
+    return stuck;
+  };
   return async (transcript, phase, mood) => {
     let response: Response;
     let body: unknown;
@@ -17,7 +23,7 @@ export function createFetchTransport(getLevel: () => EnglishLevel, getNails: () 
       response = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ transcript, phase, mood, level: getLevel(), ...(getNails() ? { nails: getNails() } : {}), ...(clientId ? { clientId } : {}), ...(scenario ?? {}), ...(menu ? { menu } : {}) }),
+        body: JSON.stringify({ transcript, phase, mood, level: getLevel(), ...(getNails() ? { nails: getNails() } : {}), ...(clientId ? { clientId } : {}), ...(scenario ?? {}), ...(menu ? { menu } : {}), ...(flags?.picture ? { picture: true } : {}), ...(takeStuck() ? { stuck: true } : {}) }),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       body = await response.json();

@@ -1,3 +1,4 @@
+import { afterLeaving } from './game/pause';
 import { bringsPicture, referenceTarget } from './game/reference';
 import { planHangnail } from './game/hangnail';
 import { DAILY_CONFIG, NEW_PLAY, liveStreak as playStreak, welcomeCoins } from './game/daily';
@@ -82,6 +83,9 @@ import { CORNER_SEEN_KEY, shouldCue } from './game/corner';
 import { SEASON_KEY, activeSeason, giftDue, openGift, parseSeasonState, seasonOverride, seasonPalette, seasonStickers } from './game/seasons';
 import type { Season } from './game/seasons';
 
+
+/** Story 068: the iPhone silent-switch hint was shown once. */
+const SILENT_HINT_KEY = 'salon.silentHint';
 
 /** 057a part 2: the welcome front page was answered on this phone (an account, or play without one). */
 const WELCOME_KEY = 'salon.welcomeDone';
@@ -349,6 +353,16 @@ async function boot(): Promise<void> {
     removeEventListener: (type, listener, options) => window.removeEventListener(type, listener, options),
     isHidden: () => document.visibilityState === 'hidden',
   });
+  // Story 068: on an iPhone the ring/silent switch mutes web audio: a gentle hint, once, at the first tap.
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS && readStored(SILENT_HINT_KEY) !== '1') {
+    const hint = (): void => {
+      window.removeEventListener('pointerdown', hint, true);
+      writeStored(SILENT_HINT_KEY, '1');
+      window.setTimeout(() => showNote(t('audio.silentHint')), 800);
+    };
+    window.addEventListener('pointerdown', hint, true);
+  }
   // Story 037: natural voices from the server when it has them; the browser's voice otherwise.
   const voice = withSpeakingSignal(
     withNaturalVoice(createBrowserVoice(window as unknown as SpeechHost), { fetch: (input, init) => fetch(input, init), createAudio: () => new Audio() as unknown as AudioLike }),
@@ -551,18 +565,21 @@ async function boot(): Promise<void> {
     // Story 005: what the client hears about her nails, and the finished result for the review and the stars.
     const nails: { note: string | undefined; finished: { description: string; match: number; fixes?: FixOutcome[] } | undefined; photo?: Promise<string | null>; workForPicture?: Promise<string | null> } = { note: undefined, finished: undefined };
     // Story 044: the salon menu and her order on it (she orders by number; checkout rings it up).
+    // Story 068: facts the client turn reads each time: she brought a picture; the player is stuck on her question.
+    const turnFlags = { picture: false, pickNext: false };
     const menuList = menuItems(loadSave().menu ?? { preset: MENU_CONFIG.default });
     // Story 063: her usual follows who she is (the same order the path's appointments card shows).
     const order = orderFor(client.nailRequest, menuList, client.id);
     const appointment = createAppointment({
       client,
-      takeTurn: createFetchTransport(() => level, () => nails.note, client.id, scenarioFields, { items: menuList, order: order.map((line) => line.number) }),
+      takeTurn: createFetchTransport(() => level, () => nails.note, client.id, scenarioFields, { items: menuList, order: order.map((line) => line.number) }, turnFlags),
       level,
       // Grading starts from the chat panel's onEnded, once the final line has finished revealing (story 002).
       onFinished: () => undefined,
     });
     // Story 065 (hard clients): she may bring a picture: her request narrows to it, drawn by the nail renderer.
     const picture = client.nailRequest && client.nailRequest.service !== 'pedicure' && bringsPicture(client.difficulty, `${client.id}:${loadSave().appointments}`) ? referenceTarget(client.nailRequest) : null;
+    turnFlags.picture = picture !== null;
     const referencePhoto = picture ? stage.designPhoto(picture.design, picture.request, GALLERY_CONFIG.width, GALLERY_CONFIG.quality) : null;
     const panel = stage.createChatPanel(host, appointment, {
       client,
@@ -572,6 +589,15 @@ async function boot(): Promise<void> {
       translations,
       translate: translateTransport,
       menu: { items: menuList, order },
+      // Story 068: Leave visit (from the pause): nothing is counted; back to the path (any penalty is in config).
+      onLeave: () => {
+        writeSave(afterLeaving(loadSave()));
+        showPath();
+      },
+      // Story 068: two misses on her question: the next turn asks her to pick a sensible answer and move on.
+      onStuck: () => {
+        turnFlags.pickNext = true;
+      },
       ...(client.nailRequest
         ? {
             nailArt: {

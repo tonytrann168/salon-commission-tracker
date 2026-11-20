@@ -123,6 +123,24 @@ checks.push(['client-turn: she accepts $35 instead of $40 → agreedTotal 35', (
   (b) => typeof b.reply === 'string' && b.agreedTotal === 35,
   (b) => `"${b.reply}" agreedTotal ${JSON.stringify(b.agreedTotal)}`]);
 
+// Story 068: never claim a picture she doesn't have (no reference visit).
+checks.push(['client-turn: asked for a picture, a non-reference client has none', () => handleClientTurn({
+    transcript: [{ role: 'client', content: 'Hi! A gel manicure, please.' }, { role: 'player', content: 'Sure! Do you have a picture? Can I see a picture?' }],
+    phase: 'consultation', mood: 60, level: 'some', clientId: 'grace' }, env, fetch),
+  (b) => typeof b.reply === 'string' && !/\b(here('s| is)|i have|i've got|let me show you)\b[^.?!]{0,30}\b(picture|photo|pic)\b/i.test(b.reply),
+  (b) => `"${b.reply}"`]);
+// Story 068: stuck on her question twice: she picks a sensible answer and moves on (no question again).
+checks.push(['client-turn: stuck on "short or medium?" → she picks and moves on', () => handleClientTurn({
+    transcript: [
+      { role: 'client', content: 'Hi! Gel today. Short or medium nails, please?' },
+      { role: 'player', content: 'Got it.' },
+      { role: 'client', content: 'Sorry, dear, can you say that again? Slowly, please.' },
+      { role: 'player', content: 'I got you.' },
+    ],
+    phase: 'consultation', mood: 55, level: 'beginner', clientId: 'grace', stuck: true }, env, fetch),
+  (b) => typeof b.reply === 'string' && /\b(short|medium)\b/i.test(b.reply) && !/say (that|it) again|short or medium/i.test(b.reply),
+  (b) => `"${b.reply}"`]);
+
 // Story 037: natural voices, only when the Azure Speech env vars are set locally (skipped otherwise).
 if (azureConfigured(env)) {
   checks.push(['tts (Tom, annoyed): Azure returns audio', () => handleTts({ text: 'How much longer is this going to take?', clientId: 'tom', emotion: 'annoyed', level: 'some' }, env, fetch),

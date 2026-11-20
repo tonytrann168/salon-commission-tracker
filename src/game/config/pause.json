@@ -1,0 +1,7 @@
+{
+  "_note": "Story 068 (owner playtest 5): ⏸ pauses a visit out of world (no client line, her timers and mood wait). 'Leave visit' ends it without counting it: no stars, XP, tips or coins, the streak is untouched and today's client stays available. Owner default (to confirm): no penalty. xpPenalty / coinsPenalty: taken when leaving (0 = none).",
+  "leave": {
+    "xpPenalty": 0,
+    "coinsPenalty": 0
+  }
+}

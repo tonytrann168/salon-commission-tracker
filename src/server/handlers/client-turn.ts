@@ -43,6 +43,10 @@ export interface ClientTurnRequest {
   visits?: ClientVisits;
   /** Story 044: the salon's menu and her order on it (checked again here: plain names, prices in range, known numbers). */
   menu?: { items: MenuItem[]; order: OrderLine[] };
+  /** Story 068: she brought a reference picture this visit (otherwise she never claims one). */
+  picture?: boolean;
+  /** Story 068: the stylist is stuck on her question: she picks a sensible answer herself and moves on. */
+  stuck?: boolean;
 }
 
 export interface HandlerResponse {
@@ -93,7 +97,7 @@ export function parseClientTurnRequest(body: unknown): ParseResult<ClientTurnReq
   const scenario = parseScenarioFields(body);
   if (!scenario.ok) return scenario;
   const menu = parseMenuField(body.menu);
-  return { ok: true, value: { transcript: messages, phase, mood, level, ...(nails ? { nails } : {}), ...(menu ? { menu } : {}), ...(typeof body.clientId === 'string' ? { clientId: body.clientId } : {}), ...scenario.value } };
+  return { ok: true, value: { transcript: messages, phase, mood, level, ...(nails ? { nails } : {}), ...(menu ? { menu } : {}), ...(typeof body.clientId === 'string' ? { clientId: body.clientId } : {}), ...(body.picture === true ? { picture: true } : {}), ...(body.stuck === true ? { stuck: true } : {}), ...scenario.value } };
 }
 
 /** Strictly validate the model's response and extract the structured turn from the forced tool call. */
@@ -175,6 +179,12 @@ ${moodRules}
 - Set unclearEnglish to true only when her last line was hard to understand or ungrammatical. Set rude to true only when she was rude or disrespectful (broken English alone is never rude).
 - Your reply tone must match your mood: lower mood sounds colder and shorter. At very low mood you may say you are leaving.
 
+PICTURES
+- You only have a picture or photo of nails if the game note says picture=yes (then you have already shown it to the stylist). When it says picture=no, never say you have a picture, never say "here" as if showing one, and never describe a photo. If the stylist asks to see a picture, say kindly that you don't have one and describe what you want in words (shape, length, colour, art).
+
+WHEN THE STYLIST IS STUCK
+- If the game note says stylist_is_stuck=yes, do not ask your question again. Choose a sensible answer yourself (for example "Let's do short, then."), say it kindly in one short sentence, and move on with the visit. Lower your mood only a little, if at all.
+
 PRICE
 - If you and the stylist agree on a total price for today's visit in the chat (for example she offers $35 instead of $40 and you accept, or you settle on a price), set agreedTotal to that total in dollars, as a number. Keep setting it on later turns while that agreement stands. Leave agreedTotal out when no price has been agreed.
 
@@ -206,12 +216,15 @@ const failure = (status: number, code: TurnErrorCode, message: string): HandlerR
 });
 
 /** Anthropic needs the first message to be from the user; the client's opening line comes first in our transcript. */
-function toApiMessages({ transcript, phase, mood, nails }: ClientTurnRequest): { role: 'user' | 'assistant'; content: string }[] {
+export function toApiMessages({ transcript, phase, mood, nails, picture, stuck }: ClientTurnRequest): { role: 'user' | 'assistant'; content: string }[] {
   const messages = transcript.map((message, index) => {
     const isLast = index === transcript.length - 1;
     const helpNote = message.helped ? ', stylist_used_help_me_say_it=yes' : '';
     const nailNote = nails ? `, nails=${nails}` : '';
-    const note = isLast ? `\n\n[Game note: phase=${phase}, mood=${mood}${helpNote}${nailNote}]` : '';
+    // Story 068: the picture fact rides in the note (the system prompt stays cached), and so does "stuck".
+    const pictureNote = `, picture=${picture ? 'yes' : 'no'}`;
+    const stuckNote = stuck ? ', stylist_is_stuck=yes' : '';
+    const note = isLast ? `\n\n[Game note: phase=${phase}, mood=${mood}${helpNote}${nailNote}${pictureNote}${stuckNote}]` : '';
     return { role: message.role === 'player' ? ('user' as const) : ('assistant' as const), content: message.content + note };
   });
   return messages[0]?.role === 'assistant'

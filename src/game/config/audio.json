@@ -7,7 +7,8 @@
   "masterSfxGain": 0.5,
   "duck": {
     "level": 0.25,
-    "fadeSeconds": 0.25
+    "fadeSeconds": 0.25,
+    "maxSeconds": 20
   },
   "music": {
     "bpm": 78,

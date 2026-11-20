@@ -43,7 +43,8 @@ export interface AudioConfig {
   defaults: { music: number; sfx: number };
   masterMusicGain: number;
   masterSfxGain: number;
-  duck: { level: number; fadeSeconds: number };
+  /** maxSeconds (story 068): a duck lifts by itself after this long (a spoken line whose end never came, on iOS). */
+  duck: { level: number; fadeSeconds: number; maxSeconds: number };
   music: MusicSpec;
   sfx: Record<SoundEvent, SfxSpec>;
 }
@@ -73,7 +74,7 @@ export function parseAudioConfig(raw: unknown): AudioConfig {
     defaults: { music: number(defaults.music, 'defaults.music', 0, 1), sfx: number(defaults.sfx, 'defaults.sfx', 0, 1) },
     masterMusicGain: number(root.masterMusicGain, 'masterMusicGain', 0, 1),
     masterSfxGain: number(root.masterSfxGain, 'masterSfxGain', 0, 1),
-    duck: { level: number(duck.level, 'duck.level', 0, 1), fadeSeconds: number(duck.fadeSeconds, 'duck.fadeSeconds', 0, 3) },
+    duck: { level: number(duck.level, 'duck.level', 0, 1), fadeSeconds: number(duck.fadeSeconds, 'duck.fadeSeconds', 0, 3), maxSeconds: number(duck.maxSeconds, 'duck.maxSeconds', 1, 120) },
     music: {
       bpm: number(music.bpm, 'music.bpm', 40, 200),
       swing: number(music.swing, 'music.swing', 0, 0.5),
@@ -217,6 +218,8 @@ export interface AudioEngine {
   play(event: SoundEvent): void;
   /** True once the first tap has started audio. */
   readonly started: boolean;
+  /** Story 068: the music is lowered for speech right now. */
+  readonly ducked: boolean;
   destroy(): void;
 }
 
@@ -235,6 +238,8 @@ export function createAudioEngine(host: AudioHost, config: AudioConfig = AUDIO_C
   let noise: AudioBuffer | null = null;
   let settings = loadAudioSettings();
   let ducked = false;
+  /** When the current duck began (context seconds), for the failsafe. */
+  let duckedAt = 0;
   let nextStep = 0;
   let nextTime = 0;
   let timer: unknown = null;
@@ -306,6 +311,11 @@ export function createAudioEngine(host: AudioHost, config: AudioConfig = AUDIO_C
 
   const scheduler = (): void => {
     if (!ctx || ctx.state !== 'running') return;
+    // Story 068: never stay ducked for good (a line whose end event never fired would silence the music).
+    if (ducked && ctx.currentTime - duckedAt > config.duck.maxSeconds) {
+      ducked = false;
+      applyGains(config.duck.fadeSeconds);
+    }
     while (nextTime < ctx.currentTime + SCHEDULE_AHEAD_SECONDS) {
       scheduleStep(nextStep, nextTime + swingDelay(config.music, nextStep));
       nextTime += stepSeconds(config.music);
@@ -351,6 +361,13 @@ export function createAudioEngine(host: AudioHost, config: AudioConfig = AUDIO_C
     settings = loadAudioSettings();
     applyGains(0.1);
   };
+  /** Story 068: any later tap (and a page restored from the back-forward cache) resumes a context iOS stopped. */
+  const onGesture = (): void => {
+    if (ctx && ctx.state !== 'running' && ctx.state !== 'closed' && !host.isHidden()) {
+      void ctx.resume().catch(() => undefined);
+      nextTime = Math.max(nextTime, ctx.currentTime + 0.05);
+    }
+  };
   const onVisibility = (): void => {
     if (!ctx) return;
     if (host.isHidden()) void ctx.suspend().catch(() => undefined);
@@ -365,14 +382,20 @@ export function createAudioEngine(host: AudioHost, config: AudioConfig = AUDIO_C
   host.addEventListener(SOUND_EVENT_NAME, onSound);
   host.addEventListener(AUDIO_SETTINGS_EVENT, onSettings);
   host.addEventListener('visibilitychange', onVisibility);
+  host.addEventListener('pointerdown', onGesture, true);
+  host.addEventListener('pageshow', onGesture);
 
   const engine: AudioEngine = {
     get started() {
       return ctx !== null;
     },
+    get ducked() {
+      return ducked;
+    },
     duck(next) {
       if (next === ducked) return;
       ducked = next;
+      if (next && ctx) duckedAt = ctx.currentTime;
       applyGains(config.duck.fadeSeconds);
     },
     play(event) {
@@ -390,6 +413,8 @@ export function createAudioEngine(host: AudioHost, config: AudioConfig = AUDIO_C
       host.removeEventListener(SOUND_EVENT_NAME, onSound);
       host.removeEventListener(AUDIO_SETTINGS_EVENT, onSettings);
       host.removeEventListener('visibilitychange', onVisibility);
+      host.removeEventListener('pointerdown', onGesture, true);
+      host.removeEventListener('pageshow', onGesture);
       void ctx?.close().catch(() => undefined);
     },
   };

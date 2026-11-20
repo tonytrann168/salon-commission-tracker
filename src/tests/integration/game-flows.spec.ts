@@ -831,6 +831,67 @@ for (const lang of LANGS) {
       await expect(page.locator('.chat-results .progress-streak')).toHaveCount(0);
     });
 
+    test('feeling stuck (story 068): her question waits in a line; one miss opens the companion; two and the next turn asks her to pick; the Try this chip shows the better line', async ({ page }) => {
+      test.setTimeout(90_000);
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily') } });
+      // The owner's playtest: a gel client asks; "Got it." (a real fix); "say that again"; then she picks.
+      const seen = await mockApi(page, { correct: true, replies: ['Hi!', 'Short or medium nails, please?', 'Sorry, dear, can you say that again? Slowly, please.', "Okay, let's do short, then.", 'Thanks!'], phases: ['consultation', 'consultation', 'consultation', 'service'] });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.path-screen .picker-daily').click();
+      const send = async (line: string) => {
+        await page.waitForFunction(() => !document.querySelector<HTMLButtonElement>('.chat-form button[type=submit]')?.disabled);
+        await page.locator('.chat-input').fill(line);
+        await page.locator('.chat-form button[type=submit]').click();
+      };
+      await send('Hello! What would you like today?');
+      const waiting = page.locator('.waiting-for');
+      await expect(waiting).toContainText('Short or medium nails, please?');
+      // "Got it." is graded Try this (a miss): the companion opens on her own; the chip shows the better line.
+      await send('Got it.');
+      await expect(page.locator('.mai-panel')).not.toHaveClass(/hidden/);
+      const chip = page.locator('.chat-bubble.player .line-grade.tappable').last();
+      await expect(chip).toBeVisible();
+      await page.locator('.mai-panel').evaluate((panel) => panel.classList.add('hidden'));
+      await chip.click();
+      await expect(page.locator('.better-line .better-en')).not.toBeEmpty();
+      await page.locator('.better-close').click();
+      // Her "say that again" (the second miss): the line says she will choose; the next turn tells the AI to pick.
+      await expect(waiting).toContainText('Short or medium nails, please?');
+      await expect(waiting).toContainText(lang === 'vi' ? 'tự chọn' : 'will choose');
+      await send('I got you.');
+      await expect.poll(() => seen['client-turn']?.length ?? 0).toBe(3);
+      expect((seen['client-turn']![2] as { stuck?: boolean }).stuck).toBe(true);
+      expect((seen['client-turn']![1] as { stuck?: boolean }).stuck).toBeUndefined();
+      expect((seen['client-turn']![0] as { picture?: boolean }).picture).toBeUndefined();
+      // Her choice closes the question.
+      await expect(waiting).toBeHidden();
+    });
+
+    test('pause (story 068): ⏸ stops the visit out of world; Resume returns; Leave visit goes home and counts nothing', async ({ page }) => {
+      test.setTimeout(90_000);
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily') } });
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.path-screen .picker-daily').click();
+      await page.locator('.mood .pause-button').click();
+      await expect(page.locator('.pause-overlay')).toBeVisible();
+      await page.locator('.pause-resume').click();
+      await expect(page.locator('.pause-overlay')).toBeHidden();
+      await expect(page.locator('.chat-input')).toBeVisible();
+      // The mood row still fits 320 px with ⏸.
+      expect(await page.locator('.mood > *').evaluateAll((nodes) => Math.max(...nodes.map((n) => n.getBoundingClientRect().right)))).toBeLessThanOrEqual(320);
+      const before = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}'));
+      await page.locator('.mood .pause-button').click();
+      await page.locator('.pause-leave').click();
+      await expect(page.locator('.path-screen')).toBeVisible();
+      const after = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}'));
+      expect(after).toMatchObject({ xp: before.xp, appointments: before.appointments, wallet: before.wallet });
+      // Today's client is still there.
+      await expect(page.locator('.path-screen .picker-daily')).toBeEnabled();
+    });
+
     test('every line graded (story 061): a line with a real fix is Try this, a short line is Good, a fine long line is Perfect (only Perfect has confetti)', async ({ page }) => {
       test.setTimeout(90_000);
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily') } });

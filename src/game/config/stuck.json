@@ -1,0 +1,16 @@
+{
+  "_note": "Story 068 (owner playtest 5: feeling stuck). When the client asks something, a small 'waiting for' line shows her question (up to questionMaxChars). A miss is her asking to hear it again (sayAgain patterns, case-insensitive) or the player's reply graded 'Try this'. After missesForHelp misses on the same question the companion opens with her tip (or a hint with a ready line). After missesBeforeDefault misses the client picks a sensible answer herself and moves on (the next turn tells the AI so), with a gentle stuckMood dip.",
+  "sayAgain": [
+    "say (that|it) again",
+    "(can|could) you repeat",
+    "\\bpardon\\b",
+    "didn'?t (catch|get|understand) (that|you)",
+    "what do you mean",
+    "come again",
+    "say that more slowly|slowly, please"
+  ],
+  "missesForHelp": 1,
+  "missesBeforeDefault": 2,
+  "stuckMood": -2,
+  "questionMaxChars": 70
+}

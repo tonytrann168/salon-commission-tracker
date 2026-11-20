@@ -136,8 +136,8 @@
   "voice.blocked": "The microphone is blocked. Allow it in your browser settings, or type your reply.",
   "voice.noSpeech": "I didn't hear anything. Tap the mic and try again, or type your reply.",
   "voice.failed": "Voice stopped working. Type your reply instead.",
-  "voice.speakerOnLabel": "Client voice is on. Tap to mute.",
-  "voice.speakerOffLabel": "Client voice is off. Tap to hear the client.",
+  "voice.speakerOnLabel": "Client's voice is on (only her voice; music and sounds are in Settings). Tap to mute her voice.",
+  "voice.speakerOffLabel": "Client's voice is off (only her voice; music and sounds are in Settings). Tap to hear her.",
   "settings.clientVoice": "Client voice",
   "settings.clientVoiceNote": "Clients say their lines out loud (slower at Beginner).",
   "practice.button": "Practise",
@@ -803,5 +803,16 @@
   "picture.yourWork": "Your work",
   "picture.match": "Match {n}%",
   "picture.nudge": "📷 {CShe} brought a picture: tap 📷.",
-  "chat.moodLabel": "Mood {n} of 100"
+  "chat.moodLabel": "Mood {n} of 100",
+  "stuck.waiting": "{CShe}'s waiting for: “{q}”",
+  "stuck.showBetter": "Show the better line",
+  "stuck.betterTitle": "Try this",
+  "audio.silentHint": "🔈 No sound? Check the silent switch on the side of your iPhone.",
+  "pause.button": "Pause the visit",
+  "pause.title": "Paused",
+  "pause.line": "The client waits. Take your time.",
+  "pause.resume": "Resume",
+  "pause.leave": "Leave visit",
+  "pause.leaveNote": "Leaving: this visit is not counted (no stars, XP or tips; your streak is safe, and today's client is still there).",
+  "stuck.pickNext": "No worries: reply anything, and {cShe} will choose for “{q}”."
 }

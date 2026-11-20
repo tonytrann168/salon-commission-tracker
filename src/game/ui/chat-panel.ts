@@ -1,3 +1,5 @@
+import { NOT_STUCK, STUCK_CONFIG, onClientLine, onTryGrade } from '../stuck';
+import type { StuckState, StuckStep } from '../stuck';
 import { moodBand } from '../mood-display';
 import { REFERENCE_CONFIG } from '../reference';
 import { openPictureSheet } from './picture-sheet';
@@ -119,6 +121,10 @@ export function createChatPanel(
       /** Story 065 (hard clients): her picture of the nails she wants (drawn by the nail renderer). */
       reference?: Promise<string | null>;
     };
+    /** Story 068: the player is stuck on her question (two misses): the next client turn picks for them. */
+    onStuck?: () => void;
+    /** Story 068: "Leave visit" on the pause overlay (the visit is not counted). */
+    onLeave?: () => void;
     /** Voice in and out (story 004): the mic button, the client speaking aloud, and practising the last line. */
     voice?: { io: VoiceIO; clientId: string; speakReplies: boolean; onSpeakerChange: (on: boolean) => void };
   },
@@ -158,6 +164,8 @@ export function createChatPanel(
     const showSpeaker = (): void => {
       speaker.textContent = speakerOn ? '🔊' : '🔇';
       speaker.setAttribute('aria-label', t(speakerOn ? 'voice.speakerOnLabel' : 'voice.speakerOffLabel'));
+      // Story 068: its scope is clear on a long press / hover too: only the client's voice.
+      speaker.title = t(speakerOn ? 'voice.speakerOnLabel' : 'voice.speakerOffLabel');
       speaker.setAttribute('aria-pressed', String(speakerOn));
     };
     showSpeaker();
@@ -590,10 +598,12 @@ export function createChatPanel(
     window.clearTimeout(ignoreTimer);
     awaitingAnswer = expectsAnswer(text);
     if (!awaitingAnswer) return;
+    const askedAt = pauseCount;
     ignoreTimer = window.setTimeout(() => {
       awaitingAnswer = false;
       const answered = latest.transcript.slice(index + 1).some((m) => m.role === 'player');
-      if (answered || !serviceMode) return;
+      // Story 068: a pause during her wait stops the clock: no "ignored question" dip.
+      if (answered || !serviceMode || paused || pauseCount !== askedAt) return;
       appointment.adjustMood(SERVICE_TALK.ignoreMoodDip);
       showNudge(t('service.nudge', { name: clientName }));
     }, SERVICE_TALK.ignoreSeconds * 1000);
@@ -603,7 +613,8 @@ export function createChatPanel(
   const sayWhenFree = (text: string, tries = 0): void => {
     if (!serviceMode || ending || tries > 12) return;
     // She doesn't pile up questions: her next line waits while one is still unanswered (until its wait runs out).
-    if (awaitingAnswer || replyOpen || latest.status !== 'awaiting_player' || root.classList.contains('prepping')) {
+    // Story 068: nothing from her while the visit is paused.
+    if (paused || awaitingAnswer || replyOpen || latest.status !== 'awaiting_player' || root.classList.contains('prepping')) {
       talkTimers.push(window.setTimeout(() => sayWhenFree(text, tries + 1), 5000));
       return;
     }
@@ -765,6 +776,9 @@ export function createChatPanel(
       requestAnimationFrame(() => station.relayout());
     }
     watchCheckout(snapshot);
+    trackLines(snapshot);
+    pauseButton.disabled = snapshot.status === 'waiting' || snapshot.status === 'finished';
+    pauseButton.classList.toggle('hidden', snapshot.status === 'finished');
     if (!serviceMode) return;
     if (!stationOpen) setStationOpen(true);
     // The player sent from the sheet: back to the nails; her question is answered.
@@ -973,7 +987,7 @@ export function createChatPanel(
         const grade = grades.get(index);
         if (grade) {
           bubble.classList.add('graded');
-          bubble.append(gradeBadge(grade));
+          bubble.append(gradeBadge(grade, 'span', index));
         }
         // The player's newest line can be practised aloud (story 004).
         const isLastPlayerLine = !snapshot.transcript.slice(index + 1).some((later) => later.role === 'player');
@@ -1058,6 +1072,81 @@ export function createChatPanel(
   /** Corrections queued for Mai this appointment (capped in config/learning.json). */
   let tipsQueued = 0;
   let walkOutShown = false;
+  // Story 068: ⏸ pauses the visit out of world (no client line; her timers and mood wait); Resume returns exactly here.
+  let paused = false;
+  let pauseCount = 0;
+  const pauseButton = el('button', 'pause-button', '⏸');
+  pauseButton.type = 'button';
+  pauseButton.setAttribute('aria-label', t('pause.button'));
+  mood.prepend(pauseButton);
+  const pauseOverlay = el('div', 'pause-overlay hidden');
+  pauseOverlay.setAttribute('role', 'dialog');
+  pauseOverlay.setAttribute('aria-modal', 'true');
+  pauseOverlay.setAttribute('aria-label', t('pause.title'));
+  const pauseCard = el('div', 'pause-card');
+  const resume = el('button', 'chat-button pause-resume', `▶ ${t('pause.resume')}`);
+  resume.type = 'button';
+  const leave = el('button', 'chat-button secondary pause-leave', t('pause.leave'));
+  leave.type = 'button';
+  pauseCard.append(el('h2', '', `⏸ ${t('pause.title')}`), el('p', 'pause-line', t('pause.line')), resume, leave, el('p', 'pause-note', t('pause.leaveNote')));
+  pauseOverlay.append(pauseCard);
+  root.append(pauseOverlay);
+  const setPaused = (next: boolean): void => {
+    paused = next;
+    if (next) pauseCount++;
+    pauseOverlay.classList.toggle('hidden', !next);
+    root.classList.toggle('paused', next);
+    if (next) resume.focus({ preventScroll: true });
+  };
+  pauseButton.addEventListener('click', () => setPaused(true));
+  resume.addEventListener('click', () => setPaused(false));
+  leave.addEventListener('click', () => {
+    setPaused(false);
+    portraits.onLeave?.();
+  });
+  // Story 068 (owner playtest 5): her open question waits in a small line above the reply box; a miss (her "say that
+  // again", or a reply graded "Try this") brings the companion's help; two misses and she picks for the player.
+  let stuck: StuckState = NOT_STUCK;
+  /** Two misses: the next turn asks her to pick; until her answer the line says so. */
+  let pickArmed = false;
+  let trackedLines = initial.transcript.length;
+  const waiting = el('p', 'waiting-for hidden');
+  waiting.setAttribute('aria-live', 'polite');
+  root.insertBefore(waiting, form);
+  const showWaiting = (): void => {
+    const last = latest.transcript[latest.transcript.length - 1];
+    const on = stuck.question !== null && last?.role === 'client' && latest.status === 'awaiting_player';
+    const words = { ...clientGrammar(portraits.client.pronoun), q: stuck.question ?? '' };
+    waiting.textContent = on ? t(pickArmed ? 'stuck.pickNext' : 'stuck.waiting', words) : '';
+    waiting.classList.toggle('hidden', !on);
+  };
+  const stuckStep = (next: StuckStep): void => {
+    stuck = next.state;
+    if (next.help) mai?.helpNow();
+    if (next.pickForPlayer) {
+      appointment.adjustMood(STUCK_CONFIG.stuckMood);
+      portraits.onStuck?.();
+      // The question stays in the line, saying she will choose: any reply moves the visit on.
+      pickArmed = true;
+    }
+    showWaiting();
+  };
+  const trackLines = (snapshot: AppointmentSnapshot): void => {
+    for (let i = trackedLines; i < snapshot.transcript.length; i++) {
+      const message = snapshot.transcript[i]!;
+      if (message.role === 'client') {
+        // Her line after a pick was asked for is her choice: the question is closed.
+        if (pickArmed) {
+          pickArmed = false;
+          stuck = NOT_STUCK;
+          continue;
+        }
+        stuckStep(onClientLine(stuck, message.content));
+      }
+    }
+    trackedLines = snapshot.transcript.length;
+    showWaiting();
+  };
   /** Story 064: a slip waits for a sorry; a hangnail left at Done is said once. */
   let apologyDue = false;
   let hangnailNoted = false;
@@ -1067,14 +1156,53 @@ export function createChatPanel(
    */
   /** 061 review: each graded line keeps a small badge pinned to its bubble's top-right corner (by transcript index). */
   const grades = new Map<number, LineGrade>();
-  const gradeBadge = (grade: LineGrade, tag: 'span' | 'div' = 'span'): HTMLElement => {
+  /** Story 068: the better line for a "Try this" grade (tap the chip to see and hear it). */
+  const betterLines = new Map<number, { en: string; vi: string }>();
+  const gradeBadge = (grade: LineGrade, tag: 'span' | 'div' = 'span', index = -1): HTMLElement => {
     // The big floating Perfect celebration is .perfect-line; a pinned badge is only its grade.
-    const badge = el(tag, `line-grade grade-${grade}${grade === 'perfect' && tag === 'div' ? ' perfect-line' : ''}`, t(`chat.grade.${grade}`));
+    const better = betterLines.get(index);
+    const tappable = grade === 'try' && better && tag === 'span';
+    const badge = el(tappable ? 'button' : tag, `line-grade grade-${grade}${grade === 'perfect' && tag === 'div' ? ' perfect-line' : ''}${tappable ? ' tappable' : ''}`, t(`chat.grade.${grade}`));
     badge.dataset.grade = grade;
+    if (tappable && better) {
+      (badge as HTMLButtonElement).type = 'button';
+      badge.setAttribute('aria-label', t('stuck.showBetter'));
+      badge.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openBetterLine(better);
+      });
+    }
     return badge;
+  };
+  /** Story 068: the better line, with 🔊 to hear it (the companion's voice). */
+  const openBetterLine = (better: { en: string; vi: string }): void => {
+    root.querySelector('.better-line')?.remove();
+    const card = el('div', 'better-line');
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-label', t('stuck.betterTitle'));
+    const en = el('p', 'better-en', better.en);
+    en.lang = 'en';
+    const vi = el('p', 'better-vi', better.vi);
+    vi.lang = 'vi';
+    const row = el('div', 'better-actions');
+    if (voice?.io.canSpeak) {
+      const hear = el('button', 'chat-button secondary better-hear', `🔊 ${t('help.listen')}`);
+      hear.type = 'button';
+      hear.addEventListener('click', () => void voice.io.speak(better.en, companionSpeech('en', portraits.level)));
+      row.append(hear);
+    }
+    const close = el('button', 'chat-button better-close', t('common.close'));
+    close.type = 'button';
+    close.addEventListener('click', () => card.remove());
+    row.append(close);
+    card.append(el('strong', '', `💡 ${t('stuck.betterTitle')}`), en, vi, row);
+    root.append(card);
+    close.focus({ preventScroll: true });
   };
   const showGrade = (grade: LineGrade, index: number): void => {
     grades.set(index, grade);
+    // Story 068: a "Try this" reply to her open question is a miss.
+    if (grade === 'try') stuckStep(onTryGrade(stuck));
     const perfect = grade === 'perfect';
     const ms = perfect ? JUICE_CONFIG.perfect.showMs : JUICE_CONFIG.grades.showMs;
     // In the chat: pinned to the corner of the line it grades. While painting (the chat is folded away): it floats.
@@ -1083,7 +1211,7 @@ export function createChatPanel(
     if (bubble) {
       bubble.querySelector('.line-grade')?.remove();
       bubble.classList.add('graded');
-      bubble.append(gradeBadge(grade));
+      bubble.append(gradeBadge(grade, 'span', index));
     }
     // Perfect also gets its big moment (confetti); and while painting (the chat folded away) every grade floats.
     if (bubble && bubble.offsetParent !== null && !perfect) {
@@ -1119,6 +1247,7 @@ export function createChatPanel(
     corrections.transport
       .checkLine({ level: portraits.level, language: bestie.language, phase: before.phase, line: line.trim(), clientLine })
       .then((result) => {
+        if (result.needsCorrection && result.better) betterLines.set(index, { en: result.better.en, vi: result.better.vi });
         if (latest.status !== 'finished') showGrade(lineGrade(line, result, helped), index);
         if (!result.needsCorrection || !result.better || latest.status === 'finished') return;
         // Checks run side by side, so the cap is checked again when each answer lands.
