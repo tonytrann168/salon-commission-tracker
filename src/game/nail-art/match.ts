@@ -46,11 +46,15 @@ export function matchDesign(design: NailDesign, request: NailRequest, config: Na
   // Full marks at the "fully painted" line; nothing below half painted.
   const coverageScore = Math.round(Math.max(0, Math.min(1, (covered - 0.5) / (config.fullCoverage - 0.5))) * 100);
 
-  const gems = design.decorations.filter((d) => d.kind === 'gem').length;
-  const stickers = design.decorations.length - gems;
+  // Story 069: with a big-toe accent only the big toes' art counts (and art elsewhere is not what she asked for).
+  const perLimb = config.hand.fingers.length;
+  const counted = request.accent === 'bigToe' ? design.decorations.filter((d) => d.nail % perLimb === 0) : design.decorations;
+  const offAccent = design.decorations.length - counted.length;
+  const gems = counted.filter((d) => d.kind === 'gem').length;
+  const stickers = counted.length - gems;
   const usedGradient = design.gradient !== null;
   const gradient = request.gradient === 'ok' || (request.gradient === 'yes') === usedGradient ? 100 : 0;
-  const extras = Math.round((levelScore(gems, request.gems, config) + levelScore(stickers, request.stickers, config) + gradient) / 3);
+  const extras = Math.round(((levelScore(gems, request.gems, config) + levelScore(stickers, request.stickers, config) + gradient) / 3) * (offAccent > 0 ? 0.5 : 1));
 
   // Neatness (owner, 2026-11-10): polish on the skin around any nail lowers it.
   const perNailNeat = neatness(design, config);
@@ -89,5 +93,6 @@ export function describeRequest(request: NailRequest, config: NailArtConfig = NA
   const art = [request.gems !== 'none' ? `${request.gems} gems` : 'no gems', request.stickers !== 'none' ? `${request.stickers} stickers` : 'no stickers', request.gradient === 'yes' ? 'a gradient' : request.gradient === 'no' ? 'no gradient' : 'a gradient is fine'].join(', ');
   const where = request.service === 'pedicure' ? (request.hands === 2 ? 'pedicure, both feet: ' : 'pedicure: ') : request.hands === 2 ? 'both hands: ' : '';
   const lengths = request.lengths?.length ? `${request.lengths.map((l) => LENGTH_WORDS[l].replace(' nails', '')).join(' or ')} nails, ` : '';
-  return `${where}${request.shapes.join(' or ')} shape, ${lengths}${colors}, ${art}`;
+  const accent = request.accent === 'bigToe' ? ' (art on the big toes only)' : '';
+  return `${where}${request.shapes.join(' or ')} shape, ${lengths}${colors}, ${art}${accent}`;
 }

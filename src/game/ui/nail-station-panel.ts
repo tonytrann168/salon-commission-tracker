@@ -1,3 +1,4 @@
+import { PEDICURE_SHAPES } from '../nail-art/design';
 import { createHangnailOverlay } from './hangnail-overlay';
 import { haptic, prefersReducedMotion } from '../comfort';
 import { clientGrammar } from '../types';
@@ -116,11 +117,13 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const lengths = options.lengths ?? NAIL_LENGTHS.filter((l) => l !== 'xlong');
   // Overseer (051): the hand stays as big as it can: room only for the longest length she ordered (or the one picked).
   const longest = Math.max(1, ...(options.request.lengths ?? []).map((l) => NAIL_ART_CONFIG.lengths[l]));
-  const view = createStationView(emptyDesign(SHAPES[1] ?? 'round', nails), options.tools, limbFor(options.request), longest);
+  // Story 069: toes only take square or round.
+  const shapes: NailShape[] = options.request.service === 'pedicure' ? PEDICURE_SHAPES : SHAPES;
+  const view = createStationView(emptyDesign(shapes.includes('round') ? 'round' : (shapes[0] ?? 'round'), nails), options.tools, limbFor(options.request), longest);
   const palette = options.palette ?? NAIL_ART_CONFIG.palette.filter((colour) => !colour.shop);
   options.layer.addChild(view.container);
   view.container.visible = false;
-  let design = emptyDesign(SHAPES[1] ?? 'round', nails);
+  let design = emptyDesign(shapes.includes('round') ? 'round' : (shapes[0] ?? 'round'), nails);
   let tool: StationTool = 'polish';
   const stickerKinds = options.stickers ?? NAIL_ART_CONFIG.stickers;
   let sticker: StickerKind = stickerKinds[0] ?? 'heart';
@@ -192,7 +195,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     if (changeTimer === 0) changeTimer = window.setTimeout(flushChange, 250);
   };
 
-  const shapeButtons = SHAPES.map((shape) =>
+  const shapeButtons = shapes.map((shape) =>
     button(shapeIcon(shape), 'station-shape', () => {
       if (design.shape !== shape) remember();
       setDesign({ ...design, shape });
@@ -378,7 +381,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
   function refresh(): void {
     updateChecks();
     (Object.keys(tabButtons) as Exclude<Tab, 'clean'>[]).forEach((key) => tabButtons[key].setAttribute('aria-selected', String(key === tab)));
-    shapeButtons.forEach((node, index) => node.setAttribute('aria-pressed', String(SHAPES[index] === design.shape)));
+    shapeButtons.forEach((node, index) => node.setAttribute('aria-pressed', String(shapes[index] === design.shape)));
     lengthButtons.forEach((node, index) => node.setAttribute('aria-pressed', String(lengths[index] === design.length)));
     (Object.keys(toolButtons) as StationTool[]).forEach((key) => toolButtons[key].setAttribute('aria-pressed', String(key === tool)));
     swatches.forEach((node, index) => {

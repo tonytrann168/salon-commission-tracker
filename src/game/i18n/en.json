@@ -814,5 +814,12 @@
   "pause.resume": "Resume",
   "pause.leave": "Leave visit",
   "pause.leaveNote": "Leaving: this visit is not counted (no stars, XP or tips; your streak is safe, and today's client is still there).",
-  "stuck.pickNext": "No worries: reply anything, and {cShe} will choose for “{q}”."
+  "stuck.pickNext": "No worries: reply anything, and {cShe} will choose for “{q}”.",
+  "menu.group.combos": "Combos (hands + feet)",
+  "menu.tag.comboClassic": "Classic mani + pedi",
+  "menu.tag.comboGel": "Gel mani + spa pedi",
+  "menu.short.comboClassic": "Mani + pedi",
+  "menu.short.comboGel": "Gel mani + spa pedi",
+  "menu.comboSaving": "Save ${dollars} vs separately",
+  "service.order.bigToe": "big toes only"
 }

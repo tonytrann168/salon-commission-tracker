@@ -1,3 +1,4 @@
+import { pedicureRequest } from './game/nail-art/design';
 import { afterLeaving } from './game/pause';
 import { bringsPicture, referenceTarget } from './game/reference';
 import { planHangnail } from './game/hangnail';
@@ -578,7 +579,9 @@ async function boot(): Promise<void> {
       onFinished: () => undefined,
     });
     // Story 065 (hard clients): she may bring a picture: her request narrows to it, drawn by the nail renderer.
-    const picture = client.nailRequest && client.nailRequest.service !== 'pedicure' && bringsPicture(client.difficulty, `${client.id}:${loadSave().appointments}`) ? referenceTarget(client.nailRequest) : null;
+    // Story 069: a pedicure request is kept to what toes take (short; square or round); pictures work for feet too.
+    const nailRequest = client.nailRequest ? pedicureRequest(client.nailRequest) : undefined;
+    const picture = nailRequest && bringsPicture(client.difficulty, `${client.id}:${loadSave().appointments}`) ? referenceTarget(nailRequest) : null;
     turnFlags.picture = picture !== null;
     const referencePhoto = picture ? stage.designPhoto(picture.design, picture.request, GALLERY_CONFIG.width, GALLERY_CONFIG.quality) : null;
     const panel = stage.createChatPanel(host, appointment, {
@@ -601,7 +604,7 @@ async function boot(): Promise<void> {
       ...(client.nailRequest
         ? {
             nailArt: {
-              request: picture?.request ?? client.nailRequest,
+              request: picture?.request ?? nailRequest ?? client.nailRequest,
               ...(referencePhoto ? { reference: referencePhoto } : {}),
               // Story 028: seasonal polishes and stickers only while their season runs.
               palette: seasonPalette(stationPalette(NAIL_ART_CONFIG.palette, loadSave()), activeSeason(localDay(), seasonOverride())),

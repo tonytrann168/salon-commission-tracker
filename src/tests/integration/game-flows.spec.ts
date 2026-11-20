@@ -93,6 +93,12 @@ for (const lang of LANGS) {
       await expect(page.locator('.pedi-prep')).toHaveCount(0, { timeout: 6_000 });
       await expect(page.locator('.station-tools')).toBeVisible();
       expect(Number(await page.locator('.mood-value').textContent())).toBeGreaterThan(mood);
+      // Story 069: toes take square or round only, and short nails only.
+      await page.locator('.station-step[data-step=shape]').click();
+      await expect(page.locator('.station-shape')).toHaveCount(2);
+      await page.locator('.station-step[data-step=length]').click();
+      await expect(page.locator('.station-length')).toHaveCount(1);
+      await expect(page.locator('.service-order')).toContainText(lang === 'vi' ? 'chỉ ngón cái' : 'big toes only');
     });
 
     test('buying a polish in the shop puts it in the station', async ({ page }) => {
@@ -292,16 +298,16 @@ for (const lang of LANGS) {
       await expect(page.locator('.menu-presets [data-preset=fancy]')).toHaveAttribute('aria-pressed', 'true');
       // Story 063: the real menu, in groups with icons; Fancy's classic manicure is $45.
       await expect(page.locator('.menu-settings .menu-item').first()).toContainText('$45');
-      await expect(page.locator('.menu-settings .menu-group-title')).toHaveCount(4);
-      await expect(page.locator('.menu-settings .menu-item svg.service-icon')).toHaveCount(16);
+      await expect(page.locator('.menu-settings .menu-group-title')).toHaveCount(5);
+      await expect(page.locator('.menu-settings .menu-item svg.service-icon')).toHaveCount(18);
       await page.reload();
       await page.locator('.title-menu > .chat-button').first().click();
       await page.locator('.picker-daily').click();
       // Consultation: the menu button shows the numbered menu.
       await page.locator('.chat-menu-button').click();
-      await expect(page.locator('.menu-sheet .menu-item')).toHaveCount(16);
+      await expect(page.locator('.menu-sheet .menu-item')).toHaveCount(18);
       await expect(page.locator('.menu-sheet .menu-item').first()).toContainText('Classic manicure');
-      await expect(page.locator('.menu-sheet .menu-group-title')).toHaveText(lang === 'vi' ? ['Móng tay', 'Móng chân', 'Đắp / nối móng', 'Thêm'] : ['Manicure', 'Pedicure', 'Nail enhancements', 'Add-ons']);
+      await expect(page.locator('.menu-sheet .menu-group-title')).toHaveText(lang === 'vi' ? ['Móng tay', 'Móng chân', 'Đắp / nối móng', 'Thêm', 'Combo (tay + chân)'] : ['Manicure', 'Pedicure', 'Nail enhancements', 'Add-ons', 'Combos (hands + feet)']);
       await expect(page.locator('.menu-sheet .menu-item.ordered')).toHaveCount(0);
       expect(await noOverflow(page)).toBe(true);
       await page.locator('.menu-close').click();
@@ -428,7 +434,7 @@ for (const lang of LANGS) {
       await expect(page.locator('.menu-setup-title svg.price-board-icon')).toHaveCount(1);
       await expect(page.locator('.menu-setup-mai')).toContainText('Number 3');
       await page.locator('.menu-presets [data-preset=basic]').click();
-      await expect(page.locator('.menu-setup .menu-item')).toHaveCount(16);
+      await expect(page.locator('.menu-setup .menu-item')).toHaveCount(18);
       expect(await noOverflow(page)).toBe(true);
       await page.locator('.menu-confirm').click();
       await expect(page.locator('.picker-daily')).toBeVisible();

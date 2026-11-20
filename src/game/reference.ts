@@ -56,11 +56,16 @@ export function referenceTarget(request: NailRequest, config: NailArtConfig = NA
   for (let nail = 0; nail < nails; nail++) design = paint(design, nail, cells);
   if (request.gradient === 'yes') design = { ...design, gradient: request.colors[1] ?? config.palette.find((c) => c.id !== base)?.id ?? null };
   // Her art, spread over the nails: gems near the cuticle, stickers in the middle.
+  // Story 069: a big-toe accent puts the art on the big toes only (spread across them).
+  const perLimb = config.hand.fingers.length;
+  const bigToes = Array.from({ length: Math.max(1, Math.round(nails / perLimb)) }, (_, i) => i * perLimb);
+  const where = (i: number, spread: (i: number) => number): number => (request.accent === 'bigToe' ? (bigToes[i % bigToes.length] as number) : spread(i));
+  const across = (i: number, of: number): number => (request.accent === 'bigToe' ? 0.25 + (0.5 * (Math.floor(i / bigToes.length) % 3)) / 2 : of);
   const gems = countFor(request.gems, config);
-  for (let i = 0; i < gems; i++) design = decorate(design, { nail: (i * 2 + 1) % nails, x: 0.5, y: 0.75, kind: 'gem' }, config);
+  for (let i = 0; i < gems; i++) design = decorate(design, { nail: where(i, (k) => (k * 2 + 1) % nails), x: across(i, 0.5), y: 0.7, kind: 'gem' }, config);
   const stickers = countFor(request.stickers, config);
   const kinds: StickerKind[] = config.stickers;
-  for (let i = 0; i < stickers; i++) design = decorate(design, { nail: (i * 2) % nails, x: 0.5, y: 0.45, kind: kinds[i % kinds.length] as StickerKind }, config);
+  for (let i = 0; i < stickers; i++) design = decorate(design, { nail: where(i, (k) => (k * 2) % nails), x: across(i, 0.5), y: 0.45, kind: kinds[i % kinds.length] as StickerKind }, config);
   const narrowed: NailRequest = {
     ...request,
     shapes: [shape],

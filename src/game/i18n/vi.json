@@ -814,5 +814,12 @@
   "pause.resume": "Tiếp tục",
   "pause.leave": "Rời cuộc hẹn",
   "pause.leaveNote": "Rời đi: cuộc hẹn này không tính (không sao, XP hay tip; chuỗi ngày vẫn giữ, khách hôm nay vẫn còn đó).",
-  "stuck.pickNext": "Đừng lo: trả lời gì cũng được, khách sẽ tự chọn cho “{q}”."
+  "stuck.pickNext": "Đừng lo: trả lời gì cũng được, khách sẽ tự chọn cho “{q}”.",
+  "menu.group.combos": "Combo (tay + chân)",
+  "menu.tag.comboClassic": "Combo tay + chân",
+  "menu.tag.comboGel": "Combo gel tay + chân spa",
+  "menu.short.comboClassic": "Combo tay + chân",
+  "menu.short.comboGel": "Combo gel + chân spa",
+  "menu.comboSaving": "Rẻ hơn ${dollars} so với làm riêng",
+  "service.order.bigToe": "chỉ ngón cái"
 }

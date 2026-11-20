@@ -1,5 +1,5 @@
 import { getLanguage, t } from '../i18n';
-import { menuGroups } from '../menu';
+import { comboSaving, menuGroups } from '../menu';
 import type { MenuItem } from '../menu';
 import { el } from './dom';
 import { serviceIcon } from './service-icon';
@@ -24,6 +24,9 @@ export function menuList(items: readonly MenuItem[], ordered: ReadonlySet<number
         names.append(el('strong', '', item.name.en));
         if (lang === 'vi' && item.name.vi !== item.name.en) names.append(el('small', '', item.name.vi));
       } else names.append(el('span', '', item.name[lang]));
+      // Story 069: a combo shows what it saves against the two services separately.
+      const saving = comboSaving(item, items);
+      if (saving && saving > 0) names.append(el('small', 'menu-saving', t('menu.comboSaving', { dollars: saving })));
       row.append(el('span', 'menu-number', String(number)), icon, names, el('span', 'menu-price', `${group.category === 'addons' ? '+' : ''}$${item.price}`));
       list.append(row);
     }

@@ -13,12 +13,13 @@ const plain: NailRequest = { shapes: ['round'], colors: ['red'], gradient: 'no',
 const mid = MENU_CONFIG.presets.mid;
 
 describe('the salon menu', () => {
-  it('is a real 2026 menu: Manicure 1-3, Pedicure 4-6, Nail enhancements 7-10, Add-ons 11-16; Mid near the medians', () => {
+  it('is a real 2026 menu: Manicure 1-3, Pedicure 4-6, Nail enhancements 7-10, Add-ons 11-16, Combos 17-18; Mid near the medians', () => {
     expect(menuGroups(mid).map((g) => [g.category, g.lines.map((l) => l.number)])).toEqual([
       ['manicure', [1, 2, 3]],
       ['pedicure', [4, 5, 6]],
       ['enhancements', [7, 8, 9, 10]],
       ['addons', [11, 12, 13, 14, 15, 16]],
+      ['combos', [17, 18]],
     ]);
     const price = (tag: string) => mid.find((i) => i.tag === tag)!.price;
     // Zenoti / ThePricer / Boulevard 2026 ranges.

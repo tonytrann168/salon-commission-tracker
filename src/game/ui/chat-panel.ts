@@ -1,3 +1,4 @@
+import { PEDICURE_LENGTHS } from '../nail-art/design';
 import { NOT_STUCK, STUCK_CONFIG, onClientLine, onTryGrade } from '../stuck';
 import type { StuckState, StuckStep } from '../stuck';
 import { moodBand } from '../mood-display';
@@ -323,7 +324,8 @@ export function createChatPanel(
         ...(nailArt.redos ? { redos: nailArt.redos } : {}),
         ...(nailArt.tools ? { tools: nailArt.tools } : {}),
         // Story 051: Extra long is offered to hard clients (or when she asks for it).
-        lengths: NAIL_LENGTHS.filter((l) => l !== 'xlong' || portraits.client.difficulty === 'hard' || nailArt.request.lengths?.includes('xlong')),
+        // Story 069: toes only take short nails.
+        lengths: nailArt.request.service === 'pedicure' ? PEDICURE_LENGTHS : NAIL_LENGTHS.filter((l) => l !== 'xlong' || portraits.client.difficulty === 'hard' || nailArt.request.lengths?.includes('xlong')),
         topBand: () => serviceTop.offsetHeight + 6,
         maiSide: () => (mai ? ((mai.element.dataset.side as 'left' | 'right' | undefined) ?? 'right') : null),
         onChange: (design) => {
@@ -485,6 +487,8 @@ export function createChatPanel(
     // Story 051: her length goes with the shape on the order.
     const lengthWords = r.lengths?.length ? ` · ${r.lengths.map((l) => t(`station.length.${l}`)).join(' / ')}` : '';
     const extras = [r.gradient === 'yes' ? '🌈' : '', r.gems !== 'none' ? `💎 ${t(`service.order.${r.gems}`)}` : '', r.stickers !== 'none' ? `⭐ ${t(`service.order.${r.stickers}`)}` : ''].filter(Boolean);
+    // Story 069: a big-toe accent says where the art goes.
+    if (r.accent === 'bigToe' && extras.some((x) => x.startsWith('💎') || x.startsWith('⭐'))) extras.push(t('service.order.bigToe'));
     // Colours on the first line, shape and extras on the second (never cut; a tap shows it all if it is longer).
     order.textContent = `🎨 ${colours}\n${[`${shapes}${lengthWords}`, ...extras].join(" · ")}`;
     order.setAttribute('aria-label', `${t('service.order.label')}: ${order.textContent}`);

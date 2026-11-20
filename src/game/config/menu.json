@@ -1,5 +1,5 @@
 {
-  "_note": "Story 044, 063: the salon menu (pretend money, shown to the client and rung up at checkout; the wallet still gets only the tip). Story 063: a real 2026 US salon menu in four groups (Manicure 1-3, Pedicure 4-6, Nail enhancements 7-10, Add-ons 11-16), numbered in one list, each with a small drawn icon. Basic / Mid / Fancy scale the prices; Mid is about the 2026 medians (Zenoti, ThePricer, Boulevard: basic mani $25-45, gel $35-70, dip $40-60, acrylic full set $45-75, fill $30-50, French +$5-25, art +$5-20, removal +$10-25, pedicure $25-40+). tag: what the item is, so her order can be found on any menu (the older tags fullSet, ombre, gems, extensions still work on a player's own menu). limits: the player's own menu.",
+  "_note": "Story 044, 063: the salon menu (pretend money, shown to the client and rung up at checkout; the wallet still gets only the tip). Story 063: a real 2026 US salon menu in four groups (Manicure 1-3, Pedicure 4-6, Nail enhancements 7-10, Add-ons 11-16), numbered in one list, each with a small drawn icon. Basic / Mid / Fancy scale the prices; Mid is about the 2026 medians (Zenoti, ThePricer, Boulevard: basic mani $25-45, gel $35-70, dip $40-60, acrylic full set $45-75, fill $30-50, French +$5-25, art +$5-20, removal +$10-25, pedicure $25-40+). tag: what the item is, so her order can be found on any menu (the older tags fullSet, ombre, gems, extensions still work on a player's own menu). limits: the player's own menu. Story 069: Combos (17-18), priced from 2026 US guides: a basic mani-pedi combo is about $50-70 and a gel combo $70-110, with bundles typically 10-25% cheaper than the two services separately (usecalcpro.com/health/mani-pedi-cost-calculator, groupon.com/articles/what-is-a-pedicure-guide-to-cost-tips-and-types, zenoti.com/thecheckin/nail-salon-prices, joinblvd.com/blog/nail-salon-prices, thepricer.org/cost-of-manicures-and-pedicures). Each combo here saves about 12% against its two items on the same price set.",
   "default": "mid",
   "pricey": {
     "_note": "Story 045: a price-sensitive client (client data) may remark kindly on a total over this many dollars; prices never change mood, stars or tips.",
@@ -141,6 +141,22 @@
           "en": "Polish change",
           "vi": "Đổi màu sơn"
         }
+      },
+      {
+        "tag": "comboClassic",
+        "price": 44,
+        "name": {
+          "en": "Classic mani + pedi",
+          "vi": "Combo tay + chân cơ bản"
+        }
+      },
+      {
+        "tag": "comboGel",
+        "price": 62,
+        "name": {
+          "en": "Gel mani + spa pedi",
+          "vi": "Combo gel tay + chân spa"
+        }
       }
     ],
     "mid": [
@@ -271,6 +287,22 @@
           "en": "Polish change",
           "vi": "Đổi màu sơn"
         }
+      },
+      {
+        "tag": "comboClassic",
+        "price": 60,
+        "name": {
+          "en": "Classic mani + pedi",
+          "vi": "Combo tay + chân cơ bản"
+        }
+      },
+      {
+        "tag": "comboGel",
+        "price": 88,
+        "name": {
+          "en": "Gel mani + spa pedi",
+          "vi": "Combo gel tay + chân spa"
+        }
       }
     ],
     "fancy": [
@@ -400,6 +432,22 @@
         "name": {
           "en": "Polish change",
           "vi": "Đổi màu sơn"
+        }
+      },
+      {
+        "tag": "comboClassic",
+        "price": 79,
+        "name": {
+          "en": "Classic mani + pedi",
+          "vi": "Combo tay + chân cơ bản"
+        }
+      },
+      {
+        "tag": "comboGel",
+        "price": 119,
+        "name": {
+          "en": "Gel mani + spa pedi",
+          "vi": "Combo gel tay + chân spa"
         }
       }
     ]

@@ -181,7 +181,8 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
     const g = view.decorations;
     g.clear();
     const { w, h } = view.finger.nail;
-    const r = Math.min(w, 12) * 0.14;
+    // Story 069: art scales to the nail (short, wide toenails get smaller art).
+    const r = Math.min(w, h * 1.4, 12) * 0.14;
     for (const d of design.decorations.filter((item) => item.nail === firstNail() + index)) {
       const x = d.x * w;
       const y = d.y * h;
@@ -298,8 +299,23 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       const bottom = (h - offsetY) / scale;
       // Full-screen service: the palm sits right under the fingers; otherwise it reaches the bottom of the zone.
       const palmY = topBand > 0 ? hand.box.h * 1.04 : Math.max(hand.box.h * 1.02, bottom * 0.98);
-      palm.clear().ellipse(hand.box.w * 0.52, palmY, hand.box.w * 0.42, hand.box.h * 0.2).fill({ color: SKIN });
-      palm.ellipse(hand.box.w * 0.3, palmY - hand.box.h * 0.04, hand.box.w * 0.16, hand.box.h * 0.12).fill({ color: SKIN_SHADE, alpha: 0.35 });
+      if (hand.kind === 'foot') {
+        // Story 069: a real foot from above: the ball of the foot under the toes (wide at the big toe, sloping down to
+        // the little toe), narrowing toward the heel; the toes sit on it. Mirrored for the left foot.
+        const W = hand.box.w;
+        const H = hand.box.h;
+        const flip = handIndex === 1 ? (x: number) => W - x : (x: number) => x;
+        const pts: [number, number][] = [
+          [12, 30], [16, 22], [26, 18], [40, 15], [52, 16], [64, 20], [76, 26], [88, 34], [92, 46], [90, 62],
+          [84, 80], [74, 96], [58, 104], [38, 104], [22, 94], [12, 76], [9, 54],
+        ];
+        palm.clear().poly(pts.flatMap(([x, y]) => [flip(x), (y / 56) * H])).fill({ color: SKIN }).stroke({ width: 1.2 / scale, color: SKIN_LINE });
+        // A soft arch shade and the ball of the foot.
+        palm.ellipse(flip(W * 0.36), H * 0.62, W * 0.2, H * 0.14).fill({ color: SKIN_SHADE, alpha: 0.3 });
+      } else {
+        palm.clear().ellipse(hand.box.w * 0.52, palmY, hand.box.w * 0.42, hand.box.h * 0.2).fill({ color: SKIN });
+        palm.ellipse(hand.box.w * 0.3, palmY - hand.box.h * 0.04, hand.box.w * 0.16, hand.box.h * 0.12).fill({ color: SKIN_SHADE, alpha: 0.35 });
+      }
       lastLayout = [x, y, w, h, reserveLeft, reserveRight, topBand];
       const factor = NAIL_ART_CONFIG.lengths[design.length];
       for (const fingerAtShort of handIndex === 1 ? mirroredFingers(hand) : hand.fingers) {

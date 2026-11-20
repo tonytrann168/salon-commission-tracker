@@ -48,3 +48,4 @@
 .menu-groups .menu-item { grid-template-columns: 30px 30px 1fr auto; }
 .menu-icon { display: grid; place-items: center; width: 30px; height: 30px; }
 .service-icon { display: block; }
+.menu-saving { color: #2f7d4f; font-weight: 700; }

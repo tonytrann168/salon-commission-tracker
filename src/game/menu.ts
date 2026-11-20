@@ -8,17 +8,18 @@ import type { NailRequest } from './nail-art/design';
  */
 
 /** Story 063 adds the real menu's services; the older tags (fullSet, ombre, gems, extensions) still work on an own menu. */
-export const MENU_TAGS = ['manicure', 'gel', 'spa', 'fullSet', 'pedicure', 'spaPedicure', 'jellyPedicure', 'acrylic', 'fill', 'dip', 'gelX', 'extensions', 'french', 'chrome', 'art', 'gems', 'ombre', 'removal', 'paraffin', 'polishChange', 'other'] as const;
+export const MENU_TAGS = ['manicure', 'gel', 'spa', 'fullSet', 'pedicure', 'spaPedicure', 'jellyPedicure', 'acrylic', 'fill', 'dip', 'gelX', 'extensions', 'french', 'chrome', 'art', 'gems', 'ombre', 'removal', 'paraffin', 'polishChange', 'other', 'comboClassic', 'comboGel'] as const;
 export type MenuTag = (typeof MENU_TAGS)[number];
 
 /** Story 063: the menu's groups, in order. */
-export const MENU_CATEGORIES = ['manicure', 'pedicure', 'enhancements', 'addons'] as const;
+export const MENU_CATEGORIES = ['manicure', 'pedicure', 'enhancements', 'addons', 'combos'] as const;
 export type MenuCategory = (typeof MENU_CATEGORIES)[number];
 const CATEGORY_OF: Record<MenuTag, MenuCategory> = {
   manicure: 'manicure', gel: 'manicure', spa: 'manicure', fullSet: 'manicure',
   pedicure: 'pedicure', spaPedicure: 'pedicure', jellyPedicure: 'pedicure',
   acrylic: 'enhancements', fill: 'enhancements', dip: 'enhancements', gelX: 'enhancements', extensions: 'enhancements',
   french: 'addons', chrome: 'addons', art: 'addons', gems: 'addons', ombre: 'addons', removal: 'addons', paraffin: 'addons', polishChange: 'addons', other: 'addons',
+  comboClassic: 'combos', comboGel: 'combos',
 };
 export const categoryOf = (tag: MenuTag): MenuCategory => CATEGORY_OF[tag];
 
@@ -154,7 +155,7 @@ export function orderFor(request: NailRequest | undefined, items: readonly MenuI
 
 export const orderTotal = (order: readonly OrderLine[]): number => order.reduce((sum, line) => sum + line.item.price, 0);
 
-const CATEGORY_TITLES: Record<MenuCategory, string> = { manicure: 'Manicure', pedicure: 'Pedicure', enhancements: 'Nail enhancements', addons: 'Add-ons' };
+const CATEGORY_TITLES: Record<MenuCategory, string> = { manicure: 'Manicure', pedicure: 'Pedicure', enhancements: 'Nail enhancements', addons: 'Add-ons', combos: 'Combos (hands and feet)' };
 
 /** What the AI client is told about the menu and her order (English; the names are cleaned). */
 export function menuPrompt(items: readonly MenuItem[], order: readonly OrderLine[], priceSensitive = false, config: MenuConfig = MENU_CONFIG): string {
@@ -164,4 +165,15 @@ export function menuPrompt(items: readonly MenuItem[], order: readonly OrderLine
     .join('\n');
   const mine = order.map((line) => `number ${line.number} (${line.item.name.en})`).join(' with ');
   return `THE SALON MENU (on the wall; prices in dollars)\n${list}\n- Order by number, the way regulars do (for example "Number ${order[0]?.number ?? 1}, please."), and an add-on by name with it (for example "number ${order[0]?.number ?? 1} with French tip"). Your order today: ${mine}. At checkout the total is $${orderTotal(order)} plus any tip. If the stylist rings up a different price, politely ask about it.${priceSensitive && orderTotal(order) > config.pricey.over ? `\n- You watch your money and $${orderTotal(order)} feels a bit high. At checkout you may say so once, kindly and in your own words (for example "Hmm, that's a bit pricey."). It does not change your mood: report moodDelta for how the stylist treats you, as usual.` : ''}`;
+}
+
+/** Story 069: what a combo is made of (its tags), to show the saving against buying the two separately. */
+export const COMBO_PARTS: Partial<Record<MenuTag, [MenuTag, MenuTag]>> = { comboClassic: ['manicure', 'pedicure'], comboGel: ['gel', 'spaPedicure'] };
+
+/** Story 069: a combo's saving on this menu (the two parts' prices minus the combo's), or null. */
+export function comboSaving(item: MenuItem, items: readonly MenuItem[]): number | null {
+  const parts = COMBO_PARTS[item.tag];
+  if (!parts) return null;
+  const [a, b] = parts.map((tag) => items.find((i) => i.tag === tag)?.price);
+  return a !== undefined && b !== undefined ? a + b - item.price : null;
 }

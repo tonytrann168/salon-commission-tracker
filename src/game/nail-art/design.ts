@@ -37,6 +37,20 @@ export interface FingerConfig {
 export interface HandConfig {
   box: { w: number; h: number };
   fingers: FingerConfig[];
+  /** Story 069: a foot is drawn as a foot (toes on a sole), not a hand. */
+  kind?: 'hand' | 'foot';
+}
+
+/** Story 069: toenails only come short, square or round (no long nails or extensions on toes). */
+export const PEDICURE_SHAPES: NailShape[] = ['square', 'round'];
+export const PEDICURE_LENGTHS: NailLength[] = ['short'];
+
+/** Story 069: a pedicure request kept to what toes take (other shapes become square or round; nails short). */
+export function pedicureRequest(request: NailRequest): NailRequest {
+  if (request.service !== 'pedicure') return request;
+  const toe = (shape: NailShape): NailShape => (PEDICURE_SHAPES.includes(shape) ? shape : shape === 'stiletto' ? 'square' : 'round');
+  const shapes = [...new Set(request.shapes.map(toe))];
+  return { ...request, shapes, lengths: [...PEDICURE_LENGTHS] };
 }
 
 export interface NailArtConfig {
@@ -107,6 +121,8 @@ export interface NailRequest {
   hands?: 1 | 2;
   /** Story 024: a pedicure (toes) instead of a manicure. */
   service?: 'manicure' | 'pedicure';
+  /** Story 069: the art goes on the big toes only (the common pedicure accent). */
+  accent?: 'bigToe';
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -141,6 +157,7 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
     const box = isRecord(limbRaw.box) ? limbRaw.box : fail(`"${name}.box" must be an object`);
     const fingers = Array.isArray(limbRaw.fingers) && limbRaw.fingers.length > 0 ? limbRaw.fingers : fail(`"${name}.fingers" must be a non-empty list`);
     return {
+      ...(limbRaw.kind === 'foot' ? { kind: 'foot' as const } : {}),
       box: { w: num(box.w, `${name}.box.w`, 10, 1000), h: num(box.h, `${name}.box.h`, 10, 1000) },
       fingers: fingers.map((finger, i): FingerConfig => {
         const at = `${name}.fingers[${i}]`;
