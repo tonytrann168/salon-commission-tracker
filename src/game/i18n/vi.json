@@ -802,5 +802,6 @@
   "picture.compareTitle": "Hình mẫu và bộ móng của {you}",
   "picture.yourWork": "Bộ móng của {you}",
   "picture.match": "Giống {n}%",
-  "picture.nudge": "📷 Khách có hình mẫu: bấm 📷."
+  "picture.nudge": "📷 Khách có hình mẫu: bấm 📷.",
+  "chat.moodLabel": "Tâm trạng {n} trên 100"
 }

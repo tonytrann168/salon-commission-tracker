@@ -1,0 +1,20 @@
+{
+  "_note": "Story 067 (owner): the client's mood is a number 0-100 in a pill, like a phone's battery %, coloured by band (first band whose `min` the mood reaches, highest first): good (green) 70-100, mid (amber) 40-69, low (red) 0-39. face: the emoji before the number. No mood bands existed before (the old bar used a continuous colour; voice-cast moodBands pick a tone of voice, not a colour).",
+  "bands": [
+    {
+      "band": "good",
+      "min": 70,
+      "face": "😊"
+    },
+    {
+      "band": "mid",
+      "min": 40,
+      "face": "😐"
+    },
+    {
+      "band": "low",
+      "min": 0,
+      "face": "😟"
+    }
+  ]
+}

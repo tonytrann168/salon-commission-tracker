@@ -790,7 +790,16 @@ for (const lang of LANGS) {
       expect(pictureAt).toBe(menuAt + 1);
       for (let i = 1; i < row.length; i++) expect(row[i]!.left).toBeGreaterThanOrEqual(row[i - 1]!.right - 0.5);
       expect(Math.max(...row.map((n) => n.right))).toBeLessThanOrEqual(320);
-      await expect(page.locator('.service-nudge')).toContainText('📷');
+      // 067: the picture notice is its own row under the mood bar (not over her face).
+      const note = page.locator('.picture-note');
+      await expect(note).toContainText('📷');
+      expect(await page.evaluate(() => document.querySelector('.picture-note')!.getBoundingClientRect().bottom <= document.querySelector('.portrait-zone')!.getBoundingClientRect().top + 1)).toBe(true);
+      // 067: her mood is a number in a pill (band colour, "Mood N of 100"), one width beside 📋 and 📷.
+      const pill = page.locator('.mood .mood-pill');
+      await expect(pill).toHaveAttribute('data-band', /^(good|mid|low)$/);
+      await expect(pill).toHaveAttribute('aria-label', lang === 'vi' ? /^Tâm trạng \d+ trên 100$/ : /^Mood \d+ of 100$/);
+      expect((await pill.boundingBox())!.width).toBeGreaterThanOrEqual(70);
+      await expect(page.locator('.mood-track')).toHaveCount(0);
       await button.click();
       const photo = page.locator('.picture-sheet img.picture-photo');
       await expect(photo).toBeVisible();
@@ -817,6 +826,9 @@ for (const lang of LANGS) {
       expect(Math.abs(sizes[0]![1]! - sizes[1]![1]!)).toBeLessThanOrEqual(2);
       await expect(compare.locator('.picture-match')).toHaveText(lang === 'vi' ? /^Giống \d+%$/ : /^Match \d+%$/);
       await expect(page.locator('.chat-results .polaroid')).toHaveCount(0);
+      // 067: the streak once on the results card (the chip; no second "Daily client done! Streak" line).
+      await expect(page.locator('.chat-results .rewards-streak')).toHaveCount(1);
+      await expect(page.locator('.chat-results .progress-streak')).toHaveCount(0);
     });
 
     test('every line graded (story 061): a line with a real fix is Try this, a short line is Good, a fine long line is Perfect (only Perfect has confetti)', async ({ page }) => {

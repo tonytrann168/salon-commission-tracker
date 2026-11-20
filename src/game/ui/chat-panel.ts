@@ -1,3 +1,4 @@
+import { moodBand } from '../mood-display';
 import { REFERENCE_CONFIG } from '../reference';
 import { openPictureSheet } from './picture-sheet';
 import { HANGNAIL_CONFIG, saysSorry } from '../hangnail';
@@ -61,12 +62,14 @@ import { burst, centreOf } from './burst';
 const VISIBLE_PHASES = PHASES.filter((phase) => phase !== 'done');
 
 /** Mood color from red (angry) through amber to green (happy). */
-const moodColor = (mood: number): string => `hsl(${Math.round((mood / MOOD_MAX) * 120)}, 70%, 50%)`;
 
 /**
  * Mount the appointment UI into `host`. `portraits.layer` is the Pixi container the client and bestie portraits
  * are drawn on, over the portrait zone. `destroy` removes the UI and the portraits.
  */
+/** 067: how long the picture notice row stays (it also goes when 📷 is opened). */
+const PICTURE_NOTE_MS = 9000;
+
 export function createChatPanel(
   host: HTMLElement,
   appointment: Appointment,
@@ -131,16 +134,21 @@ export function createChatPanel(
   const header = el('div', 'chat-header');
   const phases = el('ol', 'chat-phases');
   const phaseItems = VISIBLE_PHASES.map((phase) => phases.appendChild(el('li', '', t(`chat.phase.${phase}`))));
+  // Story 067 (owner): her mood is a number in a pill, like a phone's battery % ("😊 72"), coloured by band; it
+  // keeps one width beside 📋 and 📷 (the old bar shrank to a stub at 320 px).
   const mood = el('div', 'mood');
-  const track = el('div', 'mood-track');
-  const fill = el('div', 'mood-fill');
+  const pill = el('span', 'mood-pill');
+  const face = el('span', 'mood-face');
+  face.setAttribute('aria-hidden', 'true');
   const value = el('span', 'mood-value');
-  track.appendChild(fill);
-  track.setAttribute('role', 'meter');
-  track.setAttribute('aria-label', t('chat.mood'));
-  track.setAttribute('aria-valuemin', '0');
-  track.setAttribute('aria-valuemax', String(MOOD_MAX));
-  mood.append(el('span', '', t('chat.mood')), track, value);
+  pill.append(face, value);
+  pill.setAttribute('role', 'meter');
+  pill.setAttribute('aria-valuemin', '0');
+  pill.setAttribute('aria-valuemax', String(MOOD_MAX));
+  // The pill says it all (face, number, and "Mood N of 100" for screen readers), so the row fits 320 px with 📋, 📷 and 🔇.
+  pill.title = t('chat.mood');
+  mood.append(pill, el('span', 'mood-spacer'));
+  let shownMood = -1;
   const voice = portraits.voice;
   let speakerOn = voice?.speakReplies ?? false;
   if (voice?.io.canSpeak) {
@@ -612,7 +620,16 @@ export function createChatPanel(
     appointment.clientSays(text);
   };
   // Story 065: she shows her picture as the visit starts (the 📷 stays in the mood row).
-  if (pictureButton) showNudge(t('picture.nudge', clientGrammar(portraits.client.pronoun)));
+  // 067: the picture notice has its own row under the mood bar (never on her chin or under the companion's bubble);
+  // it goes when 📷 is opened, or after a while.
+  if (pictureButton) {
+    const note = el('p', 'picture-note', t('picture.nudge', clientGrammar(portraits.client.pronoun)));
+    note.setAttribute('role', 'status');
+    header.append(note);
+    const drop = (): void => note.remove();
+    pictureButton.addEventListener('click', drop);
+    window.setTimeout(drop, PICTURE_NOTE_MS);
+  }
   const startService = (): void => {
     serviceStarted = true;
     appointment.holdPhase('service');
@@ -931,10 +948,19 @@ export function createChatPanel(
       }
     }
 
-    fill.style.width = `${snapshot.mood}%`;
-    fill.style.backgroundColor = moodColor(snapshot.mood);
+    const band = moodBand(snapshot.mood);
     value.textContent = String(snapshot.mood);
-    track.setAttribute('aria-valuenow', String(snapshot.mood));
+    face.textContent = band.face;
+    pill.dataset.band = band.band;
+    pill.setAttribute('aria-valuenow', String(snapshot.mood));
+    pill.setAttribute('aria-label', t('chat.moodLabel', { n: snapshot.mood }));
+    // A quick tick when it changes (not with reduced motion).
+    if (shownMood !== -1 && shownMood !== snapshot.mood && !prefersReducedMotion()) {
+      pill.classList.remove('tick');
+      void pill.offsetWidth;
+      pill.classList.add('tick');
+    }
+    shownMood = snapshot.mood;
 
     speakingIndex = speaking ? snapshot.transcript.length - 1 : -1;
     clientNodes.clear();

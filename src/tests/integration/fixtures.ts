@@ -59,6 +59,8 @@ export async function seed(target: Page | BrowserContext, lang: Lang, options: S
 export const dailyWith = (clientId: string, scenarioId?: string): Record<string, unknown> => ({ daily: { day: localDay(), clientId, ...(scenarioId ? { scenarioId } : {}) } });
 
 export interface ApiOptions {
+  /** Story 067: her mood change per turn (default +3). */
+  moodDelta?: number;
   /** Story 059: from this client turn (0-based) on, she reports this agreed total. */
   agreedTotal?: { fromTurn: number; dollars: number };
   /** Client replies in order; the phase walks consultation → service → checkout → done one step per turn. */
@@ -88,7 +90,7 @@ export async function mockApi(target: Page | BrowserContext, options: ApiOptions
         // Story 059: a total agreed in the chat from this turn on.
         const agreed = options.agreedTotal && turn >= options.agreedTotal.fromTurn ? { agreedTotal: options.agreedTotal.dollars } : {};
         turn += 1;
-        return json({ reply, moodDelta: 3, phase, unclearEnglish: false, rude: false, ...agreed });
+        return json({ reply, moodDelta: options.moodDelta ?? 3, phase, unclearEnglish: false, rude: false, ...agreed });
       }
       case 'grade-appointment':
         return json(options.grading ?? {

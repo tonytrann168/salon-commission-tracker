@@ -6,9 +6,21 @@
 .chat-phases li.past { background: #ffc4da; color: #3b2a33; }
 .chat-phases li.current { background: #ff5c9a; color: #fff; font-weight: 700; }
 .mood { display: flex; align-items: center; gap: 10px; font-size: 14px; }
-.mood-track { flex: 1; height: 14px; border-radius: 999px; background: #f1dde6; overflow: hidden; }
-.mood-fill { height: 100%; border-radius: 999px; transition: width 0.6s ease, background-color 0.6s ease; }
-.mood-value { min-width: 2.5em; text-align: right; font-weight: 700; }
+/* Story 067: her mood as a number in a pill (like a battery %), coloured by band; the colours are tokens (AA text on
+   each pill colour), so a dark theme can reuse them. One width, so 📋 and 📷 never squeeze it. */
+.chat-panel { --mood-good-bg: #e3f6ea; --mood-good-ink: #1f6b3f; --mood-mid-bg: #fff2d6; --mood-mid-ink: #7a4d00; --mood-low-bg: #ffe1e1; --mood-low-ink: #a3262e; }
+.mood { gap: 8px; }
+.mood-spacer { flex: 1 1 auto; }
+.mood-pill { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 76px; min-height: 36px; padding: 0 10px; border-radius: 999px; box-sizing: border-box; font: 800 18px/1 system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.mood-pill[data-band='good'] { background: var(--mood-good-bg); color: var(--mood-good-ink); box-shadow: inset 0 0 0 2px #9bd4b0; }
+.mood-pill[data-band='mid'] { background: var(--mood-mid-bg); color: var(--mood-mid-ink); box-shadow: inset 0 0 0 2px #f2c46b; }
+.mood-pill[data-band='low'] { background: var(--mood-low-bg); color: var(--mood-low-ink); box-shadow: inset 0 0 0 2px #f2a0a5; }
+.mood-face { font-size: 17px; }
+.mood-value { min-width: 1.8em; text-align: right; }
+.mood-pill.tick { animation: mood-tick 0.35s ease-out; }
+@keyframes mood-tick { 0% { transform: scale(1); } 40% { transform: scale(1.14); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .mood-pill.tick { animation: none; } }
+html[data-motion='reduce'] .mood-pill.tick { animation: none; }
 .portrait-zone { position: relative; flex: 0 0 clamp(96px, 17vh, 160px); pointer-events: none !important; }
 .portrait-zone .station-touch { pointer-events: auto; inset: 0; }
 .chat-log { min-height: 0; flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; background: rgba(255, 244, 248, 0.78); }
@@ -162,3 +174,6 @@ html[data-motion='reduce'] .service-say.pop { animation: none; }
 /* Story 060: 📋 as an icon in the mood row (consultation and checkout), never over her face. */
 .mood .chat-menu-button { position: static; flex: none; min-width: 44px; min-height: 40px; padding: 0 8px; box-shadow: none; }
 .mood .chat-menu-button span { display: none; }
+
+/* 067: the picture notice, its own row under the mood bar. */
+.picture-note { margin: 0; padding: 4px 10px; border-radius: 10px; background: #f3e8ff; color: #3b2a33; font: 600 14px/1.3 system-ui, sans-serif; text-align: center; }

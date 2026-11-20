@@ -802,5 +802,6 @@
   "picture.compareTitle": "Her picture vs your work",
   "picture.yourWork": "Your work",
   "picture.match": "Match {n}%",
-  "picture.nudge": "📷 {CShe} brought a picture: tap 📷."
+  "picture.nudge": "📷 {CShe} brought a picture: tap 📷.",
+  "chat.moodLabel": "Mood {n} of 100"
 }

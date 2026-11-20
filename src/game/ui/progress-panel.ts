@@ -41,7 +41,8 @@ export function createProgressPanel(update: ProgressUpdate, stars: number): HTML
   const streakChip = played?.newDay ? el('p', 'rewards-streak', t('progress.streakUp', { from: Math.max(0, played.streak - 1), to: played.streak })) : null;
   if (streakChip) section.append(streakChip);
   section.append(rankBar(update.save.xp));
-  if (update.streak) section.append(el('p', 'progress-streak', t('daily.doneStreak', { days: update.streak.days })));
+  // 067: one streak line: the chip when the streak moved on today, else the daily challenge's line.
+  if (update.streak && !streakChip) section.append(el('p', 'progress-streak', t('daily.doneStreak', { days: update.streak.days })));
   const skip = el('p', 'rewards-skip', t('payment.skip'));
 
   let done = false;

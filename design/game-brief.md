@@ -64,6 +64,7 @@ Mai, the player's mascot best friend, is the main reason to play and to come bac
 - Phase 3: contests and leaderboards.
 - Phase 4: a shared map of player-owned salons in different locations.
 - Constraint: no free text between players without moderation and safety work in place first.
+- World direction (owner 11-19): grow into a 2D / 2.5D world, not 3D. Order: (1) finish the core game; (2) a decoratable salon room (top-down or angled 2.5D, cozy life-sim style); (3) a town map with your salon and other salons; (4) visiting friends' salons and multiple locations. The nail station and chat stay as close-up screens. 3D only if the game grows big. Keep game logic, configs, state and the AI layer separate from rendering so the front end can change later.
 
 ## Build order
 1. One client, text only, with mood meter and portraits *(built: stories 001, 009)*.
