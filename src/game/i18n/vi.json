@@ -810,7 +810,7 @@
   "audio.silentHint": "🔈 Không nghe tiếng? Kiểm tra nút gạt im lặng bên hông iPhone nha.",
   "pause.button": "Tạm dừng",
   "pause.title": "Tạm dừng",
-  "pause.line": "Khách đợi. Cứ từ từ nha.",
+  "pause.line": "Tạm dừng trò chơi. Cứ từ từ nha.",
   "pause.resume": "Tiếp tục",
   "pause.leave": "Rời cuộc hẹn",
   "pause.leaveNote": "Rời đi: cuộc hẹn này không tính (không sao, XP hay tip; chuỗi ngày vẫn giữ, khách hôm nay vẫn còn đó).",
@@ -821,5 +821,6 @@
   "menu.short.comboClassic": "Combo tay + chân",
   "menu.short.comboGel": "Combo gel + chân spa",
   "menu.comboSaving": "Rẻ hơn ${dollars} so với làm riêng",
-  "service.order.bigToe": "chỉ ngón cái"
+  "service.order.bigToe": "chỉ ngón cái",
+  "mai.answerTitle": "Trả lời câu khách hỏi:"
 }

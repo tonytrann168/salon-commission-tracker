@@ -810,7 +810,7 @@
   "audio.silentHint": "🔈 No sound? Check the silent switch on the side of your iPhone.",
   "pause.button": "Pause the visit",
   "pause.title": "Paused",
-  "pause.line": "The client waits. Take your time.",
+  "pause.line": "Game paused. Take your time.",
   "pause.resume": "Resume",
   "pause.leave": "Leave visit",
   "pause.leaveNote": "Leaving: this visit is not counted (no stars, XP or tips; your streak is safe, and today's client is still there).",
@@ -821,5 +821,6 @@
   "menu.short.comboClassic": "Mani + pedi",
   "menu.short.comboGel": "Gel mani + spa pedi",
   "menu.comboSaving": "Save ${dollars} vs separately",
-  "service.order.bigToe": "big toes only"
+  "service.order.bigToe": "big toes only",
+  "mai.answerTitle": "Answer her question:"
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import stuckJson from '../game/config/stuck.json';
-import { NOT_STUCK, STUCK_CONFIG, asksToRepeat, onClientLine, onTryGrade, parseStuckConfig, questionOf } from '../game/stuck';
+import { NOT_STUCK, STUCK_CONFIG, answersFor, asksToRepeat, onClientLine, onTryGrade, parseStuckConfig, questionOf } from '../game/stuck';
 import { PAUSE_CONFIG, afterLeaving, parsePauseConfig } from '../game/pause';
 import { NEW_SAVE } from '../game/progression';
 import { DEFAULT_CLIENT } from '../game/clients/default-client';
@@ -37,9 +37,20 @@ describe('feeling stuck (the owner\'s real transcript)', () => {
     expect(questionOf(`${'a'.repeat(200)}?`)!.length).toBeLessThanOrEqual(STUCK_CONFIG.questionMaxChars);
   });
 
+  it('story 068b: her help answers the open question directly (short or medium → short / medium)', () => {
+    const lines = answersFor(question);
+    expect(lines.map((l) => l.en)).toEqual(['Short, please.', "Let's do short.", 'Medium would be nice.']);
+    expect(lines[0]!.vi).toBe('Dạ, mình làm ngắn nha.');
+    for (const kind of Object.values(STUCK_CONFIG.answers)) for (const vi of kind.vi) expect(vi).not.toMatch(/(^|[^\p{L}])(em|chị|anh)([^\p{L}]|$)/iu);
+    expect(answersFor('Can I have a picture?').map((l) => l.en)).toEqual(['Yes, please.', 'No, thank you.']);
+    expect(answersFor('What colour do you like?').every((l) => l.en.length > 0)).toBe(true);
+    expect(answersFor('Square, or round?').map((l) => l.en)[0]).toBe('Square, please.');
+  });
+
   it('reads stuck.json and refuses bad values', () => {
     expect(parseStuckConfig(stuckJson).missesBeforeDefault).toBe(STUCK_CONFIG.missesBeforeDefault);
     expect(() => parseStuckConfig({ ...stuckJson, missesBeforeDefault: 0 })).toThrow('stuck.json');
+    expect(() => parseStuckConfig({ ...stuckJson, answers: { ...stuckJson.answers, yesNo: { en: ['Yes.'], vi: [] } } })).toThrow('stuck.json');
   });
 });
 

@@ -40,3 +40,10 @@ html[data-motion='reduce'] .mai-bubble.has-tip, html[data-motion='reduce'] .mai-
    wraps rather than reaching her face; her expression is how the player reads the mood. */
 .mai-layer:not(.over-station) .mai-cue { bottom: 68px; right: 4px; left: calc(var(--face-right, 210px) + 6px); max-width: none; white-space: normal; text-align: center; border-radius: 12px 12px 2px 12px; font-size: 12px; padding: 4px 6px; }
 .mai-layer:not(.over-station)[data-side='left'] .mai-cue { left: calc(var(--face-right, 210px) + 6px); right: 4px; border-radius: 12px 12px 12px 2px; }
+
+/* Story 068b: the answer to her open question, on top of the companion's panel. */
+.mai-answer { background: #fff7d6; border: 2px solid #f2c94c; border-radius: 14px; padding: 10px 12px; margin: 0 0 10px; }
+.mai-answer-question { margin: 0 0 6px; }
+.mai-answer-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.mai-answer-line { font-size: 18px; display: grid; }
+.mai-answer-vi { font-size: 16px; color: #6b4a57; }

@@ -856,6 +856,10 @@ for (const lang of LANGS) {
       // "Got it." is graded Try this (a miss): the companion opens on her own; the chip shows the better line.
       await send('Got it.');
       await expect(page.locator('.mai-panel')).not.toHaveClass(/hidden/);
+      // Story 068b: the companion's top card answers HER question (short or medium), with no praise header.
+      const top = page.locator('.mai-panel > :nth-child(2)');
+      await expect(top).toContainText(lang === 'vi' ? 'Trả lời câu khách hỏi:' : 'Answer her question:');
+      await expect(top).toContainText(/\b(short|medium)\b/i);
       const chip = page.locator('.chat-bubble.player .line-grade.tappable').last();
       await expect(chip).toBeVisible();
       await page.locator('.mai-panel').evaluate((panel) => panel.classList.add('hidden'));
@@ -883,6 +887,7 @@ for (const lang of LANGS) {
       await page.locator('.path-screen .picker-daily').click();
       await page.locator('.mood .pause-button').click();
       await expect(page.locator('.pause-overlay')).toBeVisible();
+      await expect(page.locator('.pause-overlay')).toContainText(lang === 'vi' ? 'Tạm dừng trò chơi. Cứ từ từ nha.' : 'Game paused. Take your time.');
       await page.locator('.pause-resume').click();
       await expect(page.locator('.pause-overlay')).toBeHidden();
       await expect(page.locator('.chat-input')).toBeVisible();

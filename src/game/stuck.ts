@@ -11,6 +11,12 @@ export interface StuckConfig {
   missesBeforeDefault: number;
   stuckMood: number;
   questionMaxChars: number;
+  /** Story 068b: words that start a yes/no question. */
+  yesNoStart: string[];
+  /** Story 068b: direct answers, per kind of question ({X}/{x} = her choice). */
+  answers: Record<'choice' | 'yesNo' | 'open', { en: string[]; vi: string[] }>;
+  /** Story 068b: Vietnamese for common choices. */
+  words: Record<string, string>;
 }
 
 export function parseStuckConfig(raw: unknown): StuckConfig {
@@ -29,7 +35,18 @@ export function parseStuckConfig(raw: unknown): StuckConfig {
       return fail(`"sayAgain[${i}]" is not a valid pattern`);
     }
   }) : fail('"sayAgain" needs patterns');
+  const lines = (v: unknown, what: string): string[] => (Array.isArray(v) && v.length > 0 && v.every((x) => typeof x === 'string' && x.trim()) ? (v as string[]) : fail(`"${what}" needs lines`));
+  const a = (c.answers ?? {}) as Record<string, Record<string, unknown> | undefined>;
+  const kind = (k: 'choice' | 'yesNo' | 'open') => {
+    const en = lines(a[k]?.en, `answers.${k}.en`);
+    const vi = lines(a[k]?.vi, `answers.${k}.vi`);
+    return vi.length === en.length ? { en, vi } : fail(`"answers.${k}" needs as many vi lines as en lines`);
+  };
+  const words = c.words && typeof c.words === 'object' && Object.values(c.words).every((w) => typeof w === 'string') ? (c.words as Record<string, string>) : fail('"words" must map words to Vietnamese');
   const config = {
+    yesNoStart: lines(c.yesNoStart, 'yesNoStart').map((w) => w.toLowerCase()),
+    answers: { choice: kind('choice'), yesNo: kind('yesNo'), open: kind('open') },
+    words,
     sayAgain,
     missesForHelp: whole('missesForHelp', 1, 5),
     missesBeforeDefault: whole('missesBeforeDefault', 1, 6),
@@ -84,4 +101,35 @@ export function onClientLine(state: StuckState, line: string, config: StuckConfi
 /** The player's reply was graded "Try this" while her question waits: a miss. */
 export function onTryGrade(state: StuckState, config: StuckConfig = STUCK_CONFIG): StuckStep {
   return state.question ? step({ ...state, misses: state.misses + 1 }, state, config) : { state, help: false, pickForPlayer: false };
+}
+
+/** Story 068b: a ready answer to her question: the English line to say, and its Vietnamese. */
+export interface Answer {
+  en: string;
+  vi: string;
+}
+
+const cap = (w: string): string => w.charAt(0).toUpperCase() + w.slice(1);
+const fill = (line: string, word: string): string => line.replaceAll('{X}', cap(word)).replaceAll('{x}', word);
+
+/**
+ * Story 068b: direct answers to her open question (the companion's top card on a miss). "Short or medium nails,
+ * please?" → "Short, please." / "Let's do short." / "Medium would be nice."; a yes/no question → "Yes, please." /
+ * "No, thank you."; anything else → a polite holding line. Never praise; always an answer.
+ */
+export function answersFor(question: string, config: StuckConfig = STUCK_CONFIG): Answer[] {
+  const q = question.replace(/…$/, '').trim();
+  // A choice: "<a> or <b>" (last word before "or", first word after it).
+  const choice = q.match(/([A-Za-z]+)\s*,?\s+or\s+([A-Za-z]+)/i);
+  if (choice) {
+    const picks = [choice[1]!, choice[1]!, choice[2]!].map((w) => w.toLowerCase());
+    return config.answers.choice.en.map((en, i) => {
+      const word = picks[i % picks.length] as string;
+      const viWord = config.words[word] ?? word;
+      return { en: fill(en, word), vi: fill(config.answers.choice.vi[i] as string, viWord) };
+    });
+  }
+  const first = q.toLowerCase().match(/^[a-z']+/)?.[0] ?? '';
+  const kind = config.yesNoStart.includes(first) ? 'yesNo' : 'open';
+  return config.answers[kind].en.map((en, i) => ({ en, vi: config.answers[kind].vi[i] as string }));
 }

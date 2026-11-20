@@ -1,5 +1,5 @@
 {
-  "_note": "Story 068 (owner playtest 5: feeling stuck). When the client asks something, a small 'waiting for' line shows her question (up to questionMaxChars). A miss is her asking to hear it again (sayAgain patterns, case-insensitive) or the player's reply graded 'Try this'. After missesForHelp misses on the same question the companion opens with her tip (or a hint with a ready line). After missesBeforeDefault misses the client picks a sensible answer herself and moves on (the next turn tells the AI so), with a gentle stuckMood dip.",
+  "_note": "Story 068 (owner playtest 5: feeling stuck). When the client asks something, a small 'waiting for' line shows her question (up to questionMaxChars). A miss is her asking to hear it again (sayAgain patterns, case-insensitive) or the player's reply graded 'Try this'. After missesForHelp misses on the same question the companion opens with her tip (or a hint with a ready line). After missesBeforeDefault misses the client picks a sensible answer herself and moves on (the next turn tells the AI so), with a gentle stuckMood dip. Story 068b: when the companion helps on a miss, her top card answers the client's OPEN QUESTION directly. A choice question ('short or medium?') gives one line per choice from answers.choice ({X} = the choice, {x} lower case); a yes/no question (starts with a yesNoStart word) gives answers.yesNo; anything else gives answers.open. words gives the Vietnamese for common choices (shown under the English line in Vietnamese). The Vietnamese lines never hardcode chị/em/anh (the client's title varies).",
   "sayAgain": [
     "say (that|it) again",
     "(can|could) you repeat",
@@ -12,5 +12,71 @@
   "missesForHelp": 1,
   "missesBeforeDefault": 2,
   "stuckMood": -2,
-  "questionMaxChars": 70
+  "questionMaxChars": 70,
+  "yesNoStart": [
+    "do",
+    "does",
+    "did",
+    "are",
+    "is",
+    "can",
+    "could",
+    "would",
+    "will",
+    "should",
+    "may",
+    "have",
+    "shall"
+  ],
+  "answers": {
+    "choice": {
+      "en": [
+        "{X}, please.",
+        "Let's do {x}.",
+        "{X} would be nice."
+      ],
+      "vi": [
+        "Dạ, mình làm {x} nha.",
+        "Dạ, làm {x} nha.",
+        "{X} được đó."
+      ]
+    },
+    "yesNo": {
+      "en": [
+        "Yes, please.",
+        "No, thank you."
+      ],
+      "vi": [
+        "Dạ, vâng ạ.",
+        "Dạ, không cần đâu ạ."
+      ]
+    },
+    "open": {
+      "en": [
+        "Let me check for you, one moment.",
+        "Good question! Let me show you."
+      ],
+      "vi": [
+        "Để mình xem, chờ chút nha.",
+        "Hỏi hay quá! Để mình chỉ xem."
+      ]
+    }
+  },
+  "words": {
+    "short": "ngắn",
+    "medium": "vừa",
+    "long": "dài",
+    "square": "vuông",
+    "round": "tròn",
+    "oval": "bầu",
+    "almond": "hạnh nhân",
+    "red": "đỏ",
+    "pink": "hồng",
+    "nude": "màu nude",
+    "white": "trắng",
+    "gel": "gel",
+    "regular": "thường",
+    "hot": "nóng",
+    "warm": "ấm"
+  }
 }

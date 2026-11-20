@@ -53,8 +53,8 @@ export interface MaiBubble {
   queueTip: (tip: Tip) => boolean;
   /** Hint and Help me say it only while the player can type. */
   setEnabled: (enabled: boolean) => void;
-  /** Story 068: the player seems stuck: open with her waiting tip (a ready line), or ask for a hint. */
-  helpNow: () => void;
+  /** Story 068/068b: the player missed her question: open with a card that answers it (older tips below). */
+  helpNow: (answer?: { question: string; lines: { en: string; vi: string }[] }) => void;
   /** Story 057b: a face for a moment (cheering for a perfect line, sad when a client walks out), then back. */
   react: (expression: MascotExpression, ms: number) => void;
   destroy: () => void;
@@ -93,6 +93,31 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
     bubble.setAttribute('aria-label', queue.unseen > 0 ? t('mai.openTips', { name: companionName(), count: queue.unseen }) : t('mai.open', { name: companionName() }));
     bubble.setAttribute('aria-expanded', String(open));
     layer.dataset.side = side;
+  };
+
+  // Story 068b: the answer card for her open question (on top, until the panel closes).
+  let answerCard: HTMLElement | null = null;
+  const answerView = (answer: { question: string; lines: { en: string; vi: string }[] }): HTMLElement => {
+    const card = el('div', 'mai-answer');
+    const asked = el('p', 'bestie-text mai-answer-question');
+    const q = el('span', '', `“${answer.question}”`);
+    q.lang = 'en';
+    asked.append(el('span', 'bestie-label', `${t('mai.answerTitle')} `), q);
+    const list = el('ul', 'mai-answer-lines');
+    for (const line of answer.lines) {
+      const item = el('li', 'mai-answer-line');
+      const en = el('strong', '', line.en);
+      en.lang = 'en';
+      item.append(en);
+      if (options.language === 'vi') {
+        const vi = el('small', 'mai-answer-vi', line.vi);
+        vi.lang = 'vi';
+        item.append(vi);
+      }
+      list.append(item);
+    }
+    card.append(asked, list);
+    return card;
   };
 
   const hintBox = el('div', 'mai-hint');
@@ -146,8 +171,9 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
     });
     actions.append(help);
     // Actions first: on a small phone they stay in view without scrolling the panel.
-    panel.replaceChildren(header, actions, hintBox, ...(queue.tips.length > 0 ? [tips] : []));
-    if (queue.tips.length === 0 && hintBox.childElementCount === 0) hintBox.replaceChildren(el('p', 'bestie-text mai-empty', t('mai.noTips')));
+    // Story 068b: the answer to her question comes first (above the buttons); older tips stay below, never on top.
+    panel.replaceChildren(header, ...(answerCard ? [answerCard] : []), actions, hintBox, ...(queue.tips.length > 0 ? [tips] : []));
+    if (!answerCard && queue.tips.length === 0 && hintBox.childElementCount === 0) hintBox.replaceChildren(el('p', 'bestie-text mai-empty', t('mai.noTips')));
   };
 
   const setExpression = (next: MascotExpression): void => {
@@ -171,6 +197,7 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
     } else {
       hintRequest++;
       expression = 'idle';
+      answerCard = null;
     }
     panel.classList.toggle('hidden', !open);
     drawBubble();
@@ -278,7 +305,14 @@ export function createMaiBubble(options: MaiBubbleOptions): MaiBubble {
       }
       return true;
     },
-    helpNow() {
+    helpNow(answer) {
+      if (answer && answer.lines.length > 0) {
+        answerCard = answerView(answer);
+        if (!open) setOpen(true);
+        else drawPanel();
+        if (options.speak) options.speak(answer.lines.map((l) => l.en).join(' '), 'en');
+        return;
+      }
       const hadTips = queue.unseen > 0;
       if (!open) setOpen(true);
       if (!hadTips) askHint();

@@ -1,5 +1,5 @@
 import { PEDICURE_LENGTHS } from '../nail-art/design';
-import { NOT_STUCK, STUCK_CONFIG, onClientLine, onTryGrade } from '../stuck';
+import { NOT_STUCK, STUCK_CONFIG, onClientLine, onTryGrade, answersFor } from '../stuck';
 import type { StuckState, StuckStep } from '../stuck';
 import { moodBand } from '../mood-display';
 import { REFERENCE_CONFIG } from '../reference';
@@ -1126,7 +1126,8 @@ export function createChatPanel(
   };
   const stuckStep = (next: StuckStep): void => {
     stuck = next.state;
-    if (next.help) mai?.helpNow();
+    // Story 068b: her help answers the open question directly (not a tip about the last line).
+    if (next.help) mai?.helpNow(next.state.question ? { question: next.state.question, lines: answersFor(next.state.question) } : undefined);
     if (next.pickForPlayer) {
       appointment.adjustMood(STUCK_CONFIG.stuckMood);
       portraits.onStuck?.();
