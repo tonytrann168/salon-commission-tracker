@@ -355,5 +355,11 @@
   ],
   "fps": {
     "target": 60
+  },
+  "rub": {
+    "_note": "Story 073 (owner: still hard to erase the polish): Rub clears skin spill on EVERY nail within its radius of the touch (never the paint on a nail). The radius is cleanupRadius x scale in hand units, and never under minPx screen pixels whatever the zoom. The cotton pad draws padLiftPx above the finger (a ring marks the real clean point), so the player sees the spill vanish.",
+    "scale": 2,
+    "minPx": 28,
+    "padLiftPx": 40
   }
 }

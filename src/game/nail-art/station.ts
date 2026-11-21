@@ -1,5 +1,5 @@
 import { Container, Graphics, Rectangle } from 'pixi.js';
-import { NAIL_ART_CONFIG, lengthReach, mirroredFingers, withLength, addSpill, cleanUp, dab, removeNail, tidyNail, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid, wipeCells } from './design';
+import { NAIL_ART_CONFIG, lengthReach, mirroredFingers, withLength, addSpill, dab, removeNail, rubRadius, rubSpill, spillCellCentre, tidyNail, decorate, emptyDesign, insidePolygon, nailOutline, paint, paletteColor, spillGrid } from './design';
 import type { Decoration, FingerConfig, HandConfig, NailDesign, NailShape, StickerKind } from './design';
 
 /**
@@ -34,6 +34,8 @@ export interface StationView {
   setDesign(design: NailDesign): void;
   /** Pointer down/move at (x, y) in the station rectangle. Returns the new design (or the same one if nothing changed). */
   pointer(x: number, y: number, phase: 'down' | 'move', tool: StationTool, sticker: StickerKind): NailDesign;
+  /** Story 073: Rub's reach on screen (pixels), for the ring at the clean point. */
+  rubRadiusPx(): number;
   /** Story 017: which hand is on the station (0 right, 1 left). The design's nails 0-4 are the right hand, 5-9 the left. */
   setHand(hand: 0 | 1): void;
   /** Story 050: where the fingers and nails are, in the container's own space (the photo of the finished set). */
@@ -93,6 +95,25 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
   /** The nail the current stroke started on (-1: none), and the stroke's last point. */
   let strokeNail = -1;
   let last: { x: number; y: number } | null = null;
+
+  /** Story 073: a nail-local point back in the station rectangle (pixels). */
+  const fromNail = (finger: FingerConfig, nx: number, ny: number): { x: number; y: number } => {
+    const a = rad(finger.angle);
+    const u = nx - finger.nail.w / 2;
+    const q = ny - finger.nail.h / 2;
+    return { x: offsetX + (finger.x + Math.cos(a) * u - Math.sin(a) * q) * scale, y: offsetY + (finger.y + Math.sin(a) * u + Math.cos(a) * q) * scale };
+  };
+  /** Story 073: spill only lands where the player can reach it: inside the visible station, never off its edge. */
+  const onScreen = (finger: FingerConfig, cells: readonly number[]): number[] => {
+    if (!lastLayout) return [...cells];
+    const [, , w, h] = lastLayout;
+    const inset = 4;
+    return cells.filter((cell) => {
+      const c = spillCellCentre(cell, finger.nail);
+      const p = fromNail(finger, c.x, c.y);
+      return p.x >= inset && p.x <= w - inset && p.y >= inset && p.y <= h - inset;
+    });
+  };
 
   /** A point in the station rectangle, in the given nail's own units (0..w across, 0..h from tip to cuticle). */
   const toNail = (finger: FingerConfig, px: number, py: number): { x: number; y: number } => {
@@ -389,6 +410,9 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       const bottom = Math.max(a.y + a.height, b.y + b.height) - origin.y + padding;
       return new Rectangle(Math.max(0, left), Math.max(0, top), right - Math.max(0, left), bottom - Math.max(0, top));
     },
+    rubRadiusPx() {
+      return rubRadius(tools.cleanupRadius, scale) * scale;
+    },
     nailBoxes() {
       return views.map((v) => {
         const { w, h } = v.finger.nail;
@@ -445,6 +469,11 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
       const decoration: Decoration = { nail: firstNail() + onNail, x: p.x / v.finger.nail.w, y: p.y / v.finger.nail.h, kind: tool === 'gem' ? 'gem' : sticker };
       return decorate(design, decoration);
     }
+    // Story 073: Rub wipes skin spill on every nail within its (generous) reach, never the paint on a nail.
+    if (tool === 'cleanup') {
+      const radius = rubRadius(tools.cleanupRadius, scale);
+      return rubSpill(design, views.map((v, i) => ({ nail: firstNail() + i, size: v.finger.nail, x: (local[i] as { x: number }).x, y: (local[i] as { y: number }).y })), radius);
+    }
     // A stroke stays on its nail while the brush is on it or the skin around it; it moves on to another nail it reaches.
     if (phase === 'down') strokeNail = onNail >= 0 ? onNail : views.findIndex((_, i) => near(i));
     else if (strokeNail < 0 || !near(strokeNail)) strokeNail = onNail;
@@ -452,10 +481,9 @@ export function createStationView(initial: NailDesign = emptyDesign(), tools: St
     if (strokeNail < 0) return design;
     const v = views[strokeNail] as NailView;
     const p = local[strokeNail] as { x: number; y: number };
-    if (tool === 'cleanup') return cleanUp(design, firstNail() + strokeNail, wipeCells(v.finger.nail, p.x, p.y, tools.cleanupRadius));
     if (!design.base) return design;
     const hit = dab(design.shape, v.finger.nail, p.x, p.y, tools.brushRadius);
-    return addSpill(paint(design, firstNail() + strokeNail, hit.paint), firstNail() + strokeNail, hit.spill);
+    return addSpill(paint(design, firstNail() + strokeNail, hit.paint), firstNail() + strokeNail, onScreen(v.finger, hit.spill));
   }
   view.setDesign(initial);
   return view;

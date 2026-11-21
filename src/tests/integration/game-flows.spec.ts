@@ -119,6 +119,16 @@ for (const lang of LANGS) {
       await expect(page.locator('.pedi-prep')).toHaveCount(0);
       await page.locator('.station-step[data-step=shape]').click();
       expect(await page.locator('.station-shape').count()).toBeGreaterThan(2);
+      // 071b review: paint the hands hot pink (the hands' photo must keep it after the station swaps to the foot).
+      await page.locator('.station-step[data-step=colour]').click();
+      await page.locator('.station-swatch').nth(2).click();
+      const zone = (await page.locator('.station-touch, .chat-panel .zone').first().boundingBox())!;
+      for (let pass = 0; pass < 6; pass++) {
+        await page.mouse.move(zone.x + zone.width * 0.2, zone.y + zone.height * (0.3 + pass * 0.05));
+        await page.mouse.down();
+        await page.mouse.move(zone.x + zone.width * 0.85, zone.y + zone.height * (0.3 + pass * 0.05), { steps: 12 });
+        await page.mouse.up();
+      }
       // Done on the hands: no checkout; she asks for her feet; the foot comes up with the soak and scrub first.
       await page.locator('.station-done').click();
       await expect(page.locator('.chat-panel')).toHaveAttribute('data-stage', 'feet', { timeout: 6_000 });
@@ -148,6 +158,22 @@ for (const lang of LANGS) {
       await expect(both.locator('.combo-photo img')).toHaveCount(2);
       await expect(both.locator('.combo-match')).toHaveCount(2);
       await expect(both).toContainText(lang === 'vi' ? 'Khớp chung' : 'Overall match');
+      // 071b review: the hands' photo has the hot-pink polish on it (taken before the station became the foot).
+      const pinkPixels = await both.locator('.combo-photo img').first().evaluate(async (img: HTMLImageElement) => {
+        await img.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const g = canvas.getContext('2d')!;
+        g.drawImage(img, 0, 0);
+        const data = g.getImageData(0, 0, canvas.width, canvas.height).data;
+        let n = 0;
+        for (let i = 0; i < data.length; i += 4) if (data[i]! > 220 && data[i + 1]! < 120 && data[i + 2]! > 100 && data[i + 2]! < 180) n++;
+        return n;
+      });
+      expect(pinkPixels).toBeGreaterThan(200);
+      // The owner: My work keeps both photos of a combo.
+      await expect.poll(() => page.evaluate(() => (JSON.parse(localStorage.getItem('salon.gallery.v1') ?? '[]') as unknown[]).length)).toBe(2);
     });
 
     test('feet bookings (story 071): every day after two visits books a pedicure or combo; testers can choose the next one', async ({ page }) => {
@@ -325,6 +351,8 @@ for (const lang of LANGS) {
       await expect(page.locator('.station-controls .station-clean-mode')).toHaveAttribute('aria-pressed', 'true');
       await expect(page.locator('.station-row .station-tidy')).toBeVisible();
       await page.locator('.station-row .station-tidy').click();
+      // Story 073: several nails with polish on the skin: they pulse, so the player sees where to tap.
+      expect(await page.locator('.station-touch .station-dirty').count()).toBeGreaterThanOrEqual(2);
       const busy = await touch.evaluate((node) => {
         const b = node.getBoundingClientRect();
         for (let y = b.top + 4; y < b.bottom; y += 4) {
@@ -339,6 +367,51 @@ for (const lang of LANGS) {
       await expect(page.locator('.station-tools.busy')).toHaveCount(0, { timeout: 4_000 });
       await expect(page.locator('.station-status')).toContainText(lang === 'vi' ? 'Viền sạch' : 'Edges clean');
     });
+
+    for (const where of ['hand', 'foot'] as const) {
+      test(`rubbing the polish off (story 073, ${where}): at 320 px every spill is reachable and one rub pass clears it`, async ({ page }) => {
+        test.setTimeout(90_000);
+        await page.setViewportSize({ width: 320, height: 568 });
+        await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('grace', where === 'foot' ? 'pedicure-day' : 'party-tonight') } });
+        await mockApi(page);
+        await page.goto('/');
+        await page.locator('.title-menu > .chat-button').first().click();
+        await page.locator('.picker-daily').click();
+        await page.locator('.chat-input').fill(where === 'foot' ? 'Of course! Please put your feet in the warm water.' : 'Hello! Welcome. What colour would you like?');
+        await page.locator('.chat-form button[type=submit]').click();
+        if (where === 'foot') {
+          await page.locator('.pedi-start').click();
+          await expect(page.locator('.pedi-prep[data-step=scrubbing]')).toBeVisible({ timeout: 10_000 });
+          while (await page.locator('.pedi-scrub').count()) await page.locator('.pedi-scrub').click();
+          await expect(page.locator('.pedi-prep')).toHaveCount(0, { timeout: 6_000 });
+        }
+        await expect(page.locator('.station-tools')).toBeVisible({ timeout: 10_000 });
+        // A quick, messy job: polish everywhere, right up to the screen's left edge by the thumb.
+        await page.locator('.station-step[data-step=colour]').click();
+        await page.locator('.station-swatch').nth(3).click();
+        await paintEverything(page);
+        const touch = page.locator('.station-touch');
+        expect(Number(await touch.getAttribute('data-spill'))).toBeGreaterThan(20);
+        // Rub: one pass of finger strokes 20 px apart over the station (the rub reaches at least 28 px each way).
+        await page.locator('.station-controls .station-clean-mode').click();
+        await expect(page.locator('.station-row .station-tool').first()).toHaveAttribute('aria-pressed', 'true');
+        const ring = await touch.evaluate((node) => {
+          const box = node.getBoundingClientRect();
+          const fire = (type: string, x: number, y: number) => node.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 9, clientX: x, clientY: y, buttons: 1 }));
+          let ringSize = 0;
+          for (let y = box.top + 4; y < box.bottom; y += 20) {
+            fire('pointerdown', box.left + 1, y);
+            for (let x = box.left + 1; x < box.right; x += 6) fire('pointermove', x, y);
+            const r = node.querySelector<HTMLElement>('.station-rub-ring.show');
+            if (r) ringSize = r.getBoundingClientRect().width;
+            fire('pointerup', box.right - 1, y);
+          }
+          return ringSize;
+        });
+        expect(ring).toBeGreaterThanOrEqual(56);
+        await expect(touch).toHaveAttribute('data-spill', '0');
+      });
+    }
 
     test('celebrate the set (story 050): her nails as a polaroid first, then the payment; the photo is kept in My work and can be saved', async ({ page }) => {
       await seed(page, lang, { save: { xp: 100, appointments: 3, badges: ['first-client'], ...dailyWith('ana') } });

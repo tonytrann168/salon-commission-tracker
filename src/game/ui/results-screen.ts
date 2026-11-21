@@ -235,6 +235,8 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
       : photo
       ? [createPolaroid({ photo, band, caption: t('results.photoCaption', { name: clientName, date: new Date().toLocaleDateString(getLanguage() === 'vi' ? 'vi-VN' : 'en-US', { day: 'numeric', month: 'short' }) }), ...(band === 'tough' ? { note: t('results.photoTough') } : {}) })]
       : [];
+    // Story 071 (owner): My work keeps both photos of a combo (the hands first, then the feet).
+    if (photo && handsPhoto && options.combo) options.onPhoto?.(handsPhoto, score.stars);
     if (photo) options.onPhoto?.(photo, score.stars);
     // Story 057c: an extra marked `results-top` (the rewards count-up) comes first, before the polaroid.
     const extraNodes = extras ? extras(grading, score) : [];

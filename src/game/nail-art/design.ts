@@ -70,6 +70,8 @@ export interface NailArtConfig {
   spill: { marginCells: number; forgiveRing: number; zeroNeatnessAt: number };
   /** The Clean up tool's radius, in hand units. */
   cleanupRadius: number;
+  /** Story 073: Rub's reach: cleanupRadius x scale (hand units), never under minPx on screen; the pad draws padLiftPx up. */
+  rub: { scale: number; minPx: number; padLiftPx: number };
   /** Story 052: Clean edges (one nail's spill in one tap) takes this long. */
   tidy: { seconds: number };
   maxDecorationsPerNail: number;
@@ -202,6 +204,10 @@ export function parseNailArtConfig(raw: unknown): NailArtConfig {
     brushRadius: num(raw.brushRadius, 'brushRadius', 0.5, 20),
     spill: { marginCells: num(spill.marginCells, 'spill.marginCells', 0, 12), forgiveRing: num(spill.forgiveRing, 'spill.forgiveRing', 0, 6), zeroNeatnessAt: num(spill.zeroNeatnessAt, 'spill.zeroNeatnessAt', 0.05, 2) },
     cleanupRadius: num(raw.cleanupRadius, 'cleanupRadius', 0.5, 30),
+    rub: (() => {
+      const r = isRecord(raw.rub) ? raw.rub : fail('"rub" must be an object');
+      return { scale: num(r.scale, 'rub.scale', 1, 5), minPx: num(r.minPx, 'rub.minPx', 0, 80), padLiftPx: num(r.padLiftPx, 'rub.padLiftPx', 0, 120) };
+    })(),
     tidy: { seconds: num(isRecord(raw.tidy) ? raw.tidy.seconds : undefined, 'tidy.seconds', 0, 10) },
     maxDecorationsPerNail: num(raw.maxDecorationsPerNail, 'maxDecorationsPerNail', 0, 10),
     fullCoverage: num(raw.fullCoverage, 'fullCoverage', 0.5, 1),
@@ -434,3 +440,35 @@ export function tidyNail(design: NailDesign, nail: number): NailDesign {
   if ((design.spill[nail]?.length ?? 0) === 0) return design;
   return { ...design, spill: design.spill.map((list, index) => (index === nail ? [] : list)) };
 }
+
+/**
+ * Story 073: Rub's reach in hand units: cleanupRadius x rub.scale, but never under rub.minPx screen pixels (at
+ * `pxPerUnit`, the station's zoom), so a small phone or a zoomed-out hand still rubs a finger-sized area.
+ */
+export function rubRadius(cleanupRadius: number, pxPerUnit: number, config: NailArtConfig = NAIL_ART_CONFIG): number {
+  return Math.max(cleanupRadius * config.rub.scale, config.rub.minPx / Math.max(0.01, pxPerUnit));
+}
+
+/**
+ * Story 073: one Rub point: skin spill within `radius` of the touch is wiped on EVERY nail it reaches (each hit is the
+ * touch in that nail's own units). Only spill (skin) cells go: the paint on a nail is never touched.
+ */
+export function rubSpill(design: NailDesign, hits: readonly { nail: number; size: { w: number; h: number }; x: number; y: number }[], radius: number, config: NailArtConfig = NAIL_ART_CONFIG): NailDesign {
+  let next = design;
+  for (const hit of hits) {
+    if ((next.spill[hit.nail]?.length ?? 0) === 0) continue;
+    next = cleanUp(next, hit.nail, wipeCells(hit.size, hit.x, hit.y, radius, config));
+  }
+  return next;
+}
+
+/** Story 073: the nail-local centre of a spill cell (for keeping spills on screen). */
+export function spillCellCentre(cell: number, nail: { w: number; h: number }, config: NailArtConfig = NAIL_ART_CONFIG): { x: number; y: number } {
+  const grid = spillGrid(config);
+  const c = cell % grid.cols;
+  const r = Math.floor(cell / grid.cols);
+  return { x: (c - grid.margin + 0.5) * (nail.w / config.grid.cols), y: (r - grid.margin + 0.5) * (nail.h / config.grid.rows) };
+}
+
+/** Story 073: the nails that have polish on the skin (for Clean edges: one → it goes there by itself). */
+export const dirtyNails = (design: NailDesign): number[] => design.spill.flatMap((cells, nail) => (cells.length > 0 ? [nail] : []));

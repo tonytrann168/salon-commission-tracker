@@ -163,3 +163,14 @@ html[data-motion='reduce'] .station-controls .station-fix.pulse { animation: non
 @keyframes hangnail-pulse { 0%, 100% { transform: scale(0.85); opacity: 0.9; } 50% { transform: scale(1.15); opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .hangnail.pulse::before { animation: none; } }
 html[data-motion='reduce'] .hangnail.pulse::before { animation: none; }
+
+/* Story 073: the rub's real clean point and reach (the pad draws above the finger). */
+.station-rub-ring { position: absolute; left: 0; top: 0; border: 2px dashed rgba(255, 255, 255, 0.95); border-radius: 50%; box-shadow: 0 0 0 1px rgba(90, 46, 67, 0.35); pointer-events: none; opacity: 0; z-index: 2; }
+.station-rub-ring.show { opacity: 1; }
+/* Story 073: Clean edges with several nails to choose from: the dirty nails pulse. */
+.station-dirty { position: absolute; border: 3px solid #ff5c9a; border-radius: 12px; pointer-events: none; z-index: 2; animation: station-dirty-pulse 1s ease-in-out infinite; }
+@keyframes station-dirty-pulse { 0%, 100% { opacity: 0.35; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
+/* Story 073: a nail's skin is clean: a tiny ✓ pop. */
+.station-clean-pop { position: absolute; transform: translate(-50%, -100%); padding: 0 6px; border-radius: 10px; background: #2f9e5b; color: #fff; font: 700 16px/1.4 system-ui, sans-serif; pointer-events: none; z-index: 3; animation: station-clean-pop 0.9s ease-out forwards; }
+@keyframes station-clean-pop { 0% { opacity: 0; transform: translate(-50%, -60%) scale(0.6); } 20% { opacity: 1; transform: translate(-50%, -110%) scale(1.15); } 100% { opacity: 0; transform: translate(-50%, -160%) scale(1); } }
+html[data-motion='reduce'] .station-dirty { animation: none; opacity: 1; }

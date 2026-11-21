@@ -5,7 +5,11 @@ import { clientGrammar } from '../types';
 import type { ClientPronoun } from '../types';
 import type { Container, Rectangle } from 'pixi.js';
 import { getLanguage, t } from '../i18n';
-import { NAIL_ART_CONFIG, NAIL_LENGTHS, emptyDesign, limbFor, nailsFor, paletteColor, removeAll } from '../nail-art/design';
+import { NAIL_ART_CONFIG, NAIL_LENGTHS, dirtyNails, emptyDesign, limbFor, nailsFor, paletteColor, removeAll, tidyNail } from '../nail-art/design';
+import { emitUiSound } from '../ui-sounds';
+
+/** Story 073: rubbing makes a soft swish at most this often. */
+const RUB_SOUND_MS = 160;
 import type { FixKind } from '../fix-requests';
 import type { NailDesign, NailLength, NailRequest, NailShape, PaletteColor, StickerKind } from '../nail-art/design';
 import { describeDesign, matchDesign } from '../nail-art/match';
@@ -184,12 +188,15 @@ export function createNailStation(options: NailStationOptions): NailStation {
     if (history.length > 20) history.shift();
   };
   let busy = false;
+  let spillMark: HTMLElement | null = null;
   const setDesign = (next: NailDesign): void => {
     if (next === design) return;
     // Polish landed on the skin: say so once per slip, and point at Clean up (owner, 2026-11-10).
     if (next.spill !== design.spill && tool !== 'cleanup' && !status.classList.contains('show') && spillCount(next) > spillCount(design)) say(t('station.spill'));
     design = next;
     view.setDesign(design);
+    // Story 073: the polish left on the skin, as a number (a test and assistive hook; never shown).
+    spillMark?.setAttribute('data-spill', String(spillCount(design)));
     // Story 047: the client's note about the nails is rebuilt at most every 250 ms (and when the finger lifts), not on
     // every movement.
     if (changeTimer === 0) changeTimer = window.setTimeout(flushChange, 250);
@@ -370,6 +377,49 @@ export function createNailStation(options: NailStationOptions): NailStation {
     if (tool === 'gradient' || tool === 'cleanup' || tool === 'remover' || tool === 'tidy') say(t(tool === 'gradient' ? 'station.gradientOn' : tool === 'cleanup' ? 'station.cleanupOn' : tool === 'tidy' ? 'station.tidyOn' : 'station.removerOn'));
     else status.classList.remove('show');
     refresh();
+    // Story 073: Clean edges in one tap: with one nail on this hand/foot to clean it goes straight there; with
+    // several, the dirty nails pulse so the player sees where to tap.
+    if (tool === 'tidy') {
+      const dirty = dirtyOnHand();
+      if (dirty.length === 1) runTidy(tidyNail(design, dirty[0] as number));
+      else markDirty(dirty);
+    } else markDirty([]);
+  }
+
+  /** Story 073: this hand's (or foot's) nails with polish on the skin, as design indexes. */
+  function dirtyOnHand(): number[] {
+    const per = limbFor(options.request).fingers.length;
+    return dirtyNails(design).filter((nail) => Math.floor(nail / per) === hand);
+  }
+  /** Story 073: a soft pulsing ring on each dirty nail (Clean edges with several to choose from). */
+  const dirtyMarks: HTMLElement[] = [];
+  function markDirty(nails: number[]): void {
+    dirtyMarks.splice(0).forEach((mark) => mark.remove());
+    const boxes = view.nailBoxes();
+    const per = limbFor(options.request).fingers.length;
+    for (const nail of nails) {
+      const box = boxes[nail % per];
+      if (!box) continue;
+      const mark = el('span', 'station-dirty');
+      mark.setAttribute('aria-hidden', 'true');
+      mark.style.left = `${box.left - 6}px`;
+      mark.style.top = `${box.top - 6}px`;
+      mark.style.width = `${box.right - box.left + 12}px`;
+      mark.style.height = `${box.bottom - box.top + 12}px`;
+      touch.append(mark);
+      dirtyMarks.push(mark);
+    }
+  }
+  /** Story 073: a tiny ✓ pop on a nail whose skin just came clean. */
+  function cleanPop(nail: number): void {
+    const box = view.nailBoxes()[nail % limbFor(options.request).fingers.length];
+    if (!box) return;
+    const pop = el('span', 'station-clean-pop', '✓');
+    pop.setAttribute('aria-hidden', 'true');
+    pop.style.left = `${(box.left + box.right) / 2}px`;
+    pop.style.top = `${box.top - 4}px`;
+    touch.append(pop);
+    window.setTimeout(() => pop.remove(), 900);
   }
 
   /** Story 049: the ✓ on each step that matches her order (updated with the design note, at most 4 times a second). */
@@ -399,6 +449,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
 
   // Touch layer: forwards pointer positions to the station (relative to the zone).
   const touch = el('div', 'station-touch hidden');
+  spillMark = touch;
+  touch.dataset.spill = '0';
   // Story 049: the step's instruction sits over the empty palm (no toolbar height taken); a short message (spill, a
   // tool) takes its place for a few seconds.
   touch.append(status, instruction, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []));
@@ -454,10 +506,20 @@ export function createNailStation(options: NailStationOptions): NailStation {
     brush.innerHTML = kind === 'pad' ? PAD_SVG : kind === 'swab' ? SWAB_SVG : BRUSH_SVG;
   };
   setBrushKind();
+  // Story 073: the pad draws above the finger (so it never hides the spill being rubbed); a faint ring shows the real
+  // clean point and reach.
+  const rubRing = el('div', 'station-rub-ring');
+  rubRing.setAttribute('aria-hidden', 'true');
   const moveBrush = (x: number, y: number): void => {
-    brush.style.transform = brushKind === 'pad' ? `translate3d(${x}px, ${y}px, 0)` : `translate3d(${x}px, ${y}px, 0) rotate(28deg)`;
+    brush.style.transform = brushKind === 'pad' ? `translate3d(${x}px, ${y - NAIL_ART_CONFIG.rub.padLiftPx}px, 0)` : `translate3d(${x}px, ${y}px, 0) rotate(28deg)`;
   };
-  touch.append(brush);
+  const moveRing = (x: number, y: number): void => {
+    const r = view.rubRadiusPx();
+    rubRing.style.width = rubRing.style.height = `${r * 2}px`;
+    rubRing.style.transform = `translate3d(${x - r}px, ${y - r}px, 0)`;
+  };
+  touch.append(brush, rubRing);
+  let rubSoundAt = 0;
   let strokeStart: NailDesign | null = null;
   const forward = (event: PointerEvent, phase: 'down' | 'move'): void => {
     if (done || busy || nipper) return;
@@ -467,6 +529,10 @@ export function createNailStation(options: NailStationOptions): NailStation {
     if (phase === 'down') strokeStart = design;
     // Story 048: a clean-up or remover stroke is the player acting on her fix (even where the skin is already clean).
     if (tool === 'cleanup' || tool === 'remover' || tool === 'tidy') fixActed = true;
+    if (tool === 'cleanup') {
+      rubRing.classList.add('show');
+      moveRing(x, y);
+    }
     if (brushOn()) {
       if (phase === 'down') {
         setBrushKind();
@@ -477,23 +543,45 @@ export function createNailStation(options: NailStationOptions): NailStation {
     }
     const next = view.pointer(x, y, phase, tool, sticker);
     if (tool === 'tidy' && next !== design) {
-      // Story 052: Clean edges takes a moment (never free perfection): the station waits, then the nail is tidy.
-      busy = true;
-      toolbar.classList.add('busy');
-      say(t('station.tidying'), true);
-      window.setTimeout(() => {
-        busy = false;
-        toolbar.classList.remove('busy');
-        remember();
-        setDesign(next);
-        flushChange();
-        say(t('station.tidied'));
-        refresh();
-      }, NAIL_ART_CONFIG.tidy.seconds * 1000);
+      runTidy(next);
       return;
+    }
+    // Story 073: rubbing feedback: a soft swish while polish comes off, a ✓ pop when a nail's skin is clean.
+    if (tool === 'cleanup' && next !== design) {
+      const now = performance.now();
+      if (now - rubSoundAt > RUB_SOUND_MS) {
+        rubSoundAt = now;
+        emitUiSound('secondary', 1.2);
+      }
+      next.spill.forEach((cells, nail) => {
+        if (cells.length === 0 && (design.spill[nail]?.length ?? 0) > 0) cleanPop(nail);
+      });
     }
     setDesign(next);
   };
+  /** Story 052: Clean edges takes a moment (never free perfection): the station waits, then the nail is tidy. */
+  function runTidy(next: NailDesign): void {
+    if (next === design || busy) return;
+    markDirty([]);
+    busy = true;
+    toolbar.classList.add('busy');
+    say(t('station.tidying'), true);
+    window.setTimeout(() => {
+      busy = false;
+      toolbar.classList.remove('busy');
+      remember();
+      const before = design;
+      setDesign(next);
+      flushChange();
+      say(t('station.tidied'));
+      next.spill.forEach((cells, nail) => {
+        if (cells.length === 0 && (before.spill[nail]?.length ?? 0) > 0) cleanPop(nail);
+      });
+      refresh();
+      // More to clean on this hand: the rest pulse.
+      if (tool === 'tidy') markDirty(dirtyOnHand());
+    }, NAIL_ART_CONFIG.tidy.seconds * 1000);
+  }
   touch.addEventListener('pointerdown', (event) => {
     // Story 052: the floating hand switch is a button over the hand, not paint.
     if ((event.target as Element | null)?.closest?.('button')) return;
@@ -519,6 +607,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     drawing = false;
     box = null;
     brush.classList.remove('show');
+    rubRing.classList.remove('show');
     // Story 052: the stroke (or tap) is one Undo step.
     if (strokeStart && strokeStart !== design) {
       history.push(strokeStart);
