@@ -2,6 +2,8 @@ import audioJson from './config/audio.json';
 import { readStored, writeStored } from './safe-storage';
 import { SOUND_EVENTS, SOUND_EVENT_NAME } from './sound-events';
 import type { SoundEvent } from './sound-events';
+import { UI_SOUNDS_CONFIG, UI_SOUND_EVENT } from './ui-sounds';
+import type { UiSoundDetail, UiSoundKind, UiSoundsConfig, VoiceLayer } from './ui-sounds';
 
 /**
  * Music and sound (story 012). Everything is synthesised at run time with Web Audio from config/audio.json, so no
@@ -216,6 +218,8 @@ export interface AudioEngine {
   duck(ducked: boolean): void;
   /** Play an effect now (the same as an `emitSound` event). */
   play(event: SoundEvent): void;
+  /** Story 070: play a button / reward voice (the same as an `emitUiSound` event); `pitch` 1 = as written. */
+  playUi(kind: UiSoundKind, pitch?: number): void;
   /** True once the first tap has started audio. */
   readonly started: boolean;
   /** Story 068: the music is lowered for speech right now. */
@@ -231,7 +235,7 @@ const SCHEDULER_MS = 60;
  * and resumes the AudioContext and starts the music. Missing Web Audio or any audio error leaves the game silent,
  * never broken.
  */
-export function createAudioEngine(host: AudioHost, config: AudioConfig = AUDIO_CONFIG): AudioEngine {
+export function createAudioEngine(host: AudioHost, config: AudioConfig = AUDIO_CONFIG, uiConfig: UiSoundsConfig = UI_SOUNDS_CONFIG): AudioEngine {
   let ctx: AudioContext | null = null;
   let musicBus: GainNode | null = null;
   let sfxBus: GainNode | null = null;
@@ -357,6 +361,50 @@ export function createAudioEngine(host: AudioHost, config: AudioConfig = AUDIO_C
     host.removeEventListener('keydown', onFirstGesture, true);
   };
   const onSound = (event: Event): void => engine.play((event as CustomEvent<SoundEvent>).detail);
+  const onUiSound = (event: Event): void => {
+    const detail = (event as CustomEvent<UiSoundDetail>).detail;
+    if (detail) engine.playUi(detail.kind, detail.pitch);
+  };
+
+  /** Story 070: one voice layer: a tone with a pitch slide, or a burst of band-passed noise with a sweep. */
+  const voiceLayer = (layer: VoiceLayer, start: number, pitch: number, level: number): void => {
+    if (!ctx || !sfxBus) return;
+    const ratio = 2 ** (layer.bend / 12);
+    const gainOf = (at: number): GainNode => {
+      const gain = (ctx as AudioContext).createGain();
+      gain.gain.setValueAtTime(0, at);
+      gain.gain.linearRampToValueAtTime(layer.gain * level, at + Math.min(0.006, layer.duration / 4));
+      gain.gain.exponentialRampToValueAtTime(0.0001, at + layer.duration);
+      gain.connect(sfxBus as GainNode);
+      return gain;
+    };
+    if (layer.wave === 'noise') {
+      if (!noise) return;
+      const at = start + layer.at;
+      const source = ctx.createBufferSource();
+      source.buffer = noise;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.Q.value = 1.2;
+      filter.frequency.setValueAtTime(layer.filterHz[0] * pitch, at);
+      filter.frequency.exponentialRampToValueAtTime(layer.filterHz[1] * pitch, at + layer.duration);
+      source.connect(filter).connect(gainOf(at));
+      source.start(at);
+      source.stop(at + layer.duration + 0.02);
+      return;
+    }
+    layer.notes.forEach((note, index) => {
+      const at = start + layer.at + index * layer.step;
+      const osc = (ctx as AudioContext).createOscillator();
+      osc.type = layer.wave as OscillatorType;
+      const hz = midiToHz(note) * pitch;
+      osc.frequency.setValueAtTime(hz, at);
+      if (layer.bend !== 0) osc.frequency.exponentialRampToValueAtTime(hz * ratio, at + layer.duration);
+      osc.connect(gainOf(at));
+      osc.start(at);
+      osc.stop(at + layer.duration + 0.05);
+    });
+  };
   const onSettings = (): void => {
     settings = loadAudioSettings();
     applyGains(0.1);
@@ -380,6 +428,7 @@ export function createAudioEngine(host: AudioHost, config: AudioConfig = AUDIO_C
   host.addEventListener('pointerdown', onFirstGesture, true);
   host.addEventListener('keydown', onFirstGesture, true);
   host.addEventListener(SOUND_EVENT_NAME, onSound);
+  host.addEventListener(UI_SOUND_EVENT, onUiSound);
   host.addEventListener(AUDIO_SETTINGS_EVENT, onSettings);
   host.addEventListener('visibilitychange', onVisibility);
   host.addEventListener('pointerdown', onGesture, true);
@@ -405,12 +454,22 @@ export function createAudioEngine(host: AudioHost, config: AudioConfig = AUDIO_C
       const now = ctx.currentTime + 0.01;
       spec.notes.forEach((note, index) => tone(sfxBus as GainNode, spec.wave, note, now + index * spec.stepSeconds, spec.durationSeconds, spec.gain));
     },
+    playUi(kind, pitch = 1) {
+      if (!ctx || !sfxBus || ctx.state !== 'running' || settings.sfxMuted) return;
+      const voice = uiConfig.voices[kind];
+      if (!voice) return;
+      // Under the client's voice (the duck) button sounds stay quiet.
+      const level = ducked ? uiConfig.duckGain : 1;
+      const start = ctx.currentTime + 0.005;
+      for (const layer of voice.layers) voiceLayer(layer, start, pitch, level);
+    },
     destroy() {
       destroyed = true;
       if (timer !== null) host.clearInterval(timer as never);
       host.removeEventListener('pointerdown', onFirstGesture, true);
       host.removeEventListener('keydown', onFirstGesture, true);
       host.removeEventListener(SOUND_EVENT_NAME, onSound);
+      host.removeEventListener(UI_SOUND_EVENT, onUiSound);
       host.removeEventListener(AUDIO_SETTINGS_EVENT, onSettings);
       host.removeEventListener('visibilitychange', onVisibility);
       host.removeEventListener('pointerdown', onGesture, true);

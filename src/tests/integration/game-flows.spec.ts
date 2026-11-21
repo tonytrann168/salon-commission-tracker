@@ -924,6 +924,102 @@ for (const lang of LANGS) {
       await expect(waiting).toBeHidden();
     });
 
+    test('button sounds (story 070): each main button makes its kind; disabled bonks; fast taps make one sound; a touch scroll is silent; the press squashes 3 px', async ({ page }) => {
+      test.setTimeout(90_000);
+      await page.addInitScript(() => {
+        const heard: string[] = [];
+        (window as unknown as { __ui: string[] }).__ui = heard;
+        window.addEventListener('salon:ui-sound', (event) => heard.push((event as CustomEvent<{ kind: string }>).detail.kind));
+      });
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
+      await mockApi(page);
+      await page.goto('/');
+      const heard = (): Promise<string[]> => page.evaluate(() => (window as unknown as { __ui: string[] }).__ui.splice(0));
+      // Taps far enough apart for the 40 ms gap.
+      const tap = async (selector: string): Promise<string[]> => {
+        await page.waitForTimeout(60);
+        await heard();
+        await page.locator(selector).first().click();
+        return heard();
+      };
+      expect(await tap('.title-menu > .chat-button')).toEqual(['primary']);
+      expect(await tap('.path-screen .picker-daily')).toEqual(['primary']);
+      const speakerOn = (await page.locator('.speaker-button').getAttribute('aria-pressed')) === 'true';
+      expect(await tap('.speaker-button')).toEqual([speakerOn ? 'toggleOff' : 'toggleOn']);
+      expect(await tap('.chat-menu-button')).toEqual(['open']);
+      expect(await tap('.menu-sheet .menu-close')).toEqual(['close']);
+      expect(await tap('.mood .pause-button')).toEqual(['open']);
+      expect(await tap('.pause-resume')).toEqual(['primary']);
+      await page.locator('.chat-input').fill('Hello! Welcome. What colour would you like?');
+      expect(await tap('.chat-form button[type=submit]')).toEqual(['primary']);
+      // The service: steps are small buttons; a disabled Undo bonks; Done is a big one.
+      await expect(page.locator('.station-tools')).toBeVisible({ timeout: 10_000 });
+      expect(await tap('.station-step[data-step=colour]')).toEqual(['secondary']);
+      await page.waitForTimeout(60);
+      await heard();
+      const undo = page.locator('.station-undo');
+      await expect(undo).toBeDisabled();
+      await undo.click({ force: true });
+      expect(await heard()).toEqual(['blocked']);
+      // Two presses at once: one sound (the 40 ms gap).
+      await page.waitForTimeout(60);
+      const twice = await page.locator('.station-step[data-step=shape]').evaluate((node) => {
+        const box = node.getBoundingClientRect();
+        const init = { bubbles: true, pointerType: 'mouse', pointerId: 1, clientX: box.x + 5, clientY: box.y + 5 };
+        node.dispatchEvent(new PointerEvent('pointerdown', init));
+        node.dispatchEvent(new PointerEvent('pointerdown', init));
+        return (window as unknown as { __ui: string[] }).__ui.splice(0);
+      });
+      expect(twice).toEqual(['secondary']);
+      // A finger: a scroll (moved, or cancelled) is silent; a tap sounds on release.
+      await page.waitForTimeout(60);
+      const touches = await page.locator('.station-step[data-step=art]').evaluate((node) => {
+        const box = node.getBoundingClientRect();
+        const at = (x: number, id: number) => ({ bubbles: true, pointerType: 'touch', pointerId: id, clientX: box.x + x, clientY: box.y + 8 });
+        const log = (window as unknown as { __ui: string[] }).__ui;
+        node.dispatchEvent(new PointerEvent('pointerdown', at(8, 7)));
+        node.dispatchEvent(new PointerEvent('pointercancel', at(8, 7)));
+        node.dispatchEvent(new PointerEvent('pointerup', at(8, 7)));
+        node.dispatchEvent(new PointerEvent('pointerdown', at(8, 8)));
+        node.dispatchEvent(new PointerEvent('pointerup', at(40, 8)));
+        const scrolled = log.splice(0);
+        node.dispatchEvent(new PointerEvent('pointerdown', at(8, 9)));
+        const beforeRelease = log.slice(0);
+        node.dispatchEvent(new PointerEvent('pointerup', at(10, 9)));
+        return { scrolled, beforeRelease, tapped: log.splice(0) };
+      });
+      expect(touches).toEqual({ scrolled: [], beforeRelease: [], tapped: ['secondary'] });
+      // The press: Done squashes down 3 px while held, and springs back.
+      const done = page.locator('.station-done');
+      const box = (await done.boundingBox())!;
+      const top = (): Promise<number> => done.evaluate((node) => node.getBoundingClientRect().top);
+      const resting = await top();
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(150);
+      expect((await top()) - resting).toBeCloseTo(3, 0);
+      await page.mouse.up();
+      await page.waitForTimeout(400);
+      expect(await top()).toBeCloseTo(resting, 0);
+    });
+
+    test('button press with Reduce motion (story 070): no movement, only a colour change', async ({ page }) => {
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily') } });
+      await page.addInitScript(() => localStorage.setItem('salon.comfort.v1', JSON.stringify({ textSize: 'normal', reduceMotion: true, vibration: true, highContrast: false })));
+      await mockApi(page);
+      await page.goto('/');
+      const button = page.locator('.title-menu > .chat-button').first();
+      const box = (await button.boundingBox())!;
+      const resting = await button.evaluate((node) => [node.getBoundingClientRect().top, getComputedStyle(node).filter]);
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(150);
+      const pressed = await button.evaluate((node) => [node.getBoundingClientRect().top, getComputedStyle(node).filter]);
+      await page.mouse.up();
+      expect(pressed[0]).toBe(resting[0]);
+      expect(pressed[1]).not.toBe(resting[1]);
+    });
+
     test('pause (story 068): ⏸ stops the visit out of world; Resume returns; Leave visit goes home and counts nothing', async ({ page }) => {
       test.setTimeout(90_000);
       await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily') } });

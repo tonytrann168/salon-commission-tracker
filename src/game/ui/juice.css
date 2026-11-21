@@ -1,12 +1,7 @@
 /* Story 057b: the small rewards, in Salon Besties' own look. Short, soft, never in the way (click-through), and
    none of the motion with Reduce motion. */
 
-/* Bouncy buttons: a quick squash on press, a springy return. */
-.chat-button, .home-gift, .home-avatar, .path-more, .welcome-guest { transition: transform 0.18s cubic-bezier(0.34, 1.7, 0.55, 1); }
-.chat-button:active:not(:disabled), .home-gift:active:not(:disabled), .home-avatar:active, .welcome-guest:active { transform: scale(0.94); transition-duration: 0.06s; }
-@media (prefers-reduced-motion: reduce) { .chat-button, .home-gift, .home-avatar, .path-more, .welcome-guest { transition: none; } .chat-button:active:not(:disabled) { transform: none; } }
-html[data-motion='reduce'] :is(.chat-button, .home-gift, .home-avatar, .path-more, .welcome-guest) { transition: none; }
-html[data-motion='reduce'] .chat-button:active:not(:disabled) { transform: none; }
+/* Bouncy buttons: story 070 replaced the squash with the chunky press in press.css. */
 
 /* Bursts: pieces fly out from a point and fade. */
 .burst { position: fixed; z-index: 80; width: 0; height: 0; pointer-events: none; }

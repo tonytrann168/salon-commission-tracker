@@ -825,5 +825,19 @@
   "mai.answerTitle": "Answer her question:",
   "service.order.feet": "Now the feet",
   "mai.useLine": "Use this line: {line}",
-  "mai.useLineHint": "Tap a line to put it in your reply."
+  "mai.useLineHint": "Tap a line to put it in your reply.",
+  "settings.soundTest": "Sound test",
+  "settings.soundTestNote": "Tap a button to hear each sound (it follows the sound-effects volume).",
+  "settings.soundTest.press": "Press",
+  "settings.soundTest.primary": "Big button",
+  "settings.soundTest.secondary": "Small button",
+  "settings.soundTest.open": "Open",
+  "settings.soundTest.close": "Close",
+  "settings.soundTest.toggleOn": "Switch on",
+  "settings.soundTest.toggleOff": "Switch off",
+  "settings.soundTest.blocked": "Not now",
+  "settings.soundTest.tick": "Count tick",
+  "settings.soundTest.stinger": "Reward ding",
+  "settings.soundTest.giftBuild": "Gift build-up",
+  "settings.soundTest.giftPop": "Gift pop"
 }

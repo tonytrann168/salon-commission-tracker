@@ -15,11 +15,14 @@ export function createTitleMenu(host: HTMLElement, onStart: () => void, onSettin
   const start = document.createElement('button');
   start.type = 'button';
   start.className = 'chat-button';
+  // Story 070: the big Start is a primary sound; Settings opens.
+  start.dataset.sfx = 'primary';
   start.textContent = t('title.start');
   start.addEventListener('click', onStart);
   const settings = document.createElement('button');
   settings.type = 'button';
   settings.className = 'chat-button secondary';
+  settings.dataset.sfx = 'open';
   settings.textContent = t('title.settings');
   settings.addEventListener('click', onSettings);
   const phrasebook = document.createElement('button');

@@ -5,6 +5,10 @@ import { t } from '../i18n';
 import { renderMascot } from '../mascot';
 import type { ProgressSave } from '../progression';
 import { emitSound } from '../sound-events';
+import { emitUiSound } from '../ui-sounds';
+
+/** Story 070: the pop comes this long after the gift's build-up starts. */
+const GIFT_POP_MS = 300;
 import { burst as burstFrom, centreOf } from './burst';
 import { coinIcon } from './coin-icon';
 import { el } from './dom';
@@ -74,6 +78,8 @@ export function createHomeStatus(host: HTMLElement, options: HomeStatusOptions):
     gift.innerHTML = `<span class="home-gift-icon" aria-hidden="true">🎁</span><span class="home-gift-word"></span>`;
     (gift.querySelector('.home-gift-word') as HTMLElement).textContent = ready ? t('daily.giftOpen') : t('daily.giftDone');
     gift.disabled = !ready;
+    // Story 070: the gift builds up as it opens (on the tap), then pops when it is open.
+    gift.dataset.sfx = 'giftBuild';
     gift.setAttribute('aria-label', ready ? t('daily.giftLabel') : t('daily.giftDoneLabel'));
     gift.addEventListener('click', () => {
       const now = options.load();
@@ -81,7 +87,7 @@ export function createHomeStatus(host: HTMLElement, options: HomeStatusOptions):
       if (!result) return;
       // Owner decision: the gift (and a milestone) gives coins; tips come only from clients.
       options.save({ ...now, play: result.play, coins: (now.coins ?? 0) + result.total });
-      emitSound('tip');
+      window.setTimeout(() => emitUiSound('giftPop'), GIFT_POP_MS);
       openGiftSheet(host, result.coins, result.bonus, result.milestone, result.total, draw);
     });
     box.replaceChildren(...chips);

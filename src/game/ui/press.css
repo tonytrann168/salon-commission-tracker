@@ -1,0 +1,40 @@
+/* Story 070 (owner request): chunky, satisfying buttons. A darker bottom edge; while pressed the button squashes
+   down and the edge shrinks, then springs back on release (a small overshoot). With Reduce motion (Comfort or the
+   system) nothing moves: a pressed button only darkens a little. */
+:root {
+  --press-depth: 3px;
+  --press-spring: cubic-bezier(0.34, 1.8, 0.5, 1);
+}
+
+/* The big buttons: a 4 px edge in a darker shade of their colour. */
+.chat-button:not(:disabled) { box-shadow: 0 4px 0 #c23a72; }
+.chat-button.secondary:not(:disabled) { box-shadow: 0 4px 0 #e9a7c1; }
+
+/* The small ones (steps, tools, swatches, menu rows, chips): a softer 3 px edge. */
+:is(.station-steps .station-step, .station-tool, .station-shape, .station-length, .station-reset, .mai-answer-use, .pause-button, .speaker-button, .chat-menu-button, .chat-picture-button, .home-gift, .reply-chip):not(:disabled) { box-shadow: 0 3px 0 rgba(160, 70, 110, 0.28); }
+
+:is(.chat-button, .station-steps .station-step, .station-tool, .station-swatch, .station-shape, .station-length, .station-reset, .menu-item, .mai-answer-use, .pause-button, .speaker-button, .chat-menu-button, .chat-picture-button, .home-gift, .home-avatar, .reply-chip, .path-more, .welcome-guest) {
+  transition: transform 0.22s var(--press-spring), box-shadow 0.22s var(--press-spring), filter 0.08s linear;
+}
+
+/* Pressed: down by the edge's depth, the edge almost gone, a touch darker. Fast in, springy out. */
+.chat-button:active:not(:disabled) { transform: translateY(var(--press-depth)); box-shadow: 0 1px 0 #c23a72; filter: brightness(0.94); transition: none; }
+.chat-button.secondary:active:not(:disabled) { box-shadow: 0 1px 0 #e9a7c1; }
+:is(.station-steps .station-step, .station-tool, .station-shape, .station-length, .station-reset, .mai-answer-use, .pause-button, .speaker-button, .chat-menu-button, .chat-picture-button, .home-gift, .reply-chip):active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(160, 70, 110, 0.28); filter: brightness(0.95); transition: none; }
+:is(.station-swatch, .menu-item, .home-avatar, .path-more, .welcome-guest):active:not(:disabled) { transform: translateY(2px); filter: brightness(0.95); transition: none; }
+
+/* Reduce motion: no movement and no spring, just the colour change. */
+html[data-motion='reduce'] :is(.chat-button, .station-steps .station-step, .station-tool, .station-swatch, .station-shape, .station-length, .station-reset, .menu-item, .mai-answer-use, .pause-button, .speaker-button, .chat-menu-button, .chat-picture-button, .home-gift, .home-avatar, .reply-chip, .path-more, .welcome-guest):active:not(:disabled) { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  :is(.chat-button, .station-steps .station-step, .station-tool, .station-swatch, .station-shape, .station-length, .station-reset, .menu-item, .mai-answer-use, .pause-button, .speaker-button, .chat-menu-button, .chat-picture-button, .home-gift, .home-avatar, .reply-chip, .path-more, .welcome-guest):active:not(:disabled) { transform: none; }
+}
+
+/* Settings → Sound test: one button per sound. */
+.sound-test { display: flex; flex-wrap: wrap; gap: 8px; }
+.sound-test .chat-button { min-height: 44px; padding: 0 12px; font-size: 16px; }
+
+/* The station's green Done: a darker green edge, the same chunky press. */
+.station-controls .station-done:not(:disabled) { box-shadow: 0 4px 0 #1f6e3f; transition: transform 0.22s var(--press-spring), box-shadow 0.22s var(--press-spring), filter 0.08s linear; }
+.station-controls .station-done:active:not(:disabled) { transform: translateY(var(--press-depth)); box-shadow: 0 1px 0 #1f6e3f; filter: brightness(0.94); transition: none; }
+html[data-motion='reduce'] .station-controls .station-done:active:not(:disabled) { transform: none; }
+@media (prefers-reduced-motion: reduce) { .station-controls .station-done:active:not(:disabled) { transform: none; } }

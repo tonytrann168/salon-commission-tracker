@@ -3,6 +3,7 @@ import { getLanguage, t } from '../i18n';
 import { JUICE_CONFIG, countUpValue } from '../juice';
 import type { ProgressUpdate } from '../progression';
 import { emitSound } from '../sound-events';
+import { UI_SOUNDS_CONFIG, emitUiSound } from '../ui-sounds';
 import type { Celebration } from './celebration';
 import { coinIcon } from './coin-icon';
 import { el } from './dom';
@@ -54,6 +55,8 @@ export function createProgressPanel(update: ProgressUpdate, stars: number): HTML
     window.cancelAnimationFrame(frame);
     window.clearTimeout(timer);
     counters.forEach((c) => (c.value.textContent = c.format(c.target)));
+    // Story 070: the count-up ends on a little ding.
+    emitUiSound('stinger');
     if (streakChip && !streakChip.classList.contains('shown')) {
       streakChip.classList.add('shown');
       emitSound('streak');
@@ -70,6 +73,7 @@ export function createProgressPanel(update: ProgressUpdate, stars: number): HTML
   section.addEventListener('click', finish);
   // Count once the card is on screen (the results mount it after grading).
   let start = 0;
+  let lastTick = 0;
   const step = (now: number): void => {
     if (done) return;
     if (!section.isConnected) {
@@ -82,6 +86,11 @@ export function createProgressPanel(update: ProgressUpdate, stars: number): HTML
     }
     const elapsed = now - start;
     counters.forEach((c) => (c.value.textContent = c.format(countUpValue(c.target, elapsed, JUICE_CONFIG.results.countMs))));
+    // Story 070: a soft tick as the numbers climb.
+    if (elapsed < JUICE_CONFIG.results.countMs && now - lastTick >= UI_SOUNDS_CONFIG.tickEveryMs) {
+      lastTick = now;
+      emitUiSound('tick');
+    }
     frame = window.requestAnimationFrame(step);
   };
   counters.forEach((c) => (c.value.textContent = c.format(0)));

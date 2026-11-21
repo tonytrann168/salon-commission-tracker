@@ -1,0 +1,331 @@
+{
+  "_note": "Story 070 (owner request): chunky, satisfying button sounds, all made live with the Web Audio synth (oscillators and filtered noise): the game's own, never samples or imitations of any game. A button's kind: a disabled button is always 'blocked'; then data-sfx; then these selector lists in order (toggle, close, open, primary, secondary), else 'press'. Each voice is layers of tones (wave + MIDI notes played one after another, `step` apart; `bend` = semitones the pitch slides over the duration) or noise (`filterHz` = band-pass sweep from, to). `gain` levels sit under the SFX volume and master gain. minGapMs: no two button sounds closer than this. jitter: secondary taps vary in pitch by up to this share. duckGain: UI sounds while the client speaks. hapticMs: the haptic tick on a primary press (Comfort's vibration setting). tickEveryMs: the results count-up tick spacing. moveTolerancePx: a touch that moves more than this is a scroll (no sound).",
+  "minGapMs": 40,
+  "jitter": 0.05,
+  "duckGain": 0.5,
+  "hapticMs": 25,
+  "tickEveryMs": 90,
+  "moveTolerancePx": 10,
+  "selectors": {
+    "toggle": [
+      ".speaker-button",
+      "input[type=checkbox]",
+      "[role=switch]",
+      "[aria-pressed].sfx-toggle"
+    ],
+    "close": [
+      ".bestie-got-it",
+      ".better-close",
+      ".picture-close",
+      ".menu-close",
+      ".sheet-close",
+      ".account-sheet-close",
+      ".reply-sheet-close",
+      ".service-dismiss",
+      "[data-close]"
+    ],
+    "open": [
+      ".chat-menu-button",
+      ".chat-picture-button",
+      ".mai-bubble",
+      ".pause-button",
+      ".home-gift",
+      ".station-toggle"
+    ],
+    "primary": [
+      ".chat-form button[type=submit]",
+      ".station-done",
+      ".total-charge",
+      ".pause-resume",
+      ".picker-daily",
+      ".path-continue",
+      ".menu-confirm",
+      ".gift-collect",
+      ".fix-now",
+      ".welcome-create",
+      ".welcome-guest",
+      ".results-actions .chat-button:not(.secondary)"
+    ],
+    "secondary": [
+      ".help-button",
+      ".station-tab",
+      ".station-step",
+      ".station-tool",
+      ".station-swatch",
+      ".station-shape",
+      ".station-length",
+      ".station-reset",
+      ".station-undo",
+      ".station-how",
+      ".menu-item",
+      ".menu-presets button",
+      ".total-step button",
+      ".mai-answer-use",
+      ".line-grade",
+      ".reply-chip",
+      ".chat-button.secondary",
+      ".mai-actions button",
+      ".mic-button"
+    ]
+  },
+  "voices": {
+    "press": {
+      "layers": [
+        {
+          "wave": "sine",
+          "notes": [
+            52
+          ],
+          "duration": 0.07,
+          "gain": 0.32,
+          "bend": -9
+        },
+        {
+          "wave": "noise",
+          "duration": 0.025,
+          "gain": 0.06,
+          "filterHz": [
+            1800,
+            900
+          ]
+        }
+      ]
+    },
+    "primary": {
+      "layers": [
+        {
+          "wave": "triangle",
+          "notes": [
+            72,
+            79
+          ],
+          "step": 0.055,
+          "duration": 0.11,
+          "gain": 0.2,
+          "bend": 1
+        },
+        {
+          "wave": "sine",
+          "notes": [
+            60
+          ],
+          "duration": 0.08,
+          "gain": 0.18,
+          "bend": -7
+        },
+        {
+          "wave": "sine",
+          "notes": [
+            96,
+            103
+          ],
+          "step": 0.04,
+          "duration": 0.12,
+          "gain": 0.035,
+          "at": 0.1
+        }
+      ]
+    },
+    "secondary": {
+      "layers": [
+        {
+          "wave": "triangle",
+          "notes": [
+            76
+          ],
+          "duration": 0.045,
+          "gain": 0.12,
+          "bend": -3
+        },
+        {
+          "wave": "noise",
+          "duration": 0.015,
+          "gain": 0.03,
+          "filterHz": [
+            3000,
+            2500
+          ]
+        }
+      ]
+    },
+    "open": {
+      "layers": [
+        {
+          "wave": "noise",
+          "duration": 0.14,
+          "gain": 0.07,
+          "filterHz": [
+            500,
+            2600
+          ]
+        },
+        {
+          "wave": "sine",
+          "notes": [
+            67
+          ],
+          "duration": 0.12,
+          "gain": 0.08,
+          "bend": 7
+        }
+      ]
+    },
+    "close": {
+      "layers": [
+        {
+          "wave": "noise",
+          "duration": 0.13,
+          "gain": 0.06,
+          "filterHz": [
+            2400,
+            500
+          ]
+        },
+        {
+          "wave": "sine",
+          "notes": [
+            74
+          ],
+          "duration": 0.11,
+          "gain": 0.07,
+          "bend": -7
+        }
+      ]
+    },
+    "toggleOn": {
+      "layers": [
+        {
+          "wave": "sine",
+          "notes": [
+            72,
+            79
+          ],
+          "step": 0.045,
+          "duration": 0.07,
+          "gain": 0.14
+        }
+      ]
+    },
+    "toggleOff": {
+      "layers": [
+        {
+          "wave": "sine",
+          "notes": [
+            79,
+            72
+          ],
+          "step": 0.045,
+          "duration": 0.07,
+          "gain": 0.12
+        }
+      ]
+    },
+    "blocked": {
+      "layers": [
+        {
+          "wave": "triangle",
+          "notes": [
+            45
+          ],
+          "duration": 0.12,
+          "gain": 0.14,
+          "bend": -4
+        }
+      ]
+    },
+    "tick": {
+      "layers": [
+        {
+          "wave": "triangle",
+          "notes": [
+            88
+          ],
+          "duration": 0.03,
+          "gain": 0.05
+        }
+      ]
+    },
+    "stinger": {
+      "layers": [
+        {
+          "wave": "triangle",
+          "notes": [
+            84,
+            91
+          ],
+          "step": 0.07,
+          "duration": 0.35,
+          "gain": 0.12
+        },
+        {
+          "wave": "sine",
+          "notes": [
+            103
+          ],
+          "duration": 0.4,
+          "gain": 0.03,
+          "at": 0.12
+        }
+      ]
+    },
+    "giftBuild": {
+      "layers": [
+        {
+          "wave": "triangle",
+          "notes": [
+            67,
+            71,
+            74,
+            79
+          ],
+          "step": 0.07,
+          "duration": 0.09,
+          "gain": 0.1
+        },
+        {
+          "wave": "noise",
+          "duration": 0.3,
+          "gain": 0.04,
+          "filterHz": [
+            600,
+            4000
+          ]
+        }
+      ]
+    },
+    "giftPop": {
+      "layers": [
+        {
+          "wave": "sine",
+          "notes": [
+            60
+          ],
+          "duration": 0.1,
+          "gain": 0.28,
+          "bend": -10
+        },
+        {
+          "wave": "triangle",
+          "notes": [
+            84,
+            88,
+            91
+          ],
+          "step": 0.05,
+          "duration": 0.18,
+          "gain": 0.1,
+          "at": 0.03
+        },
+        {
+          "wave": "noise",
+          "duration": 0.06,
+          "gain": 0.06,
+          "filterHz": [
+            4000,
+            2000
+          ]
+        }
+      ]
+    }
+  }
+}

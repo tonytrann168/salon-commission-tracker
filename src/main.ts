@@ -12,6 +12,7 @@ import { ACCOUNT_EVENT, createHomeStatus } from './game/ui/home-status';
 import { createMenuSetupScreen } from './game/ui/menu-setup';
 import { MENU_CONFIG, menuItems, orderFor } from './game/menu';
 import { comboScore, comboStages } from './game/combo';
+import { installUiSounds } from './game/ui/ui-sound-listener';
 import type { Container, Rectangle } from 'pixi.js';
 import { GALLERY_CONFIG, addToGallery } from './game/gallery';
 import type { FixOutcome } from './game/fix-requests';
@@ -71,6 +72,7 @@ import type { ClientPersona, EnglishLevel, Grading, Outcome } from './game/types
 import type { ScoreResult } from './game/scoring';
 import './game/ui/global.css';
 import './game/ui/comfort.css';
+import './game/ui/press.css';
 import { applyComfort } from './game/comfort';
 import { installErrorHandling } from './game/ui/error-screen';
 import { APP_VERSION } from './game/feedback';
@@ -784,10 +786,9 @@ async function boot(): Promise<void> {
     window.setTimeout(() => note.remove(), NOTE_MS);
   }
 
-  // Story 057b: a soft tap for every button (the sound-effects setting covers it).
-  document.addEventListener('pointerdown', (event) => {
-    if ((event.target as Element | null)?.closest?.('button:not(:disabled)')) emitSound('tap');
-  }, { capture: true, passive: true });
+  // Story 070 (was 057b's single tap): every button sounds by its kind (press, primary, secondary, open/close,
+  // toggle, blocked), throttled; the sound-effects setting covers it.
+  installUiSounds(document);
 
   // 057a part 2: a first open while not signed in (no account remembered on this phone) starts on the welcome page.
   const firstAccount = getAccount();

@@ -825,5 +825,19 @@
   "mai.answerTitle": "Trả lời câu khách hỏi:",
   "service.order.feet": "Giờ tới chân",
   "mai.useLine": "Dùng câu này: {line}",
-  "mai.useLineHint": "Bấm vào một câu để đưa vào ô trả lời."
+  "mai.useLineHint": "Bấm vào một câu để đưa vào ô trả lời.",
+  "settings.soundTest": "Thử âm thanh",
+  "settings.soundTestNote": "Bấm từng nút để nghe từng âm thanh (theo âm lượng hiệu ứng).",
+  "settings.soundTest.press": "Bấm",
+  "settings.soundTest.primary": "Nút lớn",
+  "settings.soundTest.secondary": "Nút nhỏ",
+  "settings.soundTest.open": "Mở",
+  "settings.soundTest.close": "Đóng",
+  "settings.soundTest.toggleOn": "Bật",
+  "settings.soundTest.toggleOff": "Tắt",
+  "settings.soundTest.blocked": "Chưa được",
+  "settings.soundTest.tick": "Tiếng đếm",
+  "settings.soundTest.stinger": "Tiếng thưởng",
+  "settings.soundTest.giftBuild": "Quà sắp mở",
+  "settings.soundTest.giftPop": "Quà bung"
 }

@@ -12,6 +12,7 @@ import { replayTour } from '../onboarding';
 import { feedbackButton } from './feedback-sheet';
 import { createBackupSection } from './backup-panel';
 import { createComfortSection } from './comfort-section';
+import { UI_SOUND_KINDS } from '../ui-sounds';
 import { createMenuSection } from './menu-settings';
 import { createVoicePicker } from './voice-picker';
 import { createAccountSection } from './account-panel';
@@ -175,6 +176,19 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
       return row;
     };
     const soundNote = el('p', 'setting-note sound-note', t('settings.soundNote'));
+    // Story 070: Sound test: one button per sound, so the owner can judge them (follows the SFX volume and mute).
+    const soundTest = el('div', 'setting-row sound-test-row');
+    const soundTestList = el('div', 'sound-test');
+    for (const kind of UI_SOUND_KINDS) {
+      const play = el('button', 'chat-button secondary sound-test-play', t(`settings.soundTest.${kind}`));
+      play.type = 'button';
+      play.dataset.sfx = kind;
+      play.dataset.kind = kind;
+      soundTestList.append(play);
+    }
+    const soundTestText = el('span', 'setting-text');
+    soundTestText.append(el('strong', '', t('settings.soundTest')), el('span', 'setting-note', t('settings.soundTestNote')));
+    soundTest.append(soundTestText, soundTestList);
 
     const back = el('button', 'chat-button secondary', t('common.back'));
     back.type = 'button';
@@ -212,7 +226,7 @@ export function createSettingsScreen(host: HTMLElement, onBack: () => void, onDr
       open.addEventListener('click', () => openWhatsNew(host, notes));
       versionRow.append(open);
     }
-    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, speedRow, maiVoiceRow, voicePickRow, autoSendRow, soundRow('music'), soundRow('sfx'), soundNote, hintsRow, correctionsRow, createMenuSection(), comfort, backup, legalLinks(), versionRow, back);
+    screen.replaceChildren(title, nameRow, companion, tourRow, feedback, ...accountSection, levelTitle, picker, row, voiceRow, speedRow, maiVoiceRow, voicePickRow, autoSendRow, soundRow('music'), soundRow('sfx'), soundNote, soundTest, hintsRow, correctionsRow, createMenuSection(), comfort, backup, legalLinks(), versionRow, back);
   };
 
   render();
