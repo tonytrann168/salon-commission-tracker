@@ -1,0 +1,5 @@
+{
+  "_note": "Story 072 (owner: reload survival matters): the visit in progress is saved on this phone (never the cloud) on every meaningful change, and offered back after a reload or crash for maxAgeHours. version: bump it when the saved shape changes; a save of another version is dropped safely.",
+  "version": 1,
+  "maxAgeHours": 24
+}

@@ -573,6 +573,8 @@ for (const lang of LANGS) {
       expect(said.lang).toBe(lang === 'vi' ? 'vi-VN' : 'en-US');
       // Settings: the switch is there and on; turned off, it stays off.
       await page.goto('/');
+      // Story 072: the visit was left mid-way: the game offers it back; leave it.
+      await page.locator('.resume-leave').click();
       await page.locator('.title-menu-row').first().locator('button').first().click();
       await expect(page.locator('.companion-voice-toggle')).toBeChecked();
       await page.locator('.companion-voice-toggle').uncheck();
@@ -634,6 +636,8 @@ for (const lang of LANGS) {
       expect((seen['tts']![0] as { companion: unknown }).companion).toEqual({ gender: 'female', lang: 'en', voice: 'ava' });
       // Settings: 3 voices for her, the chosen one marked; another is picked and saved; ▶ plays a sample in it.
       await page.goto('/');
+      // Story 072: the visit was left mid-way: the game offers it back; leave it.
+      await page.locator('.resume-leave').click();
       await page.locator('.title-menu-row').first().locator('button').first().click();
       const choices = page.locator('.voice-pick-row .voice-choice-pick');
       await expect(choices).toHaveCount(3);
@@ -1131,6 +1135,104 @@ for (const lang of LANGS) {
       await page.mouse.up();
       expect(pressed[0]).toBe(resting[0]);
       expect(pressed[1]).not.toBe(resting[1]);
+    });
+
+    test('resume after a reload (story 072): Continue brings back the same nails, mood, chat and phase', async ({ page }) => {
+      test.setTimeout(90_000);
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('grace', 'party-tonight') } });
+      await mockApi(page, { moodDelta: 4 });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('Hello! Welcome. What colour would you like?');
+      await page.locator('.chat-form button[type=submit]').click();
+      await expect(page.locator('.station-tools')).toBeVisible({ timeout: 10_000 });
+      // Paint two nails (two short strokes across the middle of the hand).
+      await page.locator('.station-step[data-step=colour]').click();
+      await page.locator('.station-swatch').nth(3).click();
+      const touch = page.locator('.station-touch');
+      const box = (await touch.boundingBox())!;
+      for (const x of [0.42, 0.62]) {
+        await touch.evaluate((node, at) => {
+          const fire = (type: string, y: number) => node.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 5, clientX: at.x, clientY: y, buttons: 1 }));
+          fire('pointerdown', at.top);
+          for (let y = at.top; y < at.top + 60; y += 3) fire('pointermove', y);
+          fire('pointerup', at.top + 60);
+        }, { x: box.x + box.width * x, top: box.y + box.height * 0.45 });
+      }
+      const painted = Number(await touch.getAttribute('data-painted'));
+      expect(painted).toBeGreaterThan(10);
+      const mood = await page.locator('.mood-value').textContent();
+      await page.waitForTimeout(400);
+      const savedChat = (): Promise<{ role: string; content: string }[]> => page.evaluate(() => JSON.parse(localStorage.getItem('salon.visit') ?? '{}').appointment?.transcript ?? []);
+      const chat = await savedChat();
+      expect(chat.length).toBeGreaterThanOrEqual(3);
+      // The game closes mid-visit (a reload or a crash).
+      await page.reload();
+      await expect(page.locator('.resume-visit')).toBeVisible({ timeout: 10_000 });
+      await expect(page.locator('.resume-visit h2')).toContainText('Grace');
+      await page.locator('.resume-continue').click();
+      await expect(page.locator('.chat-panel')).toHaveClass(/service-mode/, { timeout: 10_000 });
+      await expect(page.locator('.station-touch')).toHaveAttribute('data-painted', String(painted));
+      await expect(page.locator('.mood-value')).toHaveText(mood!);
+      expect(await savedChat()).toEqual(chat);
+      for (const message of chat) await expect(page.locator('.chat-log')).toContainText(message.content, { timeout: 10_000 });
+      // The visit goes on to the results as usual, and then nothing is left to continue.
+      await page.locator('.station-done').click();
+      await page.waitForSelector('.chat-panel:not(.service-mode) .chat-input', { timeout: 8_000 });
+      await finishAppointment(page, ['That is forty dollars, please.', 'Thank you! See you next time.']);
+      expect(await page.evaluate(() => localStorage.getItem('salon.visit'))).toBeNull();
+      await page.reload();
+      await expect(page.locator('.title-menu')).toBeVisible();
+      await expect(page.locator('.resume-visit')).toHaveCount(0);
+    });
+
+    test('resume after a reload (story 072): a pedicure past its soak and scrub does not repeat them', async ({ page }) => {
+      test.setTimeout(90_000);
+      await seed(page, lang, { save: { xp: 100, appointments: 4, badges: ['first-client'], ...dailyWith('grace', 'pedicure-day') } });
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await page.locator('.chat-input').fill('Of course! Please put your feet in the warm water.');
+      await page.locator('.chat-form button[type=submit]').click();
+      await page.locator('.pedi-start').click();
+      await expect(page.locator('.pedi-prep[data-step=scrubbing]')).toBeVisible({ timeout: 10_000 });
+      while (await page.locator('.pedi-scrub').count()) await page.locator('.pedi-scrub').click();
+      await expect(page.locator('.pedi-prep')).toHaveCount(0, { timeout: 6_000 });
+      await expect(page.locator('.station-tools')).toBeVisible();
+      await page.waitForTimeout(400);
+      await page.reload();
+      await page.locator('.resume-continue').click();
+      await expect(page.locator('.station-tools')).toBeVisible({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await expect(page.locator('.pedi-prep')).toHaveCount(0);
+      // Still the foot (toes take two shapes).
+      await page.locator('.station-step[data-step=shape]').click();
+      await expect(page.locator('.station-shape')).toHaveCount(2);
+    });
+
+    test('resume after a reload (story 072): Leave visit ends it with no penalty, and a save of another version is dropped', async ({ page }) => {
+      test.setTimeout(60_000);
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], ...dailyWith('lily') } });
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await page.locator('.picker-daily').click();
+      await expect(page.locator('.chat-input')).toBeVisible();
+      const before = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}'));
+      await page.reload();
+      await page.locator('.resume-leave').click();
+      await expect(page.locator('.resume-visit')).toHaveCount(0);
+      const after = await page.evaluate(() => JSON.parse(localStorage.getItem('salon.save') ?? '{}'));
+      expect(after).toMatchObject({ xp: before.xp, appointments: before.appointments });
+      expect(await page.evaluate(() => localStorage.getItem('salon.visit'))).toBeNull();
+      // A save from another version of the game: dropped, no prompt.
+      await page.evaluate(() => localStorage.setItem('salon.visit', JSON.stringify({ v: 999, savedAt: Date.now(), clientId: 'lily' })));
+      await page.reload();
+      await expect(page.locator('.title-menu')).toBeVisible();
+      await expect(page.locator('.resume-visit')).toHaveCount(0);
+      expect(await page.evaluate(() => localStorage.getItem('salon.visit'))).toBeNull();
     });
 
     test('pause (story 068): ⏸ stops the visit out of world; Resume returns; Leave visit goes home and counts nothing', async ({ page }) => {

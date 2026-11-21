@@ -855,5 +855,8 @@
   "results.comboTitle": "Hands and feet",
   "results.comboHands": "Hands",
   "results.comboFeet": "Feet",
-  "results.comboOverall": "Overall match: {n}%"
+  "results.comboOverall": "Overall match: {n}%",
+  "resume.title": "Continue your visit with {name}?",
+  "resume.continue": "Continue",
+  "resume.note": "The game closed in the middle of a visit. Everything is just as you left it."
 }

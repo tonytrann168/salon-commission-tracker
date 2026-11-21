@@ -13,6 +13,9 @@ import { createMenuSetupScreen } from './game/ui/menu-setup';
 import { MENU_CONFIG, menuItems, orderFor } from './game/menu';
 import { comboScore, comboStages } from './game/combo';
 import { installUiSounds } from './game/ui/ui-sound-listener';
+import { VISIT_SAVE_KEY, parseVisitSave, visitSaveOf } from './game/visit-save';
+import type { VisitSave } from './game/visit-save';
+import { createResumeCard } from './game/ui/resume-card';
 import type { Container, Rectangle } from 'pixi.js';
 import { GALLERY_CONFIG, addToGallery } from './game/gallery';
 import type { FixOutcome } from './game/fix-requests';
@@ -496,6 +499,35 @@ async function boot(): Promise<void> {
     return { client: applyScenario(persona, scenario), scenario };
   };
 
+  /** Story 072: "Continue your visit with Grace?" when a visit was left in progress (saved on this phone). */
+  function offerSavedVisit(): void {
+    let saved: VisitSave | null = null;
+    try {
+      saved = parseVisitSave(localStorage.getItem(VISIT_SAVE_KEY), Date.now());
+      if (!saved) localStorage.removeItem(VISIT_SAVE_KEY);
+    } catch {
+      saved = null;
+    }
+    const persona = saved ? ROSTER.find((c) => c.id === saved.clientId) : undefined;
+    if (!saved || !persona) return;
+    const visit = saved;
+    createResumeCard(appHost, {
+      name: persona.name,
+      onContinue: () => {
+        voice.unlock();
+        void beginAppointment(visit.level, persona, visit.daily, getScenario(visit.scenarioId), visit.pathNode, visit);
+      },
+      onLeave: () => {
+        try {
+          localStorage.removeItem(VISIT_SAVE_KEY);
+        } catch {
+          // Nothing to do.
+        }
+        writeSave(afterLeaving(loadSave()));
+      },
+    });
+  }
+
   /** Story 057a: the salon path, the hub after Start: a top bar, today's challenge, the day's nodes. */
   const showPath = () => {
     teardownDom();
@@ -585,7 +617,7 @@ async function boot(): Promise<void> {
   };
 
   /** `pathNode` (story 057a): the salon path's node this appointment is (it finishes the node). */
-  const beginAppointment = async (level: EnglishLevel, persona: ClientPersona, daily = false, scenario?: Scenario, pathNode?: number) => {
+  const beginAppointment = async (level: EnglishLevel, persona: ClientPersona, daily = false, scenario?: Scenario, pathNode?: number, restore?: VisitSave) => {
     // Story 018: the appointment needs the PixiJS stage (usually loaded by now) and a connection.
     let stage: Stage;
     try {
@@ -606,6 +638,11 @@ async function boot(): Promise<void> {
     showScene('salon');
     // Story 005: what the client hears about her nails, and the finished result for the review and the stars.
     const nails: { note: string | undefined; finished: { description: string; match: number; fixes?: FixOutcome[] } | undefined; photo?: Promise<string | null>; workForPicture?: Promise<string | null> } = { note: undefined, finished: undefined };
+    // Story 072: a visit continued after a reload: the finished set and its photo, if Done was already tapped.
+    if (restore?.finished) nails.finished = restore.finished;
+    if (restore?.photo) nails.photo = Promise.resolve(restore.photo);
+    /** Story 072: the finished set's photo, once ready (kept with the saved visit). */
+    let photoData: string | undefined = restore?.photo;
     // Story 044: the salon menu and her order on it (she orders by number; checkout rings it up).
     // Story 068: facts the client turn reads each time: she brought a picture; the player is stuck on her question.
     const turnFlags = { picture: false, pickNext: false };
@@ -618,13 +655,15 @@ async function boot(): Promise<void> {
       level,
       // Grading starts from the chat panel's onEnded, once the final line has finished revealing (story 002).
       onFinished: () => undefined,
+      ...(restore ? { restore: restore.appointment } : {}),
     });
     // Story 065 (hard clients): she may bring a picture: her request narrows to it, drawn by the nail renderer.
     // Story 069: a pedicure request is kept to what toes take (short; square or round); pictures work for feet too.
     const nailRequest = client.nailRequest ? pedicureRequest(client.nailRequest) : undefined;
     // Story 069b: a combo is the hands, then the feet, then one checkout (no picture for a combo).
     const combo = nailRequest ? comboStages(nailRequest) : null;
-    let handsDone: { description: string; score: number; photo: Promise<string | null> | null } | null = null;
+    let handsDone: { description: string; score: number; photo: Promise<string | null> | null } | null = restore?.handsDone ? { description: restore.handsDone.description, score: restore.handsDone.score, photo: Promise.resolve(restore.handsDone.photo ?? null) } : null;
+    let handsPhotoData: string | undefined = restore?.handsDone?.photo;
     /** Story 071: the feet's own match, for the combo results (both photos, each with its match). */
     let feetMatch: number | null = null;
     const picture = nailRequest && !combo && (scenario?.picture || bringsPicture(client.difficulty, `${client.id}:${loadSave().appointments}`)) ? referenceTarget(nailRequest) : null;
@@ -640,9 +679,11 @@ async function boot(): Promise<void> {
       menu: { items: menuList, order },
       // Story 068: Leave visit (from the pause): nothing is counted; back to the path (any penalty is in config).
       onLeave: () => {
+        clearVisit();
         writeSave(afterLeaving(loadSave()));
         showPath();
       },
+      ...(restore?.service ? { restore: restore.service } : {}),
       // Story 068: two misses on her question: the next turn asks her to pick a sensible answer and move on.
       onStuck: () => {
         turnFlags.pickNext = true;
@@ -657,6 +698,10 @@ async function boot(): Promise<void> {
                     onHandsDone: (design: NailDesign, result: MatchResult, source: { target: Container; frame: Rectangle | null } | null) => {
                       // Story 071: the hands' photo now, while the hand is still on the stage.
                       handsDone = { description: describeDesign(design, undefined, 'manicure'), score: result.score, photo: source ? stage.snapshot(source.target, GALLERY_CONFIG.width, GALLERY_CONFIG.quality, source.frame ?? undefined) : null };
+                      void handsDone.photo?.then((photo) => {
+                        handsPhotoData = photo ?? undefined;
+                        saveVisit();
+                      });
                     },
                   }
                 : {}),
@@ -674,6 +719,8 @@ async function boot(): Promise<void> {
               })(),
               onNote: (note: string | undefined) => {
                 nails.note = note;
+                // Story 072: the set changed: keep the visit.
+                saveVisit();
               },
               onDone: (design: NailDesign, result: MatchResult) => {
                 const feet = combo ? describeDesign(design, undefined, 'pedicure') : null;
@@ -687,6 +734,10 @@ async function boot(): Promise<void> {
               // Story 050: the finished set's photo (taken now, shown first on the results and kept in My work).
               onPhoto: (source: { target: Container; frame: Rectangle | null }) => {
                 nails.photo = stage.snapshot(source.target, GALLERY_CONFIG.width, GALLERY_CONFIG.quality, source.frame ?? undefined);
+                void nails.photo.then((photo) => {
+                  photoData = photo ?? undefined;
+                  saveVisit();
+                });
               },
               // Story 048: the fixes she asked for go to the review, the scorecard and the debrief.
               onFixes: (fixes: FixOutcome[]) => {
@@ -714,8 +765,10 @@ async function boot(): Promise<void> {
             }
           : {}),
       },
-      onEnded: (container, result) =>
-        createResultsScreen(container, {
+      onEnded: (container, result) => {
+        // Story 072: the visit is over (results): nothing left to continue.
+        clearVisit();
+        return createResultsScreen(container, {
           clientName: client.name,
           clientId: client.id,
           clientPronoun: client.pronoun,
@@ -747,9 +800,51 @@ async function boot(): Promise<void> {
             createLearningPanel({ transport: corrections, level, language: getLanguage(), outcome: result.outcome, transcript: result.transcript, ...(practice ? { onPractice: practice } : {}) }),
             ...[createLevelChangePanel(level, score.englishScore)].filter((panel): panel is HTMLElement => panel !== null),
           ],
-        }).destroy,
+        }).destroy;
+      },
     });
     teardownDom = panel.destroy;
+    // Story 072: the visit is saved on this phone on every change (her turn, the mood, the set), so a reload or a crash
+    // can continue it; cleared at the results or on Leave visit.
+    let visitOver = false;
+    function saveVisit(): void {
+      if (visitOver || typeof panel === 'undefined') return;
+      const snapshot = appointment.getSnapshot();
+      if (snapshot.status === 'finished') return;
+      const save = visitSaveOf(
+        {
+          clientId: persona.id,
+          ...(scenario ? { scenarioId: scenario.id } : {}),
+          daily,
+          ...(pathNode !== undefined ? { pathNode } : {}),
+          level,
+          appointment: { phase: snapshot.phase, mood: snapshot.mood, transcript: [...snapshot.transcript], moodHistory: [...snapshot.moodHistory], ...(snapshot.agreedTotal !== undefined ? { agreedTotal: snapshot.agreedTotal } : {}) },
+          service: panel.visitState(),
+          ...(nails.finished ? { finished: { description: nails.finished.description, match: nails.finished.match } } : {}),
+          ...(photoData ? { photo: photoData } : {}),
+          ...(handsDone ? { handsDone: { description: handsDone.description, score: handsDone.score, ...(handsPhotoData ? { photo: handsPhotoData } : {}) } } : {}),
+        },
+        Date.now(),
+      );
+      try {
+        localStorage.setItem(VISIT_SAVE_KEY, JSON.stringify(save));
+      } catch {
+        // Storage full or blocked: the visit simply can't be continued after a reload.
+      }
+    }
+    function clearVisit(): void {
+      visitOver = true;
+      try {
+        localStorage.removeItem(VISIT_SAVE_KEY);
+      } catch {
+        // Nothing to do.
+      }
+    }
+    appointment.subscribe((snapshot) => {
+      if (snapshot.status === 'finished') clearVisit();
+      else saveVisit();
+    });
+    saveVisit();
     // Story 015: the first appointment comes with the companion's tour (once; replayable from Settings).
     startTour(appHost);
 
@@ -838,6 +933,8 @@ async function boot(): Promise<void> {
   const firstAccount = getAccount();
   if (firstAccount && !firstAccount.user && !firstAccount.memory().email && readStored(WELCOME_KEY) !== '1') showWelcome(firstAccount);
   else showTitle();
+  // Story 072: a visit was in progress when the game closed (a reload or a crash): offer to continue it.
+  offerSavedVisit();
 
   // Story 018: installable app with an offline title (built files only; never /api). Production builds only.
   if (import.meta.env.PROD && 'serviceWorker' in navigator) {

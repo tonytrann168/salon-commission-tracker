@@ -23,6 +23,17 @@ export interface AppointmentSnapshot {
   error: Error | null;
   /** Set when status is `finished`. */
   result: AppointmentResult | null;
+  /** Story 072: the latest total agreed in the chat (kept with a visit saved for a reload). */
+  agreedTotal?: number;
+}
+
+/** Story 072: where a visit saved before a reload or crash picks up again. */
+export interface AppointmentRestore {
+  phase: Phase;
+  mood: number;
+  transcript: Message[];
+  moodHistory: number[];
+  agreedTotal?: number;
 }
 
 export interface AppointmentOptions {
@@ -32,6 +43,8 @@ export interface AppointmentOptions {
   level: EnglishLevel;
   /** Called once when the appointment ends (story 002 consumes this). */
   onFinished: (result: AppointmentResult) => void;
+  /** Story 072: continue a visit saved before a reload (its phase, mood, chat and agreed total). */
+  restore?: AppointmentRestore;
 }
 
 export interface Appointment {
@@ -70,14 +83,14 @@ export function nextPhase(current: Phase, proposed: Phase): Phase {
 
 /** Create an appointment that starts in consultation with the client's opening line. */
 export function createAppointment(options: AppointmentOptions): Appointment {
-  const { client, takeTurn, level, onFinished } = options;
+  const { client, takeTurn, level, onFinished, restore } = options;
   const listeners = new Set<(snapshot: AppointmentSnapshot) => void>();
 
   let status: AppointmentStatus = 'awaiting_player';
-  let phase: Phase = 'consultation';
-  let mood = clampMood(client.startingMood);
-  let transcript: Message[] = [{ role: 'client', content: client.openingLine }];
-  let moodHistory: number[] = [mood];
+  let phase: Phase = restore?.phase ?? 'consultation';
+  let mood = clampMood(restore?.mood ?? client.startingMood);
+  let transcript: Message[] = restore?.transcript.length ? [...restore.transcript] : [{ role: 'client', content: client.openingLine }];
+  let moodHistory: number[] = restore?.moodHistory.length ? [...restore.moodHistory] : [mood];
   let pending: string | null = null;
   let pendingHelped = false;
   let error: Error | null = null;
@@ -85,7 +98,7 @@ export function createAppointment(options: AppointmentOptions): Appointment {
   let hold: Phase | null = null;
   let lastEmotion: Emotion | null = null;
   /** Story 059: the latest total agreed in the chat. */
-  let agreedTotal: number | undefined;
+  let agreedTotal: number | undefined = restore?.agreedTotal;
 
   const getSnapshot = (): AppointmentSnapshot => ({
     lastEmotion,
@@ -97,6 +110,7 @@ export function createAppointment(options: AppointmentOptions): Appointment {
     pendingPlayerMessage: pending,
     error,
     result,
+    ...(agreedTotal !== undefined ? { agreedTotal } : {}),
   });
 
   const notify = (): void => {

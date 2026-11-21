@@ -855,5 +855,8 @@
   "results.comboTitle": "Tay và chân",
   "results.comboHands": "Tay",
   "results.comboFeet": "Chân",
-  "results.comboOverall": "Khớp chung: {n}%"
+  "results.comboOverall": "Khớp chung: {n}%",
+  "resume.title": "Tiếp tục với khách {name}?",
+  "resume.continue": "Tiếp tục",
+  "resume.note": "Trò chơi bị đóng giữa chừng. Mọi thứ vẫn y như lúc {you} rời đi."
 }

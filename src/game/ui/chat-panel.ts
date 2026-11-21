@@ -29,6 +29,7 @@ import type { PrepOverlay } from './pedicure-prep';
 import { createNailStation, nailsNote } from './nail-station-panel';
 import type { NailStation } from './nail-station-panel';
 import { COMBO_CONFIG, comboScore } from '../combo';
+import type { ServiceState } from '../visit-save';
 import { openMenuSheet } from './menu-sheet';
 import { priceBoardIcon } from './menu-icon';
 import type { MenuItem, OrderLine } from '../menu';
@@ -132,6 +133,8 @@ export function createChatPanel(
       /** Story 069b: the hands of a combo are done (the feet come next); story 071: with the hands' photo source. */
       onHandsDone?: (design: NailDesign, result: MatchResult, photo: { target: Container; frame: Rectangle | null } | null) => void;
     };
+    /** Story 072: continue a visit saved before a reload: the station's part (the appointment restores the rest). */
+    restore?: ServiceState;
     /** Story 068: the player is stuck on her question (two misses): the next client turn picks for them. */
     onStuck?: () => void;
     /** Story 068: "Leave visit" on the pause overlay (the visit is not counted). */
@@ -139,7 +142,7 @@ export function createChatPanel(
     /** Voice in and out (story 004): the mic button, the client speaking aloud, and practising the last line. */
     voice?: { io: VoiceIO; clientId: string; speakReplies: boolean; onSpeakerChange: (on: boolean) => void };
   },
-): { destroy: () => void; setBestieExpression: (expression: Expression) => void } {
+): { destroy: () => void; setBestieExpression: (expression: Expression) => void; visitState: () => ServiceState } {
   const root = el('div', 'chat-panel');
   const clientName = getPortraitDefinition(portraits.client.portraitId).name;
   // Story 023: the phone's setting or the game's own Reduce motion.
@@ -306,15 +309,18 @@ export function createChatPanel(
   let feetNext: NailRequest | null = nailArt?.feet ?? null;
   const isCombo = feetNext !== null;
   let handsScore: number | null = null;
-  const makeStation = (art: NonNullable<typeof nailArt>, request: NailRequest): NailStation =>
+  // Story 072: a visit continued after a reload.
+  const restore = portraits.restore;
+  const makeStation = (art: NonNullable<typeof nailArt>, request: NailRequest, initialDesign?: NailDesign | null): NailStation =>
     createNailStation({
+        ...(initialDesign ? { initialDesign } : {}),
         rect: () => zone.rect(),
         zone: zone.element,
         layer: portraits.layer,
         request,
         clientPronoun: portraits.client.pronoun,
         // Story 064: her hangnail: a clean trim earns her thanks; a slip is her ouch, then first aid and a sorry.
-        ...(art.hangnail !== undefined && request.service !== 'pedicure'
+        ...(art.hangnail !== undefined && request.service !== 'pedicure' && (!restore || restore.hangnailLeft)
           ? {
               hangnail: {
                 nail: art.hangnail,
@@ -370,7 +376,15 @@ export function createChatPanel(
           afterDone();
         },
       });
-  let station: NailStation | null = nailArt ? makeStation(nailArt, nailArt.request) : null;
+  /** The request on the station now (a combo's hands, then its feet). */
+  let currentRequest: NailRequest | null = nailArt?.request ?? null;
+  if (nailArt && restore?.stage === 'feet' && nailArt.feet) {
+    currentRequest = nailArt.feet;
+    feetNext = null;
+    handsScore = restore.handsScore ?? null;
+  }
+  let station: NailStation | null = nailArt && currentRequest ? makeStation(nailArt, currentRequest, restore?.design) : null;
+  if (restore?.stage === 'feet') root.dataset.stage = 'feet';
   /** Story 069b: the hands are done: her line, then the foot comes up (a new station) with the soak and scrub first. */
   function toFeet(art: NonNullable<typeof nailArt>, feet: NailRequest): void {
     feetNext = null;
@@ -383,6 +397,7 @@ export function createChatPanel(
       old.toolbar.before(next.toolbar);
       old.destroy();
       station = next;
+      currentRequest = feet;
       new ResizeObserver(liftMai).observe(next.toolbar);
       drawOrder(feet);
       root.dataset.stage = 'feet';
@@ -417,6 +432,8 @@ export function createChatPanel(
     } else mai.element.classList.remove('over-station');
   }
   let prep: PrepOverlay | null = null;
+  /** Story 072: the soak and scrub are over (kept with a saved visit, so a reload never repeats them). */
+  let prepFinished = restore?.prepDone ?? false;
   function startPrep(): void {
     if (!station || !nailArt) return;
     root.classList.add('prepping');
@@ -425,6 +442,7 @@ export function createChatPanel(
       vi: clientVietnamese(portraits.client),
       onFinish: (moodDelta) => {
         prep = null;
+        prepFinished = true;
         root.classList.remove('prepping');
         if (moodDelta !== 0) appointment.adjustMood(moodDelta);
         requestAnimationFrame(() => station?.relayout());
@@ -544,7 +562,7 @@ export function createChatPanel(
     order.textContent = `${feet}🎨 ${colours}\n${[`${shapes}${lengthWords}`, ...extras].join(" · ")}${accent}`;
     order.setAttribute('aria-label', `${t('service.order.label')}: ${order.textContent}`);
   }
-  if (nailArt) drawOrder(nailArt.request);
+  if (currentRequest) drawOrder(currentRequest);
   // Her bubble grows to fit the whole sentence (this is an English-practice game) and the order is never cut: the block
   // is measured, and the hand is laid out below it.
   serviceTop.append(talk, order);
@@ -564,7 +582,7 @@ export function createChatPanel(
   let awaitingAnswer = false;
   let lastMatch = 0;
   // Story 048: the fixes she asked for during this service.
-  let fixes: FixRequest[] = [];
+  let fixes: FixRequest[] = restore ? [...restore.fixes] : [];
   /** A fix she asked for: track it and show the Fix it step. */
   const askFix = (text: string): void => {
     const kind = fixKindOf(text);
@@ -697,15 +715,23 @@ export function createChatPanel(
     pictureButton.addEventListener('click', drop);
     window.setTimeout(drop, PICTURE_NOTE_MS);
   }
+  /** Story 072: when the service started (moved back by the time already spent, for a visit continued after a reload). */
+  let serviceStartedAt = 0;
   const startService = (): void => {
     serviceStarted = true;
+    const elapsed = restore?.started ? restore.serviceElapsedMs : 0;
+    serviceStartedAt = performance.now() - elapsed;
     appointment.holdPhase('service');
     // Story 064: she mentions her hangnail first (and the station says how to trim it).
-    if (nailArt?.hangnail !== undefined) {
+    if (nailArt?.hangnail !== undefined && !restore?.started && station?.hangnailLeft()) {
       sayWhenFree(HANGNAIL_CONFIG.lines.notice);
       showNudge(t('hangnail.notice', clientGrammar(portraits.client.pronoun)));
     }
-    for (const line of planServiceTalk(portraits.client.difficulty)) talkTimers.push(window.setTimeout(() => sayWhenFree(line.text), line.at * 1000));
+    // Story 072: her planned lines resume from the time left (the ones already past are not said again).
+    for (const line of planServiceTalk(portraits.client.difficulty)) {
+      const at = line.at * 1000 - elapsed;
+      if (at >= 0) talkTimers.push(window.setTimeout(() => sayWhenFree(line.text), at));
+    }
   };
   // Story 058: after Done (checkout), her complaint ("polish on my skin… more red than coral") or the player offering a
   // fix shows 🔧 Fix it in the chat; it reopens the station on the Fix it step, and the next Done returns to checkout.
@@ -1005,8 +1031,9 @@ export function createChatPanel(
       if (working && !stationOpened) {
         stationOpened = true;
         setStationOpen(true);
-        // Story 026: a pedicure starts with soak & scrub over the foot, then the paint tools.
-        if (nailArt.request.service === 'pedicure') startPrep();
+        // Story 026: a pedicure starts with soak & scrub over the foot, then the paint tools (story 072: not again
+        // after a reload).
+        if (currentRequest?.service === 'pedicure' && !prepFinished) startPrep();
       }
       if (snapshot.status === 'finished') {
         prep?.destroy();
@@ -1384,8 +1411,26 @@ export function createChatPanel(
     sheet.focus();
   });
 
+  // Story 072: a visit continued at checkout: the job is finished (no tools, the nails as they were).
+  if (restore && appointment.getSnapshot().phase === 'checkout') {
+    serviceStarted = true;
+    stationOpened = true;
+    root.classList.add('service-over');
+    checkoutSeen = appointment.getSnapshot().transcript.length - 1;
+  }
+
   return {
     setBestieExpression: zone.setBestieExpression,
+    visitState: () => ({
+      started: serviceStarted,
+      serviceElapsedMs: serviceStarted ? Math.max(0, Math.round(performance.now() - serviceStartedAt)) : 0,
+      prepDone: prepFinished,
+      stage: root.dataset.stage === 'feet' ? 'feet' : 'hands',
+      ...(handsScore !== null ? { handsScore } : {}),
+      design: station ? station.design() : null,
+      fixes: [...fixes],
+      hangnailLeft: station ? station.hangnailLeft() : false,
+    }),
     destroy() {
       prep?.destroy();
       station?.destroy();

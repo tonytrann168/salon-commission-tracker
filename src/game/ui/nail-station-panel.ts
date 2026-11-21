@@ -29,6 +29,8 @@ import './nail-station.css';
  */
 
 export interface NailStationOptions {
+  /** Story 072: continue a set saved before a reload (same nails count). */
+  initialDesign?: NailDesign;
   /** Where the station draws (the portrait zone's rectangle, relative to the Pixi host). */
   rect: () => { left: number; top: number; width: number; height: number };
   /** The element the touch layer covers (the portrait zone). */
@@ -123,11 +125,12 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const longest = Math.max(1, ...(options.request.lengths ?? []).map((l) => NAIL_ART_CONFIG.lengths[l]));
   // Story 069: toes only take square or round.
   const shapes: NailShape[] = options.request.service === 'pedicure' ? PEDICURE_SHAPES : SHAPES;
-  const view = createStationView(emptyDesign(shapes.includes('round') ? 'round' : (shapes[0] ?? 'round'), nails), options.tools, limbFor(options.request), longest);
+  const startDesign = options.initialDesign && options.initialDesign.painted.length === nails ? options.initialDesign : emptyDesign(shapes.includes('round') ? 'round' : (shapes[0] ?? 'round'), nails);
+  const view = createStationView(startDesign, options.tools, limbFor(options.request), longest);
   const palette = options.palette ?? NAIL_ART_CONFIG.palette.filter((colour) => !colour.shop);
   options.layer.addChild(view.container);
   view.container.visible = false;
-  let design = emptyDesign(shapes.includes('round') ? 'round' : (shapes[0] ?? 'round'), nails);
+  let design = startDesign;
   let tool: StationTool = 'polish';
   const stickerKinds = options.stickers ?? NAIL_ART_CONFIG.stickers;
   let sticker: StickerKind = stickerKinds[0] ?? 'heart';
@@ -197,6 +200,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     view.setDesign(design);
     // Story 073: the polish left on the skin, as a number (a test and assistive hook; never shown).
     spillMark?.setAttribute('data-spill', String(spillCount(design)));
+    spillMark?.setAttribute('data-painted', String(design.painted.reduce((sum, cells) => sum + cells.length, 0)));
     // Story 047: the client's note about the nails is rebuilt at most every 250 ms (and when the finger lifts), not on
     // every movement.
     if (changeTimer === 0) changeTimer = window.setTimeout(flushChange, 250);
@@ -450,7 +454,8 @@ export function createNailStation(options: NailStationOptions): NailStation {
   // Touch layer: forwards pointer positions to the station (relative to the zone).
   const touch = el('div', 'station-touch hidden');
   spillMark = touch;
-  touch.dataset.spill = '0';
+  touch.dataset.spill = String(spillCount(design));
+  touch.dataset.painted = String(design.painted.reduce((sum, cells) => sum + cells.length, 0));
   // Story 049: the step's instruction sits over the empty palm (no toolbar height taken); a short message (spill, a
   // tool) takes its place for a few seconds.
   touch.append(status, instruction, ...(nails > NAIL_ART_CONFIG.hand.fingers.length ? [handButton] : []));
