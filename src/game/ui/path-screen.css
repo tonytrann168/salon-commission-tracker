@@ -74,3 +74,10 @@ html[data-motion='reduce'] .path-node.current { animation: none; }
 .path-challenge .picker-daily { width: 100%; margin: 0; }
 .path-challenge-tag { font: 800 13px/1.2 system-ui, sans-serif; color: #b3470b; letter-spacing: 0.2px; }
 .path-challenge .picker-daily-label { display: none; }
+
+/* Story 071: pedicure and combo bookings, and the testers' next-client chooser. */
+.path-appointment.booked-pedicure .path-appointment-service, .path-appointment.booked-combo .path-appointment-service { color: #2f7d4f; font-weight: 700; }
+.path-test-next { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 16px 8px; padding: 8px; border: 2px dashed #c9a7f5; border-radius: 14px; background: #faf5ff; }
+.path-test-label { width: 100%; font-size: 16px; font-weight: 700; color: #5b3c8c; }
+.path-test-next .path-test-option { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 0 6px; font-size: 16px; }
+.path-test-next .path-test-option[aria-pressed='true'] { background: #7a43c2; color: #fff; }

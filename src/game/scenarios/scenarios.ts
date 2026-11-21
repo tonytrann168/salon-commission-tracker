@@ -22,6 +22,23 @@ export interface Scenario {
   nailRequest?: Partial<NailRequest>;
   /** Story 033: after Done, the client asks for one redo (the station allows one more Done). */
   redo?: boolean;
+  /** Story 071: she always brings a picture of what she wants (hard clients). */
+  picture?: boolean;
+}
+
+/** Story 071: what a scenario books: a pedicure, a mani + pedi combo, or nails (anything else). */
+export const serviceOfScenario = (scenario: Scenario): 'manicure' | 'pedicure' | 'combo' =>
+  scenario.nailRequest?.combo ? 'combo' : scenario.nailRequest?.service === 'pedicure' ? 'pedicure' : 'manicure';
+
+/**
+ * Story 071: the scenario for a booked pedicure or combo: this client's own variant first (a scenario made for her),
+ * else one for anyone who fits, picked by `seed`. Null when none fits (she comes in for her nails).
+ */
+export function feetScenario(candidates: readonly Scenario[], clientId: string, service: 'pedicure' | 'combo', seed: number): Scenario | null {
+  const fits = candidates.filter((s) => serviceOfScenario(s) === service);
+  const own = fits.filter((s) => s.eligible.clients?.includes(clientId));
+  const pool = own.length > 0 ? own : fits;
+  return pool.length > 0 ? (pool[seed % pool.length] as Scenario) : null;
 }
 
 /** What the save knows about past visits of one client (for "returning"). */
@@ -70,6 +87,7 @@ export function parseScenario(raw: unknown, file: string, clientIds: readonly st
       ...(n.service !== undefined ? { service: n.service === 'manicure' || n.service === 'pedicure' ? n.service : fail('"nailRequest.service" must be manicure or pedicure') } : {}),
       ...(n.accent !== undefined ? { accent: n.accent === 'bigToe' ? ('bigToe' as const) : fail('"nailRequest.accent" must be bigToe') } : {}),
       ...(n.combo !== undefined ? { combo: typeof n.combo === 'boolean' ? n.combo : fail('"nailRequest.combo" must be true or false') } : {}),
+      ...(n.extras !== undefined ? { extras: Array.isArray(n.extras) && n.extras.every((x) => typeof x === 'string' && /^[a-zA-Z]+$/.test(x)) ? (n.extras as string[]) : fail('"nailRequest.extras" must be a list of menu tags') } : {}),
     };
   }
   return {
@@ -83,6 +101,7 @@ export function parseScenario(raw: unknown, file: string, clientIds: readonly st
     openingLine: text('openingLine', 300),
     ...(nailRequest ? { nailRequest } : {}),
     ...(raw.redo === undefined ? {} : raw.redo === true ? { redo: true } : fail('"redo" must be true when set')),
+    ...(raw.picture === undefined ? {} : raw.picture === true ? { picture: true } : fail('"picture" must be true when set')),
   };
 }
 

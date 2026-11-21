@@ -1,7 +1,7 @@
 import { NEW_PLAY, doneToday, liveStreak } from '../daily';
 import { getLanguage, t } from '../i18n';
 import { PATH_CONFIG, askDayChoice, dayProgress, pathView, todaysAppointments } from '../path';
-import type { PathNode } from '../path';
+import type { BookedService, PathNode } from '../path';
 import { rankFor } from '../progression';
 import type { ProgressSave } from '../progression';
 import type { ClientPersona, Difficulty } from '../types';
@@ -28,7 +28,9 @@ export interface PathScreenOptions {
   /** Story 062: the answer to "continue Day N, or start Day N+1?". */
   onDayChoice?: (choice: 'continue' | 'next') => void;
   /** Story 062: a booked guest's service from the salon menu ("#2 Gel manicure"). */
-  serviceFor?: (client: ClientPersona) => string;
+  serviceFor?: (client: ClientPersona, node?: PathNode) => string;
+  /** Story 071 (testers with an unlock-all code): choose what the next booked client comes in for. */
+  testNext?: { value: BookedService | null; onPick: (service: BookedService | null) => void };
 }
 
 const SWAY = [0, 62, 0, -62];
@@ -134,11 +136,29 @@ export function createPathScreen(host: HTMLElement, options: PathScreenOptions):
   // 062 review: one "today" card. Today's challenge is the first row of today's appointments (⭐); alone, it keeps its card.
   const appointments = booked.length > 0 && !choice ? appointmentsCard(booked, options) : null;
   const dailyAlone = options.daily && !appointments ? [createDailyCard(options.daily, options.faceImage)] : [];
-  screen.append(bar, title, ...(choice ? [choice] : []), ...(summary ? [summary] : []), ...dailyAlone, ...(appointments ? [appointments] : []), path, actions);
+  const tester = options.testNext ? testNextRow(options.testNext) : null;
+  screen.append(bar, title, ...(choice ? [choice] : []), ...(summary ? [summary] : []), ...(tester ? [tester] : []), ...dailyAlone, ...(appointments ? [appointments] : []), path, actions);
   host.append(screen);
   // The current node in view.
   requestAnimationFrame(() => screen.querySelector('.path-stop.current')?.scrollIntoView({ block: 'center' }));
   return screen;
+}
+
+/** Story 071: testers (unlock-all code) choose the next booked client's service: manicure, pedicure or combo. */
+function testNextRow(test: NonNullable<PathScreenOptions['testNext']>): HTMLElement {
+  const row = el('div', 'path-test-next');
+  row.setAttribute('role', 'group');
+  row.setAttribute('aria-label', t('path.testNext'));
+  row.append(el('span', 'path-test-label', t('path.testNext')));
+  for (const service of ['manicure', 'pedicure', 'combo'] as const) {
+    const button = el('button', 'chat-button secondary path-test-option', t(`path.testNext.${service}`));
+    button.type = 'button';
+    button.dataset.service = service;
+    button.setAttribute('aria-pressed', String(test.value === service));
+    button.addEventListener('click', () => test.onPick(test.value === service ? null : service));
+    row.append(button);
+  }
+  return row;
 }
 
 /** Story 062: "Continue Day 3 (2 of 5 done)" or "Start Day 4". */
@@ -182,7 +202,9 @@ function appointmentsCard(booked: { node: PathNode; time: string }[], options: P
     if (!node.client) continue;
     const row = el('li', 'path-appointment');
     const words = el('span', 'path-appointment-words');
-    words.append(el('strong', '', node.client.name), ...(options.serviceFor ? [el('span', 'path-appointment-service', options.serviceFor(node.client))] : []));
+    words.append(el('strong', '', node.client.name), ...(options.serviceFor ? [el('span', 'path-appointment-service', options.serviceFor(node.client, node))] : []));
+    // Story 071: a pedicure or combo booking says so at a glance.
+    if (node.service && node.service !== 'manicure') row.classList.add(`booked-${node.service}`);
     row.append(el('span', 'path-appointment-time', time), avatar(node.client, options.faceImage), words);
     list.append(row);
   }

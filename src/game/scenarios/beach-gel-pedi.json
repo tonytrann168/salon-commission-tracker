@@ -1,0 +1,42 @@
+{
+  "id": "beach-gel-pedi",
+  "name": {
+    "en": "Beach trip pedicure",
+    "vi": "Làm chân đi biển"
+  },
+  "tag": {
+    "en": "🦶🏖️ Gel pedicure: beach trip on Friday",
+    "vi": "🦶🏖️ Sơn gel móng chân: thứ Sáu đi biển"
+  },
+  "difficulty": "easy",
+  "eligible": {
+    "difficulties": [
+      "easy",
+      "medium"
+    ]
+  },
+  "occasion": "You are going to the beach on Friday and want your toes to look great in sandals for the whole trip.",
+  "constraints": "You want a pedicure with gel polish on your toes so it lasts the whole trip (gel on the toes is an add-on on the menu). A bright summer colour. You may ask how long gel lasts and how it comes off. You are happy when the stylist explains the steps and makes sure the water is not too hot.",
+  "openingLine": "Hi! I'm going to the beach on Friday. Can I get a pedicure with gel on my toes? Something bright for summer!",
+  "nailRequest": {
+    "lengths": [
+      "short"
+    ],
+    "service": "pedicure",
+    "hands": 2,
+    "gradient": "no",
+    "stickers": "none",
+    "shapes": [
+      "round",
+      "square"
+    ],
+    "colors": [
+      "coral",
+      "hot-pink"
+    ],
+    "gems": "none",
+    "extras": [
+      "gelToes"
+    ]
+  }
+}

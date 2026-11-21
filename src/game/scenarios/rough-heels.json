@@ -1,0 +1,41 @@
+{
+  "id": "rough-heels",
+  "name": {
+    "en": "Rough heels",
+    "vi": "Gót chân thô ráp"
+  },
+  "tag": {
+    "en": "🦶 Pedicure: \"my heels are so rough\"",
+    "vi": "🦶 Làm chân: \"gót chân tôi thô quá\""
+  },
+  "difficulty": "medium",
+  "eligible": {
+    "difficulties": [
+      "medium",
+      "hard"
+    ]
+  },
+  "occasion": "You stand all day at work and your heels are dry, rough and a little cracked. You are a bit embarrassed about it.",
+  "constraints": "You want a pedicure that really takes care of the rough heels: you ask about callus removal (callus treatment is an add-on on the menu) and whether it hurts. A clean, natural colour. You relax when the stylist is kind about your feet and explains the scrub and the callus care; you feel worse if she makes a face or rushes.",
+  "openingLine": "Hi... I need a pedicure. My heels are so rough, I'm a little embarrassed. Can you do something about the calluses?",
+  "nailRequest": {
+    "lengths": [
+      "short"
+    ],
+    "service": "pedicure",
+    "hands": 2,
+    "gradient": "no",
+    "stickers": "none",
+    "shapes": [
+      "square"
+    ],
+    "colors": [
+      "nude",
+      "pale-pink"
+    ],
+    "gems": "none",
+    "extras": [
+      "callus"
+    ]
+  }
+}

@@ -20,7 +20,12 @@ export interface PathConfig {
   showDays: number;
   /** Story 062: booked guests (the day's appointment stops). */
   booked: { xp: number; openHour: number; slotMinutes: number };
+  /** Story 071: pedicure and combo bookings. */
+  feet: { afterVisits: number; extraChance: number; comboShare: number };
 }
+
+/** Story 071: what a booked guest comes in for. */
+export type BookedService = 'manicure' | 'pedicure' | 'combo';
 
 export function parsePathConfig(raw: unknown): PathConfig {
   const c = raw as Partial<PathConfig>;
@@ -31,7 +36,10 @@ export function parsePathConfig(raw: unknown): PathConfig {
   const whole = (n: unknown, name: string, min: number, max: number): number => (typeof n === 'number' && Number.isInteger(n) && n >= min && n <= max ? n : fail(`"${name}" must be ${min}-${max}`));
   const b = (c.booked ?? {}) as Partial<PathConfig['booked']>;
   const booked = { xp: whole(b.xp, 'booked.xp', 0, 100), openHour: whole(b.openHour, 'booked.openHour', 5, 14), slotMinutes: whole(b.slotMinutes, 'booked.slotMinutes', 15, 240) };
-  return { pattern, lessonPhrases: whole(c.lessonPhrases, 'lessonPhrases', 1, 6), lessonXp: whole(c.lessonXp, 'lessonXp', 0, 100), goal: whole(c.goal, 'goal', 1, 10), showDays: whole(c.showDays, 'showDays', 0, 3), booked };
+  const f = (c.feet ?? {}) as Partial<PathConfig['feet']>;
+  const share = (n: unknown, name: string): number => (typeof n === 'number' && n >= 0 && n <= 1 ? n : fail(`"${name}" must be 0-1`));
+  const feet = { afterVisits: whole(f.afterVisits, 'feet.afterVisits', 0, 50), extraChance: share(f.extraChance, 'feet.extraChance'), comboShare: share(f.comboShare, 'feet.comboShare') };
+  return { pattern, lessonPhrases: whole(c.lessonPhrases, 'lessonPhrases', 1, 6), lessonXp: whole(c.lessonXp, 'lessonXp', 0, 100), goal: whole(c.goal, 'goal', 1, 10), showDays: whole(c.showDays, 'showDays', 0, 3), booked, feet };
 }
 
 export const PATH_CONFIG: PathConfig = parsePathConfig(pathJson);
@@ -43,6 +51,8 @@ export interface PathNode {
   kind: NodeKind;
   /** An appointment's client. */
   client?: ClientPersona;
+  /** Story 071: an appointment's booked service (pedicure and combo bookings come every day). */
+  service?: BookedService;
   /** A lesson's topic and phrases. */
   lesson?: { topic: (typeof TOPICS)[number]; phrases: StarterPhrase[] };
 }
@@ -77,7 +87,26 @@ export function pathNode(index: number, roster: readonly ClientPersona[], unlock
   for (let i = first; i < index; i++) if (config.pattern[i - first] === 'appointment') taken.add(pathNode(i, roster, unlocked, config).client?.id ?? '');
   const start = hash(`path-${index}`) % list.length;
   const client = (Array.from({ length: list.length }, (_, k) => list[(start + k) % list.length] as ClientPersona).find((c) => !taken.has(c.id)) ?? list[start]) as ClientPersona;
-  return { index, day, kind, client };
+  return { index, day, kind, client, service: bookedService(index, config) };
+}
+
+/**
+ * Story 071: the service booked at path node `index`. After `feet.afterVisits` appointment stops, each salon day has
+ * one pedicure-or-combo booking (a stable pick of that day's eligible slots); other eligible stops are one with
+ * chance `feet.extraChance`. A feet booking is a combo with chance `feet.comboShare`.
+ */
+export function bookedService(index: number, config: PathConfig = PATH_CONFIG): BookedService {
+  const per = config.pattern.length;
+  if (config.pattern[index % per] !== 'appointment') return 'manicure';
+  const perDay = config.pattern.filter((k) => k === 'appointment').length;
+  const day = Math.floor(index / per);
+  const ordinal = (i: number): number => Math.floor(i / per) * perDay + config.pattern.slice(0, i % per).filter((k) => k === 'appointment').length;
+  if (ordinal(index) < config.feet.afterVisits) return 'manicure';
+  const slots = Array.from({ length: per }, (_, k) => day * per + k).filter((i) => config.pattern[i % per] === 'appointment' && ordinal(i) >= config.feet.afterVisits);
+  const forced = slots[hash(`feet-day-${day}`) % slots.length];
+  const feet = index === forced || (hash(`feet-extra-${index}`) % 1000) / 1000 < config.feet.extraChance;
+  if (!feet) return 'manicure';
+  return (hash(`feet-combo-${index}`) % 1000) / 1000 < config.feet.comboShare ? 'combo' : 'pedicure';
 }
 
 /** The nodes to draw: the current day (and `showDays` ahead), with each node's state. */

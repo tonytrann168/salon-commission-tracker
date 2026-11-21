@@ -13,7 +13,7 @@ const ids = (list: { id: string }[]) => list.map((s) => s.id).sort();
 
 describe('scenario data', () => {
   it('has the scenarios (six from story 019, pedicure day from 024, rainy day and colour redo from 033), each with a tag and an opening line in place', () => {
-    expect(ids(SCENARIOS)).toEqual(['bridal-trial', 'colour-redo', 'combo-day', 'elderly-regular', 'gift-card', 'party-tonight', 'pedicure-day', 'rainy-day', 'returning-client', 'walk-in-rush']);
+    expect(ids(SCENARIOS)).toEqual(['beach-gel-pedi', 'bridal-trial', 'colour-redo', 'combo-day', 'combo-treat', 'elderly-regular', 'gift-card', 'jake-first-pedi', 'kim-combo-deal', 'marcus-quick-pedi', 'party-tonight', 'pedicure-day', 'priya-combo', 'rainy-day', 'returning-client', 'rosa-spa-pedi', 'rough-heels', 'spa-combo-picky', 'toe-art-picture', 'victoria-gel-combo', 'walk-in-rush']);
     for (const s of SCENARIOS) {
       expect(s.tag.en.length, s.id).toBeGreaterThan(5);
       expect(s.tag.vi.length, s.id).toBeGreaterThan(5);
@@ -34,7 +34,7 @@ describe('eligibility', () => {
   it('fits the client, needs the difficulty unlocked, and "returning" only after a real visit', () => {
     const grace = getClient('grace')!;
     const tom = getClient('tom')!;
-    expect(ids(eligibleScenarios(grace, SCENARIOS, { unlocked: ['easy'] }))).toEqual(['elderly-regular', 'gift-card', 'pedicure-day', 'rainy-day', 'walk-in-rush']);
+    expect(ids(eligibleScenarios(grace, SCENARIOS, { unlocked: ['easy'] }))).toEqual(['beach-gel-pedi', 'combo-treat', 'elderly-regular', 'gift-card', 'pedicure-day', 'rainy-day', 'walk-in-rush']);
     expect(ids(eligibleScenarios(grace, SCENARIOS, { unlocked: [...ALL], visits: { visits: 2, lastStars: 4, lastDay: '2026-11-09' } }))).toContain('returning-client');
     expect(ids(eligibleScenarios(tom, SCENARIOS, { unlocked: [...ALL] }))).not.toContain('bridal-trial');
     expect(ids(eligibleScenarios(tom, SCENARIOS, { unlocked: [...ALL] }))).not.toContain('returning-client');

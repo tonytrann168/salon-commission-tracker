@@ -1,0 +1,36 @@
+{
+  "id": "marcus-quick-pedi",
+  "name": {
+    "en": "Marcus's quick pedicure",
+    "vi": "Marcus làm chân nhanh"
+  },
+  "tag": {
+    "en": "🦶⏱️ Pedicure: a work trip tomorrow",
+    "vi": "🦶⏱️ Làm chân: mai đi công tác"
+  },
+  "difficulty": "medium",
+  "eligible": {
+    "clients": [
+      "marcus"
+    ]
+  },
+  "occasion": "You fly out for a work trip tomorrow morning and want neat, clean feet. You are short on time.",
+  "constraints": "A classic pedicure, no colour (nude or clear), square and short. You ask how long it takes and the price before you sit. You appreciate clear answers and a stylist who keeps the steps moving.",
+  "openingLine": "Hi. I need a quick pedicure, just clean and neat. How long does it take?",
+  "nailRequest": {
+    "lengths": [
+      "short"
+    ],
+    "service": "pedicure",
+    "hands": 2,
+    "gradient": "no",
+    "stickers": "none",
+    "shapes": [
+      "square"
+    ],
+    "colors": [
+      "nude"
+    ],
+    "gems": "none"
+  }
+}

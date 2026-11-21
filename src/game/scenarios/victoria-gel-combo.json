@@ -1,0 +1,35 @@
+{
+  "id": "victoria-gel-combo",
+  "name": {
+    "en": "Victoria's gel combo",
+    "vi": "Combo gel của Victoria"
+  },
+  "tag": {
+    "en": "💅🦶 Gel combo: in a hurry",
+    "vi": "💅🦶 Combo gel: đang vội"
+  },
+  "difficulty": "hard",
+  "eligible": {
+    "clients": [
+      "victoria"
+    ]
+  },
+  "occasion": "You have a gala tonight and booked the gel mani + spa pedi combo. You are in a hurry and expect perfect work.",
+  "constraints": "Black gel on hands and toes. You ask sharply how long the combo takes and what the spa pedicure includes. You make cold remarks if the stylist is slow or unclear, and warm up a little when she is quick and confident.",
+  "openingLine": "The gel mani and spa pedi combo. Black. I have a gala tonight, so please be quick.",
+  "nailRequest": {
+    "gradient": "no",
+    "stickers": "none",
+    "combo": true,
+    "shapes": [
+      "square"
+    ],
+    "lengths": [
+      "short"
+    ],
+    "colors": [
+      "black"
+    ],
+    "gems": "none"
+  }
+}

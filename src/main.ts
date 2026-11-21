@@ -6,7 +6,7 @@ import { DAILY_CONFIG, NEW_PLAY, liveStreak as playStreak, welcomeCoins } from '
 import { createPathScreen } from './game/ui/path-screen';
 import { createLessonScreen } from './game/ui/lesson-screen';
 import { PATH_CONFIG, finishNode, startNextDay } from './game/path';
-import type { PathNode } from './game/path';
+import type { BookedService, PathNode } from './game/path';
 import { companionSpeech } from './game/companion-voice';
 import { ACCOUNT_EVENT, createHomeStatus } from './game/ui/home-status';
 import { createMenuSetupScreen } from './game/ui/menu-setup';
@@ -33,7 +33,7 @@ import { companionIdentity, loadCompanion } from './game/companion';
 import { createDressUpScreen, createMeetScreen } from './game/ui/companion-screens';
 import { gainFriendship } from './game/ui/friendship';
 import { createStaleBuildGuard, isChunkLoadError } from './game/stale-build';
-import { SCENARIOS, SCENARIO_ODDS, applyScenario, eligibleScenarios, getScenario, pickScenario } from './game/scenarios';
+import { SCENARIOS, SCENARIO_ODDS, applyScenario, eligibleScenarios, feetScenario, getScenario, pickScenario } from './game/scenarios';
 import type { Scenario } from './game/scenarios';
 import { startTour } from './game/ui/tour';
 import { feedbackButton } from './game/ui/feedback-sheet';
@@ -120,6 +120,12 @@ async function boot(): Promise<void> {
   if (import.meta.env.VITE_INVITE_GATE === '1' && navigator.onLine) {
     if (!(await getSession()).signedIn) await askForInvite(host);
     unlockAll = (await getSession()).unlockAll;
+  } else if (navigator.onLine) {
+    // Story 071: without the invite gate the server can still say a tester session unlocks everything (the testers'
+    // next-client chooser); anywhere without a session route this is simply "no". Asked once, in the background.
+    void getSession().then((session) => {
+      unlockAll = session.unlockAll;
+    });
   }
 
   // A new deploy while the game is open: an old lazy chunk is gone → "New version!" and one reload (never a loop).
@@ -476,6 +482,20 @@ async function boot(): Promise<void> {
     teardownDom = () => screen.remove();
   };
 
+  /** Story 071: testers (unlock-all code) can choose what the next booked client comes in for. */
+  let testNext: BookedService | null = null;
+  /**
+   * Story 071: a path booking: a pedicure or combo booking brings its scenario (her own variant first). `current`: the
+   * tester's choice applies to the next stop.
+   */
+  const bookingFor = (node: PathNode, current: boolean): { client: ClientPersona; scenario: Scenario | undefined } => {
+    const persona = node.client ?? DEFAULT_CLIENT;
+    const service = (current && testNext) || node.service || 'manicure';
+    if (service === 'manicure') return { client: persona, scenario: undefined };
+    const scenario = feetScenario(scenariosFor(persona), persona.id, service, hashDay(`feet:${node.index}`)) ?? undefined;
+    return { client: applyScenario(persona, scenario), scenario };
+  };
+
   /** Story 057a: the salon path, the hub after Start: a top bar, today's challenge, the day's nodes. */
   const showPath = () => {
     teardownDom();
@@ -491,7 +511,12 @@ async function boot(): Promise<void> {
       faceImage,
       onNode: (node) => {
         if (node.kind === 'lesson' && node.lesson) showLesson(node);
-        else if (node.client) beginAppointment(level, node.client, false, undefined, node.index);
+        else if (node.client) {
+          const current = node.index === (loadSave().pathDone ?? 0);
+          const booking = bookingFor(node, current);
+          if (current) testNext = null;
+          beginAppointment(level, node.client, false, booking.scenario, node.index);
+        }
       },
       onMore: showClientPicker,
       onBack: showTitle,
@@ -505,10 +530,23 @@ async function boot(): Promise<void> {
         }
         showPath();
       },
-      serviceFor: (client) => {
+      ...(unlockAll
+        ? {
+            testNext: {
+              value: testNext,
+              onPick: (service: BookedService | null) => {
+                testNext = service;
+                showPath();
+              },
+            },
+          }
+        : {}),
+      serviceFor: (persona, node) => {
         // 062 review: short names ("#2 Gel mani + French"); a player's own menu keeps its own names.
+        // Story 071: a pedicure or combo booking shows that service.
+        const client = node ? bookingFor(node, node.index === (loadSave().pathDone ?? 0)).client : persona;
         const choice = loadSave().menu ?? { preset: MENU_CONFIG.default };
-        const order = orderFor(client.nailRequest, menuItems(choice), client.id);
+        const order = orderFor(client.nailRequest ? pedicureRequest(client.nailRequest) : undefined, menuItems(choice), client.id);
         const short = (line: (typeof order)[number]): string => (choice.preset === 'custom' ? line.item.name[getLanguage()] : t(`menu.short.${line.item.tag}`));
         return order.map((line, i) => (i === 0 ? `#${line.number} ${short(line)}` : short(line))).join(' + ');
       },
@@ -587,7 +625,7 @@ async function boot(): Promise<void> {
     // Story 069b: a combo is the hands, then the feet, then one checkout (no picture for a combo).
     const combo = nailRequest ? comboStages(nailRequest) : null;
     let handsDone: { description: string; score: number } | null = null;
-    const picture = nailRequest && !combo && bringsPicture(client.difficulty, `${client.id}:${loadSave().appointments}`) ? referenceTarget(nailRequest) : null;
+    const picture = nailRequest && !combo && (scenario?.picture || bringsPicture(client.difficulty, `${client.id}:${loadSave().appointments}`)) ? referenceTarget(nailRequest) : null;
     turnFlags.picture = picture !== null;
     const referencePhoto = picture ? stage.designPhoto(picture.design, picture.request, GALLERY_CONFIG.width, GALLERY_CONFIG.quality) : null;
     const panel = stage.createChatPanel(host, appointment, {

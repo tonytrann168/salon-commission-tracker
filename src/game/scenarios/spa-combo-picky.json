@@ -1,0 +1,36 @@
+{
+  "id": "spa-combo-picky",
+  "name": {
+    "en": "Spa combo, every step",
+    "vi": "Combo spa, đủ từng bước"
+  },
+  "tag": {
+    "en": "💅🦶 Spa combo: she knows every step",
+    "vi": "💅🦶 Combo spa: khách biết rõ từng bước"
+  },
+  "difficulty": "hard",
+  "eligible": {
+    "difficulties": [
+      "hard"
+    ]
+  },
+  "occasion": "You booked the gel mani + spa pedi combo and you know exactly what a spa pedicure should include.",
+  "constraints": "You expect every step: the soak, the scrub, the mask, hot towels and a real foot and calf massage. You ask what the spa pedicure includes and you complain politely if a step seems skipped. You also check that the combo price is less than the two separately. A deep red on hands and toes.",
+  "openingLine": "I'd like the gel mani and spa pedi combo. And I mean the full spa pedicure: scrub, mask, massage, everything.",
+  "nailRequest": {
+    "gradient": "no",
+    "stickers": "none",
+    "combo": true,
+    "shapes": [
+      "square",
+      "oval"
+    ],
+    "lengths": [
+      "short"
+    ],
+    "colors": [
+      "red"
+    ],
+    "gems": "none"
+  }
+}

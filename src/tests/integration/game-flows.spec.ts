@@ -143,6 +143,37 @@ for (const lang of LANGS) {
       await expect(page.locator('.total-step .total-menu')).toContainText(`$${price}`);
     });
 
+    test('feet bookings (story 071): every day after two visits books a pedicure or combo; testers can choose the next one', async ({ page }) => {
+      test.setTimeout(90_000);
+      // Day 3 of the path (well past two visits); no challenge today, so every booking is a row.
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], pathDone: 10, pathDayOn: '' } });
+      await mockApi(page);
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      const rows = page.locator('.path-appointments .path-appointment:not(.path-challenge)');
+      await expect(rows.first()).toBeVisible();
+      const feet = page.locator('.path-appointments :is(.path-appointment.booked-pedicure, .path-appointment.booked-combo)');
+      expect(await feet.count()).toBeGreaterThanOrEqual(1);
+      await expect(feet.first().locator('.path-appointment-service')).toContainText(lang === 'vi' ? /chân|Combo/ : /pedi|Pedicure|Combo/i);
+      // A player without a tester code has no chooser.
+      await expect(page.locator('.path-test-next')).toHaveCount(0);
+    });
+
+    test('tester chooser (story 071): Pedicure makes the next booked client a pedicure', async ({ page }) => {
+      test.setTimeout(90_000);
+      await seed(page, lang, { save: { xp: 300, appointments: 10, badges: ['first-client'], pathDone: 10, pathDayOn: '' } });
+      await mockApi(page, { unlockAll: true });
+      await page.goto('/');
+      await page.locator('.title-menu > .chat-button').first().click();
+      await expect(page.locator('.path-test-next')).toBeVisible();
+      await page.locator('.path-test-option[data-service=pedicure]').click();
+      await expect(page.locator('.path-test-option[data-service=pedicure]')).toHaveAttribute('aria-pressed', 'true');
+      await page.locator('.path-stop.current .path-node, .path-node.current').first().click();
+      await page.locator('.chat-input').fill('Of course! Please put your feet in the warm water.');
+      await page.locator('.chat-form button[type=submit]').click();
+      await expect(page.locator('.pedi-prep')).toBeVisible({ timeout: 10_000 });
+    });
+
     test('buying a polish in the shop puts it in the station', async ({ page }) => {
       await seed(page, lang, { save: { wallet: 50, xp: 100, appointments: 4, badges: ['first-client'], ...dailyWith('lily', 'party-tonight') } });
       await mockApi(page);
@@ -341,13 +372,13 @@ for (const lang of LANGS) {
       // Story 063: the real menu, in groups with icons; Fancy's classic manicure is $45.
       await expect(page.locator('.menu-settings .menu-item').first()).toContainText('$45');
       await expect(page.locator('.menu-settings .menu-group-title')).toHaveCount(5);
-      await expect(page.locator('.menu-settings .menu-item svg.service-icon')).toHaveCount(18);
+      await expect(page.locator('.menu-settings .menu-item svg.service-icon')).toHaveCount(21);
       await page.reload();
       await page.locator('.title-menu > .chat-button').first().click();
       await page.locator('.picker-daily').click();
       // Consultation: the menu button shows the numbered menu.
       await page.locator('.chat-menu-button').click();
-      await expect(page.locator('.menu-sheet .menu-item')).toHaveCount(18);
+      await expect(page.locator('.menu-sheet .menu-item')).toHaveCount(21);
       await expect(page.locator('.menu-sheet .menu-item').first()).toContainText('Classic manicure');
       await expect(page.locator('.menu-sheet .menu-group-title')).toHaveText(lang === 'vi' ? ['Móng tay', 'Móng chân', 'Đắp / nối móng', 'Thêm', 'Combo (tay + chân)'] : ['Manicure', 'Pedicure', 'Nail enhancements', 'Add-ons', 'Combos (hands + feet)']);
       await expect(page.locator('.menu-sheet .menu-item.ordered')).toHaveCount(0);
@@ -476,7 +507,7 @@ for (const lang of LANGS) {
       await expect(page.locator('.menu-setup-title svg.price-board-icon')).toHaveCount(1);
       await expect(page.locator('.menu-setup-mai')).toContainText('Number 3');
       await page.locator('.menu-presets [data-preset=basic]').click();
-      await expect(page.locator('.menu-setup .menu-item')).toHaveCount(18);
+      await expect(page.locator('.menu-setup .menu-item')).toHaveCount(21);
       expect(await noOverflow(page)).toBe(true);
       await page.locator('.menu-confirm').click();
       await expect(page.locator('.picker-daily')).toBeVisible();

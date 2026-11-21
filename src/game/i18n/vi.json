@@ -839,5 +839,17 @@
   "settings.soundTest.tick": "Tiếng đếm",
   "settings.soundTest.stinger": "Tiếng thưởng",
   "settings.soundTest.giftBuild": "Quà sắp mở",
-  "settings.soundTest.giftPop": "Quà bung"
+  "settings.soundTest.giftPop": "Quà bung",
+  "menu.tag.gelToes": "Sơn gel móng chân",
+  "menu.tag.callus": "Trị chai chân",
+  "menu.tag.hotStone": "Massage đá nóng",
+  "menu.short.gelToes": "Gel chân",
+  "menu.short.callus": "Trị chai",
+  "menu.short.hotStone": "Đá nóng",
+  "path.testNext": "Thử nghiệm: khách tiếp theo",
+  "path.testNext.manicure": "Móng tay",
+  "path.testNext.pedicure": "Móng chân",
+  "path.testNext.combo": "Combo",
+  "path.service.pedicure": "🦶 Móng chân",
+  "path.service.combo": "💅🦶 Combo"
 }

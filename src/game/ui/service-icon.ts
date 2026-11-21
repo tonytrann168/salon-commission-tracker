@@ -40,6 +40,9 @@ const DRAW: Record<MenuTag, () => string> = {
   paraffin: () => finger('#ff8ab5', 1, `<path d="M5 22 Q16 15 27 22 L27 30 L5 30 Z" fill="#fff3c9" stroke="#d9b54a" stroke-width="1" opacity="0.95"/>`),
   polishChange: () => `<rect x="11" y="13" width="10" height="16" rx="3" fill="#ff5c9a" stroke="${LINE}" stroke-width="1"/><rect x="13" y="5" width="6" height="8" rx="1.5" fill="#3b2a33"/><path d="M14 17 L14 25" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>`,
   other: () => sparkle(16, 16, '#ff5c9a'),
+  gelToes: () => foot('#ff5c9a', '<path d="M9 9 Q10 8 11.5 8" stroke="#fff" stroke-width="1.2" stroke-linecap="round" fill="none"/>'),
+  callus: () => foot('#f6cfb4', '<path d="M8 25 Q12 27 16 26" stroke="#c9a27e" stroke-width="2" stroke-linecap="round" fill="none"/>' + sparkle(25, 26, '#ffd23f')),
+  hotStone: () => foot('#ffb3cf', '<ellipse cx="16" cy="21" rx="5" ry="2.6" fill="#5b5560"/><ellipse cx="16" cy="17.5" rx="3.6" ry="2" fill="#7a737f"/>' + '<path d="M24 6 Q25 4 24 2 M27 7 Q28 5 27 3" stroke="#ff8a5c" stroke-width="1.2" fill="none" stroke-linecap="round"/>'),
   comboClassic: () => `<g transform="translate(-4 -2) scale(0.62)">${finger('#ff8ab5')}</g><g transform="translate(12 12) scale(0.6)">${foot('#ff8ab5')}</g>`,
   comboGel: () => `<g transform="translate(-4 -2) scale(0.62)">${finger('#ff5c9a', 1, '<path d="M13 11 Q14 10 15.5 10" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/>')}</g><g transform="translate(12 12) scale(0.6)">${foot('#ffb3cf')}</g>`,
 };

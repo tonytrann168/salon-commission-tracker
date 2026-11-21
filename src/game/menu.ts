@@ -8,7 +8,7 @@ import type { NailRequest } from './nail-art/design';
  */
 
 /** Story 063 adds the real menu's services; the older tags (fullSet, ombre, gems, extensions) still work on an own menu. */
-export const MENU_TAGS = ['manicure', 'gel', 'spa', 'fullSet', 'pedicure', 'spaPedicure', 'jellyPedicure', 'acrylic', 'fill', 'dip', 'gelX', 'extensions', 'french', 'chrome', 'art', 'gems', 'ombre', 'removal', 'paraffin', 'polishChange', 'other', 'comboClassic', 'comboGel'] as const;
+export const MENU_TAGS = ['manicure', 'gel', 'spa', 'fullSet', 'pedicure', 'spaPedicure', 'jellyPedicure', 'acrylic', 'fill', 'dip', 'gelX', 'extensions', 'french', 'chrome', 'art', 'gems', 'ombre', 'removal', 'paraffin', 'polishChange', 'other', 'comboClassic', 'comboGel', 'gelToes', 'callus', 'hotStone'] as const;
 export type MenuTag = (typeof MENU_TAGS)[number];
 
 /** Story 063: the menu's groups, in order. */
@@ -20,6 +20,7 @@ const CATEGORY_OF: Record<MenuTag, MenuCategory> = {
   acrylic: 'enhancements', fill: 'enhancements', dip: 'enhancements', gelX: 'enhancements', extensions: 'enhancements',
   french: 'addons', chrome: 'addons', art: 'addons', gems: 'addons', ombre: 'addons', removal: 'addons', paraffin: 'addons', polishChange: 'addons', other: 'addons',
   comboClassic: 'combos', comboGel: 'combos',
+  gelToes: 'addons', callus: 'addons', hotStone: 'addons',
 };
 export const categoryOf = (tag: MenuTag): MenuCategory => CATEGORY_OF[tag];
 
@@ -140,7 +141,9 @@ export function orderFor(request: NailRequest | undefined, items: readonly MenuI
   const hands = request?.hands === 2 ? (find('fullSet') ?? usual(['manicure', 'gel', 'spa'])) : usual(['manicure', 'gel', 'spa']);
   // Story 069b: a combo is one line (the gel combo when her usual is gel or spa).
   const combo = request?.combo ? (hands?.item.tag === 'manicure' ? find('comboClassic') : find('comboGel')) ?? find('comboClassic') : null;
-  const base = combo ?? (pedicure ? usual(['pedicure', 'spaPedicure', 'jellyPedicure']) : long ? (find('acrylic') ?? hands) : hands) ?? (items[0] ? { number: 1, item: items[0] } : null);
+  // Story 071: a scenario can name the pedicure she wants (a spa pedicure).
+  const named = pedicure ? (request?.extras ?? []).map((tag) => (categoryOf(tag as MenuTag) === 'pedicure' ? find(tag as MenuTag) : null)).find((line) => line) ?? null : null;
+  const base = combo ?? (pedicure ? (named ?? usual(['pedicure', 'spaPedicure', 'jellyPedicure'])) : long ? (find('acrylic') ?? hands) : hands) ?? (items[0] ? { number: 1, item: items[0] } : null);
   const extras: (OrderLine | null)[] = request
     ? [
         request.gradient === 'yes' ? (find('ombre') ?? find('art')) : null,
@@ -149,6 +152,8 @@ export function orderFor(request: NailRequest | undefined, items: readonly MenuI
         long && base?.item.tag !== 'acrylic' ? find('extensions') : null,
         // Some clients like a French tip with it.
         who && !pedicure && !combo && seedOf(`${who}:french`) % 4 === 0 ? find('french') : null,
+        // Story 071: add-ons she asks for (gel on the toes, callus care, hot stones...).
+        ...(request.extras ?? []).filter((tag) => MENU_TAGS.includes(tag as MenuTag) && categoryOf(tag as MenuTag) === 'addons').map((tag) => find(tag as MenuTag)),
       ]
     : [];
   const lines = [base, ...extras].filter((line): line is OrderLine => line !== null);

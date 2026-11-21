@@ -125,6 +125,8 @@ export interface NailRequest {
   accent?: 'bigToe';
   /** Story 069b: a mani + pedi combo (hands, then feet, one checkout). */
   combo?: boolean;
+  /** Story 071: menu items she asks for by tag (a spa pedicure, callus care, gel on the toes...). */
+  extras?: string[];
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);

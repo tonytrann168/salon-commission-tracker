@@ -69,11 +69,13 @@ describe('combos', () => {
 
 describe('the combo visit (story 069b)', () => {
   const combo: NailRequest = { shapes: ['almond', 'round'], lengths: ['medium'], colors: ['coral'], gems: 'few', stickers: 'none', gradient: 'no', combo: true };
-  it('is the hands (as asked), then both feet (short, square or round, no art by default)', () => {
+  it('is the hands (as asked), then both feet (short, square or round; story 071: her art on the big toes)', () => {
     const stages = comboStages(combo)!;
     expect(stages.hands).toMatchObject({ service: 'manicure', shapes: ['almond', 'round'], lengths: ['medium'], gems: 'few' });
     expect(stages.hands.combo).toBeUndefined();
-    expect(stages.feet).toMatchObject({ service: 'pedicure', hands: 2, shapes: ['round'], lengths: ['short'], colors: ['coral'], gems: 'none' });
+    expect(stages.feet).toMatchObject({ service: 'pedicure', hands: 2, shapes: ['round'], lengths: ['short'], colors: ['coral'], gems: 'few', accent: 'bigToe' });
+    // No art asked for: no accent on the toes either.
+    expect(comboStages({ ...combo, gems: 'none' })!.feet.accent).toBeUndefined();
     expect(comboStages({ ...combo, combo: false })).toBeNull();
     expect(comboScore(80, 91)).toBe(86);
   });

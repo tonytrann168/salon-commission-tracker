@@ -37,7 +37,7 @@ export function comboStages(request: NailRequest, config: ComboConfig = COMBO_CO
     ...rest,
     service: 'pedicure',
     hands: 2,
-    ...(config.feetArt ? {} : { gems: 'none' as const, stickers: 'none' as const, gradient: 'no' as const }),
+    ...(config.feetArt ? (rest.gems !== 'none' || rest.stickers !== 'none' ? { accent: 'bigToe' as const, gradient: 'no' as const } : { gradient: 'no' as const }) : { gems: 'none' as const, stickers: 'none' as const, gradient: 'no' as const }),
   });
   return { hands, feet };
 }

@@ -1,0 +1,38 @@
+{
+  "id": "toe-art-picture",
+  "name": {
+    "en": "Toe art picture",
+    "vi": "Ảnh mẫu móng chân"
+  },
+  "tag": {
+    "en": "🦶📷 Pedicure: she brings a picture of toe art",
+    "vi": "🦶📷 Làm chân: khách mang ảnh mẫu móng chân"
+  },
+  "difficulty": "hard",
+  "eligible": {
+    "difficulties": [
+      "hard"
+    ]
+  },
+  "picture": true,
+  "occasion": "You saw a pedicure with a little gem art on the big toes online and saved the picture on your phone.",
+  "constraints": "You show the stylist your picture and want it to look just like it: red toes with a few gems on the big toes only, short and square. You are picky about the gems being neat and only on the big toes. You ask what the art costs before agreeing.",
+  "openingLine": "Hi. I want a pedicure exactly like this picture. Red, with a few little gems on the big toes. Can you do that?",
+  "nailRequest": {
+    "lengths": [
+      "short"
+    ],
+    "service": "pedicure",
+    "hands": 2,
+    "gradient": "no",
+    "stickers": "none",
+    "shapes": [
+      "square"
+    ],
+    "colors": [
+      "red"
+    ],
+    "gems": "few",
+    "accent": "bigToe"
+  }
+}

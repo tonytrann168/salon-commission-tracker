@@ -1,0 +1,35 @@
+{
+  "id": "kim-combo-deal",
+  "name": {
+    "en": "Kim's combo deal",
+    "vi": "Kim chọn combo"
+  },
+  "tag": {
+    "en": "💅🦶 Combo: \"is it cheaper together?\"",
+    "vi": "💅🦶 Combo: \"làm chung có rẻ hơn không?\""
+  },
+  "difficulty": "medium",
+  "eligible": {
+    "clients": [
+      "kim"
+    ]
+  },
+  "occasion": "You want both hands and feet done but you watch your money, so you check the combo price first.",
+  "constraints": "You ask how much you save with the combo against a manicure and a pedicure separately, and what it includes, before agreeing. Mint on hands and toes. You get uneasy if extras are added without asking.",
+  "openingLine": "Hi! I want my hands and my feet done. Is it cheaper if I get them together?",
+  "nailRequest": {
+    "gradient": "no",
+    "stickers": "none",
+    "combo": true,
+    "shapes": [
+      "square"
+    ],
+    "lengths": [
+      "medium"
+    ],
+    "colors": [
+      "mint"
+    ],
+    "gems": "none"
+  }
+}

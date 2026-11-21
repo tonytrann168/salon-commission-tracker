@@ -1,0 +1,38 @@
+{
+  "id": "combo-treat",
+  "name": {
+    "en": "Mani-pedi treat",
+    "vi": "Tự thưởng tay + chân"
+  },
+  "tag": {
+    "en": "💅🦶 Combo: a treat after a long week",
+    "vi": "💅🦶 Combo: tự thưởng sau một tuần dài"
+  },
+  "difficulty": "easy",
+  "eligible": {
+    "difficulties": [
+      "easy"
+    ]
+  },
+  "occasion": "It was a long week and you are treating yourself to a mani-pedi, hands and feet in one visit.",
+  "constraints": "You want the mani + pedi combo from the menu because it costs a little less than the two separately. Matching colour on hands and toes. You may ask what the combo includes. You are happy when the stylist tells you what comes next (hands first, then the foot soak).",
+  "openingLine": "Hi! I'd like the mani-pedi combo today, please. The same colour on my hands and toes.",
+  "nailRequest": {
+    "gradient": "no",
+    "stickers": "none",
+    "combo": true,
+    "shapes": [
+      "round",
+      "oval"
+    ],
+    "lengths": [
+      "short",
+      "medium"
+    ],
+    "colors": [
+      "pale-pink",
+      "coral"
+    ],
+    "gems": "none"
+  }
+}

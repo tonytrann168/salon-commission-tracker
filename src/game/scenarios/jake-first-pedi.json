@@ -1,0 +1,36 @@
+{
+  "id": "jake-first-pedi",
+  "name": {
+    "en": "Jake's first pedicure",
+    "vi": "Lần đầu Jake làm chân"
+  },
+  "tag": {
+    "en": "🦶 Pedicure: his first time",
+    "vi": "🦶 Làm chân: lần đầu tiên"
+  },
+  "difficulty": "easy",
+  "eligible": {
+    "clients": [
+      "jake"
+    ]
+  },
+  "occasion": "Your sister gave you a pedicure gift card. It is your first pedicure ever and you are a little nervous.",
+  "constraints": "You don't know what happens in a pedicure: you ask about each step (the soak, the scrub, the trim) and if it tickles. No colour, just clean and buffed (clear or nude is fine). You laugh at yourself and thank the stylist for explaining.",
+  "openingLine": "Hi! Um, my sister gave me a gift card for a pedicure. It's my first time. What do I do?",
+  "nailRequest": {
+    "lengths": [
+      "short"
+    ],
+    "service": "pedicure",
+    "hands": 2,
+    "gradient": "no",
+    "stickers": "none",
+    "shapes": [
+      "square"
+    ],
+    "colors": [
+      "nude"
+    ],
+    "gems": "none"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "priya-combo",
+  "name": {
+    "en": "Priya's combo",
+    "vi": "Combo của Priya"
+  },
+  "tag": {
+    "en": "💅🦶 Combo: matching for a wedding",
+    "vi": "💅🦶 Combo: đồng bộ đi đám cưới"
+  },
+  "difficulty": "medium",
+  "eligible": {
+    "clients": [
+      "priya"
+    ]
+  },
+  "occasion": "Your cousin's wedding is this weekend and you want matching hands and toes.",
+  "constraints": "You want the mani + pedi combo, coral on hands and toes, with a few gems on your fingers and the big toes. You change your mind once about the colour (navy, then back to coral) and want the stylist to help you decide.",
+  "openingLine": "Hi! I need hands and feet for a wedding this weekend. The combo, please! But I can't decide on the colour...",
+  "nailRequest": {
+    "gradient": "no",
+    "stickers": "none",
+    "combo": true,
+    "shapes": [
+      "almond"
+    ],
+    "lengths": [
+      "medium"
+    ],
+    "colors": [
+      "coral"
+    ],
+    "gems": "few"
+  }
+}

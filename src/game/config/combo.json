@@ -1,7 +1,7 @@
 {
-  "_note": "Story 069b (owner playtest 5): a combo visit does the hands, then the feet (soak and scrub first), then ONE checkout at the combo price. Each half moves her mood by moodShare of a single service's change (so a combo moves it as much as one service). feetLine is what she says when the hands are done (English: the game is English practice); switchMs is the pause before the foot comes up. The feet take her colours, short square/round nails and no art unless feetArt is true.",
+  "_note": "Story 069b (owner playtest 5): a combo visit does the hands, then the feet (soak and scrub first), then ONE checkout at the combo price. Each half moves her mood by moodShare of a single service's change (so a combo moves it as much as one service). feetLine is what she says when the hands are done (English: the game is English practice); switchMs is the pause before the foot comes up. The feet take her colours and short square/round nails; with feetArt (owner, story 071: on) they take her art too, on the big toes (the common accent).",
   "moodShare": 0.5,
   "switchMs": 1600,
   "feetLine": "They look lovely! Now my feet, please.",
-  "feetArt": false
+  "feetArt": true
 }

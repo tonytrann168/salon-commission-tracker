@@ -839,5 +839,17 @@
   "settings.soundTest.tick": "Count tick",
   "settings.soundTest.stinger": "Reward ding",
   "settings.soundTest.giftBuild": "Gift build-up",
-  "settings.soundTest.giftPop": "Gift pop"
+  "settings.soundTest.giftPop": "Gift pop",
+  "menu.tag.gelToes": "Gel polish on toes",
+  "menu.tag.callus": "Callus treatment",
+  "menu.tag.hotStone": "Hot stone massage",
+  "menu.short.gelToes": "Gel toes",
+  "menu.short.callus": "Callus care",
+  "menu.short.hotStone": "Hot stones",
+  "path.testNext": "Tester: next client",
+  "path.testNext.manicure": "Manicure",
+  "path.testNext.pedicure": "Pedicure",
+  "path.testNext.combo": "Combo",
+  "path.service.pedicure": "🦶 Pedicure",
+  "path.service.combo": "💅🦶 Combo"
 }

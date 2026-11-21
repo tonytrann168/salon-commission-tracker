@@ -1,0 +1,39 @@
+{
+  "id": "rosa-spa-pedi",
+  "name": {
+    "en": "Rosa's spa pedicure",
+    "vi": "Rosa làm chân spa"
+  },
+  "tag": {
+    "en": "🦶✨ Spa pedicure: her only break this week",
+    "vi": "🦶✨ Làm chân spa: lần nghỉ duy nhất trong tuần"
+  },
+  "difficulty": "easy",
+  "eligible": {
+    "clients": [
+      "rosa"
+    ]
+  },
+  "occasion": "Your feet ache after double shifts and this is your one break this week. You booked the spa pedicure to really relax.",
+  "constraints": "You want the spa pedicure (the scrub, the mask and the longer foot and calf massage). You may ask what the spa pedicure includes and whether hot stones cost extra. A calm, classic red on the toes. You love a quiet, gentle stylist.",
+  "openingLine": "Hi... I booked the spa pedicure. My feet are so tired. I just want to relax today.",
+  "nailRequest": {
+    "lengths": [
+      "short"
+    ],
+    "service": "pedicure",
+    "hands": 2,
+    "gradient": "no",
+    "stickers": "none",
+    "shapes": [
+      "round"
+    ],
+    "colors": [
+      "red"
+    ],
+    "gems": "none",
+    "extras": [
+      "spaPedicure"
+    ]
+  }
+}

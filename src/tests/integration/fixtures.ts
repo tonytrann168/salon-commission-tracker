@@ -70,6 +70,8 @@ export interface ApiOptions {
   correct?: boolean;
   /** The phases the client turns walk through (default service → checkout → done). */
   phases?: string[];
+  /** Story 071: the session's invite code unlocks everything (testers). */
+  unlockAll?: boolean;
 }
 
 /** Answer every /api call the game makes. Returns the requests seen, by route. */
@@ -107,7 +109,7 @@ export async function mockApi(target: Page | BrowserContext, options: ApiOptions
       case 'bestie':
         return json({ hint: 'Ask what colour she likes.', praise: 'Great job!', tryNext: 'Offer a top coat.', question: '', memory: '', reply: 'Nice!' });
       case 'session':
-        return json({ signedIn: true });
+        return json({ signedIn: true, ...(options.unlockAll ? { unlockAll: true } : {}) });
       default:
         return json({ ok: true });
     }

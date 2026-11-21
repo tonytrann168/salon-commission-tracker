@@ -1,5 +1,5 @@
 {
-  "_note": "Story 057a: home is a path of salon days. Each day has nodesPerDay nodes in this pattern (appointment = a client in the chair; lesson = a short phrase lesson). Clients get harder day by day, within the difficulties the player's rank has opened. lessonPhrases: phrases in a lesson. lessonXp: XP for finishing one. goal: the daily goal ring (clients finished today). showDays: days drawn ahead of the current one. Story 062: days are flexible. Coming back on a later calendar day to an unfinished salon day asks: continue it, or start the next day (it closes with however many clients were served, no penalty; a small 'Day N: 2 clients' note shows). The day's appointment stops are today's booked guests, shown on the 'Today's appointments' card with a time (from openHour, every slotMinutes) and their service from the salon menu; a booked guest gives booked.xp extra XP. Walk-ins (Other clients) can come between them.",
+  "_note": "Story 057a: home is a path of salon days. Each day has nodesPerDay nodes in this pattern (appointment = a client in the chair; lesson = a short phrase lesson). Clients get harder day by day, within the difficulties the player's rank has opened. lessonPhrases: phrases in a lesson. lessonXp: XP for finishing one. goal: the daily goal ring (clients finished today). showDays: days drawn ahead of the current one. Story 062: days are flexible. Coming back on a later calendar day to an unfinished salon day asks: continue it, or start the next day (it closes with however many clients were served, no penalty; a small 'Day N: 2 clients' note shows). The day's appointment stops are today's booked guests, shown on the 'Today's appointments' card with a time (from openHour, every slotMinutes) and their service from the salon menu; a booked guest gives booked.xp extra XP. Walk-ins (Other clients) can come between them. Story 071 (owner: never got a pedicure or combo client): feet bookings. Once the player has had feet.afterVisits appointment stops, every salon day books at least one pedicure-or-combo guest (a stable pick of the day's slots), and each other stop is one with chance feet.extraChance (about 25-30% of visits overall). comboShare of the feet bookings are mani + pedi combos.",
   "pattern": [
     "appointment",
     "appointment",
@@ -15,5 +15,10 @@
     "xp": 5,
     "openHour": 10,
     "slotMinutes": 90
+  },
+  "feet": {
+    "afterVisits": 2,
+    "extraChance": 0.05,
+    "comboShare": 0.4
   }
 }
