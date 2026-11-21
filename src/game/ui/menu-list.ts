@@ -24,6 +24,8 @@ export function menuList(items: readonly MenuItem[], ordered: ReadonlySet<number
         names.append(el('strong', '', item.name.en));
         if (lang === 'vi' && item.name.vi !== item.name.en) names.append(el('small', '', item.name.vi));
       } else names.append(el('span', '', item.name[lang]));
+      // Story 071: what the service includes, under its name.
+      if (item.includes) names.append(el('small', 'menu-includes', item.includes[getLanguage()]));
       // Story 069: a combo shows what it saves against the two services separately.
       const saving = comboSaving(item, items);
       if (saving && saving > 0) names.append(el('small', 'menu-saving', t('menu.comboSaving', { dollars: saving })));

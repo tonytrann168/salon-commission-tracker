@@ -19,6 +19,10 @@ import { getLanguage, t } from '../i18n';
 import { el } from './dom';
 import { createMaiBubble } from './mai-bubble';
 import { createPrepOverlay } from './pedicure-prep';
+import { relaxLine } from '../nail-art/prep';
+
+/** Story 071: her relaxing line comes a moment after the soak and scrub. */
+const RELAX_DELAY_MS = 2500;
 import { emotionFor } from '../voice-cast';
 import { SERVICE_TALK, checkoutLine, expectsAnswer, planServiceTalk } from '../service-talk';
 import type { PrepOverlay } from './pedicure-prep';
@@ -125,8 +129,8 @@ export function createChatPanel(
       reference?: Promise<string | null>;
       /** Story 069b: a combo: after the hands' Done the station becomes the feet (soak and scrub first). */
       feet?: NailRequest;
-      /** Story 069b: the hands of a combo are done (the feet come next). */
-      onHandsDone?: (design: NailDesign, result: MatchResult) => void;
+      /** Story 069b: the hands of a combo are done (the feet come next); story 071: with the hands' photo source. */
+      onHandsDone?: (design: NailDesign, result: MatchResult, photo: { target: Container; frame: Rectangle | null } | null) => void;
     };
     /** Story 068: the player is stuck on her question (two misses): the next client turn picks for them. */
     onStuck?: () => void;
@@ -356,7 +360,7 @@ export function createChatPanel(
           // Story 069b: the hands of a combo are done: the feet come next (no checkout yet).
           if (feetNext && !checkoutFixing && !station?.canRedo) {
             handsScore = result.score;
-            art.onHandsDone?.(design, result);
+            art.onHandsDone?.(design, result, station ? station.photoSource() : null);
             toFeet(art, feetNext);
             return;
           }
@@ -424,6 +428,9 @@ export function createChatPanel(
         root.classList.remove('prepping');
         if (moodDelta !== 0) appointment.adjustMood(moodDelta);
         requestAnimationFrame(() => station?.relayout());
+        // Story 071: a spa step the game doesn't play (mask, hot towels, massage, hot stones): she relaxes.
+        const relax = relaxLine(portraits.menu?.order.map((line) => line.item.tag) ?? [], Math.random());
+        if (relax) window.setTimeout(() => sayWhenFree(relax.en), RELAX_DELAY_MS);
       },
     });
     zone.element.append(prep.element);

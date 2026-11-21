@@ -4,6 +4,8 @@ import pathJson from '../game/config/path.json';
 import { ROSTER } from '../game/clients/roster';
 import { SCENARIOS, eligibleScenarios, feetScenario, serviceOfScenario } from '../game/scenarios';
 import { DIFFICULTIES } from '../game/types';
+import { MENU_CONFIG, menuPrompt, orderFor } from '../game/menu';
+import { PREP_RELAX, relaxLine } from '../game/nail-art/prep';
 
 /** Story 071 (owner: never got a pedicure or combo client): pedicure and combo bookings come reliably. */
 const per = PATH_CONFIG.pattern.length;
@@ -64,5 +66,32 @@ describe('every client can come in for a pedicure and a combo', () => {
     expect(of('pedicure').length).toBeGreaterThanOrEqual(4);
     expect(of('combo').length).toBeGreaterThanOrEqual(4);
     for (const service of ['pedicure', 'combo']) expect(new Set(of(service).map((s) => s.difficulty))).toEqual(new Set(DIFFICULTIES));
+  });
+});
+
+describe('what each service includes (story 071)', () => {
+  it('pedicures, spa services and combos say what they include, in English and Vietnamese, on every preset', () => {
+    for (const items of Object.values(MENU_CONFIG.presets)) {
+      for (const tag of ['pedicure', 'spaPedicure', 'comboClassic', 'comboGel', 'manicure', 'gelToes', 'callus', 'hotStone']) {
+        const item = items.find((i) => i.tag === tag)!;
+        expect(item.includes?.en, tag).toBeTruthy();
+        expect(item.includes?.vi, tag).toBeTruthy();
+      }
+      expect(items.find((i) => i.tag === 'pedicure')!.includes!.en).toMatch(/soak.*callus.*massage.*polish/i);
+      expect(items.find((i) => i.tag === 'spaPedicure')!.includes!.en).toMatch(/scrub.*mask.*massage/i);
+    }
+  });
+  it('the client is told what her service includes and may ask about it', () => {
+    const items = MENU_CONFIG.presets.mid;
+    const order = orderFor({ shapes: ['round'], colors: ['red'], gradient: 'no', gems: 'none', stickers: 'none', service: 'pedicure', extras: ['spaPedicure', 'hotStone'] }, items);
+    expect(order.map((l) => l.item.tag)).toEqual(['spaPedicure', 'hotStone']);
+    const prompt = menuPrompt(items, order);
+    expect(prompt).toContain('includes: Classic steps plus sugar scrub');
+    expect(prompt).toContain('ask once what your service includes');
+  });
+  it('a spa step the game does not play is her relaxing line; a classic pedicure has none', () => {
+    expect(relaxLine(['spaPedicure'], 0)).toEqual(PREP_RELAX.lines[0]);
+    expect(relaxLine(['pedicure', 'hotStone'], 0.99)).toEqual(PREP_RELAX.lines.at(-1));
+    expect(relaxLine(['pedicure', 'gelToes'], 0.5)).toBeNull();
   });
 });

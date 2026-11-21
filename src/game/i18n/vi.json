@@ -851,5 +851,9 @@
   "path.testNext.pedicure": "Móng chân",
   "path.testNext.combo": "Combo",
   "path.service.pedicure": "🦶 Móng chân",
-  "path.service.combo": "💅🦶 Combo"
+  "path.service.combo": "💅🦶 Combo",
+  "results.comboTitle": "Tay và chân",
+  "results.comboHands": "Tay",
+  "results.comboFeet": "Chân",
+  "results.comboOverall": "Khớp chung: {n}%"
 }

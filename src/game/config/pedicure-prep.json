@@ -3,15 +3,53 @@
   "scrubWidths": 8,
   "scrubTapWidths": 1,
   "moodBonus": 4,
-  "skipFor": ["easy"],
+  "skipFor": [
+    "easy"
+  ],
   "reactions": {
     "done": [
-      { "en": "Ahh, the warm water feels amazing. My feet feel brand new!", "vi": "Ôi, nước ấm dễ chịu quá. Chân {c} như mới luôn!" },
-      { "en": "Oh, that scrub is so nice. I could fall asleep right here!", "vi": "Chà xát thích quá. {C} ngủ luôn ở đây được đó!" },
-      { "en": "Mmm, so relaxing. Thank you for taking your time.", "vi": "Thư giãn quá. Cảm ơn {s} đã làm kỹ nha." }
+      {
+        "en": "Ahh, the warm water feels amazing. My feet feel brand new!",
+        "vi": "Ôi, nước ấm dễ chịu quá. Chân {c} như mới luôn!"
+      },
+      {
+        "en": "Oh, that scrub is so nice. I could fall asleep right here!",
+        "vi": "Chà xát thích quá. {C} ngủ luôn ở đây được đó!"
+      },
+      {
+        "en": "Mmm, so relaxing. Thank you for taking your time.",
+        "vi": "Thư giãn quá. Cảm ơn {s} đã làm kỹ nha."
+      }
     ],
     "skipped": [
-      { "en": "No soak today? That's okay, let's go straight to the colour.", "vi": "Hôm nay không ngâm hả? Không sao, mình sơn màu luôn nha." }
+      {
+        "en": "No soak today? That's okay, let's go straight to the colour.",
+        "vi": "Hôm nay không ngâm hả? Không sao, mình sơn màu luôn nha."
+      }
+    ]
+  },
+  "relax": {
+    "_note": "Story 071: the spa steps the game does not play as a mini-game (mask, hot towels, the longer massage, hot stones). When her order has one of these menu tags, she says one of these lines after the soak and scrub (the client relaxes).",
+    "tags": [
+      "spaPedicure",
+      "jellyPedicure",
+      "hotStone",
+      "comboGel",
+      "paraffin"
+    ],
+    "lines": [
+      {
+        "en": "Mmm, the mask and the hot towels... and that massage on my calves. Heaven!",
+        "vi": "Mặt nạ với khăn nóng... rồi massage bắp chân nữa. Sướng quá!"
+      },
+      {
+        "en": "Oh, the warm stones feel so good. I could stay here all day.",
+        "vi": "Đá ấm dễ chịu quá. Ngồi đây cả ngày cũng được."
+      },
+      {
+        "en": "That longer massage is exactly what my feet needed. Thank you.",
+        "vi": "Massage lâu vậy đúng là chân đang cần. Cảm ơn nha."
+      }
     ]
   }
 }

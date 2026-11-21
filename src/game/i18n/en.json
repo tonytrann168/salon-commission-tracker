@@ -851,5 +851,9 @@
   "path.testNext.pedicure": "Pedicure",
   "path.testNext.combo": "Combo",
   "path.service.pedicure": "🦶 Pedicure",
-  "path.service.combo": "💅🦶 Combo"
+  "path.service.combo": "💅🦶 Combo",
+  "results.comboTitle": "Hands and feet",
+  "results.comboHands": "Hands",
+  "results.comboFeet": "Feet",
+  "results.comboOverall": "Overall match: {n}%"
 }

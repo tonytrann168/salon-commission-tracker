@@ -624,7 +624,9 @@ async function boot(): Promise<void> {
     const nailRequest = client.nailRequest ? pedicureRequest(client.nailRequest) : undefined;
     // Story 069b: a combo is the hands, then the feet, then one checkout (no picture for a combo).
     const combo = nailRequest ? comboStages(nailRequest) : null;
-    let handsDone: { description: string; score: number } | null = null;
+    let handsDone: { description: string; score: number; photo: Promise<string | null> | null } | null = null;
+    /** Story 071: the feet's own match, for the combo results (both photos, each with its match). */
+    let feetMatch: number | null = null;
     const picture = nailRequest && !combo && (scenario?.picture || bringsPicture(client.difficulty, `${client.id}:${loadSave().appointments}`)) ? referenceTarget(nailRequest) : null;
     turnFlags.picture = picture !== null;
     const referencePhoto = picture ? stage.designPhoto(picture.design, picture.request, GALLERY_CONFIG.width, GALLERY_CONFIG.quality) : null;
@@ -652,8 +654,9 @@ async function boot(): Promise<void> {
               ...(combo
                 ? {
                     feet: combo.feet,
-                    onHandsDone: (design: NailDesign, result: MatchResult) => {
-                      handsDone = { description: describeDesign(design, undefined, 'manicure'), score: result.score };
+                    onHandsDone: (design: NailDesign, result: MatchResult, source: { target: Container; frame: Rectangle | null } | null) => {
+                      // Story 071: the hands' photo now, while the hand is still on the stage.
+                      handsDone = { description: describeDesign(design, undefined, 'manicure'), score: result.score, photo: source ? stage.snapshot(source.target, GALLERY_CONFIG.width, GALLERY_CONFIG.quality, source.frame ?? undefined) : null };
                     },
                   }
                 : {}),
@@ -674,6 +677,7 @@ async function boot(): Promise<void> {
               },
               onDone: (design: NailDesign, result: MatchResult) => {
                 const feet = combo ? describeDesign(design, undefined, 'pedicure') : null;
+                if (combo) feetMatch = result.score;
                 nails.finished = handsDone && feet
                   ? { description: `hands: ${handsDone.description}; feet: ${feet}`, match: comboScore(handsDone.score, result.score) }
                   : { description: describeDesign(design, undefined, client.nailRequest?.service), match: result.score };
@@ -730,6 +734,8 @@ async function boot(): Promise<void> {
           helpLanguage: getHelpLanguage(),
           ...(nails.finished ? { nails: nails.finished } : {}),
           bill: order.map((line) => ({ number: line.number, label: line.item.name[getLanguage()], price: line.item.price })),
+          // Story 071: after a combo, both photos (hands and feet), each with its own match, and the average.
+          ...(handsDone && feetMatch !== null && nails.photo ? { combo: { hands: handsDone.photo ?? Promise.resolve(null), handsMatch: handsDone.score, feetMatch } } : {}),
           ...(referencePhoto ? { reference: referencePhoto, ...(nails.workForPicture ? { workForPicture: nails.workForPicture } : {}) } : {}),
           ...(nails.photo ? { photo: nails.photo, onPhoto: (photo: string, stars: number) => void addToGallery({ photo, clientName: client.name, stars, day: localDay() }) } : {}),
           extras: (grading, score) => [

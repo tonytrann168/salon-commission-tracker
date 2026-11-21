@@ -96,3 +96,27 @@ export function prepOutcome(prep: Prep, roll: number, config: PrepConfig = PREP_
   const pick = pickFresh(list.length, recent, list.length - 1, roll);
   return { moodDelta: prep.state === 'done' ? config.moodBonus : 0, line: list[pick - 1] as PrepLine, pick };
 }
+
+/** Story 071: the spa steps the game doesn't play (mask, hot towels, the longer massage, hot stones): her line. */
+export interface PrepRelax {
+  tags: string[];
+  lines: PrepLine[];
+}
+
+export function parsePrepRelax(raw: unknown): PrepRelax {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const fail = (what: string): never => {
+    throw new Error(`pedicure-prep.json: relax.${what}`);
+  };
+  const tags = Array.isArray(r.tags) && r.tags.every((t) => typeof t === 'string') ? (r.tags as string[]) : fail('tags must be a list of menu tags');
+  const lines = Array.isArray(r.lines) && r.lines.length > 0 && r.lines.every((l) => l && typeof l.en === 'string' && typeof l.vi === 'string') ? (r.lines as PrepLine[]) : fail('lines need en and vi');
+  return { tags, lines };
+}
+
+export const PREP_RELAX: PrepRelax = parsePrepRelax((prepJson as Record<string, unknown>).relax);
+
+/** Her relaxing line when her order has a spa step (`roll` in [0, 1) picks it), or null. */
+export function relaxLine(orderTags: readonly string[], roll: number, config: PrepRelax = PREP_RELAX): PrepLine | null {
+  if (!orderTags.some((tag) => config.tags.includes(tag))) return null;
+  return config.lines[Math.min(config.lines.length - 1, Math.floor(roll * config.lines.length))] as PrepLine;
+}

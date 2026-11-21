@@ -141,6 +141,13 @@ for (const lang of LANGS) {
       // The menu price is that one line's price (Grace's usual is gel: the gel combo).
       const price = (await bill.textContent())!.match(/\$(\d+)/)![1]!;
       await expect(page.locator('.total-step .total-menu')).toContainText(`$${price}`);
+      // Story 071: the results show both photos (hands and feet), each with its match, and the overall match.
+      await toResults(page);
+      const both = page.locator('.combo-photos');
+      await expect(both).toBeVisible();
+      await expect(both.locator('.combo-photo img')).toHaveCount(2);
+      await expect(both.locator('.combo-match')).toHaveCount(2);
+      await expect(both).toContainText(lang === 'vi' ? 'Khớp chung' : 'Overall match');
     });
 
     test('feet bookings (story 071): every day after two visits books a pedicure or combo; testers can choose the next one', async ({ page }) => {
@@ -380,6 +387,8 @@ for (const lang of LANGS) {
       await page.locator('.chat-menu-button').click();
       await expect(page.locator('.menu-sheet .menu-item')).toHaveCount(21);
       await expect(page.locator('.menu-sheet .menu-item').first()).toContainText('Classic manicure');
+      // Story 071: what each service includes, under its name.
+      await expect(page.locator('.menu-sheet .menu-item').nth(3).locator('.menu-includes')).toContainText(lang === 'vi' ? 'Ngâm' : 'Soak');
       await expect(page.locator('.menu-sheet .menu-group-title')).toHaveText(lang === 'vi' ? ['Móng tay', 'Móng chân', 'Đắp / nối móng', 'Thêm', 'Combo (tay + chân)'] : ['Manicure', 'Pedicure', 'Nail enhancements', 'Add-ons', 'Combos (hands + feet)']);
       await expect(page.locator('.menu-sheet .menu-item.ordered')).toHaveCount(0);
       expect(await noOverflow(page)).toBe(true);

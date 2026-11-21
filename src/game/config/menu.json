@@ -1,5 +1,5 @@
 {
-  "_note": "Story 044, 063: the salon menu (pretend money, shown to the client and rung up at checkout; the wallet still gets only the tip). Story 063: a real 2026 US salon menu in four groups (Manicure 1-3, Pedicure 4-6, Nail enhancements 7-10, Add-ons 11-16), numbered in one list, each with a small drawn icon. Basic / Mid / Fancy scale the prices; Mid is about the 2026 medians (Zenoti, ThePricer, Boulevard: basic mani $25-45, gel $35-70, dip $40-60, acrylic full set $45-75, fill $30-50, French +$5-25, art +$5-20, removal +$10-25, pedicure $25-40+). tag: what the item is, so her order can be found on any menu (the older tags fullSet, ombre, gems, extensions still work on a player's own menu). limits: the player's own menu. Story 069: Combos (17-18), priced from 2026 US guides: a basic mani-pedi combo is about $50-70 and a gel combo $70-110, with bundles typically 10-25% cheaper than the two services separately (usecalcpro.com/health/mani-pedi-cost-calculator, groupon.com/articles/what-is-a-pedicure-guide-to-cost-tips-and-types, zenoti.com/thecheckin/nail-salon-prices, joinblvd.com/blog/nail-salon-prices, thepricer.org/cost-of-manicures-and-pedicures). Each combo here saves about 12% against its two items on the same price set. Story 071: pedicure add-ons from real menus (Groupon pedicure guide 2026; places.singleplatform.com/diamond-nails--spa/menu; sites.google.com/view/modernnailsspa/services/pedicure; sites.google.com/view/phoenix-nails-spa/service-menu/pedicure-services): gel polish on any pedicure +$10-15, callus treatment, hot stones +$8.",
+  "_note": "Story 044, 063: the salon menu (pretend money, shown to the client and rung up at checkout; the wallet still gets only the tip). Story 063: a real 2026 US salon menu in four groups (Manicure 1-3, Pedicure 4-6, Nail enhancements 7-10, Add-ons 11-16), numbered in one list, each with a small drawn icon. Basic / Mid / Fancy scale the prices; Mid is about the 2026 medians (Zenoti, ThePricer, Boulevard: basic mani $25-45, gel $35-70, dip $40-60, acrylic full set $45-75, fill $30-50, French +$5-25, art +$5-20, removal +$10-25, pedicure $25-40+). tag: what the item is, so her order can be found on any menu (the older tags fullSet, ombre, gems, extensions still work on a player's own menu). limits: the player's own menu. Story 069: Combos (17-18), priced from 2026 US guides: a basic mani-pedi combo is about $50-70 and a gel combo $70-110, with bundles typically 10-25% cheaper than the two services separately (usecalcpro.com/health/mani-pedi-cost-calculator, groupon.com/articles/what-is-a-pedicure-guide-to-cost-tips-and-types, zenoti.com/thecheckin/nail-salon-prices, joinblvd.com/blog/nail-salon-prices, thepricer.org/cost-of-manicures-and-pedicures). Each combo here saves about 12% against its two items on the same price set. Story 071: pedicure add-ons from real menus (Groupon pedicure guide 2026; places.singleplatform.com/diamond-nails--spa/menu; sites.google.com/view/modernnailsspa/services/pedicure; sites.google.com/view/phoenix-nails-spa/service-menu/pedicure-services): gel polish on any pedicure +$10-15, callus treatment, hot stones +$8. Story 071: each main service shows what it includes (\"includes\", en/vi) under its name, from the same sources and the Groupon pedicure guide 2026: a classic pedicure is soak, trim and shape, cuticle care, callus removal, a short massage and polish (~$35-50); a spa/deluxe pedicure adds a sugar or sea-salt scrub, a mask, paraffin or hot towels and a longer foot and calf massage (~$50-80). A player's own menu keeps its own items (no includes).",
   "default": "mid",
   "pricey": {
     "_note": "Story 045: a price-sensitive client (client data) may remark kindly on a total over this many dollars; prices never change mood, stars or tips.",
@@ -20,6 +20,10 @@
         "name": {
           "en": "Classic manicure",
           "vi": "Làm móng tay cơ bản"
+        },
+        "includes": {
+          "en": "Soak, shape, cuticle care, hand massage, polish",
+          "vi": "Ngâm, dũa dáng, chăm sóc da, massage tay, sơn"
         }
       },
       {
@@ -28,6 +32,10 @@
         "name": {
           "en": "Gel manicure",
           "vi": "Sơn gel tay"
+        },
+        "includes": {
+          "en": "Shape, cuticle care, gel polish (lasts 2-3 weeks)",
+          "vi": "Dũa dáng, chăm sóc da, sơn gel (bền 2-3 tuần)"
         }
       },
       {
@@ -36,6 +44,10 @@
         "name": {
           "en": "Deluxe spa manicure",
           "vi": "Làm móng tay spa cao cấp"
+        },
+        "includes": {
+          "en": "Manicure plus scrub, mask, hot towels, longer massage",
+          "vi": "Làm tay + tẩy da, đắp mặt nạ, khăn nóng, massage lâu hơn"
         }
       },
       {
@@ -44,6 +56,10 @@
         "name": {
           "en": "Classic pedicure",
           "vi": "Làm móng chân cơ bản"
+        },
+        "includes": {
+          "en": "Soak, trim and shape, cuticle care, callus removal, short massage, polish",
+          "vi": "Ngâm, cắt dũa, chăm sóc da, chà gót, massage ngắn, sơn"
         }
       },
       {
@@ -52,6 +68,10 @@
         "name": {
           "en": "Spa pedicure",
           "vi": "Làm móng chân spa"
+        },
+        "includes": {
+          "en": "Classic steps plus sugar scrub, mask, hot towels, longer foot and calf massage",
+          "vi": "Các bước cơ bản + tẩy da đường, mặt nạ, khăn nóng, massage chân và bắp chân lâu hơn"
         }
       },
       {
@@ -60,6 +80,10 @@
         "name": {
           "en": "Jelly pedicure",
           "vi": "Ngâm chân thạch (jelly)"
+        },
+        "includes": {
+          "en": "Spa pedicure with a warm jelly soak",
+          "vi": "Làm chân spa với ngâm thạch ấm"
         }
       },
       {
@@ -68,6 +92,10 @@
         "name": {
           "en": "Acrylic full set",
           "vi": "Đắp bột bộ mới"
+        },
+        "includes": {
+          "en": "Full set of acrylic tips, shape and polish",
+          "vi": "Đắp bột nguyên bộ, dũa dáng và sơn"
         }
       },
       {
@@ -76,6 +104,10 @@
         "name": {
           "en": "Acrylic fill",
           "vi": "Đắp bột dặm (fill)"
+        },
+        "includes": {
+          "en": "Fill the grown-out gap of acrylic or gel",
+          "vi": "Dặm phần móng mọc ra"
         }
       },
       {
@@ -84,6 +116,10 @@
         "name": {
           "en": "Dip powder",
           "vi": "Nhúng bột (dip)"
+        },
+        "includes": {
+          "en": "Dip powder colour, strong and long-lasting",
+          "vi": "Sơn nhúng bột, chắc và bền"
         }
       },
       {
@@ -92,6 +128,10 @@
         "name": {
           "en": "Gel-X extensions",
           "vi": "Nối móng Gel-X"
+        },
+        "includes": {
+          "en": "Soft gel extensions, shaped and polished",
+          "vi": "Nối móng gel mềm, dũa dáng và sơn"
         }
       },
       {
@@ -132,6 +172,10 @@
         "name": {
           "en": "Paraffin wax",
           "vi": "Ủ sáp paraffin"
+        },
+        "includes": {
+          "en": "Warm paraffin wax dip for soft skin",
+          "vi": "Nhúng sáp paraffin ấm cho da mềm"
         }
       },
       {
@@ -148,6 +192,10 @@
         "name": {
           "en": "Gel polish on toes",
           "vi": "Sơn gel móng chân"
+        },
+        "includes": {
+          "en": "Gel polish instead of regular on any pedicure",
+          "vi": "Sơn gel thay sơn thường cho mọi dịch vụ chân"
         }
       },
       {
@@ -156,6 +204,10 @@
         "name": {
           "en": "Callus treatment",
           "vi": "Trị chai chân"
+        },
+        "includes": {
+          "en": "Extra callus softening and smoothing for rough heels",
+          "vi": "Làm mềm và chà sạch chai cho gót chân thô"
         }
       },
       {
@@ -164,6 +216,10 @@
         "name": {
           "en": "Hot stone massage",
           "vi": "Massage đá nóng"
+        },
+        "includes": {
+          "en": "Warm stones added to the foot and calf massage",
+          "vi": "Thêm đá ấm khi massage chân và bắp chân"
         }
       },
       {
@@ -172,6 +228,10 @@
         "name": {
           "en": "Classic mani + pedi",
           "vi": "Combo tay + chân cơ bản"
+        },
+        "includes": {
+          "en": "Classic manicure + classic pedicure, one visit",
+          "vi": "Làm tay cơ bản + làm chân cơ bản, một lần"
         }
       },
       {
@@ -180,6 +240,10 @@
         "name": {
           "en": "Gel mani + spa pedi",
           "vi": "Combo gel tay + chân spa"
+        },
+        "includes": {
+          "en": "Gel manicure + spa pedicure, one visit",
+          "vi": "Làm tay gel + làm chân spa, một lần"
         }
       }
     ],
@@ -190,6 +254,10 @@
         "name": {
           "en": "Classic manicure",
           "vi": "Làm móng tay cơ bản"
+        },
+        "includes": {
+          "en": "Soak, shape, cuticle care, hand massage, polish",
+          "vi": "Ngâm, dũa dáng, chăm sóc da, massage tay, sơn"
         }
       },
       {
@@ -198,6 +266,10 @@
         "name": {
           "en": "Gel manicure",
           "vi": "Sơn gel tay"
+        },
+        "includes": {
+          "en": "Shape, cuticle care, gel polish (lasts 2-3 weeks)",
+          "vi": "Dũa dáng, chăm sóc da, sơn gel (bền 2-3 tuần)"
         }
       },
       {
@@ -206,6 +278,10 @@
         "name": {
           "en": "Deluxe spa manicure",
           "vi": "Làm móng tay spa cao cấp"
+        },
+        "includes": {
+          "en": "Manicure plus scrub, mask, hot towels, longer massage",
+          "vi": "Làm tay + tẩy da, đắp mặt nạ, khăn nóng, massage lâu hơn"
         }
       },
       {
@@ -214,6 +290,10 @@
         "name": {
           "en": "Classic pedicure",
           "vi": "Làm móng chân cơ bản"
+        },
+        "includes": {
+          "en": "Soak, trim and shape, cuticle care, callus removal, short massage, polish",
+          "vi": "Ngâm, cắt dũa, chăm sóc da, chà gót, massage ngắn, sơn"
         }
       },
       {
@@ -222,6 +302,10 @@
         "name": {
           "en": "Spa pedicure",
           "vi": "Làm móng chân spa"
+        },
+        "includes": {
+          "en": "Classic steps plus sugar scrub, mask, hot towels, longer foot and calf massage",
+          "vi": "Các bước cơ bản + tẩy da đường, mặt nạ, khăn nóng, massage chân và bắp chân lâu hơn"
         }
       },
       {
@@ -230,6 +314,10 @@
         "name": {
           "en": "Jelly pedicure",
           "vi": "Ngâm chân thạch (jelly)"
+        },
+        "includes": {
+          "en": "Spa pedicure with a warm jelly soak",
+          "vi": "Làm chân spa với ngâm thạch ấm"
         }
       },
       {
@@ -238,6 +326,10 @@
         "name": {
           "en": "Acrylic full set",
           "vi": "Đắp bột bộ mới"
+        },
+        "includes": {
+          "en": "Full set of acrylic tips, shape and polish",
+          "vi": "Đắp bột nguyên bộ, dũa dáng và sơn"
         }
       },
       {
@@ -246,6 +338,10 @@
         "name": {
           "en": "Acrylic fill",
           "vi": "Đắp bột dặm (fill)"
+        },
+        "includes": {
+          "en": "Fill the grown-out gap of acrylic or gel",
+          "vi": "Dặm phần móng mọc ra"
         }
       },
       {
@@ -254,6 +350,10 @@
         "name": {
           "en": "Dip powder",
           "vi": "Nhúng bột (dip)"
+        },
+        "includes": {
+          "en": "Dip powder colour, strong and long-lasting",
+          "vi": "Sơn nhúng bột, chắc và bền"
         }
       },
       {
@@ -262,6 +362,10 @@
         "name": {
           "en": "Gel-X extensions",
           "vi": "Nối móng Gel-X"
+        },
+        "includes": {
+          "en": "Soft gel extensions, shaped and polished",
+          "vi": "Nối móng gel mềm, dũa dáng và sơn"
         }
       },
       {
@@ -302,6 +406,10 @@
         "name": {
           "en": "Paraffin wax",
           "vi": "Ủ sáp paraffin"
+        },
+        "includes": {
+          "en": "Warm paraffin wax dip for soft skin",
+          "vi": "Nhúng sáp paraffin ấm cho da mềm"
         }
       },
       {
@@ -318,6 +426,10 @@
         "name": {
           "en": "Gel polish on toes",
           "vi": "Sơn gel móng chân"
+        },
+        "includes": {
+          "en": "Gel polish instead of regular on any pedicure",
+          "vi": "Sơn gel thay sơn thường cho mọi dịch vụ chân"
         }
       },
       {
@@ -326,6 +438,10 @@
         "name": {
           "en": "Callus treatment",
           "vi": "Trị chai chân"
+        },
+        "includes": {
+          "en": "Extra callus softening and smoothing for rough heels",
+          "vi": "Làm mềm và chà sạch chai cho gót chân thô"
         }
       },
       {
@@ -334,6 +450,10 @@
         "name": {
           "en": "Hot stone massage",
           "vi": "Massage đá nóng"
+        },
+        "includes": {
+          "en": "Warm stones added to the foot and calf massage",
+          "vi": "Thêm đá ấm khi massage chân và bắp chân"
         }
       },
       {
@@ -342,6 +462,10 @@
         "name": {
           "en": "Classic mani + pedi",
           "vi": "Combo tay + chân cơ bản"
+        },
+        "includes": {
+          "en": "Classic manicure + classic pedicure, one visit",
+          "vi": "Làm tay cơ bản + làm chân cơ bản, một lần"
         }
       },
       {
@@ -350,6 +474,10 @@
         "name": {
           "en": "Gel mani + spa pedi",
           "vi": "Combo gel tay + chân spa"
+        },
+        "includes": {
+          "en": "Gel manicure + spa pedicure, one visit",
+          "vi": "Làm tay gel + làm chân spa, một lần"
         }
       }
     ],
@@ -360,6 +488,10 @@
         "name": {
           "en": "Classic manicure",
           "vi": "Làm móng tay cơ bản"
+        },
+        "includes": {
+          "en": "Soak, shape, cuticle care, hand massage, polish",
+          "vi": "Ngâm, dũa dáng, chăm sóc da, massage tay, sơn"
         }
       },
       {
@@ -368,6 +500,10 @@
         "name": {
           "en": "Gel manicure",
           "vi": "Sơn gel tay"
+        },
+        "includes": {
+          "en": "Shape, cuticle care, gel polish (lasts 2-3 weeks)",
+          "vi": "Dũa dáng, chăm sóc da, sơn gel (bền 2-3 tuần)"
         }
       },
       {
@@ -376,6 +512,10 @@
         "name": {
           "en": "Deluxe spa manicure",
           "vi": "Làm móng tay spa cao cấp"
+        },
+        "includes": {
+          "en": "Manicure plus scrub, mask, hot towels, longer massage",
+          "vi": "Làm tay + tẩy da, đắp mặt nạ, khăn nóng, massage lâu hơn"
         }
       },
       {
@@ -384,6 +524,10 @@
         "name": {
           "en": "Classic pedicure",
           "vi": "Làm móng chân cơ bản"
+        },
+        "includes": {
+          "en": "Soak, trim and shape, cuticle care, callus removal, short massage, polish",
+          "vi": "Ngâm, cắt dũa, chăm sóc da, chà gót, massage ngắn, sơn"
         }
       },
       {
@@ -392,6 +536,10 @@
         "name": {
           "en": "Spa pedicure",
           "vi": "Làm móng chân spa"
+        },
+        "includes": {
+          "en": "Classic steps plus sugar scrub, mask, hot towels, longer foot and calf massage",
+          "vi": "Các bước cơ bản + tẩy da đường, mặt nạ, khăn nóng, massage chân và bắp chân lâu hơn"
         }
       },
       {
@@ -400,6 +548,10 @@
         "name": {
           "en": "Jelly pedicure",
           "vi": "Ngâm chân thạch (jelly)"
+        },
+        "includes": {
+          "en": "Spa pedicure with a warm jelly soak",
+          "vi": "Làm chân spa với ngâm thạch ấm"
         }
       },
       {
@@ -408,6 +560,10 @@
         "name": {
           "en": "Acrylic full set",
           "vi": "Đắp bột bộ mới"
+        },
+        "includes": {
+          "en": "Full set of acrylic tips, shape and polish",
+          "vi": "Đắp bột nguyên bộ, dũa dáng và sơn"
         }
       },
       {
@@ -416,6 +572,10 @@
         "name": {
           "en": "Acrylic fill",
           "vi": "Đắp bột dặm (fill)"
+        },
+        "includes": {
+          "en": "Fill the grown-out gap of acrylic or gel",
+          "vi": "Dặm phần móng mọc ra"
         }
       },
       {
@@ -424,6 +584,10 @@
         "name": {
           "en": "Dip powder",
           "vi": "Nhúng bột (dip)"
+        },
+        "includes": {
+          "en": "Dip powder colour, strong and long-lasting",
+          "vi": "Sơn nhúng bột, chắc và bền"
         }
       },
       {
@@ -432,6 +596,10 @@
         "name": {
           "en": "Gel-X extensions",
           "vi": "Nối móng Gel-X"
+        },
+        "includes": {
+          "en": "Soft gel extensions, shaped and polished",
+          "vi": "Nối móng gel mềm, dũa dáng và sơn"
         }
       },
       {
@@ -472,6 +640,10 @@
         "name": {
           "en": "Paraffin wax",
           "vi": "Ủ sáp paraffin"
+        },
+        "includes": {
+          "en": "Warm paraffin wax dip for soft skin",
+          "vi": "Nhúng sáp paraffin ấm cho da mềm"
         }
       },
       {
@@ -488,6 +660,10 @@
         "name": {
           "en": "Gel polish on toes",
           "vi": "Sơn gel móng chân"
+        },
+        "includes": {
+          "en": "Gel polish instead of regular on any pedicure",
+          "vi": "Sơn gel thay sơn thường cho mọi dịch vụ chân"
         }
       },
       {
@@ -496,6 +672,10 @@
         "name": {
           "en": "Callus treatment",
           "vi": "Trị chai chân"
+        },
+        "includes": {
+          "en": "Extra callus softening and smoothing for rough heels",
+          "vi": "Làm mềm và chà sạch chai cho gót chân thô"
         }
       },
       {
@@ -504,6 +684,10 @@
         "name": {
           "en": "Hot stone massage",
           "vi": "Massage đá nóng"
+        },
+        "includes": {
+          "en": "Warm stones added to the foot and calf massage",
+          "vi": "Thêm đá ấm khi massage chân và bắp chân"
         }
       },
       {
@@ -512,6 +696,10 @@
         "name": {
           "en": "Classic mani + pedi",
           "vi": "Combo tay + chân cơ bản"
+        },
+        "includes": {
+          "en": "Classic manicure + classic pedicure, one visit",
+          "vi": "Làm tay cơ bản + làm chân cơ bản, một lần"
         }
       },
       {
@@ -520,6 +708,10 @@
         "name": {
           "en": "Gel mani + spa pedi",
           "vi": "Combo gel tay + chân spa"
+        },
+        "includes": {
+          "en": "Gel manicure + spa pedicure, one visit",
+          "vi": "Làm tay gel + làm chân spa, một lần"
         }
       }
     ]

@@ -25,3 +25,10 @@
 .results-review-wrap { display: flex; flex-direction: column; gap: 6px; text-align: left; }
 .results-review[role='button'] { cursor: pointer; }
 .results-translation { padding: 0; }
+
+/* Story 071: the combo's two photos, each with its match. */
+.combo-photos .combo-photo figcaption { display: grid; gap: 2px; }
+.combo-photos .combo-match { font-size: 16px; }
+.combo-photos .combo-match.good { color: #2f7d4f; }
+.combo-photos .combo-match.okay { color: #9a6a00; }
+.combo-photos .combo-match.low { color: #b0304f; }

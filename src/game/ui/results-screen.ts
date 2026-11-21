@@ -57,6 +57,8 @@ export interface ResultsScreenOptions {
   /** 066: the finished set drawn like her picture (same renderer and framing), for a fair side by side. */
   workForPicture?: Promise<string | null>;
   onPhoto?: (photo: string, stars: number) => void;
+  /** Story 071: a combo: the hands' photo and both matches (the feet are `photo`; `nails.match` is the average). */
+  combo?: { hands: Promise<string | null>; handsMatch: number; feetMatch: number };
   /** Story 044: her order on the salon menu (rung up at checkout). */
   bill?: { number: number; label: string; price: number }[];
   /** Story 039: what was done (for the price the client pays): a manicure or a pedicure, one or both hands/feet. */
@@ -225,8 +227,11 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     // Story 050: her nails first, as a big polaroid, with a celebration that fits the result; then the payment.
     const band = cheerFor(score.stars, result.outcome === 'walked_out');
     const compare = (workForPicture ?? photo) && reference && options.nails ? pictureCompare(reference, (workForPicture ?? photo) as string, options.nails.match, clientName) : null;
+    const both = !compare && photo && handsPhoto && options.combo ? comboPhotos(handsPhoto, photo, options.combo.handsMatch, options.combo.feetMatch, options.nails?.match ?? Math.round((options.combo.handsMatch + options.combo.feetMatch) / 2)) : null;
     const polaroid = compare
       ? [compare]
+      : both
+      ? [both]
       : photo
       ? [createPolaroid({ photo, band, caption: t('results.photoCaption', { name: clientName, date: new Date().toLocaleDateString(getLanguage() === 'vi' ? 'vi-VN' : 'en-US', { day: 'numeric', month: 'short' }) }), ...(band === 'tough' ? { note: t('results.photoTough') } : {}) })]
       : [];
@@ -265,6 +270,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
   let charged: number | null = null;
   let reference: string | null = null;
   let workForPicture: string | null = null;
+  let handsPhoto: string | null = null;
   let lastReaction: ChargeReaction | null = null;
 
   const run = async (): Promise<void> => {
@@ -291,6 +297,7 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
     const photo = options.photo ? await options.photo.catch(() => null) : null;
     reference = options.reference ? await options.reference.catch(() => null) : null;
     workForPicture = options.workForPicture ? await options.workForPicture.catch(() => null) : null;
+    handsPhoto = options.combo ? await options.combo.hands.catch(() => null) : null;
     const scored = scoreAppointment(
         {
           finalMood,
@@ -315,4 +322,23 @@ export function createResultsScreen(container: HTMLElement, options: ResultsScre
       container.replaceChildren();
     },
   };
+}
+
+/** Story 071: after a combo, the hands and the feet side by side, each with its match, and the overall match. */
+function comboPhotos(hands: string, feet: string, handsMatch: number, feetMatch: number, overall: number): HTMLElement {
+  const box = el('section', 'results-section combo-photos');
+  box.append(el('h2', '', t('results.comboTitle')));
+  const row = el('div', 'picture-compare-row');
+  for (const [src, label, match] of [[hands, t('results.comboHands'), handsMatch], [feet, t('results.comboFeet'), feetMatch]] as const) {
+    const fig = el('figure', 'picture-polaroid small combo-photo');
+    const img = el('img', 'picture-photo');
+    img.src = src;
+    img.alt = label;
+    const caption = el('figcaption', '');
+    caption.append(el('span', '', label), el('strong', `combo-match ${match >= 80 ? 'good' : match >= 55 ? 'okay' : 'low'}`, t('picture.match', { n: match })));
+    fig.append(img, caption);
+    row.append(fig);
+  }
+  box.append(row, el('p', `picture-match ${overall >= 80 ? 'good' : overall >= 55 ? 'okay' : 'low'}`, t('results.comboOverall', { n: overall })));
+  return box;
 }

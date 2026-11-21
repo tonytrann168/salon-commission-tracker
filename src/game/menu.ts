@@ -35,6 +35,8 @@ export interface MenuItem {
   tag: MenuTag;
   price: number;
   name: { en: string; vi: string };
+  /** Story 071: what the service includes (shown under its name; the client may ask). */
+  includes?: { en: string; vi: string };
 }
 
 export interface MenuConfig {
@@ -67,8 +69,15 @@ export function parseItem(raw: unknown, limits: MenuConfig['limits']): MenuItem 
   const en = typeof raw.name.en === 'string' ? cleanName(raw.name.en, limits.maxName) : '';
   const vi = typeof raw.name.vi === 'string' ? cleanName(raw.name.vi, limits.maxName) : '';
   if (!tag || !(price >= limits.minPrice && price <= limits.maxPrice) || (!en && !vi)) return null;
-  return { tag, price, name: { en: en || vi, vi: vi || en } };
+  // Story 071: what it includes (optional; a player's own items have none).
+  const inc = isRecord(raw.includes) ? raw.includes : null;
+  const incEn = inc && typeof inc.en === 'string' ? cleanName(inc.en, INCLUDES_MAX) : '';
+  const incVi = inc && typeof inc.vi === 'string' ? cleanName(inc.vi, INCLUDES_MAX) : '';
+  return { tag, price, name: { en: en || vi, vi: vi || en }, ...(incEn || incVi ? { includes: { en: incEn || incVi, vi: incVi || incEn } } : {}) };
 }
+
+/** Story 071: the longest "includes" line kept. */
+const INCLUDES_MAX = 120;
 
 export function parseMenuConfig(raw: unknown): MenuConfig {
   const fail = (what: string): never => {
@@ -168,10 +177,10 @@ const CATEGORY_TITLES: Record<MenuCategory, string> = { manicure: 'Manicure', pe
 export function menuPrompt(items: readonly MenuItem[], order: readonly OrderLine[], priceSensitive = false, config: MenuConfig = MENU_CONFIG): string {
   // Story 063: the menu in its groups; add-ons are asked for with a service ("number 2 with French tip").
   const list = menuGroups(items)
-    .map((group) => `${CATEGORY_TITLES[group.category]}:\n${group.lines.map((line) => `${line.number}. ${line.item.name.en}: ${group.category === 'addons' ? '+' : ''}$${line.item.price}`).join('\n')}`)
+    .map((group) => `${CATEGORY_TITLES[group.category]}:\n${group.lines.map((line) => `${line.number}. ${line.item.name.en}: ${group.category === 'addons' ? '+' : ''}$${line.item.price}${line.item.includes ? ` (includes: ${line.item.includes.en})` : ''}`).join('\n')}`)
     .join('\n');
   const mine = order.map((line) => `number ${line.number} (${line.item.name.en})`).join(' with ');
-  return `THE SALON MENU (on the wall; prices in dollars)\n${list}\n- Order by number, the way regulars do (for example "Number ${order[0]?.number ?? 1}, please."), and an add-on by name with it (for example "number ${order[0]?.number ?? 1} with French tip"). Your order today: ${mine}. At checkout the total is $${orderTotal(order)} plus any tip. If the stylist rings up a different price, politely ask about it.${priceSensitive && orderTotal(order) > config.pricey.over ? `\n- You watch your money and $${orderTotal(order)} feels a bit high. At checkout you may say so once, kindly and in your own words (for example "Hmm, that's a bit pricey."). It does not change your mood: report moodDelta for how the stylist treats you, as usual.` : ''}`;
+  return `THE SALON MENU (on the wall; prices in dollars)\n${list}\n- Order by number, the way regulars do (for example "Number ${order[0]?.number ?? 1}, please."), and an add-on by name with it (for example "number ${order[0]?.number ?? 1} with French tip"). Your order today: ${mine}. You may ask once what your service includes (the menu says), especially for a pedicure, a spa service or a combo, and notice if a step seems skipped. At checkout the total is $${orderTotal(order)} plus any tip. If the stylist rings up a different price, politely ask about it.${priceSensitive && orderTotal(order) > config.pricey.over ? `\n- You watch your money and $${orderTotal(order)} feels a bit high. At checkout you may say so once, kindly and in your own words (for example "Hmm, that's a bit pricey."). It does not change your mood: report moodDelta for how the stylist treats you, as usual.` : ''}`;
 }
 
 /** Story 069: what a combo is made of (its tags), to show the saving against buying the two separately. */
