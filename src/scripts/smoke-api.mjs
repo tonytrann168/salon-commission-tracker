@@ -123,6 +123,16 @@ checks.push(['client-turn: she accepts $35 instead of $40 → agreedTotal 35', (
   (b) => typeof b.reply === 'string' && b.agreedTotal === 35,
   (b) => `"${b.reply}" agreedTotal ${JSON.stringify(b.agreedTotal)}`]);
 
+// Story 074 (owner playtest 25 Nov): the client never speaks as the stylist ("What color do you want today?").
+checks.push(['client-turn: after "Thank you sister" she stays the client (no stylist question)', () => handleClientTurn({
+    transcript: [
+      { role: 'client', content: "Hello dear! I'd like a manicure. No hurry, I'm free all afternoon." },
+      { role: 'player', content: 'Thank you sister' },
+    ],
+    phase: 'consultation', mood: 67, level: 'beginner', clientId: 'grace' }, env, fetch),
+  (b) => typeof b.reply === 'string' && !/\bwhat (colou?r|shape|length|service)s? (do|would) you (want|like)\b(?! (for|on) me)/i.test(b.reply) && !/how can i help you|have a seat/i.test(b.reply),
+  (b) => `"${b.reply}"`]);
+
 // Story 068: never claim a picture she doesn't have (no reference visit).
 checks.push(['client-turn: asked for a picture, a non-reference client has none', () => handleClientTurn({
     transcript: [{ role: 'client', content: 'Hi! A gel manicure, please.' }, { role: 'player', content: 'Sure! Do you have a picture? Can I see a picture?' }],

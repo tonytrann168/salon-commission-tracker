@@ -1,4 +1,5 @@
 import stuckJson from './config/stuck.json';
+import { speaksAsStylist } from './role-guard';
 
 /**
  * Story 068 (owner playtest 5): never leave the player stuck in a loop. Track the client's open question and the
@@ -64,7 +65,9 @@ export const asksToRepeat = (line: string, config: StuckConfig = STUCK_CONFIG): 
 
 /** Her question, short enough for one line: the last sentence that ends with "?". */
 export function questionOf(line: string, config: StuckConfig = STUCK_CONFIG): string | null {
-  const sentences = line.match(/[^.!?]*\?/g);
+  // Owner playtest (25 Nov): a stylist-style question from her ("What color do you want today?") is never shown as
+  // her question waiting for the stylist's answer.
+  const sentences = line.match(/[^.!?]*\?/g)?.filter((sentence) => !speaksAsStylist(sentence));
   const last = sentences?.at(-1)?.trim();
   if (!last) return null;
   return last.length > config.questionMaxChars ? `${last.slice(0, config.questionMaxChars - 1).trimEnd()}…` : last;

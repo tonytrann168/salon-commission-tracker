@@ -64,6 +64,7 @@ Mai, the player's mascot best friend, is the main reason to play and to come bac
 - Phase 3: contests and leaderboards.
 - Phase 4: a shared map of player-owned salons in different locations.
 - Constraint: no free text between players without moderation and safety work in place first.
+- Swap seats (owner idea, 11-25): sometimes the player can choose to be the CUSTOMER, and the AI is the nail tech. The player practises asking for what she wants (colour, shape, price, "can you fix this?") and hears how a good tech talks. Not built: today the client is always the customer, and the server keeps the AI in that role (story 074).
 - World direction (owner 11-19): grow into a 2D / 2.5D world, not 3D. Order: (1) finish the core game; (2) a decoratable salon room (top-down or angled 2.5D, cozy life-sim style); (3) a town map with your salon and other salons; (4) visiting friends' salons and multiple locations. The nail station and chat stay as close-up screens. 3D only if the game grows big. Keep game logic, configs, state and the AI layer separate from rendering so the front end can change later.
 
 ## Build order

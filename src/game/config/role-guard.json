@@ -1,0 +1,15 @@
+{
+  "_note": "Owner playtest (25 Nov): the client said \"What color do you want today? Coral is my favorite.\" - the stylist's own question, as if the roles had swapped. The client is always the customer. A client line matching one of these patterns (case-insensitive) is a role swap: the server asks the model once more with the correction note; if it still swaps, the stylist-style sentences are dropped (fallbackLine if nothing is left), and the game never shows such a line as her question waiting for an answer. A client asking the stylist's advice (\"What colour would you pick for me?\") is fine and never matches.",
+  "stylistLines": [
+    "\\bwhat (colou?rs?|shapes?|lengths?|designs?|style|services?|nails?) (do|would|will) you (want|like|get)\\b(?! (for|on) me)",
+    "\\bwhat (do|would) you (want|like) (to have )?(done|today|for (your|the) nails)\\b",
+    "\\bwhat (can|may|shall) i (do|get) for you\\b",
+    "\\bhow (can|may) i help you\\b",
+    "\\b(please )?(have|take) a seat\\b",
+    "\\bwhich colou?r (do|would) you (want|like)\\b(?! (for|on) me)",
+    "\\bdo you want (a |the )?(gel|manicure|pedicure|french|acrylic|art|gems?)\\b",
+    "\\bput your (hands?|feet|foot) (here|in the water)\\b"
+  ],
+  "correctionNote": "CORRECTION: your last reply spoke as the nail stylist (you asked what the stylist wants, or offered a service or a price). You are the CLIENT being served. Reply again as the client: answer what the stylist said, then say what YOU want for your nails, or ask a client's question (price, time, what is included).",
+  "fallbackLine": "I'd like my nails done in {colour} today, please."
+}
