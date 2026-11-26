@@ -20,8 +20,8 @@ export interface PathConfig {
   showDays: number;
   /** Story 062: booked guests (the day's appointment stops). */
   booked: { xp: number; openHour: number; slotMinutes: number };
-  /** Story 071: pedicure and combo bookings. */
-  feet: { afterVisits: number; extraChance: number; comboShare: number };
+  /** Story 071: pedicure and combo bookings, mixed in at random (owner 11-26: no fixed rate). */
+  feet: { afterVisits: number; mix: Record<BookedService, number> };
 }
 
 /** Story 071: what a booked guest comes in for. */
@@ -37,8 +37,11 @@ export function parsePathConfig(raw: unknown): PathConfig {
   const b = (c.booked ?? {}) as Partial<PathConfig['booked']>;
   const booked = { xp: whole(b.xp, 'booked.xp', 0, 100), openHour: whole(b.openHour, 'booked.openHour', 5, 14), slotMinutes: whole(b.slotMinutes, 'booked.slotMinutes', 15, 240) };
   const f = (c.feet ?? {}) as Partial<PathConfig['feet']>;
-  const share = (n: unknown, name: string): number => (typeof n === 'number' && n >= 0 && n <= 1 ? n : fail(`"${name}" must be 0-1`));
-  const feet = { afterVisits: whole(f.afterVisits, 'feet.afterVisits', 0, 50), extraChance: share(f.extraChance, 'feet.extraChance'), comboShare: share(f.comboShare, 'feet.comboShare') };
+  const m = (f.mix ?? {}) as Partial<Record<BookedService, unknown>>;
+  const weight = (n: unknown, name: string): number => (typeof n === 'number' && n >= 0 && n <= 100 ? n : fail(`"feet.mix.${name}" must be 0-100`));
+  const mix = { manicure: weight(m.manicure, 'manicure'), pedicure: weight(m.pedicure, 'pedicure'), combo: weight(m.combo, 'combo') };
+  if (mix.manicure + mix.pedicure + mix.combo <= 0) fail('"feet.mix" needs a weight above 0');
+  const feet = { afterVisits: whole(f.afterVisits, 'feet.afterVisits', 0, 50), mix };
   return { pattern, lessonPhrases: whole(c.lessonPhrases, 'lessonPhrases', 1, 6), lessonXp: whole(c.lessonXp, 'lessonXp', 0, 100), goal: whole(c.goal, 'goal', 1, 10), showDays: whole(c.showDays, 'showDays', 0, 3), booked, feet };
 }
 
@@ -91,22 +94,20 @@ export function pathNode(index: number, roster: readonly ClientPersona[], unlock
 }
 
 /**
- * Story 071: the service booked at path node `index`. After `feet.afterVisits` appointment stops, each salon day has
- * one pedicure-or-combo booking (a stable pick of that day's eligible slots); other eligible stops are one with
- * chance `feet.extraChance`. A feet booking is a combo with chance `feet.comboShare`.
+ * Story 071 (owner 11-26: "just mix them up, no fixed rate"): the service booked at path node `index`. The first
+ * `feet.afterVisits` appointment stops are manicures; after that each booking is a random pick by the `feet.mix`
+ * weights, stable for that stop (so the day's list never changes). No daily quota: some days have several pedicures
+ * or combos, some none.
  */
 export function bookedService(index: number, config: PathConfig = PATH_CONFIG): BookedService {
   const per = config.pattern.length;
   if (config.pattern[index % per] !== 'appointment') return 'manicure';
   const perDay = config.pattern.filter((k) => k === 'appointment').length;
-  const day = Math.floor(index / per);
-  const ordinal = (i: number): number => Math.floor(i / per) * perDay + config.pattern.slice(0, i % per).filter((k) => k === 'appointment').length;
-  if (ordinal(index) < config.feet.afterVisits) return 'manicure';
-  const slots = Array.from({ length: per }, (_, k) => day * per + k).filter((i) => config.pattern[i % per] === 'appointment' && ordinal(i) >= config.feet.afterVisits);
-  const forced = slots[hash(`feet-day-${day}`) % slots.length];
-  const feet = index === forced || (hash(`feet-extra-${index}`) % 1000) / 1000 < config.feet.extraChance;
-  if (!feet) return 'manicure';
-  return (hash(`feet-combo-${index}`) % 1000) / 1000 < config.feet.comboShare ? 'combo' : 'pedicure';
+  const ordinal = Math.floor(index / per) * perDay + config.pattern.slice(0, index % per).filter((k) => k === 'appointment').length;
+  if (ordinal < config.feet.afterVisits) return 'manicure';
+  const { manicure, pedicure, combo } = config.feet.mix;
+  const roll = ((hash(`service-${index}`) % 10_000) / 10_000) * (manicure + pedicure + combo);
+  return roll < manicure ? 'manicure' : roll < manicure + pedicure ? 'pedicure' : 'combo';
 }
 
 /** The nodes to draw: the current day (and `showDays` ahead), with each node's state. */

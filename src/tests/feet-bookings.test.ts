@@ -12,24 +12,26 @@ const per = PATH_CONFIG.pattern.length;
 const appointmentStops = (days: number): number[] => Array.from({ length: days * per }, (_, i) => i).filter((i) => PATH_CONFIG.pattern[i % per] === 'appointment');
 
 describe('feet bookings on the salon path', () => {
-  it('none before the player has had afterVisits visits; then every day has at least one pedicure or combo', () => {
-    const stops = appointmentStops(60);
+  it('the first visits are manicures; after that each booking is a random mix (owner 11-26: no fixed rate, no daily quota)', () => {
+    const stops = appointmentStops(400);
     stops.slice(0, PATH_CONFIG.feet.afterVisits).forEach((i) => expect(bookedService(i)).toBe('manicure'));
-    for (let day = 0; day < 60; day++) {
-      const today = stops.filter((i) => Math.floor(i / per) === day && stops.indexOf(i) >= PATH_CONFIG.feet.afterVisits);
-      if (today.length === 0) continue;
-      expect(today.some((i) => bookedService(i) !== 'manicure'), `day ${day + 1}`).toBe(true);
+    const services = stops.slice(PATH_CONFIG.feet.afterVisits).map((i) => bookedService(i));
+    // All three come up, none takes over.
+    for (const service of ['manicure', 'pedicure', 'combo'] as const) {
+      const share = services.filter((s) => s === service).length / services.length;
+      expect(share, service).toBeGreaterThan(0.15);
+      expect(share, service).toBeLessThan(0.55);
     }
+    // No quota: some days have no pedicure or combo, and some have several.
+    const feetPerDay = Array.from({ length: 400 }, (_, day) => stops.filter((i) => Math.floor(i / per) === day && stops.indexOf(i) >= PATH_CONFIG.feet.afterVisits).filter((i) => bookedService(i) !== 'manicure').length);
+    expect(feetPerDay.slice(1).some((n) => n === 0)).toBe(true);
+    expect(feetPerDay.some((n) => n >= 3)).toBe(true);
+    // Stable: the day's list never changes.
+    expect(stops.map((i) => bookedService(i))).toEqual(stops.map((i) => bookedService(i)));
   });
 
-  it('is about 25-30% of visits overall, with both pedicures and combos', () => {
-    const stops = appointmentStops(400).slice(PATH_CONFIG.feet.afterVisits);
-    const services = stops.map((i) => bookedService(i));
-    const feet = services.filter((s) => s !== 'manicure').length / services.length;
-    expect(feet).toBeGreaterThanOrEqual(0.25);
-    expect(feet).toBeLessThanOrEqual(0.32);
-    expect(services.filter((s) => s === 'combo').length).toBeGreaterThan(services.length * 0.07);
-    expect(services.filter((s) => s === 'pedicure').length).toBeGreaterThan(services.length * 0.12);
+  it('day 3 (the e2e fixture) has a pedicure or combo booking', () => {
+    expect(appointmentStops(3).filter((i) => i >= 2 * per).some((i) => bookedService(i) !== 'manicure')).toBe(true);
   });
 
   it('the path node carries its service; a lesson is never a booking', () => {
@@ -40,7 +42,8 @@ describe('feet bookings on the salon path', () => {
 
   it('reads path.json feet and refuses bad values', () => {
     expect(parsePathConfig(pathJson).feet).toEqual(PATH_CONFIG.feet);
-    expect(() => parsePathConfig({ ...pathJson, feet: { ...pathJson.feet, extraChance: 2 } })).toThrow('path.json');
+    expect(() => parsePathConfig({ ...pathJson, feet: { ...pathJson.feet, mix: { manicure: 0, pedicure: 0, combo: 0 } } })).toThrow('path.json');
+    expect(() => parsePathConfig({ ...pathJson, feet: { ...pathJson.feet, mix: { ...pathJson.feet.mix, combo: -1 } } })).toThrow('path.json');
   });
 });
 

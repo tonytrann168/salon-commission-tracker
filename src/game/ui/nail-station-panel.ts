@@ -8,6 +8,9 @@ import { getLanguage, t } from '../i18n';
 import { NAIL_ART_CONFIG, NAIL_LENGTHS, dirtyNails, emptyDesign, limbFor, nailsFor, paletteColor, removeAll, tidyNail } from '../nail-art/design';
 import { emitUiSound } from '../ui-sounds';
 
+/** Owner 11-26: the cotton pad's drawn size follows the rub's reach, within these bounds (CSS px). */
+const PAD_MIN_PX = 44;
+const PAD_MAX_PX = 84;
 /** Story 073: rubbing makes a soft swish at most this often. */
 const RUB_SOUND_MS = 160;
 import type { FixKind } from '../fix-requests';
@@ -518,6 +521,12 @@ export function createNailStation(options: NailStationOptions): NailStation {
   const moveBrush = (x: number, y: number): void => {
     brush.style.transform = brushKind === 'pad' ? `translate3d(${x}px, ${y - NAIL_ART_CONFIG.rub.padLiftPx}px, 0)` : `translate3d(${x}px, ${y}px, 0) rotate(28deg)`;
   };
+  // Owner 11-26 ("whatever looks most natural"): the cotton pad is drawn the size of the area it cleans, so what the
+  // player sees is what it wipes (within a sensible size for a phone).
+  const sizePad = (): void => {
+    const d = Math.round(Math.min(PAD_MAX_PX, Math.max(PAD_MIN_PX, view.rubRadiusPx() * 2)));
+    brush.style.setProperty('--pad-size', `${d}px`);
+  };
   const moveRing = (x: number, y: number): void => {
     const r = view.rubRadiusPx();
     rubRing.style.width = rubRing.style.height = `${r * 2}px`;
@@ -536,6 +545,7 @@ export function createNailStation(options: NailStationOptions): NailStation {
     if (tool === 'cleanup' || tool === 'remover' || tool === 'tidy') fixActed = true;
     if (tool === 'cleanup') {
       rubRing.classList.add('show');
+      if (phase === 'down') sizePad();
       moveRing(x, y);
     }
     if (brushOn()) {
