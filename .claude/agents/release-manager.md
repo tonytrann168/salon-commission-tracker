@@ -2,7 +2,7 @@
 name: release-manager
 description: "Release pipeline — certification checklists, store submissions and page prep, platform requirements, version numbering, release-day coordination."
 tools: Read, Glob, Grep, Write, Edit, Bash
-model: inherit
+model: haiku
 maxTurns: 20
 skills: [release-checklist, write-changelog, patch-notes]
 ---
